@@ -4,6 +4,7 @@ import { clients, documents, shops } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
+import { EditClientModal } from "../EditClientModal";
 import Link from "next/link";
 
 interface ClientProfilePageProps {
@@ -79,7 +80,7 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
             <p className="font-mono text-xs text-zinc-500 lowercase mt-0.5">&gt; id: {clientRecord.id}</p>
           </div>
           
-          <div className="flex gap-2 font-mono text-[10px]">
+          <div className="flex items-center gap-2 font-mono text-[10px]">
             <span className="border border-black px-2 py-1 bg-zinc-50 font-bold uppercase">
               Class: {clientRecord.clientType}
             </span>
@@ -88,6 +89,12 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
                 PIN: {clientRecord.taxPin}
               </span>
             )}
+            <EditClientModal
+              client={clientRecord}
+              shopId={shop.id}
+              shopSlug={slug}
+              redirectToDirectoryAfterDelete={true}
+            />
           </div>
         </div>
       </div>

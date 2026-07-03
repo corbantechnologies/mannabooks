@@ -47,7 +47,7 @@ export async function addPaymentMethod(input: AddPaymentMethodInput): Promise<{ 
 }
 
 /**
- * Retreives active account configurations for dynamic document generation mapping.
+ * Retrieves active account configurations for dynamic document generation mapping.
  */
 export async function getShopPaymentMethods(shopId: string) {
   try {
@@ -58,5 +58,50 @@ export async function getShopPaymentMethods(shopId: string) {
   } catch (error) {
     console.error("Failed to query payment definitions:", error);
     return [];
+  }
+}
+
+/**
+ * Removes a payment method configuration from the database.
+ */
+export async function deletePaymentMethod(id: string, shopId: string, shopSlug: string) {
+  try {
+    const session = await verifyAndGetSession();
+    if (!session) return { success: false, error: "Authentication credentials required." };
+
+    await db.delete(paymentMethods)
+      .where(and(eq(paymentMethods.id, id), eq(paymentMethods.shopId, shopId)));
+
+    revalidatePath(`/workspaces/${shopSlug}/settings`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to remove payment method:", error);
+    return { success: false, error: "Failed to delete payment method." };
+  }
+}
+
+/**
+ * Sets a payment method as default for the shop.
+ */
+export async function setDefaultPaymentMethod(id: string, shopId: string, shopSlug: string) {
+  try {
+    const session = await verifyAndGetSession();
+    if (!session) return { success: false, error: "Authentication credentials required." };
+
+    await db.transaction(async (tx) => {
+      await tx.update(paymentMethods)
+        .set({ isDefault: false })
+        .where(eq(paymentMethods.shopId, shopId));
+
+      await tx.update(paymentMethods)
+        .set({ isDefault: true })
+        .where(and(eq(paymentMethods.id, id), eq(paymentMethods.shopId, shopId)));
+    });
+
+    revalidatePath(`/workspaces/${shopSlug}/settings`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to set default payment method:", error);
+    return { success: false, error: "Failed to update default payment method." };
   }
 }

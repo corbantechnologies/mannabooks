@@ -86,3 +86,19 @@ export async function updateProductItem({ id, shopId, shopSlug, ...updates }: Up
         return { success: false, error: "Failed to persist product alterations." };
     }
 }
+
+/**
+ * Removes a product entry from the catalog repository.
+ */
+export async function deleteProductItem(id: string, shopId: string, shopSlug: string) {
+    try {
+        await db.delete(products)
+            .where(and(eq(products.id, id), eq(products.shopId, shopId)));
+
+        revalidatePath(`/workspaces/${shopSlug}/products`);
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete product entry:", error);
+        return { success: false, error: "Failed to delete product item." };
+    }
+}

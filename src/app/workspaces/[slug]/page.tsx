@@ -22,34 +22,22 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
     notFound();
   }
 
-  // 2. Fetch documents, clients, and products metrics
-  const shopDocs = await db.query.documents.findMany({
-    where: eq(documents.shopId, shop.id),
-    with: {
-      client: true,
-    },
-    orderBy: (docs, { desc }) => [desc(docs.createdAt)],
-    limit: 5,
-  });
-
-  const clientCount = await db
-    .select({ value: count() })
-    .from(clients)
-    .where(eq(clients.shopId, shop.id));
-
-  const productCount = await db
-    .select({ value: count() })
-    .from(products)
-    .where(eq(products.shopId, shop.id));
-
-  // Compute metrics
-  let totalRevenue = 0;
-  let pendingAmount = 0;
-  let draftCount = 0;
-
-  const allDocs = await db.query.documents.findMany({
-    where: eq(documents.shopId, shop.id),
-  });
+  // 2. Fetch documents, clients, and products metrics concurrently in parallel
+  const [shopDocs, clientCountRes, productCountRes, allDocs] = await Promise.all([
+    db.query.documents.findMany({
+      where: eq(documents.shopId, shop.id),
+      with: {
+        client: true,
+      },
+      orderBy: (docs, { desc }) => [desc(docs.createdAt)],
+      limit: 5,
+    }),
+    db.select({ value: count() }).from(clients).where(eq(clients.shopId, shop.id)),
+    db.select({ value: count() }).from(products).where(eq(products.shopId, shop.id)),
+    db.query.documents.findMany({
+      where: eq(documents.shopId, shop.id),
+    }),
+  ]);
 
   allDocs.forEach((d) => {
     const val = parseFloat(d.grandTotal || "0");
@@ -103,7 +91,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
         <div className="p-6 space-y-1">
           <p className="font-mono text-[10px] text-zinc-400 uppercase">Active Client Directory</p>
           <p className="text-2xl font-bold font-mono tracking-tight text-black">
-            {clientCount[0]?.value || 0}
+            {clientCountRes[0]?.value || 0}
           </p>
           <Link href={`/workspaces/${slug}/clients`} className="font-mono text-[10px] text-zinc-500 hover:underline block">
             View Client Flow →
@@ -113,7 +101,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
         <div className="p-6 space-y-1">
           <p className="font-mono text-[10px] text-zinc-400 uppercase">Catalog Items</p>
           <p className="text-2xl font-bold font-mono tracking-tight text-black">
-            {productCount[0]?.value || 0}
+            {productCountRes[0]?.value || 0}
           </p>
           <Link href={`/workspaces/${slug}/products`} className="font-mono text-[10px] text-zinc-500 hover:underline block">
             Manage Catalog →

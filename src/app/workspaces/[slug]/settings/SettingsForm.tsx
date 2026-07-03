@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateShopSettings } from "@/lib/actions/workspace";
-import { addPaymentMethod } from "@/lib/actions/payments";
+import { addPaymentMethod, deletePaymentMethod, setDefaultPaymentMethod } from "@/lib/actions/payments";
 import { toast } from "react-hot-toast";
 
 interface PaymentMethod {
@@ -217,13 +217,53 @@ export function SettingsForm({
         {initialMethods.length > 0 && (
           <div className="divide-y divide-black border-b border-black">
             {initialMethods.map((pm) => (
-              <div key={pm.id} className="p-4 flex justify-between items-start font-mono text-xs">
+              <div key={pm.id} className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 font-mono text-xs">
                 <div>
-                  <span className="font-bold uppercase">{pm.name}</span>
-                  {pm.isDefault && (
-                    <span className="ml-2 bg-black text-white px-1.5 py-0.5 text-[9px] font-bold uppercase">DEFAULT</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold uppercase">{pm.name}</span>
+                    {pm.isDefault && (
+                      <span className="bg-black text-white px-1.5 py-0.5 text-[9px] font-bold uppercase">DEFAULT</span>
+                    )}
+                  </div>
+                  <p className="text-zinc-500 mt-1 text-[11px] font-mono leading-relaxed">{pm.details}</p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  {!pm.isDefault && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const toastId = toast.loading("Updating default...");
+                        const res = await setDefaultPaymentMethod(pm.id, shopId, shopSlug);
+                        if (res.success) {
+                          toast.success("Set as default method!", { id: toastId });
+                          router.refresh();
+                        } else {
+                          toast.error(res.error || "Failed to set default", { id: toastId });
+                        }
+                      }}
+                      className="border border-zinc-300 text-zinc-600 px-2 py-1 text-[10px] font-bold uppercase hover:border-black hover:text-black transition-colors"
+                    >
+                      Make Default
+                    </button>
                   )}
-                  <p className="text-zinc-500 mt-0.5">{pm.details}</p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!confirm(`Are you sure you want to delete "${pm.name}"?`)) return;
+                      const toastId = toast.loading("Deleting method...");
+                      const res = await deletePaymentMethod(pm.id, shopId, shopSlug);
+                      if (res.success) {
+                        toast.success("Payment method deleted!", { id: toastId });
+                        router.refresh();
+                      } else {
+                        toast.error(res.error || "Failed to delete method", { id: toastId });
+                      }
+                    }}
+                    className="border border-rose-600 text-rose-600 px-2 py-1 text-[10px] font-bold uppercase hover:bg-rose-600 hover:text-white transition-colors"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}

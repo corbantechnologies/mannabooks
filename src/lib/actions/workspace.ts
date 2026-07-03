@@ -6,11 +6,13 @@ import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { verifyAndGetSession } from "./auth";
 
+import { cache } from "react";
+
 /**
  * Server-side security guard that extracts session credentials, 
  * verifies tenant membership, and returns the active shop context.
  */
-export async function getActiveWorkspaceContext(slug: string) {
+export const getActiveWorkspaceContext = cache(async function getActiveWorkspaceContext(slug: string) {
     // 1. Authenticate the active session cookie
     const sessionRecord = await verifyAndGetSession();
     if (!sessionRecord) {

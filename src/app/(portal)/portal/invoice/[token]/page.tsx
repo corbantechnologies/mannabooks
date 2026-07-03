@@ -6,13 +6,15 @@ import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 
 interface PortalPageProps {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }
 
 export default async function PublicInvoicePortalPage({ params }: PortalPageProps) {
+  const { token } = await params;
+
   // 1. Locate the secure document mapping via token lookup
   const tokenRecord = await db.query.documentTokens.findFirst({
-    where: eq(documentTokens.token, params.token),
+    where: eq(documentTokens.token, token),
     with: {
       document: {
         with: {

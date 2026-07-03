@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateDocumentStatus } from "@/lib/actions/documents";
+import { updateDocumentStatus, deleteDocument, duplicateDocument } from "@/lib/actions/documents";
 import { dispatchDocumentEmail } from "@/lib/actions/email";
 import { toast } from "react-hot-toast";
 
@@ -176,6 +176,41 @@ export function DocumentStatusPanel({
               Download PDF
             </a>
           )}
+
+          <button
+            type="button"
+            onClick={async () => {
+              const toastId = toast.loading("Duplicating document...");
+              const res = await duplicateDocument(documentId, shopId, shopSlug);
+              if (res.success) {
+                toast.success(`Duplicated into ${res.serial}!`, { id: toastId });
+                router.push(`/workspaces/${shopSlug}/documents/${res.documentId}`);
+              } else {
+                toast.error(res.error || "Failed to duplicate", { id: toastId });
+              }
+            }}
+            className="border border-zinc-400 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:border-black transition-colors rounded-none"
+          >
+            Duplicate
+          </button>
+
+          <button
+            type="button"
+            onClick={async () => {
+              if (!confirm("Are you sure you want to delete this document? This action cannot be undone.")) return;
+              const toastId = toast.loading("Purging document...");
+              const res = await deleteDocument(documentId, shopId, shopSlug);
+              if (res.success) {
+                toast.success("Document deleted!", { id: toastId });
+                router.push(`/workspaces/${shopSlug}/documents`);
+              } else {
+                toast.error(res.error || "Failed to delete document", { id: toastId });
+              }
+            }}
+            className="border border-rose-600 text-rose-600 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-600 hover:text-white transition-colors rounded-none"
+          >
+            Delete
+          </button>
         </div>
       </div>
     </div>

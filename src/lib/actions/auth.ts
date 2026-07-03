@@ -38,11 +38,13 @@ export async function createSession(userId: string): Promise<string> {
     return token;
 }
 
+import { cache } from "react";
+
 /**
  * Validates the session token from cookies against the database.
  * Auto-cleans expired slots to keep your data performance high.
  */
-export async function verifyAndGetSession() {
+export const verifyAndGetSession = cache(async function verifyAndGetSession() {
     const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
     if (!token) return null;
 

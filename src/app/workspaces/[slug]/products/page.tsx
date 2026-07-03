@@ -35,7 +35,7 @@ export default async function WorkspaceProductsPage({ params, searchParams }: Pr
   // 3. Query conditions
   const conditions = [eq(products.shopId, shop.id)];
   if (taxType && taxType !== "ALL") {
-    conditions.push(eq(products.taxType, taxType as any));
+    conditions.push(eq(products.defaultTaxType, taxType as any));
   }
 
   let catalogList = await db.query.products.findMany({

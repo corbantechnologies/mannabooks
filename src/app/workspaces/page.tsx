@@ -1,7 +1,7 @@
 // src/app/workspaces/page.tsx
 import { db } from "@/db";
 import { shopMembers } from "@/db/schema";
-import { verifyAndGetSession } from "@/lib/auth";
+import { verifyAndGetSession } from "@/lib/actions/auth";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";

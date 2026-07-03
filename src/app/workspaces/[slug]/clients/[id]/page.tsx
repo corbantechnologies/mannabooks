@@ -63,7 +63,7 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
   );
 
   return (
-    <div className="p-8 space-y-12 selection:bg-black selection:text-white">
+    <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
       
       {/* BACK NAVIGATION AND INTERFACE HEADER */}
       <div className="border-b border-black pb-6 space-y-2">

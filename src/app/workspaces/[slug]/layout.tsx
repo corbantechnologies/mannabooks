@@ -3,6 +3,8 @@ import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { logoutAction } from "@/lib/actions/logout";
 import Link from "next/link";
 
+import { MobileNavDrawer } from "./MobileNavDrawer";
+
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
   params: Promise<{ slug: string }>;
@@ -16,10 +18,13 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
   const { shop, user } = await getActiveWorkspaceContext(slug);
 
   return (
-    <div className="flex min-h-screen bg-white selection:bg-black selection:text-white">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-white selection:bg-black selection:text-white">
       
-      {/* GLOBAL MINIMAL EDITORIAL SIDEBAR */}
-      <aside className="w-64 border-r border-black flex flex-col justify-between bg-white h-screen sticky top-0 shrink-0">
+      {/* MOBILE TOP NAVIGATION BAR WITH SLIDE DRAWER (< 1024px) */}
+      <MobileNavDrawer slug={slug} shop={shop} user={user} />
+
+      {/* GLOBAL MINIMAL EDITORIAL SIDEBAR (1024px+) */}
+      <aside className="hidden lg:flex w-64 border-r border-black flex-col justify-between bg-white h-screen sticky top-0 shrink-0">
         <div className="flex flex-col flex-1 overflow-y-auto p-6 space-y-12">
           
           {/* BUSINESS LOGO PROFILE INDICATOR */}

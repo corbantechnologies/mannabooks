@@ -6,17 +6,27 @@ import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 
+import { clients } from "@/db/schema";
+import { LedgerFilterBar } from "./LedgerFilterBar";
+
 interface LedgerPageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ type?: string; status?: string }>;
+  searchParams: Promise<{
+    search?: string;
+    type?: string;
+    status?: string;
+    clientId?: string;
+    fromDate?: string;
+    toDate?: string;
+  }>;
 }
 
 export default async function WorkspaceLedgerPage({ params, searchParams }: LedgerPageProps) {
   // 1. Await dynamic params and searchParams (required in Next.js 15+)
   const { slug } = await params;
-  const { type } = await searchParams;
+  const { search, type, status, clientId, fromDate, toDate } = await searchParams;
 
-  // 2. Fetch active multi-tenant shop criteria
+  // 2. Fetch active multi-tenant shop criteria and clients list for dropdown
   const shop = await db.query.shops.findFirst({
     where: eq(shops.slug, slug),
   });
@@ -25,16 +35,32 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
     notFound();
   }
 
-  // 3. Compute runtime filters based on query params (for optional sorting tabs)
+  const shopClients = await db.query.clients.findMany({
+    where: eq(clients.shopId, shop.id),
+    orderBy: [desc(clients.name)],
+  });
+
+  // 3. Compute runtime filters based on query params
   const activeType = type || "ALL";
+  const activeStatus = status || "ALL";
+  const activeClientId = clientId || "ALL";
+
   const conditions = [eq(documents.shopId, shop.id)];
 
   if (activeType !== "ALL") {
     conditions.push(eq(documents.type, activeType as any));
   }
 
-  // 4. Extract the targeted chronological stream records
-  const streamLedger = await db.query.documents.findMany({
+  if (activeStatus !== "ALL") {
+    conditions.push(eq(documents.status, activeStatus as any));
+  }
+
+  if (activeClientId !== "ALL") {
+    conditions.push(eq(documents.clientId, activeClientId));
+  }
+
+  // 4. Extract stream records
+  let streamLedger = await db.query.documents.findMany({
     where: and(...conditions),
     orderBy: [desc(documents.issueDate)],
     with: {
@@ -42,8 +68,33 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
     },
   });
 
+  // Client-side text search filtering (Serial Number or Client Name)
+  if (search && search.trim() !== "") {
+    const q = search.toLowerCase().trim();
+    streamLedger = streamLedger.filter(
+      (doc) =>
+        doc.docNumber.toLowerCase().includes(q) ||
+        doc.client.name.toLowerCase().includes(q)
+    );
+  }
+
+  // Date range filtering
+  if (fromDate) {
+    const fromTime = new Date(fromDate).getTime();
+    streamLedger = streamLedger.filter(
+      (doc) => new Date(doc.issueDate).getTime() >= fromTime
+    );
+  }
+
+  if (toDate) {
+    const toTime = new Date(toDate).getTime() + 86400000; // End of selected day
+    streamLedger = streamLedger.filter(
+      (doc) => new Date(doc.issueDate).getTime() <= toTime
+    );
+  }
+
   return (
-    <div className="p-8 space-y-12 selection:bg-black selection:text-white">
+    <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
       
       {/* HEADER SECTION AREA */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black pb-6">
@@ -54,14 +105,17 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
         
         <Link
           href={`/workspaces/${slug}/documents/new`}
-          className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors border border-black rounded-none"
+          className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors border border-black rounded-none w-full sm:w-auto text-center"
         >
           + Generate Document
         </Link>
       </div>
 
+      {/* FILTER & SEARCH CONTROL BAR */}
+      <LedgerFilterBar clients={shopClients} />
+
       {/* STARK SORTING TABS STRIP */}
-      <div className="flex border border-black divide-x divide-black bg-white font-mono text-[10px] uppercase w-fit">
+      <div className="flex border border-black divide-x divide-black bg-white font-mono text-[10px] uppercase w-full sm:w-fit overflow-x-auto">
         {["ALL", "INVOICE", "QUOTATION", "RECEIPT"].map((t) => {
           const isActive = activeType === t;
           return (

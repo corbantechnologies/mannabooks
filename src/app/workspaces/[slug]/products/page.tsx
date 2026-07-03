@@ -7,13 +7,21 @@ import { formatCurrency } from "@/lib/utils";
 import { ProductFormClientSide } from "./ProductFormClientSide";
 import { EditProductModal } from "./EditProductModal";
 
+import { and } from "drizzle-orm";
+import { ProductFilterBar } from "./ProductFilterBar";
+
 interface ProductsPageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{
+    search?: string;
+    taxType?: string;
+  }>;
 }
 
-export default async function WorkspaceProductsPage({ params }: ProductsPageProps) {
-  // 1. Await params (required in Next.js 15+)
+export default async function WorkspaceProductsPage({ params, searchParams }: ProductsPageProps) {
+  // 1. Await params and searchParams (required in Next.js 15+)
   const { slug } = await params;
+  const { search, taxType } = await searchParams;
 
   // 2. Resolve active tenant context on the server
   const shop = await db.query.shops.findFirst({
@@ -24,14 +32,29 @@ export default async function WorkspaceProductsPage({ params }: ProductsPageProp
     notFound();
   }
 
-  // 2. Extract catalog items mapped to this specific shop isolation boundary
-  const catalogList = await db.query.products.findMany({
-    where: eq(products.shopId, shop.id),
+  // 3. Query conditions
+  const conditions = [eq(products.shopId, shop.id)];
+  if (taxType && taxType !== "ALL") {
+    conditions.push(eq(products.defaultTaxType, taxType as any));
+  }
+
+  let catalogList = await db.query.products.findMany({
+    where: and(...conditions),
     orderBy: [desc(products.createdAt)],
   });
 
+  // Client-side text search filter
+  if (search && search.trim() !== "") {
+    const q = search.toLowerCase().trim();
+    catalogList = catalogList.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.sku && p.sku.toLowerCase().includes(q))
+    );
+  }
+
   return (
-    <div className="p-8 space-y-12 selection:bg-black selection:text-white">
+    <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
       
       {/* ACTION BLOCK TOP BAR */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black pb-6">
@@ -43,6 +66,9 @@ export default async function WorkspaceProductsPage({ params }: ProductsPageProp
         {/* Inject interactive creation portal block */}
         <ProductFormClientSide shopId={shop.id} shopSlug={slug} />
       </div>
+
+      {/* FILTER & SEARCH CONTROL BAR */}
+      <ProductFilterBar />
 
       {/* DATA LEDGER GRID */}
       <div className="border border-black bg-white overflow-x-auto">

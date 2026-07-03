@@ -94,7 +94,7 @@ export default function LandingPage() {
 
       {/* FOOTER */}
       <footer className="border-t border-black px-6 py-6 flex flex-col sm:flex-row justify-between items-center bg-white text-xs text-zinc-500 font-mono">
-        <p>© 2026 Manna Books LTD. All rights reserved.</p>
+        <p>© 2026 Manna Books LTD. All rights reserved. Powered by <Link href="https://corbantechnologies.org/" target="_blank" className="hover:underline">Corban Technologies LTD</Link></p>
         <div className="flex gap-4 mt-2 sm:mt-0">
           <Link href="/terms" className="hover:underline">Terms of Specification</Link>
           <Link href="/privacy" className="hover:underline">Privacy Logic</Link>

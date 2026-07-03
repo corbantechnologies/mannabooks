@@ -76,7 +76,7 @@ export function DocumentStatusPanel({
   }
 
   return (
-    <div className="border border-black p-6 bg-white space-y-6 font-mono text-xs">
+    <div className="border border-black p-4 sm:p-6 bg-white space-y-6 font-mono text-xs">
       <div>
         <span className="text-[10px] text-zinc-400 uppercase">CONTROL_PANEL // LIFECYCLE_MANAGEMENT</span>
         <h3 className="font-bold uppercase tracking-tight text-sm mt-1">Status &amp; Actions</h3>

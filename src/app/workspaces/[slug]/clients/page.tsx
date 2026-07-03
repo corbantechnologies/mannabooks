@@ -7,13 +7,21 @@ import { ClientFormClientSide } from "./ClientFormClientSide";
 import { EditClientModal } from "./EditClientModal";
 import Link from "next/link";
 
+import { and } from "drizzle-orm";
+import { ClientFilterBar } from "./ClientFilterBar";
+
 interface ClientsPageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{
+    search?: string;
+    clientType?: string;
+  }>;
 }
 
-export default async function WorkspaceClientsPage({ params }: ClientsPageProps) {
-  // 1. Await params (required in Next.js 15+)
+export default async function WorkspaceClientsPage({ params, searchParams }: ClientsPageProps) {
+  // 1. Await params and searchParams (required in Next.js 15+)
   const { slug } = await params;
+  const { search, clientType } = await searchParams;
 
   // 2. Resolve shop context on the server
   const shop = await db.query.shops.findFirst({
@@ -24,14 +32,31 @@ export default async function WorkspaceClientsPage({ params }: ClientsPageProps)
     notFound();
   }
 
-  // 3. Query all registered clients under this tenant boundary
-  const clientList = await db.query.clients.findMany({
-    where: eq(clients.shopId, shop.id),
+  // 3. Query conditions
+  const conditions = [eq(clients.shopId, shop.id)];
+  if (clientType && clientType !== "ALL") {
+    conditions.push(eq(clients.clientType, clientType as any));
+  }
+
+  let clientList = await db.query.clients.findMany({
+    where: and(...conditions),
     orderBy: [desc(clients.createdAt)],
   });
 
+  // Client-side text search filter
+  if (search && search.trim() !== "") {
+    const q = search.toLowerCase().trim();
+    clientList = clientList.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.email.toLowerCase().includes(q) ||
+        (c.phone && c.phone.toLowerCase().includes(q)) ||
+        (c.taxPin && c.taxPin.toLowerCase().includes(q))
+    );
+  }
+
   return (
-    <div className="p-8 space-y-12 selection:bg-black selection:text-white">
+    <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
       
       {/* HEADER META STRIP */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black pb-6">
@@ -43,6 +68,9 @@ export default async function WorkspaceClientsPage({ params }: ClientsPageProps)
         {/* Pass the server-side shopId directly down to the interactive handler */}
         <ClientFormClientSide shopId={shop.id} shopSlug={slug} />
       </div>
+
+      {/* FILTER & SEARCH CONTROL BAR */}
+      <ClientFilterBar />
 
       {/* STARK LOG DATA TABLE */}
       <div className="border border-black bg-white overflow-x-auto">

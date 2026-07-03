@@ -70,7 +70,7 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
 
       {isOpen && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-black w-full max-w-sm p-6 space-y-6 relative font-mono text-xs">
+          <div className="bg-white border border-black w-[95%] sm:w-full max-w-sm max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-6 relative font-mono text-xs">
             
             <div className="space-y-1">
               <h2 className="text-xl font-bold uppercase tracking-tight">Edit Catalog Node</h2>

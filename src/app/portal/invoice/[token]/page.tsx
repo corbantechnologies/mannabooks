@@ -4,6 +4,7 @@ import { documentTokens, documents, shops, paymentMethods } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
+import crypto from "crypto";
 
 interface PortalPageProps {
   params: Promise<{ token: string }>;
@@ -12,25 +13,64 @@ interface PortalPageProps {
 export default async function PublicInvoicePortalPage({ params }: PortalPageProps) {
   const { token } = await params;
 
-  // 1. Locate the secure document mapping via token lookup
+  // 1. Multi-tier resilient token & document resolver
+  let targetDocumentId: string | null = null;
+
+  // Tier 1: Look up exact token match in documentTokens
   const tokenRecord = await db.query.documentTokens.findFirst({
     where: eq(documentTokens.token, token),
-    with: {
-      document: {
-        with: {
-          client: true,
-          shop: true,
-          items: true
-        }
+  });
+  if (tokenRecord) {
+    targetDocumentId = tokenRecord.documentId;
+  }
+
+  // Tier 2: Look up if token parameter is a documentId in documentTokens
+  if (!targetDocumentId) {
+    const tokenByDoc = await db.query.documentTokens.findFirst({
+      where: eq(documentTokens.documentId, token),
+    });
+    if (tokenByDoc) {
+      targetDocumentId = tokenByDoc.documentId;
+    }
+  }
+
+  // Tier 3: Direct lookup in documents table (auto-provisions missing token for legacy docs)
+  if (!targetDocumentId) {
+    const directDoc = await db.query.documents.findFirst({
+      where: eq(documents.id, token),
+    });
+    if (directDoc) {
+      targetDocumentId = directDoc.id;
+      try {
+        const fallbackToken = token.length === 64 ? token : crypto.randomBytes(32).toString("hex");
+        await db.insert(documentTokens).values({
+          documentId: directDoc.id,
+          token: fallbackToken,
+        }).onConflictDoNothing();
+      } catch (err) {
+        // Ignore duplicate token race condition
       }
     }
-  });
+  }
 
-  if (!tokenRecord || !tokenRecord.document) {
+  if (!targetDocumentId) {
     notFound();
   }
 
-  const doc = tokenRecord.document;
+  // 2. Query full document with client, shop, and line items
+  const doc = await db.query.documents.findFirst({
+    where: eq(documents.id, targetDocumentId),
+    with: {
+      client: true,
+      shop: true,
+      items: true,
+    },
+  });
+
+  if (!doc) {
+    notFound();
+  }
+
   const shop = doc.shop;
   const client = doc.client;
 

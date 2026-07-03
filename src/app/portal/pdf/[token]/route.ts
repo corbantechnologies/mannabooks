@@ -1,7 +1,7 @@
 // src/app/api/portal/pdf/[token]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { documentTokens, paymentMethods } from "@/db/schema";
+import { documentTokens, documents, paymentMethods } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import ReactPDF from "@react-pdf/renderer";
 import { formatCurrency } from "@/lib/utils";
@@ -159,18 +159,52 @@ const PdfDocumentStructure = ({ doc, shop, client, settlements }: any) => {
 export async function GET(request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
     try {
         const resolvedParams = await params;
-        const tokenData = await db.query.documentTokens.findFirst({
-            where: eq(documentTokens.token, resolvedParams.token),
-            with: {
-                document: { with: { client: true, shop: true, items: true } }
-            }
-        });
+        const token = resolvedParams.token;
 
-        if (!tokenData || !tokenData.document) {
+        let targetDocumentId: string | null = null;
+
+        const tokenRecord = await db.query.documentTokens.findFirst({
+            where: eq(documentTokens.token, token),
+        });
+        if (tokenRecord) {
+            targetDocumentId = tokenRecord.documentId;
+        }
+
+        if (!targetDocumentId) {
+            const tokenByDoc = await db.query.documentTokens.findFirst({
+                where: eq(documentTokens.documentId, token),
+            });
+            if (tokenByDoc) {
+                targetDocumentId = tokenByDoc.documentId;
+            }
+        }
+
+        if (!targetDocumentId) {
+            const directDoc = await db.query.documents.findFirst({
+                where: eq(documents.id, token),
+            });
+            if (directDoc) {
+                targetDocumentId = directDoc.id;
+            }
+        }
+
+        if (!targetDocumentId) {
             return new NextResponse("Document node missing parameter paths.", { status: 404 });
         }
 
-        const doc = tokenData.document;
+        const doc = await db.query.documents.findFirst({
+            where: eq(documents.id, targetDocumentId),
+            with: {
+                client: true,
+                shop: true,
+                items: true,
+            },
+        });
+
+        if (!doc) {
+            return new NextResponse("Document not found.", { status: 404 });
+        }
+
         const settlements = await db.query.paymentMethods.findMany({ where: eq(paymentMethods.shopId, doc.shop.id) });
 
         // Render stream instance payload buffer

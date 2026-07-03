@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateShopSettings } from "@/lib/actions/workspace";
 import { addPaymentMethod } from "@/lib/actions/payments";
+import { toast } from "react-hot-toast";
 
 interface PaymentMethod {
   id: string;
@@ -53,9 +54,12 @@ export function SettingsForm({
     e.preventDefault();
     setProfileMsg(null);
     setSaving(true);
+    const toastId = toast.loading("Saving configuration...");
 
     if (isVatRegistered && !taxPin) {
-      setProfileMsg({ type: "error", text: "A registered Tax PIN is required when VAT is active." });
+      const text = "A registered Tax PIN is required when VAT is active.";
+      setProfileMsg({ type: "error", text });
+      toast.error(text, { id: toastId });
       setSaving(false);
       return;
     }
@@ -63,7 +67,9 @@ export function SettingsForm({
     if (taxPin) {
       const pinRegex = /^[A-Z]\d{11}[A-Z]$/;
       if (!pinRegex.test(taxPin.toUpperCase().trim())) {
-        setProfileMsg({ type: "error", text: "Invalid statutory PIN format. Ensure it matches official structures." });
+        const text = "Invalid statutory PIN format. Ensure it matches official structures.";
+        setProfileMsg({ type: "error", text });
+        toast.error(text, { id: toastId });
         setSaving(false);
         return;
       }
@@ -72,10 +78,14 @@ export function SettingsForm({
     const res = await updateShopSettings({ shopId, name: businessName, taxPin, isVatRegistered, currency });
     setSaving(false);
     if (res.success) {
-      setProfileMsg({ type: "success", text: "Configuration committed successfully." });
+      const text = "Configuration committed successfully.";
+      setProfileMsg({ type: "success", text });
+      toast.success(text, { id: toastId });
       router.refresh();
     } else {
-      setProfileMsg({ type: "error", text: res.error || "Execution failed." });
+      const text = res.error || "Execution failed.";
+      setProfileMsg({ type: "error", text });
+      toast.error(text, { id: toastId });
     }
   }
 
@@ -83,18 +93,23 @@ export function SettingsForm({
     e.preventDefault();
     setPmMsg(null);
     setAddingPm(true);
+    const toastId = toast.loading("Adding payment method...");
 
     const res = await addPaymentMethod({ shopId, shopSlug, name: pmName, details: pmDetails, isDefault: pmDefault });
     setAddingPm(false);
 
     if (res.success) {
-      setPmMsg({ type: "success", text: "Payment method added." });
+      const text = "Payment method added.";
+      setPmMsg({ type: "success", text });
+      toast.success(text, { id: toastId });
       setPmName("");
       setPmDetails("");
       setPmDefault(false);
       router.refresh();
     } else {
-      setPmMsg({ type: "error", text: res.error || "Failed to save payment method." });
+      const text = res.error || "Failed to save payment method.";
+      setPmMsg({ type: "error", text });
+      toast.error(text, { id: toastId });
     }
   }
 

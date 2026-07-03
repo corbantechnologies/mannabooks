@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginUserAccount } from "@/lib/actions/auth-login";
 import Link from "next/link";
+import { toast } from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,17 +22,23 @@ export default function LoginPage() {
     const password = formData.get("password") as string;
 
     if (!email || !password) {
-      setError("Credentials input parameters are incomplete.");
+      const msg = "Credentials input parameters are incomplete.";
+      setError(msg);
+      toast.error(msg);
       setLoading(false);
       return;
     }
 
+    const toastId = toast.loading("Authenticating credentials...");
     const response = await loginUserAccount({ email, passwordHex: password });
 
     if (!response.success) {
-      setError(response.error || "Authentication handshake rejected.");
+      const msg = response.error || "Authentication handshake rejected.";
+      setError(msg);
+      toast.error(msg, { id: toastId });
       setLoading(false);
     } else {
+      toast.success("Login successful!", { id: toastId });
       router.push("/dashboard");
     }
   }

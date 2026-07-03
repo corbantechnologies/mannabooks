@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { calculateLineItem, calculateDocumentTotals, formatCurrency } from "@/lib/utils";
 import { createBillingDocument } from "@/lib/actions/documents";
+import { toast } from "react-hot-toast";
 
 interface BuilderProps {
   shop: any;
@@ -75,17 +76,23 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, products }:
     setError(null);
 
     if (!clientId) {
-      setError("A targeted Client Profile must be explicitly mapped to this file.");
+      const msg = "A targeted Client Profile must be explicitly mapped to this file.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
     const missingDescriptions = rows.some(r => !r.description.trim());
     if (missingDescriptions) {
-      setError("All ledger line entries must specify clear item descriptions.");
+      const msg = "All ledger line entries must specify clear item descriptions.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
     setLoading(true);
+    const toastId = toast.loading(`Generating ${docType.toLowerCase()}...`);
+
     const res = await createBillingDocument({
       shopId: shop.id,
       shopSlug,
@@ -97,8 +104,11 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, products }:
 
     setLoading(false);
     if (!res.success) {
-      setError(res.error || "Failed to commit billing transaction.");
+      const msg = res.error || "Failed to commit billing transaction.";
+      setError(msg);
+      toast.error(msg, { id: toastId });
     } else {
+      toast.success(`${docType} created successfully!`, { id: toastId });
       router.push(`/workspaces/${shop.slug}/documents`);
     }
   }

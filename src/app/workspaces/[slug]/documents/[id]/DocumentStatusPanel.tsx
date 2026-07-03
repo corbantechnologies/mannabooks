@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateDocumentStatus } from "@/lib/actions/documents";
 import { dispatchDocumentEmail } from "@/lib/actions/email";
+import { toast } from "react-hot-toast";
 
 interface DocumentStatusPanelProps {
   documentId: string;
@@ -42,6 +43,7 @@ export function DocumentStatusPanel({
     if (newStatus === status) return;
     setSaving(true);
     setMessage(null);
+    const toastId = toast.loading(`Updating status to ${newStatus}...`);
 
     const res = await updateDocumentStatus({
       documentId,
@@ -53,24 +55,33 @@ export function DocumentStatusPanel({
     setSaving(false);
     if (res.success) {
       setStatus(newStatus);
-      setMessage({ type: "success", text: `Status updated to ${newStatus}.` });
+      const text = `Status updated to ${newStatus}.`;
+      setMessage({ type: "success", text });
+      toast.success(text, { id: toastId });
       router.refresh();
     } else {
-      setMessage({ type: "error", text: res.error || "Failed to update status." });
+      const text = res.error || "Failed to update status.";
+      setMessage({ type: "error", text });
+      toast.error(text, { id: toastId });
     }
   }
 
   async function handleSendEmail() {
     setSending(true);
     setMessage(null);
+    const toastId = toast.loading(`Dispatching email to ${clientEmail}...`);
 
     const res = await dispatchDocumentEmail({ documentId });
     setSending(false);
 
     if (res.success) {
-      setMessage({ type: "success", text: `Document emailed to ${clientEmail} successfully.` });
+      const text = `Document emailed to ${clientEmail} successfully.`;
+      setMessage({ type: "success", text });
+      toast.success(text, { id: toastId });
     } else {
-      setMessage({ type: "error", text: res.error || "Failed to send email." });
+      const text = res.error || "Failed to send email.";
+      setMessage({ type: "error", text });
+      toast.error(text, { id: toastId });
     }
   }
 
@@ -138,6 +149,7 @@ export function DocumentStatusPanel({
               onClick={() => {
                 navigator.clipboard.writeText(portalLink);
                 setMessage({ type: "success", text: "Portal link copied to clipboard." });
+                toast.success("Portal link copied to clipboard.");
               }}
               className="border border-black bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-50 transition-colors rounded-none"
             >

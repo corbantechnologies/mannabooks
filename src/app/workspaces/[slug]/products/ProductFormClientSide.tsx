@@ -2,9 +2,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createProductItem } from "@/lib/actions/products";
+import { toast } from "react-hot-toast";
 
 export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,10 +24,14 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
     const defaultTaxType = formData.get("defaultTaxType") as "V_16" | "V_0" | "EXEMPT";
 
     if (!name || isNaN(unitPrice) || unitPrice < 0) {
-      setError("Item parameters or tracking values are invalid.");
+      const msg = "Item parameters or tracking values are invalid.";
+      setError(msg);
+      toast.error(msg);
       setLoading(false);
       return;
     }
+
+    const toastId = toast.loading("Registering catalog item...");
 
     const res = await createProductItem({
       shopId,
@@ -37,10 +44,13 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
 
     setLoading(false);
     if (!res.success) {
-      setError(res.error || "Failed to commit node to registry.");
+      const msg = res.error || "Failed to commit node to registry.";
+      setError(msg);
+      toast.error(msg, { id: toastId });
     } else {
+      toast.success(`Catalog item "${name}" created!`, { id: toastId });
       setIsOpen(false);
-      window.location.reload(); // Refresh layout context data
+      router.refresh();
     }
   }
 

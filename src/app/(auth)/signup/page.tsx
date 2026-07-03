@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { registerOwnerAccount } from "@/lib/actions/auth";
 import Link from "next/link";
+import { toast } from "react-hot-toast";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -23,11 +24,15 @@ export default function SignupPage() {
     const businessName = formData.get("businessName") as string;
 
     if (!name || !email || !password || !businessName) {
-      setError("All tracking fields are strictly required.");
+      const msg = "All tracking fields are strictly required.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
     setLoading(true);
+    const toastId = toast.loading("Compiling profile & workspace...");
+
     const response = await registerOwnerAccount({
       name,
       email,
@@ -36,9 +41,12 @@ export default function SignupPage() {
     });
 
     if (!response.success) {
-      setError(response.error || "Onboarding pipeline execution failed.");
+      const msg = response.error || "Onboarding pipeline execution failed.";
+      setError(msg);
+      toast.error(msg, { id: toastId });
       setLoading(false);
     } else {
+      toast.success("Account & workspace created successfully!", { id: toastId });
       // Navigate directly to the new workspace if shopSlug is available, else dashboard
       if ("shopSlug" in response && response.shopSlug) {
         router.push(`/workspaces/${response.shopSlug}`);

@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClientProfile } from "@/lib/actions/clients";
+import { toast } from "react-hot-toast";
 
 export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
   const router = useRouter();
@@ -16,6 +17,7 @@ export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; sho
     event.preventDefault();
     setError(null);
     setLoading(true);
+    const toastId = toast.loading("Creating client profile...");
 
     const formData = new FormData(event.currentTarget);
     const name = formData.get("name") as string;
@@ -35,8 +37,11 @@ export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; sho
 
     setLoading(false);
     if (!res.success) {
-      setError(res.error || "Failed to commit record.");
+      const msg = res.error || "Failed to commit record.";
+      setError(msg);
+      toast.error(msg, { id: toastId });
     } else {
+      toast.success(`Client profile "${name}" created!`, { id: toastId });
       setIsOpen(false);
       setClientType("WALK_IN");
       // Soft refresh — revalidates server data without a full page reload

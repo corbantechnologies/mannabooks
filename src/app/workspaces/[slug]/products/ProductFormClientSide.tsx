@@ -92,11 +92,14 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
               </div>
 
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block">SKU / Custom Tracking Identifier</label>
+                <div className="flex justify-between items-center">
+                  <label className="text-zinc-400 uppercase block">SKU / Code Reference</label>
+                  <span className="text-[9px] text-zinc-400 font-mono italic">Optional</span>
+                </div>
                 <input
                   type="text"
                   name="sku"
-                  placeholder="e.g., CON-SRV-01"
+                  placeholder="e.g., CON-SER-4821 (Auto-generated if blank)"
                   className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
                 />
               </div>

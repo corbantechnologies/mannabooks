@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClientProfile } from "@/lib/actions/clients";
+import { useCreateClient } from "@/hooks/useClients";
 import { toast } from "react-hot-toast";
 
 export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
@@ -13,11 +13,11 @@ export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; sho
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const createClientMutation = useCreateClient(shopId, shopSlug);
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setLoading(true);
-    const toastId = toast.loading("Creating client profile...");
 
     const formData = new FormData(event.currentTarget);
     const name = formData.get("name") as string;
@@ -25,28 +25,22 @@ export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; sho
     const phone = formData.get("phone") as string;
     const taxPin = formData.get("taxPin") as string;
 
-    const res = await createClientProfile({
-      shopId,
-      shopSlug,
-      name,
-      email,
-      phone,
-      clientType,
-      taxPin: clientType === "WALK_IN" ? undefined : taxPin,
-    });
-
-    setLoading(false);
-    if (!res.success) {
-      const msg = res.error || "Failed to commit record.";
-      setError(msg);
-      toast.error(msg, { id: toastId });
-    } else {
-      toast.success(`Client profile "${name}" created!`, { id: toastId });
-      setIsOpen(false);
-      setClientType("WALK_IN");
-      // Soft refresh — revalidates server data without a full page reload
-      router.refresh();
-    }
+    createClientMutation.mutate(
+      {
+        name,
+        email,
+        phone: phone || undefined,
+        clientType,
+        taxPin: clientType === "WALK_IN" ? undefined : taxPin,
+      },
+      {
+        onSuccess: () => {
+          setIsOpen(false);
+          setClientType("WALK_IN");
+          router.refresh();
+        },
+      }
+    );
   }
 
   return (

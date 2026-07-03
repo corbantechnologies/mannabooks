@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateShopSettings } from "@/lib/actions/workspace";
-import { addPaymentMethod, deletePaymentMethod, setDefaultPaymentMethod } from "@/lib/actions/payments";
+import { useAddPaymentMethod, useDeletePaymentMethod, useSetDefaultPaymentMethod } from "@/hooks/usePayments";
 import { toast } from "react-hot-toast";
 
 interface PaymentMethod {
@@ -47,11 +47,28 @@ export function SettingsForm({
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Payment method form state
-  const [pmName, setPmName] = useState("");
-  const [pmDetails, setPmDetails] = useState("");
+  const [pmCategory, setPmCategory] = useState<"BANK" | "TILL" | "PAYBILL" | "CUSTOM">("BANK");
+  const [bankName, setBankName] = useState("");
+  const [branchName, setBranchName] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [swiftCode, setSwiftCode] = useState("");
+
+  const [tillNumber, setTillNumber] = useState("");
+  const [storeName, setStoreName] = useState("");
+
+  const [paybillNumber, setPaybillNumber] = useState("");
+  const [accountRef, setAccountRef] = useState("");
+
+  const [customName, setCustomName] = useState("");
+  const [customInstructions, setCustomInstructions] = useState("");
+
   const [pmDefault, setPmDefault] = useState(false);
-  const [addingPm, setAddingPm] = useState(false);
   const [pmMsg, setPmMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const addPaymentMutation = useAddPaymentMethod(shopId, shopSlug);
+  const deletePaymentMutation = useDeletePaymentMethod(shopId, shopSlug);
+  const setDefaultPaymentMutation = useSetDefaultPaymentMethod(shopId, shopSlug);
 
   async function handleProfileSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -84,25 +101,60 @@ export function SettingsForm({
   async function handleAddPaymentMethod(e: React.FormEvent) {
     e.preventDefault();
     setPmMsg(null);
-    setAddingPm(true);
-    const toastId = toast.loading("Adding payment method...");
 
-    const res = await addPaymentMethod({ shopId, shopSlug, name: pmName, details: pmDetails, isDefault: pmDefault });
-    setAddingPm(false);
+    let name = "";
+    let details = "";
 
-    if (res.success) {
-      const text = "Payment method added.";
-      setPmMsg({ type: "success", text });
-      toast.success(text, { id: toastId });
-      setPmName("");
-      setPmDetails("");
-      setPmDefault(false);
-      router.refresh();
+    if (pmCategory === "BANK") {
+      if (!bankName || !accountName || !accountNumber) {
+        toast.error("Bank Name, Account Name, and Account Number are required.");
+        return;
+      }
+      name = `${bankName.trim()} Account`;
+      details = `Bank: ${bankName.trim()} | Acc Name: ${accountName.trim()} | Acc No: ${accountNumber.trim()}${branchName.trim() ? ` | Branch: ${branchName.trim()}` : ''}${swiftCode.trim() ? ` | SWIFT: ${swiftCode.trim().toUpperCase()}` : ''}`;
+    } else if (pmCategory === "TILL") {
+      if (!tillNumber) {
+        toast.error("Till Number is required.");
+        return;
+      }
+      name = `M-Pesa Buy Goods (Till ${tillNumber.trim()})`;
+      details = `Till Number: ${tillNumber.trim()}${storeName.trim() ? ` | Store Name: ${storeName.trim()}` : ''}`;
+    } else if (pmCategory === "PAYBILL") {
+      if (!paybillNumber) {
+        toast.error("Paybill Business Number is required.");
+        return;
+      }
+      name = `M-Pesa Paybill (${paybillNumber.trim()})`;
+      details = `Paybill / Business No: ${paybillNumber.trim()}${accountRef.trim() ? ` | Account Ref: ${accountRef.trim()}` : ''}`;
     } else {
-      const text = res.error || "Failed to save payment method.";
-      setPmMsg({ type: "error", text });
-      toast.error(text, { id: toastId });
+      if (!customName || !customInstructions) {
+        toast.error("Custom Method Name and Instructions are required.");
+        return;
+      }
+      name = customName.trim();
+      details = customInstructions.trim();
     }
+
+    addPaymentMutation.mutate(
+      { name, details, isDefault: pmDefault },
+      {
+        onSuccess: () => {
+          setBankName("");
+          setBranchName("");
+          setAccountName("");
+          setAccountNumber("");
+          setSwiftCode("");
+          setTillNumber("");
+          setStoreName("");
+          setPaybillNumber("");
+          setAccountRef("");
+          setCustomName("");
+          setCustomInstructions("");
+          setPmDefault(false);
+          router.refresh();
+        },
+      }
+    );
   }
 
   return (
@@ -232,15 +284,10 @@ export function SettingsForm({
                   {!pm.isDefault && (
                     <button
                       type="button"
-                      onClick={async () => {
-                        const toastId = toast.loading("Updating default...");
-                        const res = await setDefaultPaymentMethod(pm.id, shopId, shopSlug);
-                        if (res.success) {
-                          toast.success("Set as default method!", { id: toastId });
-                          router.refresh();
-                        } else {
-                          toast.error(res.error || "Failed to set default", { id: toastId });
-                        }
+                      onClick={() => {
+                        setDefaultPaymentMutation.mutate(pm.id, {
+                          onSuccess: () => router.refresh(),
+                        });
                       }}
                       className="border border-zinc-300 text-zinc-600 px-2 py-1 text-[10px] font-bold uppercase hover:border-black hover:text-black transition-colors"
                     >
@@ -249,16 +296,11 @@ export function SettingsForm({
                   )}
                   <button
                     type="button"
-                    onClick={async () => {
+                    onClick={() => {
                       if (!confirm(`Are you sure you want to delete "${pm.name}"?`)) return;
-                      const toastId = toast.loading("Deleting method...");
-                      const res = await deletePaymentMethod(pm.id, shopId, shopSlug);
-                      if (res.success) {
-                        toast.success("Payment method deleted!", { id: toastId });
-                        router.refresh();
-                      } else {
-                        toast.error(res.error || "Failed to delete method", { id: toastId });
-                      }
+                      deletePaymentMutation.mutate(pm.id, {
+                        onSuccess: () => router.refresh(),
+                      });
                     }}
                     className="border border-rose-600 text-rose-600 px-2 py-1 text-[10px] font-bold uppercase hover:bg-rose-600 hover:text-white transition-colors"
                   >
@@ -277,41 +319,184 @@ export function SettingsForm({
         )}
 
         {/* Add New Method Form */}
-        <form onSubmit={handleAddPaymentMethod} className="p-6 space-y-4 font-mono text-xs bg-zinc-50">
-          <p className="text-[10px] text-zinc-400 uppercase font-bold">Add New Payment Method</p>
+        <form onSubmit={handleAddPaymentMethod} className="p-6 space-y-6 font-mono text-xs bg-zinc-50 border-t border-black">
+          <div className="space-y-1">
+            <p className="text-[10px] text-zinc-400 uppercase font-bold">Add New Payment Method</p>
+            <p className="font-sans text-xs text-zinc-500">Select payment type to configure structured remittance details.</p>
+          </div>
 
-          {pmMsg && (
-            <div className={`border p-3 font-bold uppercase text-xs ${
-              pmMsg.type === "success" ? "border-black bg-black text-white" : "border-black bg-white text-black"
-            }`}>
-              &gt; {pmMsg.text}
+          {/* Category Tabs */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[
+              { id: "BANK", label: "Bank Account" },
+              { id: "TILL", label: "M-Pesa Till" },
+              { id: "PAYBILL", label: "M-Pesa Paybill" },
+              { id: "CUSTOM", label: "Custom Instructions" },
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setPmCategory(cat.id as any)}
+                className={`py-2 px-3 text-[11px] font-bold uppercase border transition-colors ${
+                  pmCategory === cat.id
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-zinc-600 border-zinc-300 hover:border-black hover:text-black"
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* BANK ACCOUNT FIELDS */}
+          {pmCategory === "BANK" && (
+            <div className="space-y-4 border border-black p-4 bg-white">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-zinc-400 uppercase block">Bank Name *</label>
+                  <input
+                    type="text"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    placeholder="e.g., NCBA Bank / KCB"
+                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-zinc-400 uppercase block">Branch Name</label>
+                  <input
+                    type="text"
+                    value={branchName}
+                    onChange={(e) => setBranchName(e.target.value)}
+                    placeholder="e.g., Kilimani Branch"
+                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-zinc-400 uppercase block">Account Name / Title *</label>
+                  <input
+                    type="text"
+                    value={accountName}
+                    onChange={(e) => setAccountName(e.target.value)}
+                    placeholder="e.g., Ventures of Africa LTD"
+                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-zinc-400 uppercase block">Account Number *</label>
+                  <input
+                    type="text"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    placeholder="e.g., 01108239101"
+                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 font-bold"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-zinc-400 uppercase block">SWIFT / BIC Code (Optional)</label>
+                <input
+                  type="text"
+                  value={swiftCode}
+                  onChange={(e) => setSwiftCode(e.target.value)}
+                  placeholder="e.g., NCBAKE22"
+                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 uppercase"
+                />
+              </div>
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-zinc-400 uppercase block">Method Name</label>
-              <input
-                type="text"
-                value={pmName}
-                onChange={(e) => setPmName(e.target.value)}
-                placeholder="e.g., M-Pesa Till"
-                className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
-                required
-              />
+          {/* M-PESA TILL FIELDS */}
+          {pmCategory === "TILL" && (
+            <div className="space-y-4 border border-black p-4 bg-white">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-zinc-400 uppercase block">Buy Goods Till Number *</label>
+                  <input
+                    type="text"
+                    value={tillNumber}
+                    onChange={(e) => setTillNumber(e.target.value)}
+                    placeholder="e.g., 552134"
+                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 font-bold text-base"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-zinc-400 uppercase block">Store / Merchant Name</label>
+                  <input
+                    type="text"
+                    value={storeName}
+                    onChange={(e) => setStoreName(e.target.value)}
+                    placeholder="e.g., Ventures of Africa"
+                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-zinc-400 uppercase block">Account Details / Instructions</label>
-              <input
-                type="text"
-                value={pmDetails}
-                onChange={(e) => setPmDetails(e.target.value)}
-                placeholder="e.g., Till: 552134 | Acc: Manna Store"
-                className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
-                required
-              />
+          )}
+
+          {/* M-PESA PAYBILL FIELDS */}
+          {pmCategory === "PAYBILL" && (
+            <div className="space-y-4 border border-black p-4 bg-white">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-zinc-400 uppercase block">Business / Paybill Number *</label>
+                  <input
+                    type="text"
+                    value={paybillNumber}
+                    onChange={(e) => setPaybillNumber(e.target.value)}
+                    placeholder="e.g., 247247"
+                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 font-bold text-base"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-zinc-400 uppercase block">Account Ref / Instructions</label>
+                  <input
+                    type="text"
+                    value={accountRef}
+                    onChange={(e) => setAccountRef(e.target.value)}
+                    placeholder="e.g., Invoice Number / Client Name"
+                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* CUSTOM INSTRUCTIONS FIELDS */}
+          {pmCategory === "CUSTOM" && (
+            <div className="space-y-4 border border-black p-4 bg-white">
+              <div className="space-y-1">
+                <label className="text-zinc-400 uppercase block">Method Title *</label>
+                <input
+                  type="text"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="e.g., PayPal / Cash / Cheque"
+                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 font-bold"
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-zinc-400 uppercase block">Payment Instructions *</label>
+                <textarea
+                  value={customInstructions}
+                  onChange={(e) => setCustomInstructions(e.target.value)}
+                  placeholder="e.g., Send PayPal payment to billing@domain.com or issue cheque to Ventures of Africa LTD."
+                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 h-20"
+                  required
+                ></textarea>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center gap-3">
             <input
@@ -321,15 +506,17 @@ export function SettingsForm({
               onChange={(e) => setPmDefault(e.target.checked)}
               className="w-4 h-4 border border-black accent-black rounded-none cursor-pointer"
             />
-            <label htmlFor="pmDefault" className="cursor-pointer select-none uppercase">Set as default method</label>
+            <label htmlFor="pmDefault" className="cursor-pointer select-none uppercase font-bold">
+              Set as default payment method on invoices
+            </label>
           </div>
 
           <button
             type="submit"
-            disabled={addingPm}
-            className="border border-black bg-black text-white px-5 py-2 font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors disabled:bg-zinc-300 rounded-none"
+            disabled={addPaymentMutation.isPending}
+            className="border border-black bg-black text-white px-6 py-2.5 font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors disabled:bg-zinc-300 rounded-none w-full sm:w-auto"
           >
-            {addingPm ? "ADDING..." : "+ Add Method"}
+            {addPaymentMutation.isPending ? "SAVING..." : "+ SAVE PAYMENT METHOD"}
           </button>
         </form>
       </div>

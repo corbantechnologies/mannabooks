@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateProductItem, deleteProductItem } from "@/lib/actions/products";
+import { useUpdateProduct, useDeleteProduct } from "@/hooks/useProducts";
 import { toast } from "react-hot-toast";
 
 interface EditProductModalProps {
@@ -27,43 +27,36 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
   const [taxType, setTaxType] = useState(product.defaultTaxType);
   const [loading, setLoading] = useState(false);
 
+  const updateProductMutation = useUpdateProduct(shopId, shopSlug);
+  const deleteProductMutation = useDeleteProduct(shopId, shopSlug);
+
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    const toastId = toast.loading("Updating product item...");
-
-    const res = await updateProductItem({
-      id: product.id,
-      shopId,
-      shopSlug,
-      name,
-      sku: sku || undefined,
-      unitPrice: parseFloat(unitPrice),
-      defaultTaxType: taxType,
-    });
-
-    setLoading(false);
-    if (res.success) {
-      toast.success("Catalog item updated!", { id: toastId });
-      setIsOpen(false);
-      router.refresh();
-    } else {
-      toast.error(res.error || "Failed to update product.", { id: toastId });
-    }
+    updateProductMutation.mutate(
+      {
+        id: product.id,
+        name,
+        sku: sku || undefined,
+        unitPrice: parseFloat(unitPrice),
+        defaultTaxType: taxType,
+      },
+      {
+        onSuccess: () => {
+          setIsOpen(false);
+          router.refresh();
+        },
+      }
+    );
   }
 
   async function handleDelete() {
     if (!confirm(`Are you sure you want to delete "${product.name}"?`)) return;
-    const toastId = toast.loading("Deleting product item...");
-
-    const res = await deleteProductItem(product.id, shopId, shopSlug);
-    if (res.success) {
-      toast.success("Catalog item deleted!", { id: toastId });
-      setIsOpen(false);
-      router.refresh();
-    } else {
-      toast.error(res.error || "Failed to delete product.", { id: toastId });
-    }
+    deleteProductMutation.mutate(product.id, {
+      onSuccess: () => {
+        setIsOpen(false);
+        router.refresh();
+      },
+    });
   }
 
   return (

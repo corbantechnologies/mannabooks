@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateDocumentStatus, deleteDocument, duplicateDocument } from "@/lib/actions/documents";
+import { useUpdateDocumentStatus, useDuplicateDocument, useDeleteDocument } from "@/hooks/useDocuments";
 import { dispatchDocumentEmail } from "@/lib/actions/email";
 import { toast } from "react-hot-toast";
 
@@ -39,31 +39,21 @@ export function DocumentStatusPanel({
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  async function handleStatusUpdate(newStatus: typeof status) {
+  const updateStatusMutation = useUpdateDocumentStatus(shopId, shopSlug);
+  const duplicateDocMutation = useDuplicateDocument(shopId, shopSlug);
+  const deleteDocMutation = useDeleteDocument(shopId, shopSlug);
+
+  async function handleStatusUpdate(newStatus: "DRAFT" | "SENT" | "OVERDUE" | "PAID") {
     if (newStatus === status) return;
-    setSaving(true);
-    setMessage(null);
-    const toastId = toast.loading(`Updating status to ${newStatus}...`);
-
-    const res = await updateDocumentStatus({
-      documentId,
-      shopId,
-      shopSlug,
-      status: newStatus,
-    });
-
-    setSaving(false);
-    if (res.success) {
-      setStatus(newStatus);
-      const text = `Status updated to ${newStatus}.`;
-      setMessage({ type: "success", text });
-      toast.success(text, { id: toastId });
-      router.refresh();
-    } else {
-      const text = res.error || "Failed to update status.";
-      setMessage({ type: "error", text });
-      toast.error(text, { id: toastId });
-    }
+    updateStatusMutation.mutate(
+      { documentId, status: newStatus },
+      {
+        onSuccess: () => {
+          setStatus(newStatus);
+          router.refresh();
+        },
+      }
+    );
   }
 
   async function handleSendEmail() {
@@ -179,15 +169,14 @@ export function DocumentStatusPanel({
 
           <button
             type="button"
-            onClick={async () => {
-              const toastId = toast.loading("Duplicating document...");
-              const res = await duplicateDocument(documentId, shopId, shopSlug);
-              if (res.success) {
-                toast.success(`Duplicated into ${res.serial}!`, { id: toastId });
-                router.push(`/workspaces/${shopSlug}/documents/${res.documentId}`);
-              } else {
-                toast.error(res.error || "Failed to duplicate", { id: toastId });
-              }
+            onClick={() => {
+              duplicateDocMutation.mutate(documentId, {
+                onSuccess: (data) => {
+                  if (data.documentId) {
+                    router.push(`/workspaces/${shopSlug}/documents/${data.documentId}`);
+                  }
+                },
+              });
             }}
             className="border border-zinc-400 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:border-black transition-colors rounded-none"
           >
@@ -196,16 +185,13 @@ export function DocumentStatusPanel({
 
           <button
             type="button"
-            onClick={async () => {
+            onClick={() => {
               if (!confirm("Are you sure you want to delete this document? This action cannot be undone.")) return;
-              const toastId = toast.loading("Purging document...");
-              const res = await deleteDocument(documentId, shopId, shopSlug);
-              if (res.success) {
-                toast.success("Document deleted!", { id: toastId });
-                router.push(`/workspaces/${shopSlug}/documents`);
-              } else {
-                toast.error(res.error || "Failed to delete document", { id: toastId });
-              }
+              deleteDocMutation.mutate(documentId, {
+                onSuccess: () => {
+                  router.push(`/workspaces/${shopSlug}/documents`);
+                },
+              });
             }}
             className="border border-rose-600 text-rose-600 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-600 hover:text-white transition-colors rounded-none"
           >

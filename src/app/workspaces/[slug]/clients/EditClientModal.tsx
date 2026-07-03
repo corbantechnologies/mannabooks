@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateClientProfile, deleteClientProfile } from "@/lib/actions/clients";
+import { useUpdateClient, useDeleteClient } from "@/hooks/useClients";
 import { toast } from "react-hot-toast";
 
 interface EditClientModalProps {
@@ -30,48 +30,41 @@ export function EditClientModal({ client, shopId, shopSlug, redirectToDirectoryA
   const [taxPin, setTaxPin] = useState(client.taxPin || "");
   const [loading, setLoading] = useState(false);
 
+  const updateClientMutation = useUpdateClient(shopId, shopSlug);
+  const deleteClientMutation = useDeleteClient(shopId, shopSlug);
+
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    const toastId = toast.loading("Updating client profile...");
-
-    const res = await updateClientProfile({
-      id: client.id,
-      shopId,
-      shopSlug,
-      name,
-      email,
-      phone: phone || undefined,
-      clientType,
-      taxPin: taxPin || undefined,
-    });
-
-    setLoading(false);
-    if (res.success) {
-      toast.success("Client profile updated!", { id: toastId });
-      setIsOpen(false);
-      router.refresh();
-    } else {
-      toast.error(res.error || "Failed to update client.", { id: toastId });
-    }
+    updateClientMutation.mutate(
+      {
+        id: client.id,
+        name,
+        email,
+        phone: phone || undefined,
+        clientType,
+        taxPin: taxPin || undefined,
+      },
+      {
+        onSuccess: () => {
+          setIsOpen(false);
+          router.refresh();
+        },
+      }
+    );
   }
 
   async function handleDelete() {
     if (!confirm(`Are you sure you want to delete client "${client.name}"?`)) return;
-    const toastId = toast.loading("Deleting client...");
-
-    const res = await deleteClientProfile(client.id, shopId, shopSlug);
-    if (res.success) {
-      toast.success("Client deleted!", { id: toastId });
-      setIsOpen(false);
-      if (redirectToDirectoryAfterDelete) {
-        router.push(`/workspaces/${shopSlug}/clients`);
-      } else {
-        router.refresh();
-      }
-    } else {
-      toast.error(res.error || "Failed to delete client.", { id: toastId });
-    }
+    deleteClientMutation.mutate(client.id, {
+      onSuccess: () => {
+        setIsOpen(false);
+        if (redirectToDirectoryAfterDelete) {
+          router.push(`/workspaces/${shopSlug}/clients`);
+        } else {
+          router.refresh();
+        }
+      },
+    });
   }
 
   return (

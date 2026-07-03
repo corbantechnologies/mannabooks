@@ -80,7 +80,7 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
             </span>
             <div className="pt-2">
               <a 
-                href={`/portal/pdf/${params.token}`}
+                href={`/portal/pdf/${token}`}
                 className="inline-block border border-black px-4 py-1.5 text-[10px] font-bold uppercase hover:bg-zinc-50 transition-colors"
               >
                 ↓ Download Vector PDF

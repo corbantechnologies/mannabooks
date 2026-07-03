@@ -39,6 +39,11 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
     }),
   ]);
 
+  // Compute metrics
+  let totalRevenue = 0;
+  let pendingAmount = 0;
+  let draftCount = 0;
+
   allDocs.forEach((d) => {
     const val = parseFloat(d.grandTotal || "0");
     if (d.status === "PAID") {

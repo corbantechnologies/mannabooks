@@ -73,7 +73,7 @@ export const verifyAndGetSession = cache(async function verifyAndGetSession() {
     }
 
     return sessionRecord;
-}
+});
 
 /**
  * Revokes the active session row and clears the client browser cookie.

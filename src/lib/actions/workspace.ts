@@ -46,7 +46,7 @@ export const getActiveWorkspaceContext = cache(async function getActiveWorkspace
         shop: shopProfile,
         role: membership.role,
     };
-}
+});
 
 interface UpdateShopSettingsInput {
     shopId: string;

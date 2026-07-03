@@ -1,0 +1,98 @@
+// src/app/workspaces/[slug]/layout.tsx
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import Link from "next/link";
+
+interface WorkspaceLayoutProps {
+  children: React.ReactNode;
+  params: { slug: string };
+}
+
+export default async function RefinedWorkspaceLayout({ children, params }: WorkspaceLayoutProps) {
+  // 1. Authenticate session and fetch multi-tenant profile fields entirely on the server
+  const { shop, user } = await getActiveWorkspaceContext(params.slug);
+
+  return (
+    <div className="flex min-h-screen bg-white selection:bg-black selection:text-white">
+      
+      {/* GLOBAL MINIMAL EDITORIAL SIDEBAR */}
+      <aside className="w-64 border-r border-black flex flex-col justify-between bg-white h-screen sticky top-0 shrink-0">
+        <div className="flex flex-col flex-1 overflow-y-auto p-6 space-y-12">
+          
+          {/* BUSINESS LOGO PROFILE INDICATOR */}
+          <div className="space-y-2 border-b border-zinc-200 pb-6">
+            <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 block">Current Workspace</span>
+            <h2 className="font-bold uppercase tracking-tighter text-base truncate block leading-none">
+              {shop.name}
+            </h2>
+            {shop.taxPin ? (
+              <div className="inline-block border border-black font-mono text-[9px] px-1 py-0.5 uppercase tracking-tight text-zinc-600 bg-zinc-50">
+                PIN: {shop.taxPin}
+              </div>
+            ) : (
+              <span className="font-mono text-[9px] italic text-rose-600 block">&gt; CONFIGURATION REQUIRED</span>
+            )}
+          </div>
+
+          {/* APPLICATION DIRECTORY LINKS */}
+          <div className="space-y-2 flex-1">
+            <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 block mb-3">Ledger Directories</span>
+            <nav className="flex flex-col gap-2 font-mono text-xs uppercase font-bold tracking-wider">
+              <Link 
+                href={`/workspaces/${params.slug}`} 
+                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+              >
+                [00] Overview Log
+              </Link>
+              <Link 
+                href={`/workspaces/${params.slug}/documents`} 
+                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+              >
+                [01] Master Ledger
+              </Link>
+              <Link 
+                href={`/workspaces/${params.slug}/clients`} 
+                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+              >
+                [02] Client Flow
+              </Link>
+              <Link 
+                href={`/workspaces/${params.slug}/products`} 
+                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+              >
+                [03] Product Catalog
+              </Link>
+              <Link 
+                href={`/workspaces/${params.slug}/settings`} 
+                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+              >
+                [04] System Settings
+              </Link>
+            </nav>
+          </div>
+
+        </div>
+
+        {/* FOOTER USER MANAGEMENT COMPONENT */}
+        <div className="p-6 border-t border-black bg-zinc-50 flex flex-col gap-2 font-mono text-[11px]">
+          <div className="truncate">
+            <span className="text-zinc-400 block text-[9px] uppercase">OPERATOR</span>
+            <span className="font-bold text-black uppercase">{user.name}</span>
+          </div>
+          <div className="text-[9px] text-zinc-400 border-t border-zinc-200 pt-2 flex justify-between items-center">
+            <span>MANNA v2026.4</span>
+            <Link href="/login" className="text-black font-bold underline hover:no-underline uppercase">
+              Logout
+            </Link>
+          </div>
+        </div>
+
+      </aside>
+
+      {/* CORE WORKSPACE DASHBOARD VIEWPORT STREAM */}
+      <main className="flex-1 overflow-y-auto min-w-0 bg-white">
+        {children}
+      </main>
+
+    </div>
+  );
+}

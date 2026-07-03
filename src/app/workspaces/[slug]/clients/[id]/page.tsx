@@ -1,0 +1,196 @@
+// src/app/workspaces/[slug]/clients/[id]/page.tsx
+import { db } from "@/db";
+import { clients, documents, shops } from "@/db/schema";
+import { eq, and, desc } from "drizzle-orm";
+import { notFound } from "next/navigation";
+import { formatCurrency } from "@/lib/utils";
+import Link from "next/link";
+
+interface ClientProfilePageProps {
+  params: { slug: string; id: string };
+}
+
+export default async function ClientProfileLedgerPage({ params }: ClientProfilePageProps) {
+  // 1. Resolve multi-tenant shop criteria context
+  const shop = await db.query.shops.findFirst({
+    where: eq(shops.slug, params.slug),
+  });
+
+  if (!shop) {
+    notFound();
+  }
+
+  // 2. Fetch the targeted client profile alongside all their historical document records
+  const clientRecord = await db.query.clients.findFirst({
+    where: and(
+      eq(clients.id, params.id),
+      eq(clients.shopId, shop.id)
+    ),
+    with: {
+      documents: {
+        orderBy: [desc(documents.issueDate)],
+      },
+    },
+  });
+
+  if (!clientRecord) {
+    notFound();
+  }
+
+  // 3. Compute structural customer performance aggregations with absolute precision
+  const performanceMetrics = clientRecord.documents.reduce(
+    (acc, doc) => {
+      const value = parseFloat(doc.grandTotal);
+      if (doc.type === "RECEIPT") {
+        acc.lifetimeValue += value;
+      } else if (doc.type === "INVOICE") {
+        if (doc.status === "PAID") {
+          acc.lifetimeValue += value;
+        } else if (doc.status === "SENT") {
+          acc.outstandingLiability += value;
+        } else if (doc.status === "OVERDUE") {
+          acc.outstandingLiability += value;
+          acc.overdueLiability += value;
+        }
+      }
+      return acc;
+    },
+    { lifetimeValue: 0, outstandingLiability: 0, overdueLiability: 0 }
+  );
+
+  return (
+    <div className="p-8 space-y-12 selection:bg-black selection:text-white">
+      
+      {/* BACK NAVIGATION AND INTERFACE HEADER */}
+      <div className="border-b border-black pb-6 space-y-2">
+        <Link 
+          href={`/workspaces/${params.slug}/clients`} 
+          className="font-mono text-xs font-bold text-zinc-400 hover:underline block"
+        >
+          ← BACK TO MASTER CLIENT REGISTRY
+        </Link>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <span className="font-mono text-xs text-zinc-400">LEDGER_NODE // CUSTOMER_PROFILE</span>
+            <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">{clientRecord.name}</h1>
+            <p className="font-mono text-xs text-zinc-500 lowercase mt-0.5">&gt; id: {clientRecord.id}</p>
+          </div>
+          
+          <div className="flex gap-2 font-mono text-[10px]">
+            <span className="border border-black px-2 py-1 bg-zinc-50 font-bold uppercase">
+              Class: {clientRecord.clientType}
+            </span>
+            {clientRecord.taxPin && (
+              <span className="bg-black text-white px-2 py-1 font-bold uppercase tracking-wide">
+                PIN: {clientRecord.taxPin}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* INDIVIDUAL PIPELINE FINANCIAL SUMMARY CARD BLOCKS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 border border-black divide-y md:divide-y-0 md:divide-x divide-black bg-white">
+        <div className="p-6 space-y-1">
+          <p className="font-mono text-xs text-zinc-400 uppercase">Computed Lifetime Value (LTV)</p>
+          <p className="text-2xl font-bold font-mono tracking-tight text-black">
+            {formatCurrency(performanceMetrics.lifetimeValue, shop.currency)}
+          </p>
+          <p className="text-[10px] text-zinc-500 leading-tight">Total settled invoice balances explicitly processed to date.</p>
+        </div>
+
+        <div className="p-6 space-y-1">
+          <p className="font-mono text-xs text-zinc-400 uppercase">Accounts Receivable Debt</p>
+          <p className="text-2xl font-bold font-mono tracking-tight text-black">
+            {formatCurrency(performanceMetrics.outstandingLiability, shop.currency)}
+          </p>
+          <p className="text-[10px] text-zinc-500 leading-tight">Pending un-settled balance vectors current in processing paths.</p>
+        </div>
+
+        <div className="p-6 space-y-1">
+          <p className="font-mono text-xs text-zinc-400 uppercase">Critically Overdue Pool</p>
+          <p className="text-2xl font-bold font-mono tracking-tight text-rose-600">
+            {formatCurrency(performanceMetrics.overdueLiability, shop.currency)}
+          </p>
+          <p className="text-[10px] text-zinc-500 leading-tight">Outstanding invoice values that have cleared their due date constraints.</p>
+        </div>
+      </div>
+
+      {/* CORE CONTACT SCHEDULING DETAILS BOX */}
+      <div className="border border-black p-4 bg-zinc-50 font-mono text-xs grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div>
+          <span className="text-zinc-400 block uppercase text-[10px]">Email Destination</span>
+          <span className="font-sans font-bold text-black text-sm">{clientRecord.email}</span>
+        </div>
+        <div>
+          <span className="text-zinc-400 block uppercase text-[10px]">Phone Line Reference</span>
+          <span className="font-bold text-black text-sm">{clientRecord.phone || "UNASSIGNED"}</span>
+        </div>
+        <div>
+          <span className="text-zinc-400 block uppercase text-[10px]">Onboarding Timestamp</span>
+          <span className="text-zinc-600 text-sm">
+            {new Date(clientRecord.createdAt).toLocaleDateString("en-KE", { dateStyle: "long" })}
+          </span>
+        </div>
+      </div>
+
+      {/* STANDALONE HISTORICAL SUB-LEDGER GRID */}
+      <div className="space-y-4">
+        <h3 className="font-bold uppercase tracking-tight text-sm font-mono">&gt; Transaction Sub-Ledger</h3>
+        
+        <div className="border border-black bg-white overflow-x-auto">
+          <table className="w-full text-left font-mono text-xs border-collapse">
+            <thead>
+              <tr className="bg-zinc-50 border-b border-black uppercase tracking-wider font-bold">
+                <th className="p-4 border-r border-black">Serial Reference</th>
+                <th className="p-4 border-r border-black">Document Type</th>
+                <th className="p-4 border-r border-black">Issue Tracking Date</th>
+                <th className="p-4 border-r border-black text-right">Total Aggregate Valuation</th>
+                <th className="p-4 text-center">Execution Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-black bg-white">
+              {clientRecord.documents.map((doc) => (
+                <tr key={doc.id} className="hover:bg-zinc-50 transition-colors">
+                  <td className="p-4 border-r border-black font-bold text-black tracking-wider">
+                    {doc.docNumber}
+                  </td>
+                  <td className="p-4 border-r border-black">
+                    <span className="border border-black px-1.5 py-0.5 text-[9px] font-bold tracking-widest bg-white">
+                      {doc.type}
+                    </span>
+                  </td>
+                  <td className="p-4 border-r border-black text-zinc-500">
+                    {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
+                  </td>
+                  <td className="p-4 border-r border-black font-bold text-sm text-black text-right">
+                    {formatCurrency(doc.grandTotal, shop.currency)}
+                  </td>
+                  <td className="p-4 text-center">
+                    <span className={`border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${
+                      doc.status === "PAID" ? "bg-black text-white border-black" :
+                      doc.status === "SENT" ? "bg-white text-black border-black font-bold" :
+                      doc.status === "OVERDUE" ? "bg-zinc-100 border-rose-600 border-dashed text-rose-700" :
+                      "bg-zinc-50 text-zinc-400 border-zinc-200"
+                    }`}>
+                      {doc.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+
+              {clientRecord.documents.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-12 text-center text-zinc-400 italic">
+                    &gt; NO REVENUE RECORDS ASSIGNED TO THIS INDIVIDUAL CLIENT TRACKING NODE.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  );
+}

@@ -31,9 +31,9 @@ export async function createClientProfile(input: CreateClientInput) {
 
         // 2. Format validation logic for statutory tax identifiers (e.g., KRA PIN format: 1 Letter, 11 Numbers, 1 Letter)
         if (cleanPin) {
-            const pinRegex = /^[A-Z]\d{11}[A-Z]$/;
+            const pinRegex = /^[A-Z]\d{9}[A-Z]$/;
             if (!pinRegex.test(cleanPin)) {
-                return { success: false, error: "The provided Tax PIN format is invalid. Ensure it fits standard parameters." };
+                return { success: false, error: "The provided Tax PIN format is invalid. Must be 11 characters (e.g. P051234567Z)." };
             }
         }
 

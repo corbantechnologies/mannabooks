@@ -65,9 +65,9 @@ export function SettingsForm({
     }
 
     if (taxPin) {
-      const pinRegex = /^[A-Z]\d{11}[A-Z]$/;
+      const pinRegex = /^[A-Z]\d{9}[A-Z]$/;
       if (!pinRegex.test(taxPin.toUpperCase().trim())) {
-        const text = "Invalid statutory PIN format. Ensure it matches official structures.";
+        const text = "Invalid statutory PIN format. Must be 11 characters (e.g. P051234567Z).";
         setProfileMsg({ type: "error", text });
         toast.error(text, { id: toastId });
         setSaving(false);

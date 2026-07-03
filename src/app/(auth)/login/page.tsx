@@ -30,16 +30,32 @@ export default function LoginPage() {
     }
 
     const toastId = toast.loading("Authenticating credentials...");
-    const response = await loginUserAccount({ email, passwordHex: password });
+    try {
+      const response = await loginUserAccount({ email, passwordHex: password });
 
-    if (!response.success) {
-      const msg = response.error || "Authentication handshake rejected.";
-      setError(msg);
-      toast.error(msg, { id: toastId });
-      setLoading(false);
-    } else {
-      toast.success("Login successful!", { id: toastId });
-      router.push("/dashboard");
+      if (!response.success) {
+        const msg = response.error || "Authentication handshake rejected.";
+        setError(msg);
+        toast.error(msg, { id: toastId });
+        setLoading(false);
+      } else {
+        toast.success("Login successful!", { id: toastId });
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      console.error("Login action error:", err);
+      const errStr = String(err?.message || err);
+      if (errStr.includes("UnrecognizedActionError") || errStr.includes("Server Action")) {
+        toast.error("Application updated on server. Syncing latest version...", { id: toastId });
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        const msg = err?.message || "An unexpected error occurred. Please try again.";
+        setError(msg);
+        toast.error(msg, { id: toastId });
+        setLoading(false);
+      }
     }
   }
 

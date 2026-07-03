@@ -33,25 +33,40 @@ export default function SignupPage() {
     setLoading(true);
     const toastId = toast.loading("Compiling profile & workspace...");
 
-    const response = await registerOwnerAccount({
-      name,
-      email,
-      passwordHex: password,
-      businessName,
-    });
+    try {
+      const response = await registerOwnerAccount({
+        name,
+        email,
+        passwordHex: password,
+        businessName,
+      });
 
-    if (!response.success) {
-      const msg = response.error || "Onboarding pipeline execution failed.";
-      setError(msg);
-      toast.error(msg, { id: toastId });
-      setLoading(false);
-    } else {
-      toast.success("Account & workspace created successfully!", { id: toastId });
-      // Navigate directly to the new workspace if shopSlug is available, else dashboard
-      if ("shopSlug" in response && response.shopSlug) {
-        router.push(`/workspaces/${response.shopSlug}`);
+      if (!response.success) {
+        const msg = response.error || "Onboarding pipeline execution failed.";
+        setError(msg);
+        toast.error(msg, { id: toastId });
+        setLoading(false);
       } else {
-        router.push("/dashboard");
+        toast.success("Account & workspace created successfully!", { id: toastId });
+        if ("shopSlug" in response && response.shopSlug) {
+          router.push(`/workspaces/${response.shopSlug}`);
+        } else {
+          router.push("/dashboard");
+        }
+      }
+    } catch (err: any) {
+      console.error("Action execution exception:", err);
+      const errStr = String(err?.message || err);
+      if (errStr.includes("UnrecognizedActionError") || errStr.includes("Server Action")) {
+        toast.error("Application updated on server. Syncing latest version...", { id: toastId });
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        const msg = err?.message || "An unexpected error occurred. Please try again.";
+        setError(msg);
+        toast.error(msg, { id: toastId });
+        setLoading(false);
       }
     }
   }

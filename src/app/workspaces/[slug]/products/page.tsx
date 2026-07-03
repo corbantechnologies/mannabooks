@@ -40,7 +40,7 @@ export default async function WorkspaceProductsPage({ params }: ProductsPageProp
         </div>
         
         {/* Inject interactive creation portal block */}
-        <ProductFormClientSide shopId={shop.id} />
+        <ProductFormClientSide shopId={shop.id} shopSlug={slug} />
       </div>
 
       {/* DATA LEDGER GRID */}

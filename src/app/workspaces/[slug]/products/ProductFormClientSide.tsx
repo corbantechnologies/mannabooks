@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { createProductItem } from "@/lib/actions/products";
 
-export function ProductFormClientSide({ shopId }: { shopId: string }) {
+export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +28,7 @@ export function ProductFormClientSide({ shopId }: { shopId: string }) {
 
     const res = await createProductItem({
       shopId,
+      shopSlug,
       name,
       sku: sku || undefined,
       unitPrice,

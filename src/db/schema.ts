@@ -130,6 +130,7 @@ export const documentTokens = pgTable('document_tokens', {
 // ==========================================
 export const usersRelations = relations(users, ({ many }) => ({
     memberships: many(shopMembers),
+    sessions: many(sessions),
 }));
 
 export const shopsRelations = relations(shops, ({ one, many }) => ({
@@ -159,4 +160,18 @@ export const documentItemsRelations = relations(documentItems, ({ one }) => ({
 
 export const documentTokensRelations = relations(documentTokens, ({ one }) => ({
     document: one(documents, { fields: [documentTokens.documentId], references: [documents.id] }),
+}));
+
+// Add this table to the bottom of your src/db/schema.ts
+export const sessions = pgTable('sessions', {
+    id: varchar('id', { length: 255 }).primaryKey(), // The unique cryptographically secure token ID
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+    user: one(users, { fields: [sessions.userId], references: [users.id] }),
 }));

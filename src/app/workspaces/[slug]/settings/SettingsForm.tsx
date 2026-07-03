@@ -157,8 +157,51 @@ export function SettingsForm({
     );
   }
 
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  async function handleCloudinaryUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+      toast.error("Cloudinary is not configured. Please set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET in .env.local, or paste a direct image URL.");
+      return;
+    }
+
+    setUploadingLogo(true);
+    const toastId = toast.loading("Uploading logo asset to Cloudinary...");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", uploadPreset);
+
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      setUploadingLogo(false);
+
+      if (data.secure_url) {
+        setLogoUrl(data.secure_url);
+        toast.success("Logo uploaded successfully!", { id: toastId });
+      } else {
+        const errorMsg = data.error?.message || "Cloudinary upload failed.";
+        toast.error(errorMsg, { id: toastId });
+      }
+    } catch (err) {
+      setUploadingLogo(false);
+      toast.error("Network error uploading to Cloudinary.", { id: toastId });
+    }
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
       {/* ── BUSINESS PROFILE FORM ── */}
       <form onSubmit={handleProfileSubmit} className="space-y-6 font-mono text-xs border border-black p-6 bg-white">
         <h2 className="font-bold uppercase tracking-wider text-sm">Business Profile</h2>
@@ -184,18 +227,50 @@ export function SettingsForm({
           />
         </div>
 
-        <div className="space-y-1">
+        {/* LOGO UPLOAD & URL FIELD */}
+        <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <label className="text-zinc-400 uppercase block">Brand Logo Asset URL</label>
-            <span className="text-[9px] text-zinc-400 font-mono italic">Optional</span>
+            <label className="text-zinc-400 uppercase block">Brand Logo Asset</label>
+            <span className="text-[9px] text-zinc-400 font-mono italic">Cloudinary Enabled</span>
           </div>
-          <input
-            type="url"
-            value={logoUrl}
-            onChange={(e) => setLogoUrl(e.target.value)}
-            placeholder="https://domain.com/assets/logo.png"
-            className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none font-mono"
-          />
+
+          {logoUrl && (
+            <div className="flex items-center gap-4 p-3 border border-black bg-zinc-50">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={logoUrl} alt="Shop Logo Preview" className="h-12 w-auto max-w-[120px] object-contain border border-zinc-300 bg-white p-1" />
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-black uppercase">Active Logo Loaded</p>
+                <button
+                  type="button"
+                  onClick={() => setLogoUrl("")}
+                  className="text-[10px] text-rose-600 font-bold uppercase underline hover:no-underline"
+                >
+                  Remove Logo
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <label className="border border-black bg-black text-white px-3 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors cursor-pointer text-center shrink-0">
+              {uploadingLogo ? "UPLOADING..." : "📷 Upload Logo File"}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleCloudinaryUpload}
+                disabled={uploadingLogo}
+                className="hidden"
+              />
+            </label>
+
+            <input
+              type="url"
+              value={logoUrl}
+              onChange={(e) => setLogoUrl(e.target.value)}
+              placeholder="Or paste direct image URL (https://...)"
+              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none font-mono text-[11px]"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

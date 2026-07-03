@@ -35,8 +35,8 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://mannabooks.vercel.app";
         const publicSecureLink = `${appUrl}/portal/invoice/${matchToken.token}`;
 
-        // Fallback to Resend's default testing domain if custom sender isn't set
-        const fromAddress = process.env.RESEND_FROM_EMAIL || "Manna Books <onboarding@resend.dev>";
+        // Use verified corbantechnologies.org domain address
+        const fromAddress = process.env.RESEND_FROM_EMAIL || "Manna Books <billing@corbantechnologies.org>";
 
         // 2. Dispatch the transaction details via Resend with clean HTML layout
         const { data, error: resendError } = await resend.emails.send({

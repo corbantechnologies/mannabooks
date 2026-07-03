@@ -25,7 +25,7 @@ export async function createSession(userId: string): Promise<string> {
     });
 
     // 3. Bake the token directly into an encrypted, ultra-secure HTTP-only cookie
-    cookies().set(SESSION_COOKIE_NAME, token, {
+    (await cookies()).set(SESSION_COOKIE_NAME, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
@@ -41,7 +41,7 @@ export async function createSession(userId: string): Promise<string> {
  * Auto-cleans expired slots to keep your data performance high.
  */
 export async function verifyAndGetSession() {
-    const token = cookies().get(SESSION_COOKIE_NAME)?.value;
+    const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
     if (!token) return null;
 
     // Fetch the session alongside user profile contexts
@@ -60,7 +60,7 @@ export async function verifyAndGetSession() {
     if (Date.now() >= sessionRecord.expiresAt.getTime()) {
         // Session stale; purge from DB and drop cookie context
         await db.delete(sessions).where(eq(sessions.id, token));
-        cookies().delete(SESSION_COOKIE_NAME);
+        (await cookies()).delete(SESSION_COOKIE_NAME);
         return null;
     }
 
@@ -71,9 +71,9 @@ export async function verifyAndGetSession() {
  * Revokes the active session row and clears the client browser cookie.
  */
 export async function invalidateSession() {
-    const token = cookies().get(SESSION_COOKIE_NAME)?.value;
+    const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
     if (!token) return;
 
     await db.delete(sessions).where(eq(sessions.id, token));
-    cookies().delete(SESSION_COOKIE_NAME);
+    (await cookies()).delete(SESSION_COOKIE_NAME);
 }

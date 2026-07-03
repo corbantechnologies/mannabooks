@@ -130,6 +130,7 @@ export const documentTokens = pgTable('document_tokens', {
 // ==========================================
 export const usersRelations = relations(users, ({ many }) => ({
     memberships: many(shopMembers),
+    sessions: many(sessions),
 }));
 
 export const shopsRelations = relations(shops, ({ one, many }) => ({
@@ -169,11 +170,7 @@ export const sessions = pgTable('sessions', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// Update your users relations at the bottom of the schema file to include sessions
-export const usersRelations = relations(users, ({ many }) => ({
-    memberships: many(shopMembers),
-    sessions: many(sessions),
-}));
+
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
     user: one(users, { fields: [sessions.userId], references: [users.id] }),

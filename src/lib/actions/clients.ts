@@ -29,14 +29,6 @@ export async function createClientProfile(input: CreateClientInput) {
             return { success: false, error: "A valid Tax PIN is required for Individual or Corporate profiles." };
         }
 
-        // 2. Format validation logic for statutory tax identifiers (e.g., KRA PIN format: 1 Letter, 11 Numbers, 1 Letter)
-        if (cleanPin) {
-            const pinRegex = /^[A-Z]\d{9}[A-Z]$/;
-            if (!pinRegex.test(cleanPin)) {
-                return { success: false, error: "The provided Tax PIN format is invalid. Must be 11 characters (e.g. P051234567Z)." };
-            }
-        }
-
         // 3. Write data safely to the PostgreSQL repository
         const [newClient] = await db.insert(clients).values({
             shopId: input.shopId,

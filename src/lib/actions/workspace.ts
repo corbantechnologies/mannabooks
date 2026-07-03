@@ -49,6 +49,7 @@ export async function getActiveWorkspaceContext(slug: string) {
 interface UpdateShopSettingsInput {
     shopId: string;
     name: string;
+    logoUrl?: string;
     taxPin?: string;
     isVatRegistered: boolean;
     currency: string;
@@ -66,7 +67,8 @@ export async function updateShopSettings(input: UpdateShopSettingsInput) {
         await db.update(shops)
             .set({
                 name: input.name.trim(),
-                taxPin: input.taxPin?.toUpperCase().trim() || null,
+                logoUrl: input.logoUrl?.trim() || null,
+                taxPin: input.taxPin?.trim() || null,
                 isVatRegistered: input.isVatRegistered,
                 currency: input.currency.toUpperCase().trim(),
             })

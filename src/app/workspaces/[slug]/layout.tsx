@@ -23,18 +23,31 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
         <div className="flex flex-col flex-1 overflow-y-auto p-6 space-y-12">
           
           {/* BUSINESS LOGO PROFILE INDICATOR */}
-          <div className="space-y-2 border-b border-zinc-200 pb-6">
-            <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 block">Current Workspace</span>
-            <h2 className="font-bold uppercase tracking-tighter text-base truncate block leading-none">
-              {shop.name}
-            </h2>
-            {shop.taxPin ? (
-              <div className="inline-block border border-black font-mono text-[9px] px-1 py-0.5 uppercase tracking-tight text-zinc-600 bg-zinc-50">
-                PIN: {shop.taxPin}
+          <div className="space-y-3 border-b border-zinc-200 pb-6">
+            <div className="flex justify-between items-center">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 block">Current Workspace</span>
+              <Link href="/workspaces" className="font-mono text-[9px] uppercase font-bold text-black underline hover:no-underline">
+                Switch / Add
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {shop.logoUrl && (
+                <img src={shop.logoUrl} alt={shop.name} className="w-8 h-8 object-contain border border-black p-0.5 bg-white shrink-0" />
+              )}
+              <div className="min-w-0">
+                <h2 className="font-bold uppercase tracking-tighter text-base truncate block leading-none">
+                  {shop.name}
+                </h2>
+                {shop.taxPin ? (
+                  <div className="inline-block border border-black font-mono text-[9px] px-1 py-0.5 uppercase tracking-tight text-zinc-600 bg-zinc-50 mt-1">
+                    PIN: {shop.taxPin}
+                  </div>
+                ) : (
+                  <span className="font-mono text-[9px] italic text-rose-600 block mt-1">&gt; CONFIGURATION REQUIRED</span>
+                )}
               </div>
-            ) : (
-              <span className="font-mono text-[9px] italic text-rose-600 block">&gt; CONFIGURATION REQUIRED</span>
-            )}
+            </div>
           </div>
 
           {/* APPLICATION DIRECTORY LINKS */}

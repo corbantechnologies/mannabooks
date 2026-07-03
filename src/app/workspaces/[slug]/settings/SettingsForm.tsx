@@ -18,6 +18,7 @@ interface SettingsFormProps {
   shopId: string;
   shopSlug: string;
   initialName: string;
+  initialLogoUrl?: string;
   initialTaxPin: string;
   initialIsVatRegistered: boolean;
   initialCurrency: string;
@@ -28,6 +29,7 @@ export function SettingsForm({
   shopId,
   shopSlug,
   initialName,
+  initialLogoUrl = "",
   initialTaxPin,
   initialIsVatRegistered,
   initialCurrency,
@@ -37,6 +39,7 @@ export function SettingsForm({
 
   // Profile form state
   const [businessName, setBusinessName] = useState(initialName);
+  const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
   const [taxPin, setTaxPin] = useState(initialTaxPin);
   const [isVatRegistered, setIsVatRegistered] = useState(initialIsVatRegistered);
   const [currency, setCurrency] = useState(initialCurrency);
@@ -64,18 +67,7 @@ export function SettingsForm({
       return;
     }
 
-    if (taxPin) {
-      const pinRegex = /^[A-Z]\d{9}[A-Z]$/;
-      if (!pinRegex.test(taxPin.toUpperCase().trim())) {
-        const text = "Invalid statutory PIN format. Must be 11 characters (e.g. P051234567Z).";
-        setProfileMsg({ type: "error", text });
-        toast.error(text, { id: toastId });
-        setSaving(false);
-        return;
-      }
-    }
-
-    const res = await updateShopSettings({ shopId, name: businessName, taxPin, isVatRegistered, currency });
+    const res = await updateShopSettings({ shopId, name: businessName, logoUrl, taxPin, isVatRegistered, currency });
     setSaving(false);
     if (res.success) {
       const text = "Configuration committed successfully.";
@@ -137,6 +129,20 @@ export function SettingsForm({
             onChange={(e) => setBusinessName(e.target.value)}
             className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-none"
             required
+          />
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex justify-between items-center">
+            <label className="text-zinc-400 uppercase block">Brand Logo Asset URL</label>
+            <span className="text-[9px] text-zinc-400 font-mono italic">Optional</span>
+          </div>
+          <input
+            type="url"
+            value={logoUrl}
+            onChange={(e) => setLogoUrl(e.target.value)}
+            placeholder="https://domain.com/assets/logo.png"
+            className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none font-mono"
           />
         </div>
 

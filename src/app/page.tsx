@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function LandingPage() {
   return (
-    <div className="flex-1 flex flex-col bg-white selection:bg-black selection:text-white">
+    <div className="flex-1 flex flex-col bg-white text-black selection:bg-black selection:text-white">
       
       {/* GLOBAL HEADER HEADER */}
       <header className="border-b border-black px-6 py-4 flex justify-between items-center bg-white sticky top-0 z-50">

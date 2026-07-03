@@ -142,6 +142,11 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     documents: many(documents),
 }));
 
+export const clientsRelations = relations(clients, ({ one, many }) => ({
+    shop: one(shops, { fields: [clients.shopId], references: [shops.id] }),
+    documents: many(documents),
+}));
+
 export const shopMembersRelations = relations(shopMembers, ({ one }) => ({
     shop: one(shops, { fields: [shopMembers.shopId], references: [shops.id] }),
     user: one(users, { fields: [shopMembers.userId], references: [users.id] }),

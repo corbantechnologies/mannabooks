@@ -17,9 +17,13 @@
 }
 
 @layer base {
-  body {
-    background-color: #ffffff;
-    color: #000000;
+  :root {
+    color-scheme: light;
+  }
+
+  html, body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }

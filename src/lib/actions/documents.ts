@@ -25,7 +25,7 @@ interface CreateDocumentInput {
 /**
  * Main compilation engine that structures, handles math calculations, and saves formal billing records.
  */
-export async function createBillingDocument(input: CreateDocumentInput) {
+export async function createBillingDocument(input: CreateDocumentInput): Promise<{ success: true; documentId: string; serial: string } | { success: false; error: string }> {
     try {
         if (input.items.length === 0) {
             return { success: false, error: "A document must contain at least one line item entry." };

@@ -45,7 +45,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-white selection:bg-black selection:text-white">
+    <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-white text-black selection:bg-black selection:text-white">
       <div className="w-full max-w-md border border-black p-8 space-y-8 bg-white">
         
         <div className="space-y-2">

@@ -153,3 +153,61 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
         return { success: false, error: "Failed to update document status." };
     }
 }
+
+/**
+ * Permanently deletes a document record and its line items.
+ */
+export async function deleteDocument(documentId: string, shopId: string, shopSlug: string) {
+    try {
+        await db.delete(documents)
+            .where(and(eq(documents.id, documentId), eq(documents.shopId, shopId)));
+
+        revalidatePath(`/workspaces/${shopSlug}/documents`);
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete document:", error);
+        return { success: false, error: "Failed to purge document record." };
+    }
+}
+
+/**
+ * Duplicates an existing document into a fresh DRAFT document.
+ */
+export async function duplicateDocument(documentId: string, shopId: string, shopSlug: string) {
+    try {
+        const existing = await db.query.documents.findFirst({
+            where: and(eq(documents.id, documentId), eq(documents.shopId, shopId)),
+            with: {
+                items: true,
+            },
+        });
+
+        if (!existing) {
+            return { success: false, error: "Target document not found." };
+        }
+
+        const res = await createBillingDocument({
+            shopId,
+            shopSlug,
+            clientId: existing.clientId,
+            type: existing.type,
+            dueDate: existing.dueDate || undefined,
+            items: existing.items.map((item) => ({
+                description: item.description,
+                quantity: parseFloat(item.quantity),
+                unitPrice: parseFloat(item.unitPrice),
+                taxType: item.taxType,
+            })),
+        });
+
+        if (res.success) {
+            revalidatePath(`/workspaces/${shopSlug}/documents`);
+            return { success: true, documentId: res.documentId, serial: res.serial };
+        } else {
+            return { success: false, error: res.error };
+        }
+    } catch (error) {
+        console.error("Failed to duplicate document:", error);
+        return { success: false, error: "Failed to clone document entry." };
+    }
+}

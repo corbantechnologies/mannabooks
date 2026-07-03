@@ -5,6 +5,7 @@ import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { ProductFormClientSide } from "./ProductFormClientSide";
+import { EditProductModal } from "./EditProductModal";
 
 interface ProductsPageProps {
   params: Promise<{ slug: string }>;
@@ -51,7 +52,8 @@ export default async function WorkspaceProductsPage({ params }: ProductsPageProp
               <th className="p-4 border-r border-black">Item Description</th>
               <th className="p-4 border-r border-black">SKU / Code Reference</th>
               <th className="p-4 border-r border-black">Baseline Base Unit Rate</th>
-              <th className="p-4">Default Tax Flag Configuration</th>
+              <th className="p-4 border-r border-black">Default Tax Flag Configuration</th>
+              <th className="p-4 text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-black">
@@ -66,7 +68,7 @@ export default async function WorkspaceProductsPage({ params }: ProductsPageProp
                 <td className="p-4 border-r border-black font-bold text-sm text-black">
                   {formatCurrency(p.unitPrice, shop.currency)}
                 </td>
-                <td className="p-4">
+                <td className="p-4 border-r border-black">
                   <span className={`px-2 py-0.5 font-bold uppercase text-[10px] ${
                     p.defaultTaxType === "V_16" ? "bg-black text-white" :
                     p.defaultTaxType === "V_0" ? "border border-zinc-400 bg-white text-zinc-600" :
@@ -75,6 +77,9 @@ export default async function WorkspaceProductsPage({ params }: ProductsPageProp
                     {p.defaultTaxType === "V_16" ? "VAT 16%" :
                      p.defaultTaxType === "V_0" ? "Zero Rated" : "Tax Exempt"}
                   </span>
+                </td>
+                <td className="p-4 text-center">
+                  <EditProductModal product={p} shopId={shop.id} shopSlug={slug} />
                 </td>
               </tr>
             ))}

@@ -90,3 +90,19 @@ export async function updateClientProfile({ id, shopId, shopSlug, ...updates }: 
         return { success: false, error: "Failed to persist client corrections data." };
     }
 }
+
+/**
+ * Server Action to remove a client profile node.
+ */
+export async function deleteClientProfile(id: string, shopId: string, shopSlug: string) {
+    try {
+        await db.delete(clients)
+            .where(and(eq(clients.id, id), eq(clients.shopId, shopId)));
+
+        revalidatePath(`/workspaces/${shopSlug}/clients`);
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete client profile:", error);
+        return { success: false, error: "Failed to remove client record from database." };
+    }
+}

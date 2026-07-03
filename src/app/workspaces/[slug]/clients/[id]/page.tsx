@@ -4,6 +4,7 @@ import { clients, documents, shops } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
+import { EditClientModal } from "../EditClientModal";
 import Link from "next/link";
 
 interface ClientProfilePageProps {
@@ -79,7 +80,7 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
             <p className="font-mono text-xs text-zinc-500 lowercase mt-0.5">&gt; id: {clientRecord.id}</p>
           </div>
           
-          <div className="flex gap-2 font-mono text-[10px]">
+          <div className="flex items-center gap-2 font-mono text-[10px]">
             <span className="border border-black px-2 py-1 bg-zinc-50 font-bold uppercase">
               Class: {clientRecord.clientType}
             </span>
@@ -88,6 +89,12 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
                 PIN: {clientRecord.taxPin}
               </span>
             )}
+            <EditClientModal
+              client={clientRecord}
+              shopId={shop.id}
+              shopSlug={slug}
+              redirectToDirectoryAfterDelete={true}
+            />
           </div>
         </div>
       </div>
@@ -149,14 +156,20 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
                 <th className="p-4 border-r border-black">Document Type</th>
                 <th className="p-4 border-r border-black">Issue Tracking Date</th>
                 <th className="p-4 border-r border-black text-right">Total Aggregate Valuation</th>
-                <th className="p-4 text-center">Execution Status</th>
+                <th className="p-4 border-r border-black text-center">Execution Status</th>
+                <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-black bg-white">
               {clientRecord.documents.map((doc) => (
                 <tr key={doc.id} className="hover:bg-zinc-50 transition-colors">
                   <td className="p-4 border-r border-black font-bold text-black tracking-wider">
-                    {doc.docNumber}
+                    <Link 
+                      href={`/workspaces/${slug}/documents/${doc.id}`}
+                      className="hover:underline underline-offset-2"
+                    >
+                      {doc.docNumber}
+                    </Link>
                   </td>
                   <td className="p-4 border-r border-black">
                     <span className="border border-black px-1.5 py-0.5 text-[9px] font-bold tracking-widest bg-white">
@@ -169,7 +182,7 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
                   <td className="p-4 border-r border-black font-bold text-sm text-black text-right">
                     {formatCurrency(doc.grandTotal, shop.currency)}
                   </td>
-                  <td className="p-4 text-center">
+                  <td className="p-4 border-r border-black text-center">
                     <span className={`border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${
                       doc.status === "PAID" ? "bg-black text-white border-black" :
                       doc.status === "SENT" ? "bg-white text-black border-black font-bold" :
@@ -179,12 +192,20 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
                       {doc.status}
                     </span>
                   </td>
+                  <td className="p-4 text-center">
+                    <Link
+                      href={`/workspaces/${slug}/documents/${doc.id}`}
+                      className="border border-black px-2 py-1 text-[10px] font-bold uppercase hover:bg-black hover:text-white transition-colors"
+                    >
+                      View Details
+                    </Link>
+                  </td>
                 </tr>
               ))}
 
               {clientRecord.documents.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-12 text-center text-zinc-400 italic">
+                  <td colSpan={6} className="p-12 text-center text-zinc-400 italic">
                     &gt; NO REVENUE RECORDS ASSIGNED TO THIS INDIVIDUAL CLIENT TRACKING NODE.
                   </td>
                 </tr>

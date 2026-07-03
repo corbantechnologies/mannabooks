@@ -46,6 +46,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { QueryProvider } from "@/providers/QueryProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -54,7 +56,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
       <body className="font-sans min-h-screen flex flex-col bg-white text-black">
-        {children}
+        <QueryProvider>
+          {children}
+        </QueryProvider>
         <Analytics />
         <Toaster
           position="bottom-right"

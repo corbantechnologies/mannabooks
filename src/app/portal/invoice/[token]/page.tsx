@@ -4,31 +4,73 @@ import { documentTokens, documents, shops, paymentMethods } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
+import crypto from "crypto";
 
 interface PortalPageProps {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }
 
 export default async function PublicInvoicePortalPage({ params }: PortalPageProps) {
-  // 1. Locate the secure document mapping via token lookup
+  const { token } = await params;
+
+  // 1. Multi-tier resilient token & document resolver
+  let targetDocumentId: string | null = null;
+
+  // Tier 1: Look up exact token match in documentTokens
   const tokenRecord = await db.query.documentTokens.findFirst({
-    where: eq(documentTokens.token, params.token),
-    with: {
-      document: {
-        with: {
-          client: true,
-          shop: true,
-          items: true
-        }
+    where: eq(documentTokens.token, token),
+  });
+  if (tokenRecord) {
+    targetDocumentId = tokenRecord.documentId;
+  }
+
+  // Tier 2: Look up if token parameter is a documentId in documentTokens
+  if (!targetDocumentId) {
+    const tokenByDoc = await db.query.documentTokens.findFirst({
+      where: eq(documentTokens.documentId, token),
+    });
+    if (tokenByDoc) {
+      targetDocumentId = tokenByDoc.documentId;
+    }
+  }
+
+  // Tier 3: Direct lookup in documents table (auto-provisions missing token for legacy docs)
+  if (!targetDocumentId) {
+    const directDoc = await db.query.documents.findFirst({
+      where: eq(documents.id, token),
+    });
+    if (directDoc) {
+      targetDocumentId = directDoc.id;
+      try {
+        const fallbackToken = token.length === 64 ? token : crypto.randomBytes(32).toString("hex");
+        await db.insert(documentTokens).values({
+          documentId: directDoc.id,
+          token: fallbackToken,
+        }).onConflictDoNothing();
+      } catch (err) {
+        // Ignore duplicate token race condition
       }
     }
-  });
+  }
 
-  if (!tokenRecord || !tokenRecord.document) {
+  if (!targetDocumentId) {
     notFound();
   }
 
-  const doc = tokenRecord.document;
+  // 2. Query full document with client, shop, and line items
+  const doc = await db.query.documents.findFirst({
+    where: eq(documents.id, targetDocumentId),
+    with: {
+      client: true,
+      shop: true,
+      items: true,
+    },
+  });
+
+  if (!doc) {
+    notFound();
+  }
+
   const shop = doc.shop;
   const client = doc.client;
 
@@ -78,7 +120,7 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
             </span>
             <div className="pt-2">
               <a 
-                href={`/portal/pdf/${params.token}`}
+                href={`/portal/pdf/${token}`}
                 className="inline-block border border-black px-4 py-1.5 text-[10px] font-bold uppercase hover:bg-zinc-50 transition-colors"
               >
                 ↓ Download Vector PDF

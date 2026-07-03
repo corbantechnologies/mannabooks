@@ -15,7 +15,7 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
   const paymentMethods = await getShopPaymentMethods(shop.id);
 
   return (
-    <div className="p-8 max-w-2xl space-y-8 selection:bg-black selection:text-white">
+    <div className="p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white">
       <div>
         <span className="font-mono text-xs text-zinc-400 uppercase">SYS_PROPERTIES // ENVIRONMENT_CONFIG</span>
         <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">Compliance &amp; Profile</h1>

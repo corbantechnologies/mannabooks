@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createProductItem } from "@/lib/actions/products";
+import { useCreateProduct } from "@/hooks/useProducts";
 import { toast } from "react-hot-toast";
 
 export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
@@ -12,10 +12,11 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const createProductMutation = useCreateProduct(shopId, shopSlug);
+
   async function handleCatalogSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setLoading(true);
 
     const formData = new FormData(event.currentTarget);
     const name = formData.get("name") as string;
@@ -27,31 +28,18 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
       const msg = "Item parameters or tracking values are invalid.";
       setError(msg);
       toast.error(msg);
-      setLoading(false);
       return;
     }
 
-    const toastId = toast.loading("Registering catalog item...");
-
-    const res = await createProductItem({
-      shopId,
-      shopSlug,
-      name,
-      sku: sku || undefined,
-      unitPrice,
-      defaultTaxType,
-    });
-
-    setLoading(false);
-    if (!res.success) {
-      const msg = res.error || "Failed to commit node to registry.";
-      setError(msg);
-      toast.error(msg, { id: toastId });
-    } else {
-      toast.success(`Catalog item "${name}" created!`, { id: toastId });
-      setIsOpen(false);
-      router.refresh();
-    }
+    createProductMutation.mutate(
+      { name, sku: sku || undefined, unitPrice, defaultTaxType },
+      {
+        onSuccess: () => {
+          setIsOpen(false);
+          router.refresh();
+        },
+      }
+    );
   }
 
   return (

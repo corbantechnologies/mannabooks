@@ -4,6 +4,7 @@ import { clients, shops } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { ClientFormClientSide } from "./ClientFormClientSide";
+import { EditClientModal } from "./EditClientModal";
 import Link from "next/link";
 
 interface ClientsPageProps {
@@ -51,8 +52,9 @@ export default async function WorkspaceClientsPage({ params }: ClientsPageProps)
               <th className="p-4 border-r border-black">Client Name</th>
               <th className="p-4 border-r border-black">Email Identifier</th>
               <th className="p-4 border-r border-black">Phone Reference</th>
-              <th className="p-4 border-r border-black">Classification</th>
-              <th className="p-4">Statutory Tax PIN</th>
+              <th className="p-4 border-r border-black font-mono">Classification</th>
+              <th className="p-4 border-r border-black font-mono">Statutory Tax PIN</th>
+              <th className="p-4 text-center font-mono">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-black">
@@ -78,8 +80,11 @@ export default async function WorkspaceClientsPage({ params }: ClientsPageProps)
                     {c.clientType}
                   </span>
                 </td>
-                <td className="p-4 font-bold text-black tracking-widest">
+                <td className="p-4 border-r border-black font-bold text-black tracking-widest">
                   {c.taxPin || <span className="text-zinc-300 font-normal italic lowercase">&gt; unassigned</span>}
+                </td>
+                <td className="p-4 text-center">
+                  <EditClientModal client={c} shopId={shop.id} shopSlug={slug} />
                 </td>
               </tr>
             ))}

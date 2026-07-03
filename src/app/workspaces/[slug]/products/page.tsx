@@ -31,7 +31,7 @@ export default async function WorkspaceProductsPage({ params }: ProductsPageProp
   });
 
   return (
-    <div className="p-8 space-y-12 selection:bg-black selection:text-white">
+    <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
       
       {/* ACTION BLOCK TOP BAR */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black pb-6">

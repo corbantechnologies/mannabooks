@@ -43,7 +43,7 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
   });
 
   return (
-    <div className="p-8 space-y-12 selection:bg-black selection:text-white">
+    <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
       
       {/* HEADER SECTION AREA */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black pb-6">
@@ -54,14 +54,14 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
         
         <Link
           href={`/workspaces/${slug}/documents/new`}
-          className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors border border-black rounded-none"
+          className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors border border-black rounded-none w-full sm:w-auto text-center"
         >
           + Generate Document
         </Link>
       </div>
 
       {/* STARK SORTING TABS STRIP */}
-      <div className="flex border border-black divide-x divide-black bg-white font-mono text-[10px] uppercase w-fit">
+      <div className="flex border border-black divide-x divide-black bg-white font-mono text-[10px] uppercase w-full sm:w-fit overflow-x-auto">
         {["ALL", "INVOICE", "QUOTATION", "RECEIPT"].map((t) => {
           const isActive = activeType === t;
           return (

@@ -80,8 +80,8 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
   });
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-12 px-4 sm:px-6 font-mono text-xs text-black selection:bg-black selection:text-white">
-      <div className="max-w-3xl mx-auto bg-white border border-black p-6 sm:p-12 space-y-12 shadow-sm">
+    <div className="min-h-screen bg-zinc-50 py-6 sm:py-12 px-3 sm:px-6 font-mono text-xs text-black selection:bg-black selection:text-white">
+      <div className="max-w-3xl mx-auto bg-white border border-black p-4 sm:p-12 space-y-8 sm:space-y-12 shadow-sm">
         
         {/* PUBLIC PORTAL BRAND HEADER */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-b border-black pb-8">

@@ -1,14 +1,17 @@
 // src/app/login/page.tsx
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { loginUserAccount } from "@/lib/actions/auth-login";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 
-export default function LoginPage() {
+function LoginFormContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +43,8 @@ export default function LoginPage() {
         setLoading(false);
       } else {
         toast.success("Login successful!", { id: toastId });
-        router.push("/dashboard");
+        // Full page navigation ensures HTTP session cookie is attached instantly
+        window.location.href = callbackUrl;
       }
     } catch (err: any) {
       console.error("Login action error:", err);
@@ -112,5 +116,15 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 flex justify-center items-center font-mono text-xs uppercase">Loading login portal...</div>
+    }>
+      <LoginFormContent />
+    </Suspense>
   );
 }

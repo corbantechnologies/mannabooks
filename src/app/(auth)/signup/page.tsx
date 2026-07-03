@@ -49,9 +49,9 @@ export default function SignupPage() {
       } else {
         toast.success("Account & workspace created successfully!", { id: toastId });
         if ("shopSlug" in response && response.shopSlug) {
-          router.push(`/workspaces/${response.shopSlug}`);
+          window.location.href = `/workspaces/${response.shopSlug}`;
         } else {
-          router.push("/dashboard");
+          window.location.href = "/dashboard";
         }
       }
     } catch (err: any) {

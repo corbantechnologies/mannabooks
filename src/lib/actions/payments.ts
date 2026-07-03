@@ -8,6 +8,7 @@ import { verifyAndGetSession } from "./auth";
 
 interface AddPaymentMethodInput {
   shopId: string;
+  shopSlug: string;
   name: string;      // e.g., "M-Pesa Till" or "NCBA Bank"
   details: string;   // e.g., "Till Number: 552134" or "Acc No: 0110XXXXXX"
   isDefault: boolean;
@@ -16,10 +17,10 @@ interface AddPaymentMethodInput {
 /**
  * Creates a clear transactional text reference instruction block for client payments.
  */
-export async function addPaymentMethod(input: AddPaymentMethodInput) {
+export async function addPaymentMethod(input: AddPaymentMethodInput): Promise<{ success: true; methodId: string } | { success: false; error: string }> {
   try {
     const session = await verifyAndGetSession();
-    if (!session) return { success: false, error: "Authentication credentials required." };
+    if (!session) return { success: false as const, error: "Authentication credentials required." };
 
     return await db.transaction(async (tx) => {
       // If this method is set to default, reset any existing default markers for this shop first
@@ -36,12 +37,12 @@ export async function addPaymentMethod(input: AddPaymentMethodInput) {
         isDefault: input.isDefault,
       }).returning();
 
-      revalidatePath("/settings");
-      return { success: true, methodId: newMethod.id };
+      revalidatePath(`/workspaces/${input.shopSlug}/settings`);
+      return { success: true as const, methodId: newMethod.id };
     });
   } catch (error) {
     console.error("Failed to append payment configuration line:", error);
-    return { success: false, error: "Failed to save settlement parameters." };
+    return { success: false as const, error: "Failed to save settlement parameters." };
   }
 }
 

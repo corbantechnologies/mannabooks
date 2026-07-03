@@ -2,6 +2,7 @@
 import { db } from "@/db";
 import { shopMembers } from "@/db/schema";
 import { verifyAndGetSession } from "@/lib/actions/auth";
+import { logoutAction } from "@/lib/actions/logout";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -88,9 +89,11 @@ export default async function WorkspacesDirectoryPage() {
       {/* BOTTOM FOOTER TRACKER */}
       <footer className="border-t border-zinc-200 pt-6 flex justify-between items-center font-mono text-[10px] text-zinc-400">
         <span>Operator Token: {session.user.name.toUpperCase().replace(/\s+/g, "_")}</span>
-        <Link href="/login" className="text-black font-bold hover:underline uppercase">
-          De-authenticate Console
-        </Link>
+        <form action={logoutAction}>
+          <button type="submit" className="text-black font-bold hover:underline uppercase cursor-pointer bg-transparent border-none p-0 font-mono text-[10px]">
+            De-authenticate Console
+          </button>
+        </form>
       </footer>
 
     </div>

@@ -2,9 +2,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClientProfile } from "@/lib/actions/clients";
 
-export function ClientFormClientSide({ shopId }: { shopId: string }) {
+export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [clientType, setClientType] = useState<"WALK_IN" | "INDIVIDUAL" | "CORPORATE">("WALK_IN");
   const [loading, setLoading] = useState(false);
@@ -23,6 +25,7 @@ export function ClientFormClientSide({ shopId }: { shopId: string }) {
 
     const res = await createClientProfile({
       shopId,
+      shopSlug,
       name,
       email,
       phone,
@@ -36,8 +39,8 @@ export function ClientFormClientSide({ shopId }: { shopId: string }) {
     } else {
       setIsOpen(false);
       setClientType("WALK_IN");
-      // Trigger native layout sync
-      window.location.reload();
+      // Soft refresh — revalidates server data without a full page reload
+      router.refresh();
     }
   }
 

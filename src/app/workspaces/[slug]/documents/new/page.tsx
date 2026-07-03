@@ -6,13 +6,16 @@ import { notFound } from "next/navigation";
 import { DocumentBuilderClientForm } from "./DocumentBuilderClientForm";
 
 interface NewDocumentPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export default async function NewDocumentPage({ params }: NewDocumentPageProps) {
-  // 1. Resolve multi-tenant shop criteria
+  // 1. Await params (required in Next.js 15+)
+  const { slug } = await params;
+
+  // 2. Resolve multi-tenant shop criteria
   const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, params.slug),
+    where: eq(shops.slug, slug),
   });
 
   if (!shop) {
@@ -39,6 +42,7 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
 
       <DocumentBuilderClientForm 
         shop={shop}
+        shopSlug={slug}
         clients={clientRegistry}
         products={productRegistry}
       />

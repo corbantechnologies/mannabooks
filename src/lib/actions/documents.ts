@@ -16,6 +16,7 @@ interface CreateDocumentItemInput {
 
 interface CreateDocumentInput {
     shopId: string;
+    shopSlug: string;
     clientId: string;
     type: "QUOTATION" | "INVOICE" | "RECEIPT";
     dueDate?: Date;
@@ -53,7 +54,7 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
             });
 
             const nextSequence = activeTypeRecords.length + 1;
-            const prefix = input.type === "QUOTATION" ? "QT" : input.type === "INVOICE" ? "INV" : "RCpt";
+            const prefix = input.type === "QUOTATION" ? "QT" : input.type === "INVOICE" ? "INV" : "RCP";
             const formattedSerial = `${prefix}-${String(nextSequence).padStart(4, "0")}`;
 
             // 3. Process complete batch arrays using calculation engine rules
@@ -105,13 +106,50 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 token: secureHexToken,
             });
 
-            revalidatePath("/documents");
-            revalidatePath(`/clients/${input.clientId}`);
+            revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+            revalidatePath(`/workspaces/${input.shopSlug}/clients/${input.clientId}`);
 
             return { success: true, documentId: newDoc.id, serial: formattedSerial };
         });
     } catch (error) {
         console.error("Critical failure during document processing sequence:", error);
         return { success: false, error: "Failed to persist document transaction details." };
+    }
+}
+
+interface UpdateDocumentStatusInput {
+    documentId: string;
+    shopId: string;
+    shopSlug: string;
+    status: "DRAFT" | "SENT" | "OVERDUE" | "PAID";
+}
+
+/**
+ * Updates the lifecycle status of an existing document.
+ * Re-validates the document detail and master ledger pages on success.
+ */
+export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Promise<{ success: true } | { success: false; error: string }> {
+    try {
+        // Verify the document belongs to this shop before mutating
+        const existing = await db.query.documents.findFirst({
+            where: and(eq(documents.id, input.documentId), eq(documents.shopId, input.shopId)),
+        });
+
+        if (!existing) {
+            return { success: false, error: "Document not found or access denied." };
+        }
+
+        await db.update(documents)
+            .set({ status: input.status })
+            .where(and(eq(documents.id, input.documentId), eq(documents.shopId, input.shopId)));
+
+        revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+        revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.documentId}`);
+        revalidatePath(`/workspaces/${input.shopSlug}/clients`);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update document status:", error);
+        return { success: false, error: "Failed to update document status." };
     }
 }

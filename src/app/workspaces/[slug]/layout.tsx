@@ -1,15 +1,19 @@
 // src/app/workspaces/[slug]/layout.tsx
 import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { logoutAction } from "@/lib/actions/logout";
 import Link from "next/link";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export default async function RefinedWorkspaceLayout({ children, params }: WorkspaceLayoutProps) {
-  // 1. Authenticate session and fetch multi-tenant profile fields entirely on the server
-  const { shop, user } = await getActiveWorkspaceContext(params.slug);
+  // 1. Await params (required in Next.js 15+)
+  const { slug } = await params;
+
+  // 2. Authenticate session and fetch multi-tenant profile fields entirely on the server
+  const { shop, user } = await getActiveWorkspaceContext(slug);
 
   return (
     <div className="flex min-h-screen bg-white selection:bg-black selection:text-white">
@@ -38,31 +42,31 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
             <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 block mb-3">Ledger Directories</span>
             <nav className="flex flex-col gap-2 font-mono text-xs uppercase font-bold tracking-wider">
               <Link 
-                href={`/workspaces/${params.slug}`} 
+                href={`/workspaces/${slug}`} 
                 className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
               >
                 [00] Overview Log
               </Link>
               <Link 
-                href={`/workspaces/${params.slug}/documents`} 
+                href={`/workspaces/${slug}/documents`} 
                 className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
               >
                 [01] Master Ledger
               </Link>
               <Link 
-                href={`/workspaces/${params.slug}/clients`} 
+                href={`/workspaces/${slug}/clients`} 
                 className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
               >
                 [02] Client Flow
               </Link>
               <Link 
-                href={`/workspaces/${params.slug}/products`} 
+                href={`/workspaces/${slug}/products`} 
                 className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
               >
                 [03] Product Catalog
               </Link>
               <Link 
-                href={`/workspaces/${params.slug}/settings`} 
+                href={`/workspaces/${slug}/settings`} 
                 className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
               >
                 [04] System Settings
@@ -80,9 +84,11 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
           </div>
           <div className="text-[9px] text-zinc-400 border-t border-zinc-200 pt-2 flex justify-between items-center">
             <span>MANNA v2026.4</span>
-            <Link href="/login" className="text-black font-bold underline hover:no-underline uppercase">
-              Logout
-            </Link>
+            <form action={logoutAction}>
+              <button type="submit" className="text-black font-bold underline hover:no-underline uppercase cursor-pointer bg-transparent border-none p-0 font-mono text-[9px]">
+                Logout
+              </button>
+            </form>
           </div>
         </div>
 

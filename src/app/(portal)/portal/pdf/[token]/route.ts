@@ -79,17 +79,18 @@ const PdfDocumentStructure = ({ doc, shop, client, settlements }: any) => {
                     { style: styles.totalBox },
                     React.createElement(ReactPDF.Text, null, "Sub-Total: " + formatCurrency(doc.subTotal, shop.currency)),
                     React.createElement(ReactPDF.Text, null, "VAT Amount: " + formatCurrency(doc.taxAmount, shop.currency)),
-                    React.createElement(ReactPDF.Text, { style: { fontWeight: "bold", borderTopWidth: 1, paddingTop: 4 } }, "TOTAL DUE: " + formatCurrency(doc.grandTotal, shop.currency))
+                    React.createElement(ReactPDF.Text, { style: { fontWeight: "bold", borderTopWidth: 1, paddingTop: 4 } as any }, "TOTAL DUE: " + formatCurrency(doc.grandTotal, shop.currency))
                 )
             )
         )
     );
 };
 
-export async function GET(request: NextRequest, { params }: { params: { token: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
     try {
+        const resolvedParams = await params;
         const tokenData = await db.query.documentTokens.findFirst({
-            where: eq(documentTokens.token, params.token),
+            where: eq(documentTokens.token, resolvedParams.token),
             with: {
                 document: { with: { client: true, shop: true, items: true } }
             }

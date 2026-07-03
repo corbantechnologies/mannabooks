@@ -39,8 +39,12 @@ export default function SignupPage() {
       setError(response.error || "Onboarding pipeline execution failed.");
       setLoading(false);
     } else {
-      // Push directly to the proxy gateway which auto-resolves workspace slugs
-      router.push("/dashboard");
+      // Navigate directly to the new workspace if shopSlug is available, else dashboard
+      if ("shopSlug" in response && response.shopSlug) {
+        router.push(`/workspaces/${response.shopSlug}`);
+      } else {
+        router.push("/dashboard");
+      }
     }
   }
 

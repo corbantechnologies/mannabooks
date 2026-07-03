@@ -54,9 +54,9 @@ export function calculateLineItem({
     // If the merchant isn't VAT registered, or the item is exempt/zero-rated, tax is flat zero
     if (!isShopVatRegistered || taxType === "EXEMPT" || taxType === "V_0") {
         return {
-            subTotal,
+            subTotal: Math.round(subTotal * 100) / 100,
             taxAmount: 0,
-            itemTotal: subTotal,
+            itemTotal: Math.round(subTotal * 100) / 100,
         };
     }
 

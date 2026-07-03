@@ -78,3 +78,34 @@ export async function updateShopSettings(input: UpdateShopSettingsInput) {
         return { success: false, error: "Failed to persist compliance updates." };
     }
 }
+
+/**
+ * Server action to create an additional shop
+ */
+export async function createAdditionalShop(input: { userId: string; businessName: string; currency: string }) {
+    const baseSlug = input.businessName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, "");
+
+    const existingSlug = await db.query.shops.findFirst({ where: eq(shops.slug, baseSlug) });
+    const finalSlug = existingSlug ? `${baseSlug}-${Date.now().toString().slice(-4)}` : baseSlug;
+
+    const [newShop] = await db.insert(shops).values({
+        ownerId: input.userId,
+        name: input.businessName.trim(),
+        slug: finalSlug,
+        currency: input.currency,
+        primaryColor: "#000000",
+        isVatRegistered: false,
+    }).returning();
+
+    await db.insert(shopMembers).values({
+        shopId: newShop.id,
+        userId: input.userId,
+        role: "OWNER",
+        isActive: true,
+    });
+
+    return { success: true as const, shopSlug: newShop.slug };
+}

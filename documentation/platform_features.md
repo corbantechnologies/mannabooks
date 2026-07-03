@@ -1,0 +1,1 @@
+<!-- what the platform can do, its core features, and what SMEs can do with it -->

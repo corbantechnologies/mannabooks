@@ -4,22 +4,26 @@ import { clients, shops } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { ClientFormClientSide } from "./ClientFormClientSide";
+import Link from "next/link";
 
 interface ClientsPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export default async function WorkspaceClientsPage({ params }: ClientsPageProps) {
-  // 1. Resolve shop context on the server
+  // 1. Await params (required in Next.js 15+)
+  const { slug } = await params;
+
+  // 2. Resolve shop context on the server
   const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, params.slug),
+    where: eq(shops.slug, slug),
   });
 
   if (!shop) {
     notFound();
   }
 
-  // 2. Query all registered clients under this tenant boundary
+  // 3. Query all registered clients under this tenant boundary
   const clientList = await db.query.clients.findMany({
     where: eq(clients.shopId, shop.id),
     orderBy: [desc(clients.createdAt)],
@@ -36,7 +40,7 @@ export default async function WorkspaceClientsPage({ params }: ClientsPageProps)
         </div>
         
         {/* Pass the server-side shopId directly down to the interactive handler */}
-        <ClientFormClientSide shopId={shop.id} />
+        <ClientFormClientSide shopId={shop.id} shopSlug={slug} />
       </div>
 
       {/* STARK LOG DATA TABLE */}
@@ -55,7 +59,9 @@ export default async function WorkspaceClientsPage({ params }: ClientsPageProps)
             {clientList.map((c) => (
               <tr key={c.id} className="hover:bg-zinc-50 transition-colors">
                 <td className="p-4 border-r border-black font-sans text-sm font-bold uppercase tracking-tight">
-                  {c.name}
+                  <Link href={`/workspaces/${slug}/clients/${c.id}`} className="hover:underline underline-offset-2">
+                    {c.name}
+                  </Link>
                 </td>
                 <td className="p-4 border-r border-black text-zinc-600 font-sans">
                   {c.email}

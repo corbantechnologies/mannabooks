@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 
 interface CreateProductInput {
     shopId: string;
+    shopSlug: string;
     name: string;
     sku?: string;
     unitPrice: number;
@@ -26,7 +27,7 @@ export async function createProductItem(input: CreateProductInput) {
             defaultTaxType: input.defaultTaxType,
         }).returning();
 
-        revalidatePath("/products");
+        revalidatePath(`/workspaces/${input.shopSlug}/products`);
         return { success: true, productId: newProduct.id };
     } catch (error) {
         console.error("Failed to register catalog item:", error);
@@ -37,12 +38,13 @@ export async function createProductItem(input: CreateProductInput) {
 interface UpdateProductInput extends Partial<CreateProductInput> {
     id: string;
     shopId: string;
+    shopSlug: string;
 }
 
 /**
  * Modifies product criteria while respecting multi-tenant borders.
  */
-export async function updateProductItem({ id, shopId, ...updates }: UpdateProductInput) {
+export async function updateProductItem({ id, shopId, shopSlug, ...updates }: UpdateProductInput) {
     try {
         const existing = await db.query.products.findFirst({
             where: and(eq(products.id, id), eq(products.shopId, shopId)),
@@ -61,7 +63,7 @@ export async function updateProductItem({ id, shopId, ...updates }: UpdateProduc
             })
             .where(and(eq(products.id, id), eq(products.shopId, shopId)));
 
-        revalidatePath("/products");
+        revalidatePath(`/workspaces/${shopSlug}/products`);
         return { success: true };
     } catch (error) {
         console.error("Failed to update product entry:", error);

@@ -7,29 +7,33 @@ import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 
 interface LedgerPageProps {
-  params: { slug: string };
-  searchParams: { type?: string; status?: string };
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ type?: string; status?: string }>;
 }
 
 export default async function WorkspaceLedgerPage({ params, searchParams }: LedgerPageProps) {
-  // 1. Fetch active multi-tenant shop criteria
+  // 1. Await dynamic params and searchParams (required in Next.js 15+)
+  const { slug } = await params;
+  const { type } = await searchParams;
+
+  // 2. Fetch active multi-tenant shop criteria
   const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, params.slug),
+    where: eq(shops.slug, slug),
   });
 
   if (!shop) {
     notFound();
   }
 
-  // 2. Compute runtime filters based on query params (for optional sorting tabs)
-  const activeType = searchParams.type || "ALL";
+  // 3. Compute runtime filters based on query params (for optional sorting tabs)
+  const activeType = type || "ALL";
   const conditions = [eq(documents.shopId, shop.id)];
 
   if (activeType !== "ALL") {
     conditions.push(eq(documents.type, activeType as any));
   }
 
-  // 3. Extract the targeted chronological stream records
+  // 4. Extract the targeted chronological stream records
   const streamLedger = await db.query.documents.findMany({
     where: and(...conditions),
     orderBy: [desc(documents.issueDate)],
@@ -49,7 +53,7 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
         </div>
         
         <Link
-          href={`/workspaces/${params.slug}/documents/new`}
+          href={`/workspaces/${slug}/documents/new`}
           className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors border border-black rounded-none"
         >
           + Generate Document
@@ -63,7 +67,7 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
           return (
             <Link
               key={t}
-              href={`/workspaces/${params.slug}/documents?type=${t}`}
+              href={`/workspaces/${slug}/documents?type=${t}`}
               className={`px-4 py-2 font-bold transition-colors ${
                 isActive ? "bg-black text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"
               }`}
@@ -89,9 +93,11 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
           </thead>
           <tbody className="divide-y divide-black bg-white">
             {streamLedger.map((doc) => (
-              <tr key={doc.id} className="hover:bg-zinc-50 transition-colors group">
+              <tr key={doc.id} className="hover:bg-zinc-50 transition-colors group cursor-pointer">
                 <td className="p-4 border-r border-black font-bold text-black tracking-wider">
-                  {doc.docNumber}
+                  <Link href={`/workspaces/${slug}/documents/${doc.id}`} className="hover:underline">
+                    {doc.docNumber}
+                  </Link>
                 </td>
                 <td className="p-4 border-r border-black">
                   <span className="border border-black px-1.5 py-0.5 text-[9px] font-bold tracking-widest bg-zinc-50">

@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 
 interface CreateClientInput {
     shopId: string; // The active shop isolation token from the user session
+    shopSlug: string; // For accurate cache revalidation
     name: string;
     email: string;
     phone?: string;
@@ -47,7 +48,7 @@ export async function createClientProfile(input: CreateClientInput) {
         }).returning();
 
         // 4. Force Next.js to purge cached lists so the client directory updates instantly
-        revalidatePath("/clients");
+        revalidatePath(`/workspaces/${input.shopSlug}/clients`);
 
         return { success: true, clientId: newClient.id };
     } catch (error) {
@@ -59,12 +60,13 @@ export async function createClientProfile(input: CreateClientInput) {
 interface UpdateClientInput extends Partial<CreateClientInput> {
     id: string;
     shopId: string;
+    shopSlug: string;
 }
 
 /**
  * Server Action to modify an existing client profile, double-checking tenant isolation boundaries.
  */
-export async function updateClientProfile({ id, shopId, ...updates }: UpdateClientInput) {
+export async function updateClientProfile({ id, shopId, shopSlug, ...updates }: UpdateClientInput) {
     try {
         // Verify target profile is owned by the requesting shop entity
         const existing = await db.query.clients.findFirst({
@@ -87,8 +89,8 @@ export async function updateClientProfile({ id, shopId, ...updates }: UpdateClie
             })
             .where(and(eq(clients.id, id), eq(clients.shopId, shopId)));
 
-        revalidatePath("/clients");
-        revalidatePath(`/clients/${id}`);
+        revalidatePath(`/workspaces/${shopSlug}/clients`);
+        revalidatePath(`/workspaces/${shopSlug}/clients/${id}`);
 
         return { success: true };
     } catch (error) {

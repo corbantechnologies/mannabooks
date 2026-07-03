@@ -7,13 +7,16 @@ import { formatCurrency } from "@/lib/utils";
 import { ProductFormClientSide } from "./ProductFormClientSide";
 
 interface ProductsPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export default async function WorkspaceProductsPage({ params }: ProductsPageProps) {
-  // 1. Resolve active tenant context on the server
+  // 1. Await params (required in Next.js 15+)
+  const { slug } = await params;
+
+  // 2. Resolve active tenant context on the server
   const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, params.slug),
+    where: eq(shops.slug, slug),
   });
 
   if (!shop) {

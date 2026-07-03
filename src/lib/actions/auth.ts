@@ -89,7 +89,8 @@ interface RegisterOwnerInput {
 
 export async function registerOwnerAccount(input: RegisterOwnerInput) {
     try {
-        return await db.transaction(async (tx) => {
+        // Run all DB writes inside a transaction for atomicity
+        const result = await db.transaction(async (tx) => {
 
             // 1. Enforce unique emails at the application level
             const existingUser = await tx.query.users.findFirst({
@@ -97,7 +98,7 @@ export async function registerOwnerAccount(input: RegisterOwnerInput) {
             });
 
             if (existingUser) {
-                return { success: false, error: "An account with this email already exists." };
+                return { success: false as const, error: "An account with this email already exists." };
             }
 
             // 2. Hash the password securely
@@ -141,19 +142,25 @@ export async function registerOwnerAccount(input: RegisterOwnerInput) {
                 isActive: true,
             });
 
-            // Issue session directly during registration so user is logged in
-            // (Note: To avoid db transaction nested issues with cookies(), we can just create the session DB record, 
-            // but createSession uses cookies() which requires "use server" context)
-            
             return {
-                success: true,
+                success: true as const,
                 userId: newUser.id,
-                shopId: newShop.id,
-                shopSlug: newShop.slug
+                shopSlug: newShop.slug,
             };
         });
+
+        // If the transaction returned an error (e.g. duplicate email), return it immediately
+        if (!result.success) {
+            return result;
+        }
+
+        // 7. Issue the session AFTER the transaction completes.
+        //    cookies() cannot be reliably set inside a Drizzle transaction context.
+        await createSession(result.userId);
+
+        return { success: true as const, shopSlug: result.shopSlug };
     } catch (error) {
         console.error("Critical error during merchant onboarding transaction:", error);
-        return { success: false, error: "Account initialization failed. Please try again." };
+        return { success: false as const, error: "Account initialization failed. Please try again." };
     }
-}
+}

@@ -7,23 +7,26 @@ import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 
 interface ClientProfilePageProps {
-  params: { slug: string; id: string };
+  params: Promise<{ slug: string; id: string }>;
 }
 
 export default async function ClientProfileLedgerPage({ params }: ClientProfilePageProps) {
-  // 1. Resolve multi-tenant shop criteria context
+  // 1. Await params (required in Next.js 15+)
+  const { slug, id } = await params;
+
+  // 2. Resolve multi-tenant shop criteria context
   const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, params.slug),
+    where: eq(shops.slug, slug),
   });
 
   if (!shop) {
     notFound();
   }
 
-  // 2. Fetch the targeted client profile alongside all their historical document records
+  // 3. Fetch the targeted client profile alongside all their historical document records
   const clientRecord = await db.query.clients.findFirst({
     where: and(
-      eq(clients.id, params.id),
+      eq(clients.id, id),
       eq(clients.shopId, shop.id)
     ),
     with: {
@@ -64,7 +67,7 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
       {/* BACK NAVIGATION AND INTERFACE HEADER */}
       <div className="border-b border-black pb-6 space-y-2">
         <Link 
-          href={`/workspaces/${params.slug}/clients`} 
+          href={`/workspaces/${slug}/clients`} 
           className="font-mono text-xs font-bold text-zinc-400 hover:underline block"
         >
           ← BACK TO MASTER CLIENT REGISTRY

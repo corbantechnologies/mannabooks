@@ -8,6 +8,7 @@ import { createBillingDocument } from "@/lib/actions/documents";
 
 interface BuilderProps {
   shop: any;
+  shopSlug: string;
   clients: any[];
   products: any[];
 }
@@ -19,14 +20,14 @@ interface UiRowItem {
   taxType: "V_16" | "V_0" | "EXEMPT";
 }
 
-export function DocumentBuilderClientForm({ shop, clients, products }: BuilderProps) {
+export function DocumentBuilderClientForm({ shop, shopSlug, clients, products }: BuilderProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form Parameters
   const [clientId, setClientId] = useState("");
-  const [docType, setDocType] = useState<"QUOTATION" | "INVOICE">("INVOICE");
+  const [docType, setDocType] = useState<"QUOTATION" | "INVOICE" | "RECEIPT">("INVOICE");
   const [dueDate, setDueDate] = useState("");
   
   // Dynamic Ledger Item Rows
@@ -87,6 +88,7 @@ export function DocumentBuilderClientForm({ shop, clients, products }: BuilderPr
     setLoading(true);
     const res = await createBillingDocument({
       shopId: shop.id,
+      shopSlug,
       clientId,
       type: docType,
       dueDate: dueDate ? new Date(dueDate) : undefined,
@@ -130,8 +132,8 @@ export function DocumentBuilderClientForm({ shop, clients, products }: BuilderPr
 
         <div className="space-y-1">
           <label className="text-zinc-400 uppercase block">Document Target Node</label>
-          <div className="grid grid-cols-2 border border-black divide-x divide-black bg-white">
-            {(["INVOICE", "QUOTATION"] as const).map((type) => (
+          <div className="grid grid-cols-3 border border-black divide-x divide-black bg-white">
+            {(["INVOICE", "QUOTATION", "RECEIPT"] as const).map((type) => (
               <button
                 key={type}
                 type="button"
@@ -205,7 +207,7 @@ export function DocumentBuilderClientForm({ shop, clients, products }: BuilderPr
                     type="number"
                     min="1"
                     value={row.quantity}
-                    onChange={(e) => updateRowField(index, "quantity", parseInt(e.target.value) || 1)}
+                    onChange={(e) => updateRowField(index, "quantity", parseFloat(e.target.value) || 1)}
                     className="w-full px-2 py-1.5 border border-black bg-white rounded-none font-bold text-center"
                     required
                   />

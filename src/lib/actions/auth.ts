@@ -59,7 +59,11 @@ export async function verifyAndGetSession() {
     }
 
     // Check if session has expired
-    if (Date.now() >= sessionRecord.expiresAt.getTime()) {
+    const expiryTime = sessionRecord.expiresAt instanceof Date
+        ? sessionRecord.expiresAt.getTime()
+        : new Date(sessionRecord.expiresAt).getTime();
+
+    if (isNaN(expiryTime) || Date.now() >= expiryTime) {
         // Session stale; purge from DB and drop cookie context
         await db.delete(sessions).where(eq(sessions.id, token));
         (await cookies()).delete(SESSION_COOKIE_NAME);

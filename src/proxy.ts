@@ -2,11 +2,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "manna_session_token";
+
 export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // 1. Grab the session cookie (Manna Books custom auth cookie token)
-    const sessionToken = request.cookies.get("manna_session_token")?.value;
+    // 1. Grab the session cookie matching process.env.COOKIE_NAME
+    const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
 
     // 2. Route Protection Guardrail
     // If the user is trying to access internal workspaces or the dashboard proxy without a session,

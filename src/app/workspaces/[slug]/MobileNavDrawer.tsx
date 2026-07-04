@@ -106,11 +106,18 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
                 [03] Product Catalog
               </Link>
               <Link
+                href={`/workspaces/${slug}/suppliers`}
+                onClick={() => setIsOpen(false)}
+                className="px-3 py-2.5 border border-black hover:bg-black hover:text-white transition-all block text-left"
+              >
+                [04] Supplier Network
+              </Link>
+              <Link
                 href={`/workspaces/${slug}/settings`}
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-black hover:bg-black hover:text-white transition-all block text-left"
               >
-                [04] System Settings
+                [05] System Settings
               </Link>
             </nav>
           </div>

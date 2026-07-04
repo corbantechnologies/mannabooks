@@ -38,6 +38,21 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
         // Use verified corbantechnologies.org domain address
         const fromAddress = process.env.RESEND_FROM_EMAIL || "Manna Books <billing@corbantechnologies.org>";
 
+        const isPaidOrReceipt = doc.type === "RECEIPT" || doc.status === "PAID";
+        const amountLabel = isPaidOrReceipt ? "AMOUNT SETTLED:" : "AMOUNT DUE:";
+        
+        const buttonText = 
+            doc.type === "RECEIPT" || doc.status === "PAID" ? "View Official Receipt →" :
+            doc.type === "QUOTATION" ? "View Quotation Estimate →" :
+            doc.type === "DELIVERY_NOTE" ? "View Delivery Note →" :
+            doc.type === "CREDIT_NOTE" ? "View Credit Note →" :
+            doc.type === "LPO" || doc.type === "PO" ? "View Purchase Order →" :
+            "View &amp; Settle Invoice →";
+
+        const introText = isPaidOrReceipt
+            ? `An official <strong>${doc.type}</strong> (Ref: <code>${doc.docNumber}</code>) has been issued for your records.`
+            : `A new <strong>${doc.type}</strong> (Ref: <code>${doc.docNumber}</code>) has been issued for your account.`;
+
         // 2. Dispatch the transaction details via Resend with clean HTML layout
         const { data, error: resendError } = await resend.emails.send({
             from: fromAddress,
@@ -53,7 +68,7 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
                     <p style="font-size: 14px; margin-bottom: 20px;">Dear <strong>${doc.client.name}</strong>,</p>
 
                     <p style="font-size: 14px; line-height: 1.5; color: #3f3f46; margin-bottom: 24px;">
-                        A new <strong>${doc.type}</strong> (Ref: <code>${doc.docNumber}</code>) has been issued for your account.
+                        ${introText}
                     </p>
 
                     <div style="background-color: #f4f4f5; border: 1px solid #000000; padding: 20px; margin-bottom: 28px;">
@@ -67,7 +82,7 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
                                 <td style="text-align: right; font-weight: bold; padding-bottom: 8px;">${doc.type}</td>
                             </tr>
                             <tr>
-                                <td style="color: #71717a; padding-bottom: 8px;">AMOUNT DUE:</td>
+                                <td style="color: #71717a; padding-bottom: 8px;">${amountLabel}</td>
                                 <td style="text-align: right; font-weight: bold; font-size: 16px; padding-bottom: 8px;">${doc.shop.currency} ${doc.grandTotal}</td>
                             </tr>
                             ${doc.dueDate ? `
@@ -80,7 +95,7 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
 
                     <div style="text-align: center; margin-bottom: 32px;">
                         <a href="${publicSecureLink}" target="_blank" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: bold; font-size: 13px; text-transform: uppercase; text-decoration: none; padding: 14px 28px; border: 1px solid #000000;">
-                            View &amp; Settle Document →
+                            ${buttonText}
                         </a>
                     </div>
 

@@ -94,11 +94,26 @@ export const clients = pgTable('clients', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// SUPPLIERS / VENDORS TABLE (Payables & Inbound Procurement Entities)
+export const suppliers = pgTable('suppliers', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    name: text('name').notNull(),
+    email: text('email').notNull(),
+    phone: varchar('phone', { length: 20 }),
+    supplierType: clientTypeEnum('supplier_type').default('CORPORATE').notNull(),
+    taxPin: varchar('tax_pin', { length: 30 }), // Personal/Soleprop (A...) or Corporate (P...) tax PIN without restriction
+    requiresEtims: boolean('requires_etims').default(false).notNull(),
+    paymentTerms: varchar('payment_terms', { length: 50 }).default('NET_30'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // DOCUMENTS TABLE (Outbound Sales & Inbound Procurement Documents)
 export const documents = pgTable('documents', {
     id: uuid('id').defaultRandom().primaryKey(),
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
-    clientId: uuid('client_id').references(() => clients.id).notNull(),
+    clientId: uuid('client_id').references(() => clients.id),
+    supplierId: uuid('supplier_id').references(() => suppliers.id),
     type: docTypeEnum('type').notNull(),
     docNumber: varchar('doc_number', { length: 50 }).notNull(), // e.g., INV-001, RCT-001, LPO-001, CN-001
     status: docStatusEnum('status').default('DRAFT').notNull(),
@@ -157,11 +172,17 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     paymentMethods: many(paymentMethods),
     products: many(products),
     clients: many(clients),
+    suppliers: many(suppliers),
     documents: many(documents),
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
     shop: one(shops, { fields: [clients.shopId], references: [shops.id] }),
+    documents: many(documents),
+}));
+
+export const suppliersRelations = relations(suppliers, ({ one, many }) => ({
+    shop: one(shops, { fields: [suppliers.shopId], references: [shops.id] }),
     documents: many(documents),
 }));
 
@@ -173,6 +194,7 @@ export const shopMembersRelations = relations(shopMembers, ({ one }) => ({
 export const documentsRelations = relations(documents, ({ one, many }) => ({
     shop: one(shops, { fields: [documents.shopId], references: [shops.id] }),
     client: one(clients, { fields: [documents.clientId], references: [clients.id] }),
+    supplier: one(suppliers, { fields: [documents.supplierId], references: [suppliers.id] }),
     parentDocument: one(documents, { fields: [documents.parentDocumentId], references: [documents.id], relationName: 'document_lineage' }),
     items: many(documentItems),
     token: one(documentTokens, { fields: [documents.id], references: [documentTokens.documentId] }),

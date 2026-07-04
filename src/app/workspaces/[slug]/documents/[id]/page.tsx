@@ -53,7 +53,7 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
           href={`/workspaces/${slug}/documents`}
           className="font-mono text-xs font-bold text-zinc-400 hover:underline block"
         >
-          {"<-"} BACK TO MASTER LEDGER
+          {"<-"} BACK TO FISCAL LEDGERS
         </Link>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
           <div>

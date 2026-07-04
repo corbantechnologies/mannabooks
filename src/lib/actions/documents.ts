@@ -158,7 +158,7 @@ interface UpdateDocumentStatusInput {
 
 /**
  * Updates the lifecycle status of an existing document.
- * Re-validates the document detail and master ledger pages on success.
+ * Re-validates the document detail and fiscal ledgers pages on success.
  */
 export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Promise<{ success: true } | { success: false; error: string }> {
     try {

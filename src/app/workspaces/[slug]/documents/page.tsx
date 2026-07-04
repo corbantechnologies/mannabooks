@@ -100,7 +100,7 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black pb-6">
         <div>
           <span className="font-mono text-xs text-zinc-400">FINANCIAL_LEDGER // CORE_STREAM</span>
-          <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">Master Ledger</h1>
+          <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">Fiscal Ledgers</h1>
         </div>
         
         <Link

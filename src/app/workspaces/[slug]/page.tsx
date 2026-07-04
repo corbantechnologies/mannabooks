@@ -122,7 +122,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
             href={`/workspaces/${slug}/documents`}
             className="font-mono text-xs font-bold uppercase underline hover:no-underline"
           >
-            View Master Ledger →
+            View Fiscal Ledgers →
           </Link>
         </div>
 

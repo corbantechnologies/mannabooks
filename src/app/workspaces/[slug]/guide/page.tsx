@@ -76,9 +76,9 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
         </div>
 
         {/* MODULE 3 */}
-        <div className="border border-black p-6 bg-white space-y-3">
-          <div className="flex items-center gap-2 border-b border-black pb-2">
-            <span className="bg-black text-white px-2 py-0.5 font-bold uppercase text-[10px]">[03] FISCAL LEDGERS &amp; KRA eTIMS TAXES</span>
+        <div className="card-modern p-6 space-y-3">
+          <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-2">
+            <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[03] FISCAL LEDGERS &amp; KRA eTIMS TAXES</span>
           </div>
           <p className="font-sans text-xs text-zinc-600">
             Issue Invoices, Receipts, Quotations, LPOs, and Credit Notes. Assign row-level tax rates (16% VAT, 0% Zero-Rated, Exempt) and enter eTIMS CU serial numbers.
@@ -86,7 +86,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
           <div className="pt-2">
             <Link
               href={`/workspaces/${slug}/documents`}
-              className="border border-black bg-zinc-50 px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-black hover:text-white transition-colors inline-block"
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
               Go to Fiscal Ledgers -&gt;
             </Link>
@@ -94,9 +94,9 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
         </div>
 
         {/* MODULE 4 */}
-        <div className="border border-black p-6 bg-white space-y-3">
-          <div className="flex items-center gap-2 border-b border-black pb-2">
-            <span className="bg-black text-white px-2 py-0.5 font-bold uppercase text-[10px]">[04] PAYMENT CHANNELS &amp; REMITTANCE REF #</span>
+        <div className="card-modern p-6 space-y-3">
+          <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-2">
+            <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[04] PAYMENT CHANNELS &amp; REMITTANCE REF #</span>
           </div>
           <p className="font-sans text-xs text-zinc-600">
             When settling documents, record payment destination channels (Bank, M-Pesa Till/Paybill, Cash, Cheque) and transaction reference codes (e.g. M-Pesa Code `QAB71239X` or Bank Ref).
@@ -104,9 +104,9 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
         </div>
 
         {/* MODULE 5 */}
-        <div className="border border-black p-6 bg-white space-y-3">
-          <div className="flex items-center gap-2 border-b border-black pb-2">
-            <span className="bg-black text-white px-2 py-0.5 font-bold uppercase text-[10px]">[05] FINANCIAL INTELLIGENCE &amp; KRA 20TH VAT TRACKER</span>
+        <div className="card-modern p-6 space-y-3">
+          <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-2">
+            <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[05] FINANCIAL INTELLIGENCE &amp; KRA 20TH VAT TRACKER</span>
           </div>
           <p className="font-sans text-xs text-zinc-600">
             Monitor real-time cash flow streams, 0–90+ day A/R aging risk matrix, top bestseller product velocity, and the statutory 20th KRA monthly VAT return deadline tracker.
@@ -114,7 +114,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
           <div className="pt-2">
             <Link
               href={`/workspaces/${slug}/analytics`}
-              className="border border-black bg-zinc-50 px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-black hover:text-white transition-colors inline-block"
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
               Go to Financial Analytics -&gt;
             </Link>

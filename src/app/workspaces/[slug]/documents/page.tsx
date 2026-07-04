@@ -116,7 +116,7 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
       <LedgerFilterBar clients={shopClients} />
 
       {/* SORTING TABS STRIP */}
-      <div className="flex border border-zinc-200 divide-x divide-zinc-200 bg-white font-mono text-[10px] uppercase w-full sm:w-fit overflow-x-auto rounded">
+      <div className="flex border border-zinc-200/80 divide-x divide-zinc-200/80 bg-white font-mono text-[10px] uppercase w-full sm:w-fit overflow-x-auto rounded shadow-sm">
         {["ALL", "INVOICE", "QUOTATION", "RECEIPT"].map((t) => {
           const isActive = activeType === t;
           return (
@@ -124,7 +124,7 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
               key={t}
               href={`/workspaces/${slug}/documents?type=${t}`}
               className={`px-4 py-2 font-semibold transition-colors ${
-                isActive ? "bg-black text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"
+                isActive ? "bg-black text-white font-semibold" : "bg-white text-zinc-600 hover:bg-zinc-50"
               }`}
             >
               {t === "ALL" ? "All Streams" : `${t}s`}

@@ -158,30 +158,30 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
   return (
     <form onSubmit={handleFormSubmit} className="space-y-8 font-mono text-xs selection:bg-black selection:text-white">
       {error && (
-        <div className="border border-black bg-zinc-50 p-4 text-black font-bold uppercase">
+        <div className="border border-zinc-200 bg-zinc-50 p-4 text-black font-semibold uppercase rounded">
           &gt; COMPILER_HALT: {error}
         </div>
       )}
 
       {/* PARENT ATTRIBUTE META GRID */}
-      <div className="border border-black p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 bg-white">
+      <div className="card-modern p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 bg-white">
         
         {/* PARTY TYPE & SELECTOR */}
         <div className="space-y-1">
           <div className="flex justify-between items-center mb-1">
-            <label className="text-zinc-400 uppercase text-[10px]">Target Entity Node</label>
+            <label className="text-zinc-400 uppercase text-[10px] font-semibold">Target Entity Node</label>
             <div className="flex gap-1 text-[9px]">
               <button
                 type="button"
                 onClick={() => { setPartyType("CLIENT"); setTargetId(""); }}
-                className={`px-1.5 py-0.5 border font-bold uppercase ${partyType === "CLIENT" ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-300"}`}
+                className={`px-2 py-0.5 border font-semibold uppercase rounded ${partyType === "CLIENT" ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-300"}`}
               >
                 Client
               </button>
               <button
                 type="button"
                 onClick={() => { setPartyType("SUPPLIER"); setTargetId(""); }}
-                className={`px-1.5 py-0.5 border font-bold uppercase ${partyType === "SUPPLIER" ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-300"}`}
+                className={`px-2 py-0.5 border font-semibold uppercase rounded ${partyType === "SUPPLIER" ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-300"}`}
               >
                 Supplier
               </button>
@@ -191,7 +191,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           <select
             value={targetId}
             onChange={(e) => setTargetId(e.target.value)}
-            className="w-full px-3 py-2 border border-black bg-white rounded-none focus:outline-none focus:ring-1 focus:ring-black font-sans text-sm"
+            className="w-full px-3 py-2 border border-zinc-300 bg-white rounded focus:outline-none focus:border-black font-sans text-xs font-semibold"
             required
           >
             <option value="">
@@ -213,11 +213,11 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
         </div>
 
         <div className="space-y-1">
-          <label className="text-zinc-400 uppercase block">Document Target Node</label>
+          <label className="text-zinc-400 uppercase block font-semibold">Document Target Node</label>
           <select
             value={docType}
             onChange={(e) => setDocType(e.target.value as DocumentType)}
-            className="w-full px-3 py-2 border border-black bg-white rounded-none focus:outline-none focus:ring-1 focus:ring-black font-mono text-xs font-bold uppercase"
+            className="w-full px-3 py-2 border border-zinc-300 bg-white rounded focus:outline-none focus:border-black font-mono text-xs font-semibold uppercase"
           >
             <option value="INVOICE">Customer Invoice (INV)</option>
             <option value="QUOTATION">Quotation / Estimate (QT)</option>
@@ -234,7 +234,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
 
         <div className="space-y-1">
           <div className="flex justify-between">
-            <label className="text-zinc-400 uppercase block">KRA eTIMS CU Serial #</label>
+            <label className="text-zinc-400 uppercase block font-semibold">KRA eTIMS CU Serial #</label>
             <span className="text-[9px] text-zinc-400 italic">Optional</span>
           </div>
           <input
@@ -242,28 +242,28 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
             value={kraCuInvoiceNumber}
             onChange={(e) => setKraCuInvoiceNumber(e.target.value)}
             placeholder="e.g. CU0123456789/2026"
-            className="w-full px-3 py-2 border border-black bg-white rounded-none focus:outline-none focus:ring-1 focus:ring-black font-mono text-xs uppercase"
+            className="w-full px-3 py-2 border border-zinc-300 bg-white rounded focus:outline-none focus:border-black font-mono text-xs uppercase"
           />
         </div>
 
         <div className="space-y-1">
-          <label className="text-zinc-400 uppercase block">Payment Due Date</label>
+          <label className="text-zinc-400 uppercase block font-semibold">Payment Due Date</label>
           <input
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="w-full px-3 py-2 border border-black bg-white rounded-none focus:outline-none focus:ring-1 focus:ring-black"
+            className="w-full px-3 py-2 border border-zinc-300 bg-white rounded focus:outline-none focus:border-black text-xs"
           />
         </div>
       </div>
 
       {/* DYNAMIC MULTI-ROW LEDGER MATRIX */}
-      <div className="border border-black bg-white">
-        <div className="bg-zinc-50 border-b border-black px-4 py-3 font-bold uppercase tracking-wider">
+      <div className="card-modern bg-white">
+        <div className="bg-zinc-50/80 border-b border-zinc-200 px-4 py-3 font-semibold uppercase tracking-wider text-zinc-600 font-sans text-xs">
           Line Item Execution Ledger
         </div>
         
-        <div className="divide-y divide-black bg-white">
+        <div className="divide-y divide-zinc-200/80 bg-white">
           {rows.map((row, index) => {
             const calculatedRow = calculateLineItem({
               quantity: row.quantity,
@@ -277,11 +277,11 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                 
                 {/* Quick Catalog Selection Lookup menu */}
                 <div className="lg:col-span-3 space-y-1">
-                  <label className="text-[10px] text-zinc-400 uppercase block">Catalog Shortcut Look-up</label>
+                  <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Catalog Shortcut Look-up</label>
                   <select
                     onChange={(e) => handleProductLookup(index, e.target.value)}
                     defaultValue=""
-                    className="w-full px-2 py-1.5 border border-zinc-300 bg-white rounded-none font-sans text-xs"
+                    className="w-full px-2 py-1.5 border border-zinc-300 bg-white rounded font-sans text-xs font-semibold"
                   >
                     <option value="">-- Autofill from Catalog Index --</option>
                     {products.map(p => (
@@ -294,43 +294,43 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                     value={row.description}
                     placeholder="Enter manual explicit line description override..."
                     onChange={(e) => updateRowField(index, "description", e.target.value)}
-                    className="w-full px-2 py-1.5 border border-black bg-white rounded-none font-sans text-xs mt-1"
+                    className="w-full px-2 py-1.5 border border-zinc-300 bg-white rounded font-sans text-xs mt-1"
                     required
                   />
                 </div>
 
                 <div className="lg:col-span-2 space-y-1">
-                  <label className="text-[10px] text-zinc-400 uppercase block">Quantity</label>
+                  <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Quantity</label>
                   <input
                     type="number"
                     min="1"
                     value={row.quantity}
                     onChange={(e) => updateRowField(index, "quantity", parseFloat(e.target.value) || 1)}
-                    className="w-full px-2 py-1.5 border border-black bg-white rounded-none font-bold text-center"
+                    className="w-full px-2 py-1.5 border border-zinc-300 bg-white rounded font-semibold text-center text-xs"
                     required
                   />
                 </div>
 
                 <div className="lg:col-span-2 space-y-1">
-                  <label className="text-[10px] text-zinc-400 uppercase block">Unit Valuation Rate</label>
+                  <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Unit Valuation Rate</label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
                     value={row.unitPrice}
                     onChange={(e) => updateRowField(index, "unitPrice", parseFloat(e.target.value) || 0)}
-                    className="w-full px-2 py-1.5 border border-black bg-white rounded-none font-bold"
+                    className="w-full px-2 py-1.5 border border-zinc-300 bg-white rounded font-semibold text-xs"
                     required
                   />
                 </div>
 
                 <div className="lg:col-span-2 space-y-1">
-                  <label className="text-[10px] text-zinc-400 uppercase block">Tax Vector</label>
+                  <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Tax Vector</label>
                   <select
                     value={row.taxType}
                     disabled={!shop.isVatRegistered}
                     onChange={(e) => updateRowField(index, "taxType", e.target.value)}
-                    className="w-full px-2 py-1.5 border border-black bg-white rounded-none disabled:bg-zinc-100 disabled:text-zinc-400"
+                    className="w-full px-2 py-1.5 border border-zinc-300 bg-white rounded text-xs disabled:bg-zinc-100 disabled:text-zinc-400 font-semibold"
                   >
                     <option value="V_16">VAT Standard 16%</option>
                     <option value="V_0">0% VAT (Zero Rated)</option>
@@ -338,7 +338,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                   </select>
                 </div>
 
-                <div className="lg:col-span-2 text-right font-bold py-2 bg-zinc-50 border border-zinc-200 px-3 self-center">
+                <div className="lg:col-span-2 text-right font-semibold py-2 bg-zinc-50 border border-zinc-200 px-3 self-center rounded">
                   <span className="text-[9px] text-zinc-400 block font-mono font-normal">ROW TOTAL</span>
                   {formatCurrency(calculatedRow.itemTotal, shop.currency)}
                 </div>
@@ -348,7 +348,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                     type="button"
                     onClick={() => removeRow(index)}
                     disabled={rows.length === 1}
-                    className="border border-rose-200 text-rose-600 px-2 py-1 text-[10px] font-bold uppercase hover:bg-rose-50 hover:border-rose-600 disabled:opacity-20 rounded-none w-full"
+                    className="border border-rose-200 bg-rose-50 text-rose-600 px-2 py-1 text-[10px] font-semibold uppercase hover:bg-rose-600 hover:text-white disabled:opacity-20 rounded w-full transition-colors"
                   >
                     Delete
                   </button>
@@ -360,11 +360,11 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
         </div>
         
         {/* ROW APPEND TRIGGER CONTROL */}
-        <div className="p-4 border-t border-black bg-zinc-50">
+        <div className="p-4 border-t border-zinc-200/80 bg-zinc-50/50">
           <button
             type="button"
             onClick={addBlankRow}
-            className="border border-black bg-white text-black text-xs font-bold px-4 py-2 hover:bg-zinc-100 uppercase tracking-wide rounded-none"
+            className="btn-secondary-modern text-xs font-semibold px-4 py-2 uppercase tracking-wide"
           >
             + Append Line Item Entry
           </button>
@@ -377,25 +377,25 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           &gt; Compliance Verification Node: All metrics evaluated natively using localized rounding filters. Uncommitted documents persist in standard editable DRAFT state nodes.
         </div>
         
-        <div className="lg:col-span-5 border border-black divide-y divide-zinc-200 bg-white p-4 font-mono space-y-2">
+        <div className="lg:col-span-5 card-modern divide-y divide-zinc-200 bg-white p-4 font-mono space-y-2">
           <div className="flex justify-between text-zinc-500 py-1">
             <span>Aggregated Sub-Total</span>
-            <span className="font-bold text-black">{formatCurrency(totals.subTotal, shop.currency)}</span>
+            <span className="font-semibold text-black">{formatCurrency(totals.subTotal, shop.currency)}</span>
           </div>
           <div className="flex justify-between text-zinc-500 py-1">
             <span>Processed VAT Pool ({shop.isVatRegistered ? "16%" : "0%"})</span>
-            <span className="font-bold text-black">{formatCurrency(totals.taxAmount, shop.currency)}</span>
+            <span className="font-semibold text-black">{formatCurrency(totals.taxAmount, shop.currency)}</span>
           </div>
-          <div className="flex justify-between text-black text-sm font-bold pt-2 border-t-2 border-black">
+          <div className="flex justify-between text-black text-sm font-semibold pt-2 border-t border-zinc-200">
             <span>FINAL BALANCE PAYABLE</span>
-            <span className="underline decoration-double">{formatCurrency(totals.grandTotal, shop.currency)}</span>
+            <span className="font-semibold text-black">{formatCurrency(totals.grandTotal, shop.currency)}</span>
           </div>
           
           <div className="pt-4">
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-black text-white text-center py-3 font-bold uppercase tracking-widest text-xs hover:bg-zinc-900 transition-colors disabled:bg-zinc-300 rounded-none"
+              className="btn-primary-modern w-full py-3 font-semibold uppercase tracking-wider text-xs disabled:bg-zinc-300"
             >
               {loading ? "EXECUTING COMPILATION TRANSACTION..." : "COMMIT BILLING COMPILATION"}
             </button>

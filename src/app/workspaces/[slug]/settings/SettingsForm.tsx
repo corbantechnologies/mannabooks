@@ -236,14 +236,14 @@ export function SettingsForm({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
       {/* ── BUSINESS PROFILE FORM ── */}
-      <form onSubmit={handleProfileSubmit} className="space-y-6 font-mono text-xs border border-black p-6 bg-white">
-        <h2 className="font-bold uppercase tracking-wider text-sm">Business Profile</h2>
+      <form onSubmit={handleProfileSubmit} className="space-y-6 font-mono text-xs card-modern p-6 bg-white">
+        <h2 className="font-semibold uppercase tracking-wider text-sm text-black font-sans">Business Profile</h2>
 
         {profileMsg && (
-          <div className={`border p-3 font-bold uppercase text-xs ${
+          <div className={`border p-3 font-semibold uppercase text-xs rounded ${
             profileMsg.type === "success"
               ? "border-black bg-black text-white"
-              : "border-black bg-zinc-50 text-black"
+              : "border-zinc-200 bg-zinc-50 text-black"
           }`}>
             &gt; {profileMsg.text}
           </div>
@@ -251,7 +251,7 @@ export function SettingsForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-zinc-400 uppercase block">Trading Legal Name</label>
+            <label className="text-zinc-400 uppercase block font-semibold">Trading Legal Name</label>
             <input
               type="text"
               value={businessName}
@@ -262,52 +262,52 @@ export function SettingsForm({
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-400 uppercase block">Short Alias / Trading Name</label>
+            <label className="text-zinc-400 uppercase block font-semibold">Short Alias / Trading Name</label>
             <input
               type="text"
               value={shortName}
               onChange={(e) => setShortName(e.target.value)}
               placeholder="e.g. Corban Tech"
-              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-zinc-400 uppercase block">Business Phone Contact</label>
+            <label className="text-zinc-400 uppercase block font-semibold">Business Phone Contact</label>
             <input
               type="text"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="e.g. +254 712 345 678"
-              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-400 uppercase block">Official Website URL</label>
+            <label className="text-zinc-400 uppercase block font-semibold">Official Website URL</label>
             <input
               type="url"
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
               placeholder="https://corbantechnologies.org"
-              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none font-mono text-[11px]"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded font-mono text-[11px]"
             />
           </div>
         </div>
 
         {/* SHOP PRIMARY THEME COLOR SELECTOR */}
-        <div className="border border-black p-4 bg-zinc-50 space-y-3">
+        <div className="border border-zinc-200 p-4 bg-zinc-50/50 rounded space-y-3">
           <div className="flex justify-between items-center">
             <div>
-              <span className="font-bold uppercase text-black text-xs block">Shop Brand Theme Color</span>
+              <span className="font-semibold uppercase text-black text-xs block">Shop Brand Theme Color</span>
               <span className="text-[10px] text-zinc-500 font-sans normal-case block">
                 Replaces default black across your workspace, client portals, PDFs, and transactional emails.
               </span>
             </div>
             <div
-              className="w-7 h-7 border border-black shadow-sm shrink-0"
+              className="w-7 h-7 border border-zinc-300 rounded shadow-sm shrink-0"
               style={{ backgroundColor: primaryColor || "#000000" }}
               title={`Current Theme: ${primaryColor}`}
             />
@@ -320,13 +320,13 @@ export function SettingsForm({
                 key={c.hex}
                 type="button"
                 onClick={() => setPrimaryColor(c.hex)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase border transition-colors ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold uppercase border rounded transition-colors ${
                   primaryColor.toLowerCase() === c.hex.toLowerCase()
                     ? "border-black bg-black text-white"
                     : "border-zinc-300 bg-white text-zinc-700 hover:border-black"
                 }`}
               >
-                <span className="w-3 h-3 border border-black/20" style={{ backgroundColor: c.hex }} />
+                <span className="w-3 h-3 border border-black/20 rounded-sm" style={{ backgroundColor: c.hex }} />
                 {c.name}
               </button>
             ))}
@@ -334,12 +334,12 @@ export function SettingsForm({
 
           {/* Custom Hex Code Input */}
           <div className="flex items-center gap-2 pt-1">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase">Custom Hex Code:</span>
+            <span className="text-[10px] font-semibold text-zinc-500 uppercase">Custom Hex Code:</span>
             <input
               type="color"
               value={primaryColor.startsWith("#") && primaryColor.length === 7 ? primaryColor : "#000000"}
               onChange={(e) => setPrimaryColor(e.target.value)}
-              className="w-8 h-8 p-0 border border-black cursor-pointer bg-white"
+              className="w-8 h-8 p-0 border border-zinc-300 cursor-pointer bg-white rounded"
             />
             <input
               type="text"
@@ -347,7 +347,7 @@ export function SettingsForm({
               onChange={(e) => setPrimaryColor(e.target.value)}
               placeholder="#000000"
               maxLength={7}
-              className="w-28 px-2 py-1 border border-black bg-white text-xs uppercase font-mono font-bold"
+              className="w-28 px-2 py-1 border border-zinc-300 bg-white text-xs uppercase font-mono font-semibold rounded"
             />
           </div>
         </div>
@@ -355,20 +355,20 @@ export function SettingsForm({
         {/* LOGO UPLOAD & URL FIELD */}
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <label className="text-zinc-400 uppercase block">Brand Logo Asset</label>
+            <label className="text-zinc-400 uppercase block font-semibold">Brand Logo Asset</label>
             <span className="text-[9px] text-zinc-400 font-mono italic">Cloudinary Enabled</span>
           </div>
 
           {logoUrl && (
-            <div className="flex items-center gap-4 p-3 border border-black bg-zinc-50">
+            <div className="flex items-center gap-4 p-3 border border-zinc-200 bg-zinc-50 rounded">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={logoUrl} alt="Shop Logo Preview" className="h-12 w-auto max-w-[120px] object-contain border border-zinc-300 bg-white p-1" />
+              <img src={logoUrl} alt="Shop Logo Preview" className="h-12 w-auto max-w-[120px] object-contain border border-zinc-200 bg-white p-1 rounded" />
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-black uppercase">Active Logo Loaded</p>
+                <p className="text-[10px] font-semibold text-black uppercase">Active Logo Loaded</p>
                 <button
                   type="button"
                   onClick={() => setLogoUrl("")}
-                  className="text-[10px] text-rose-600 font-bold uppercase underline hover:no-underline"
+                  className="text-[10px] text-rose-600 font-semibold uppercase underline hover:no-underline"
                 >
                   Remove Logo
                 </button>
@@ -377,7 +377,7 @@ export function SettingsForm({
           )}
 
           <div className="flex flex-col sm:flex-row gap-2">
-            <label className="border border-black bg-black text-white px-3 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors cursor-pointer text-center shrink-0">
+            <label className="btn-primary-modern px-3 py-2 text-[11px] font-semibold uppercase tracking-wider cursor-pointer text-center shrink-0">
               {uploadingLogo ? "UPLOADING..." : "📷 Upload Logo File"}
               <input
                 type="file"
@@ -393,18 +393,18 @@ export function SettingsForm({
               value={logoUrl}
               onChange={(e) => setLogoUrl(e.target.value)}
               placeholder="Or paste direct image URL (https://...)"
-              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none font-mono text-[11px]"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded font-mono text-[11px]"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-zinc-400 uppercase block">Operating Currency</label>
+            <label className="text-zinc-400 uppercase block font-semibold">Operating Currency</label>
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-none"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
             >
               <option value="KES">KES — Kenya Shilling</option>
               <option value="USD">USD — US Dollar</option>
@@ -415,13 +415,13 @@ export function SettingsForm({
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-400 uppercase block">Statutory Corporate PIN (KRA PIN)</label>
+            <label className="text-zinc-400 uppercase block font-semibold">Statutory Corporate PIN (KRA PIN)</label>
             <input
               type="text"
               value={taxPin}
               onChange={(e) => setTaxPin(e.target.value)}
               placeholder="e.g., P0511XXXXXXZ"
-              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 uppercase rounded-none"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 uppercase rounded text-xs font-mono"
             />
           </div>
         </div>
@@ -432,10 +432,10 @@ export function SettingsForm({
             id="vatActive"
             checked={isVatRegistered}
             onChange={(e) => setIsVatRegistered(e.target.checked)}
-            className="w-4 h-4 border border-black accent-black rounded-none mt-0.5 cursor-pointer"
+            className="w-4 h-4 border border-zinc-300 accent-black rounded-sm mt-0.5 cursor-pointer"
           />
           <div className="space-y-1">
-            <label htmlFor="vatActive" className="font-bold uppercase tracking-tight block cursor-pointer select-none">
+            <label htmlFor="vatActive" className="font-semibold uppercase tracking-tight block cursor-pointer select-none">
               This entity is officially VAT registered
             </label>
             <p className="font-sans text-[11px] text-zinc-500 normal-case leading-tight">
@@ -445,11 +445,11 @@ export function SettingsForm({
           </div>
         </div>
 
-        <div className="border-t border-black pt-4 flex justify-end">
+        <div className="border-t border-zinc-200/80 pt-4 flex justify-end">
           <button
             type="submit"
             disabled={saving}
-            className="bg-black text-white px-6 py-2.5 font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors disabled:bg-zinc-300 rounded-none"
+            className="btn-primary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs disabled:bg-zinc-300"
           >
             {saving ? "SAVING..." : "COMMIT CHANGES"}
           </button>
@@ -457,9 +457,9 @@ export function SettingsForm({
       </form>
 
       {/* ── PAYMENT METHODS ── */}
-      <div className="border border-black bg-white">
-        <div className="p-6 border-b border-black space-y-1">
-          <h2 className="font-mono font-bold uppercase tracking-wider text-sm">Payment Methods</h2>
+      <div className="card-modern bg-white">
+        <div className="p-6 border-b border-zinc-200/80 space-y-1">
+          <h2 className="font-sans font-semibold uppercase tracking-wider text-sm text-black">Payment Methods</h2>
           <p className="font-sans text-xs text-zinc-500 normal-case">
             These appear on client-facing invoices as remittance instructions.
           </p>
@@ -467,14 +467,14 @@ export function SettingsForm({
 
         {/* Existing Methods List */}
         {initialMethods.length > 0 && (
-          <div className="divide-y divide-black border-b border-black">
+          <div className="divide-y divide-zinc-200/80 border-b border-zinc-200/80">
             {initialMethods.map((pm) => (
               <div key={pm.id} className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 font-mono text-xs">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold uppercase">{pm.name}</span>
+                    <span className="font-semibold uppercase text-black">{pm.name}</span>
                     {pm.isDefault && (
-                      <span className="bg-black text-white px-1.5 py-0.5 text-[9px] font-bold uppercase">DEFAULT</span>
+                      <span className="bg-black text-white px-1.5 py-0.5 text-[9px] font-semibold uppercase rounded">DEFAULT</span>
                     )}
                   </div>
                   <p className="text-zinc-500 mt-1 text-[11px] font-mono leading-relaxed">{pm.details}</p>
@@ -489,7 +489,7 @@ export function SettingsForm({
                           onSuccess: () => router.refresh(),
                         });
                       }}
-                      className="border border-zinc-300 text-zinc-600 px-2 py-1 text-[10px] font-bold uppercase hover:border-black hover:text-black transition-colors"
+                      className="btn-secondary-modern px-2 py-1 text-[10px] font-semibold uppercase"
                     >
                       Make Default
                     </button>
@@ -502,7 +502,7 @@ export function SettingsForm({
                         onSuccess: () => router.refresh(),
                       });
                     }}
-                    className="border border-rose-600 text-rose-600 px-2 py-1 text-[10px] font-bold uppercase hover:bg-rose-600 hover:text-white transition-colors"
+                    className="border border-rose-200 bg-rose-50 text-rose-600 px-2 py-1 text-[10px] font-semibold uppercase hover:bg-rose-600 hover:text-white rounded transition-colors"
                   >
                     Delete
                   </button>
@@ -519,9 +519,9 @@ export function SettingsForm({
         )}
 
         {/* Add New Method Form */}
-        <form onSubmit={handleAddPaymentMethod} className="p-6 space-y-6 font-mono text-xs bg-zinc-50 border-t border-black">
+        <form onSubmit={handleAddPaymentMethod} className="p-6 space-y-6 font-mono text-xs bg-zinc-50/50 border-t border-zinc-200/80">
           <div className="space-y-1">
-            <p className="text-[10px] text-zinc-400 uppercase font-bold">Add New Payment Method</p>
+            <p className="text-[10px] text-zinc-400 uppercase font-semibold">Add New Payment Method</p>
             <p className="font-sans text-xs text-zinc-500">Select payment type to configure structured remittance details.</p>
           </div>
 
@@ -537,7 +537,7 @@ export function SettingsForm({
                 key={cat.id}
                 type="button"
                 onClick={() => setPmCategory(cat.id as any)}
-                className={`py-2 px-3 text-[11px] font-bold uppercase border transition-colors ${
+                className={`py-2 px-3 text-[11px] font-semibold uppercase border rounded transition-colors ${
                   pmCategory === cat.id
                     ? "bg-black text-white border-black"
                     : "bg-white text-zinc-600 border-zinc-300 hover:border-black hover:text-black"
@@ -550,64 +550,64 @@ export function SettingsForm({
 
           {/* BANK ACCOUNT FIELDS */}
           {pmCategory === "BANK" && (
-            <div className="space-y-4 border border-black p-4 bg-white">
+            <div className="space-y-4 border border-zinc-200 p-4 bg-white rounded">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block">Bank Name *</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">Bank Name *</label>
                   <input
                     type="text"
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
                     placeholder="e.g., NCBA Bank / KCB"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                     required
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block">Branch Name</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">Branch Name</label>
                   <input
                     type="text"
                     value={branchName}
                     onChange={(e) => setBranchName(e.target.value)}
                     placeholder="e.g., Kilimani Branch"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block">Account Name / Title *</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">Account Name / Title *</label>
                   <input
                     type="text"
                     value={accountName}
                     onChange={(e) => setAccountName(e.target.value)}
                     placeholder="e.g., Ventures of Africa LTD"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                     required
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block">Account Number *</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">Account Number *</label>
                   <input
                     type="text"
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
                     placeholder="e.g., 01108239101"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 font-bold"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block">SWIFT / BIC Code (Optional)</label>
+                <label className="text-zinc-400 uppercase block font-semibold">SWIFT / BIC Code (Optional)</label>
                 <input
                   type="text"
                   value={swiftCode}
                   onChange={(e) => setSwiftCode(e.target.value)}
                   placeholder="e.g., NCBAKE22"
-                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 uppercase"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 uppercase rounded text-xs"
                 />
               </div>
             </div>
@@ -615,27 +615,27 @@ export function SettingsForm({
 
           {/* M-PESA TILL FIELDS */}
           {pmCategory === "TILL" && (
-            <div className="space-y-4 border border-black p-4 bg-white">
+            <div className="space-y-4 border border-zinc-200 p-4 bg-white rounded">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block">Buy Goods Till Number *</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">Buy Goods Till Number *</label>
                   <input
                     type="text"
                     value={tillNumber}
                     onChange={(e) => setTillNumber(e.target.value)}
                     placeholder="e.g., 552134"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 font-bold text-base"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
                     required
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block">Store / Merchant Name</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">Store / Merchant Name</label>
                   <input
                     type="text"
                     value={storeName}
                     onChange={(e) => setStoreName(e.target.value)}
                     placeholder="e.g., Ventures of Africa"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                   />
                 </div>
               </div>
@@ -644,27 +644,27 @@ export function SettingsForm({
 
           {/* M-PESA PAYBILL FIELDS */}
           {pmCategory === "PAYBILL" && (
-            <div className="space-y-4 border border-black p-4 bg-white">
+            <div className="space-y-4 border border-zinc-200 p-4 bg-white rounded">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block">Business / Paybill Number *</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">Business / Paybill Number *</label>
                   <input
                     type="text"
                     value={paybillNumber}
                     onChange={(e) => setPaybillNumber(e.target.value)}
                     placeholder="e.g., 247247"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 font-bold text-base"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
                     required
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block">Account Ref / Instructions</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">Account Ref / Instructions</label>
                   <input
                     type="text"
                     value={accountRef}
                     onChange={(e) => setAccountRef(e.target.value)}
                     placeholder="e.g., Invoice Number / Client Name"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                   />
                 </div>
               </div>
@@ -673,25 +673,25 @@ export function SettingsForm({
 
           {/* CUSTOM INSTRUCTIONS FIELDS */}
           {pmCategory === "CUSTOM" && (
-            <div className="space-y-4 border border-black p-4 bg-white">
+            <div className="space-y-4 border border-zinc-200 p-4 bg-white rounded">
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block">Method Title *</label>
+                <label className="text-zinc-400 uppercase block font-semibold">Method Title *</label>
                 <input
                   type="text"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
                   placeholder="e.g., PayPal / Cash / Cheque"
-                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 font-bold"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
                   required
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block">Payment Instructions *</label>
+                <label className="text-zinc-400 uppercase block font-semibold">Payment Instructions *</label>
                 <textarea
                   value={customInstructions}
                   onChange={(e) => setCustomInstructions(e.target.value)}
                   placeholder="e.g., Send PayPal payment to billing@domain.com or issue cheque to Ventures of Africa LTD."
-                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 h-20"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs h-20 font-sans"
                   required
                 ></textarea>
               </div>
@@ -704,9 +704,9 @@ export function SettingsForm({
               id="pmDefault"
               checked={pmDefault}
               onChange={(e) => setPmDefault(e.target.checked)}
-              className="w-4 h-4 border border-black accent-black rounded-none cursor-pointer"
+              className="w-4 h-4 border border-zinc-300 accent-black rounded-sm cursor-pointer"
             />
-            <label htmlFor="pmDefault" className="cursor-pointer select-none uppercase font-bold">
+            <label htmlFor="pmDefault" className="cursor-pointer select-none uppercase font-semibold text-xs">
               Set as default payment method on invoices
             </label>
           </div>
@@ -714,7 +714,7 @@ export function SettingsForm({
           <button
             type="submit"
             disabled={addPaymentMutation.isPending}
-            className="border border-black bg-black text-white px-6 py-2.5 font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors disabled:bg-zinc-300 rounded-none w-full sm:w-auto"
+            className="btn-primary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs disabled:bg-zinc-300 w-full sm:w-auto"
           >
             {addPaymentMutation.isPending ? "SAVING..." : "+ SAVE PAYMENT METHOD"}
           </button>

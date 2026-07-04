@@ -47,40 +47,40 @@ export function SupplierFormClientSide({ shopId, shopSlug }: { shopId: string; s
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="bg-black text-white px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors rounded-none border border-black"
+        className="btn-primary-modern px-4 py-2 text-xs uppercase tracking-wider"
       >
         + Register Supplier / Vendor
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-black w-[95%] sm:w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-6 font-mono text-xs shadow-lg animate-in fade-in duration-150">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-zinc-200/80 rounded-md shadow-xl w-[95%] sm:w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-6 font-mono text-xs animate-in zoom-in-95 duration-150">
             
-            <div className="flex justify-between items-start border-b border-black pb-4">
+            <div className="flex justify-between items-start border-b border-zinc-200/80 pb-4">
               <div>
-                <h3 className="font-bold uppercase tracking-tight text-base">Register Vendor / Supplier</h3>
-                <p className="text-[10px] text-zinc-400 uppercase">Inbound Procurement Entity Entry</p>
+                <h3 className="font-semibold uppercase tracking-tight text-base font-sans text-black">Register Vendor / Supplier</h3>
+                <p className="text-[10px] text-zinc-400 uppercase font-semibold">Inbound Procurement Entity Entry</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-black font-bold hover:bg-zinc-100 px-2 py-0.5 border border-black text-xs"
+                className="text-zinc-500 font-semibold hover:bg-zinc-100 px-2 py-0.5 border border-zinc-300 rounded text-xs"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs">
               {/* CLASSIFICATION TYPE SELECTOR */}
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block text-[10px]">Vendor Classification</label>
-                <div className="grid grid-cols-3 border border-black divide-x divide-black bg-white">
+                <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Vendor Classification</label>
+                <div className="grid grid-cols-3 border border-zinc-300 divide-x divide-zinc-300 bg-white rounded overflow-hidden">
                   {(["CORPORATE", "INDIVIDUAL", "WALK_IN"] as const).map((type) => (
                     <button
                       key={type}
                       type="button"
                       onClick={() => setSupplierType(type)}
-                      className={`py-2 text-[10px] font-bold uppercase transition-colors ${
+                      className={`py-2 text-[10px] font-semibold uppercase transition-colors ${
                         supplierType === type ? "bg-black text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"
                       }`}
                     >
@@ -92,34 +92,34 @@ export function SupplierFormClientSide({ shopId, shopSlug }: { shopId: string; s
 
               {/* NAME & CONTACT */}
               <div className="space-y-1">
-                <label className="text-black font-bold uppercase block">Supplier / Company Name</label>
+                <label className="text-black font-semibold uppercase block">Supplier / Company Name</label>
                 <input
                   type="text"
                   name="name"
                   placeholder="e.g. Metro Distributors LTD"
-                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none text-xs"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block text-[10px]">Email Address</label>
+                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Email Address</label>
                   <input
                     type="email"
                     name="email"
                     placeholder="orders@vendor.com"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none text-xs"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                     required
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block text-[10px]">Phone Contact</label>
+                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Phone Contact</label>
                   <input
                     type="text"
                     name="phone"
                     placeholder="e.g. 0712345678"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none text-xs"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                   />
                 </div>
               </div>
@@ -127,25 +127,25 @@ export function SupplierFormClientSide({ shopId, shopSlug }: { shopId: string; s
               {/* FLEXIBLE TAX PIN (SOLE PROP A... OR CORP P...) */}
               <div className="space-y-1 pt-2 border-t border-dashed border-zinc-200">
                 <div className="flex justify-between items-center">
-                  <label className="text-black font-bold uppercase block">KRA Tax PIN</label>
+                  <label className="text-black font-semibold uppercase block">KRA Tax PIN</label>
                   <span className="text-[9px] text-zinc-400 italic">Sole Prop (A...) or Corp (P...)</span>
                 </div>
                 <input
                   type="text"
                   name="taxPin"
                   placeholder="e.g. A012345678B (Personal/Sole Prop) or P051234567A (Company)"
-                  className="w-full px-3 py-2 border border-black bg-white font-mono text-xs uppercase focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white font-mono text-xs uppercase focus:outline-none focus:border-black placeholder:text-zinc-300 rounded"
                   maxLength={20}
                 />
               </div>
 
               {/* PAYMENT TERMS SELECTOR */}
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block text-[10px]">Payment Terms</label>
+                <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Payment Terms</label>
                 <select
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value)}
-                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs font-bold uppercase"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black text-xs font-semibold uppercase rounded"
                 >
                   <option value="NET_30">Net 30 Days</option>
                   <option value="NET_15">Net 15 Days</option>
@@ -156,31 +156,31 @@ export function SupplierFormClientSide({ shopId, shopSlug }: { shopId: string; s
               </div>
 
               {/* STATUTORY eTIMS FISCAL REQUIREMENT TOGGLE */}
-              <div className="flex items-center gap-2 p-3 bg-zinc-50 border border-black">
+              <div className="flex items-center gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded">
                 <input
                   type="checkbox"
                   id="supplierRequiresEtims"
                   name="requiresEtims"
-                  className="accent-black w-4 h-4 cursor-pointer"
+                  className="accent-black w-4 h-4 cursor-pointer rounded-sm"
                 />
-                <label htmlFor="supplierRequiresEtims" className="font-bold uppercase text-[10px] cursor-pointer">
+                <label htmlFor="supplierRequiresEtims" className="font-semibold uppercase text-[10px] cursor-pointer">
                   Requires KRA eTIMS / CU Fiscal Receipt
                 </label>
               </div>
 
               {/* BUTTONS */}
-              <div className="border-t border-black pt-4 flex justify-end gap-2">
+              <div className="border-t border-zinc-200/80 pt-4 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="border border-zinc-300 px-4 py-2 text-zinc-600 hover:border-black hover:text-black transition-colors rounded-none"
+                  className="btn-secondary-modern px-4 py-2 text-xs uppercase"
                 >
                   CANCEL
                 </button>
                 <button
                   type="submit"
                   disabled={createSupplierMutation.isPending}
-                  className="bg-black text-white px-4 py-2 font-bold uppercase hover:bg-zinc-900 transition-colors disabled:bg-zinc-400 rounded-none"
+                  className="btn-primary-modern px-4 py-2 text-xs uppercase disabled:bg-zinc-300"
                 >
                   {createSupplierMutation.isPending ? "REGISTERING..." : "COMMIT SUPPLIER"}
                 </button>

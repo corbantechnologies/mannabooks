@@ -36,9 +36,9 @@ export function AnalyticsClientView({ shopId, shopSlug, initialData }: Analytics
     <div className="space-y-10 font-mono text-xs selection:bg-black selection:text-white">
       
       {/* TIMEFRAME SELECTOR TABS */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-black pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200/80 pb-4">
         <div>
-          <span className="text-[10px] text-zinc-400 block uppercase font-bold">Scope Horizon</span>
+          <span className="text-[10px] text-zinc-400 block uppercase font-semibold">Scope Horizon</span>
           <p className="font-sans text-xs text-zinc-500">Filter business intelligence metrics across operating timeframes.</p>
         </div>
 
@@ -55,10 +55,10 @@ export function AnalyticsClientView({ shopId, shopSlug, initialData }: Analytics
               type="button"
               disabled={loading}
               onClick={() => handleTimeframeChange(tf.id as TimeframeFilter)}
-              className={`px-3 py-1.5 text-[10px] font-bold uppercase border transition-colors ${
+              className={`px-3 py-1.5 text-[10px] font-semibold uppercase rounded transition-colors ${
                 timeframe === tf.id
-                  ? "bg-black text-white border-black"
-                  : "bg-white text-zinc-600 border-zinc-300 hover:border-black hover:text-black"
+                  ? "bg-black text-white border border-black"
+                  : "bg-white text-zinc-600 border border-zinc-300 hover:border-black hover:text-black"
               }`}
             >
               {loading && timeframe === tf.id ? "Loading..." : tf.label}
@@ -68,12 +68,12 @@ export function AnalyticsClientView({ shopId, shopSlug, initialData }: Analytics
       </div>
 
       {/* KRA 20TH STATUTORY VAT RETURN TRACKER ALERT BANNER */}
-      <div className="border border-black p-6 bg-zinc-50 space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200 pb-4">
+      <div className="card-modern p-6 bg-zinc-50/50 space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse inline-block" />
-              <span className="font-bold text-black uppercase text-sm">
+              <span className="font-semibold text-black uppercase text-sm font-sans">
                 Statutory KRA eTIMS VAT Return Tracker — {data.kraVatSummary.currentMonthName}
               </span>
             </div>
@@ -82,15 +82,15 @@ export function AnalyticsClientView({ shopId, shopSlug, initialData }: Analytics
             </p>
           </div>
 
-          <div className="border border-black bg-black text-white px-3 py-1.5 font-bold uppercase text-xs shrink-0">
+          <div className="bg-black text-white px-3 py-1.5 font-semibold uppercase text-xs rounded shrink-0">
             ⏰ {data.kraVatSummary.daysRemaining} Days Until 20th Filing Deadline
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
-          <div className="p-3 border border-zinc-200 bg-white space-y-1">
-            <span className="text-[9px] text-zinc-400 uppercase block font-bold">Output VAT Collected (16%)</span>
-            <span className="text-lg font-bold text-black block">
+          <div className="p-3 border border-zinc-200/80 bg-white space-y-1 rounded">
+            <span className="text-[9px] text-zinc-400 uppercase block font-semibold">Output VAT Collected (16%)</span>
+            <span className="text-base font-semibold text-black block">
               {formatCurrency(data.kraVatSummary.outputVat16, data.currency)}
             </span>
             <span className="text-[9px] text-zinc-500 block">Standard Rate Tax Payable</span>
@@ -164,17 +164,17 @@ export function AnalyticsClientView({ shopId, shopSlug, initialData }: Analytics
             <h2 className="font-semibold uppercase text-sm tracking-wider text-black font-sans">&gt; Monthly Cash Flow Timeline Stream</h2>
             <p className="font-sans text-xs text-zinc-500">Visual comparison of monthly Inflows (Sales Receipts) vs Outflows (Procurement).</p>
           </div>
-          <div className="flex gap-4 text-[10px] font-bold">
+          <div className="flex gap-4 text-[10px] font-semibold">
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 bg-black inline-block" /> INFLOW (REVENUE)
+              <span className="w-3 h-3 bg-black inline-block rounded-sm" /> INFLOW (REVENUE)
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 bg-zinc-300 border border-black inline-block" /> OUTFLOW (PURCHASES)
+              <span className="w-3 h-3 bg-zinc-200 border border-zinc-300 inline-block rounded-sm" /> OUTFLOW (PURCHASES)
             </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-6 gap-2 pt-4 border-b border-black pb-4 items-end h-48">
+        <div className="grid grid-cols-6 gap-2 pt-4 border-b border-zinc-200/80 pb-4 items-end h-48">
           {data.monthlyTimeline.map((item, idx) => {
             const inflowHeight = (item.inflow / maxTimelineVal) * 100;
             const outflowHeight = (item.outflow / maxTimelineVal) * 100;
@@ -185,17 +185,17 @@ export function AnalyticsClientView({ shopId, shopSlug, initialData }: Analytics
                   {/* Inflow Bar */}
                   <div
                     style={{ height: `${Math.max(inflowHeight, 4)}%` }}
-                    className="w-1/2 bg-black transition-all group-hover:opacity-90 relative"
+                    className="w-1/2 bg-black transition-all group-hover:opacity-90 relative rounded-t-sm"
                     title={`Inflow: ${formatCurrency(item.inflow, data.currency)}`}
                   />
                   {/* Outflow Bar */}
                   <div
                     style={{ height: `${Math.max(outflowHeight, 4)}%` }}
-                    className="w-1/2 bg-zinc-300 border border-black transition-all relative"
+                    className="w-1/2 bg-zinc-200 border border-zinc-300 transition-all relative rounded-t-sm"
                     title={`Outflow: ${formatCurrency(item.outflow, data.currency)}`}
                   />
                 </div>
-                <span className="text-[9px] font-bold uppercase text-zinc-500">{item.monthLabel}</span>
+                <span className="text-[9px] font-semibold uppercase text-zinc-500">{item.monthLabel}</span>
               </div>
             );
           })}

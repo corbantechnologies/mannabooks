@@ -66,37 +66,37 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
     <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
       
       {/* BACK NAVIGATION AND INTERFACE HEADER */}
-      <div className="border-b border-black pb-6 space-y-2">
+      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
         <Link 
           href={`/workspaces/${slug}/clients`} 
-          className="font-mono text-xs font-bold text-zinc-400 hover:underline block"
+          className="font-mono text-xs font-semibold text-zinc-400 hover:underline block"
         >
           ← BACK TO MASTER CLIENT REGISTRY
         </Link>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <span className="font-mono text-xs text-zinc-400">LEDGER_NODE // CUSTOMER_PROFILE</span>
-            <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">{clientRecord.name}</h1>
+            <span className="font-mono text-xs text-zinc-400 font-semibold">LEDGER_NODE // CUSTOMER_PROFILE</span>
+            <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">{clientRecord.name}</h1>
             <p className="font-mono text-xs text-zinc-500 lowercase mt-0.5">&gt; id: {clientRecord.id}</p>
           </div>
           
-          <div className="flex items-center gap-2 font-mono text-[10px]">
-            <span className="border border-black px-2 py-1 bg-zinc-50 font-bold uppercase">
+          <div className="flex flex-wrap items-center gap-2 font-mono text-[10px]">
+            <span className="border border-zinc-300 px-2.5 py-1 bg-zinc-50 font-semibold uppercase rounded text-zinc-700">
               Class: {clientRecord.clientType}
             </span>
             {clientRecord.taxPin && (
-              <span className="bg-black text-white px-2 py-1 font-bold uppercase tracking-wide">
+              <span className="bg-black text-white px-2.5 py-1 font-semibold uppercase tracking-wide rounded">
                 PIN: {clientRecord.taxPin}
               </span>
             )}
             {clientRecord.requiresEtims && (
-              <span className="border border-black bg-zinc-50 text-black px-2 py-1 font-bold uppercase tracking-wide">
+              <span className="border border-amber-300 bg-amber-50 text-amber-900 px-2.5 py-1 font-semibold uppercase tracking-wide rounded">
                 eTIMS Required
               </span>
             )}
             <Link
               href={`/workspaces/${slug}/documents/new?clientId=${clientRecord.id}`}
-              className="bg-black text-white border border-black px-3 py-1 font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors"
+              className="btn-primary-modern px-3 py-1 font-semibold uppercase tracking-wider text-[11px]"
             >
               + Generate Document
             </Link>
@@ -111,26 +111,26 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
       </div>
 
       {/* INDIVIDUAL PIPELINE FINANCIAL SUMMARY CARD BLOCKS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 border border-black divide-y md:divide-y-0 md:divide-x divide-black bg-white">
+      <div className="card-modern divide-y md:divide-y-0 md:divide-x divide-zinc-200/80 bg-white grid grid-cols-1 md:grid-cols-3">
         <div className="p-6 space-y-1">
-          <p className="font-mono text-xs text-zinc-400 uppercase">Computed Lifetime Value (LTV)</p>
-          <p className="text-2xl font-bold font-mono tracking-tight text-black">
+          <p className="font-mono text-xs text-zinc-400 uppercase font-semibold">Computed Lifetime Value (LTV)</p>
+          <p className="text-xl font-semibold font-mono tracking-tight text-black">
             {formatCurrency(performanceMetrics.lifetimeValue, shop.currency)}
           </p>
           <p className="text-[10px] text-zinc-500 leading-tight">Total settled invoice balances explicitly processed to date.</p>
         </div>
 
         <div className="p-6 space-y-1">
-          <p className="font-mono text-xs text-zinc-400 uppercase">Accounts Receivable Debt</p>
-          <p className="text-2xl font-bold font-mono tracking-tight text-black">
+          <p className="font-mono text-xs text-zinc-400 uppercase font-semibold">Accounts Receivable Debt</p>
+          <p className="text-xl font-semibold font-mono tracking-tight text-black">
             {formatCurrency(performanceMetrics.outstandingLiability, shop.currency)}
           </p>
           <p className="text-[10px] text-zinc-500 leading-tight">Pending un-settled balance vectors current in processing paths.</p>
         </div>
 
         <div className="p-6 space-y-1">
-          <p className="font-mono text-xs text-zinc-400 uppercase">Critically Overdue Pool</p>
-          <p className="text-2xl font-bold font-mono tracking-tight text-rose-600">
+          <p className="font-mono text-xs text-zinc-400 uppercase font-semibold">Critically Overdue Pool</p>
+          <p className="text-xl font-semibold font-mono tracking-tight text-rose-600">
             {formatCurrency(performanceMetrics.overdueLiability, shop.currency)}
           </p>
           <p className="text-[10px] text-zinc-500 leading-tight">Outstanding invoice values that have cleared their due date constraints.</p>
@@ -138,18 +138,18 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
       </div>
 
       {/* CORE CONTACT SCHEDULING DETAILS BOX */}
-      <div className="border border-black p-4 bg-zinc-50 font-mono text-xs grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="card-modern p-4 bg-zinc-50/50 font-mono text-xs grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <div>
-          <span className="text-zinc-400 block uppercase text-[10px]">Email Destination</span>
-          <span className="font-sans font-bold text-black text-sm">{clientRecord.email}</span>
+          <span className="text-zinc-400 block uppercase text-[10px] font-semibold">Email Destination</span>
+          <span className="font-sans font-semibold text-black text-sm">{clientRecord.email}</span>
         </div>
         <div>
-          <span className="text-zinc-400 block uppercase text-[10px]">Phone Line Reference</span>
-          <span className="font-bold text-black text-sm">{clientRecord.phone || "UNASSIGNED"}</span>
+          <span className="text-zinc-400 block uppercase text-[10px] font-semibold">Phone Line Reference</span>
+          <span className="font-semibold text-black text-sm">{clientRecord.phone || "UNASSIGNED"}</span>
         </div>
         <div>
-          <span className="text-zinc-400 block uppercase text-[10px]">Onboarding Timestamp</span>
-          <span className="text-zinc-600 text-sm">
+          <span className="text-zinc-400 block uppercase text-[10px] font-semibold">Onboarding Timestamp</span>
+          <span className="text-zinc-600 text-sm font-semibold">
             {new Date(clientRecord.createdAt).toLocaleDateString("en-KE", { dateStyle: "long" })}
           </span>
         </div>
@@ -157,24 +157,24 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
 
       {/* STANDALONE HISTORICAL SUB-LEDGER GRID */}
       <div className="space-y-4">
-        <h3 className="font-bold uppercase tracking-tight text-sm font-mono">&gt; Transaction Sub-Ledger</h3>
+        <h3 className="font-semibold uppercase tracking-tight text-sm font-sans text-black">&gt; Transaction Sub-Ledger</h3>
         
-        <div className="border border-black bg-white overflow-x-auto">
+        <div className="card-modern overflow-x-auto">
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
-              <tr className="bg-zinc-50 border-b border-black uppercase tracking-wider font-bold">
-                <th className="p-4 border-r border-black">Serial Reference</th>
-                <th className="p-4 border-r border-black">Document Type</th>
-                <th className="p-4 border-r border-black">Issue Tracking Date</th>
-                <th className="p-4 border-r border-black text-right">Total Aggregate Valuation</th>
-                <th className="p-4 border-r border-black text-center">Execution Status</th>
+              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+                <th className="p-4 border-r border-zinc-200">Serial Reference</th>
+                <th className="p-4 border-r border-zinc-200">Document Type</th>
+                <th className="p-4 border-r border-zinc-200">Issue Tracking Date</th>
+                <th className="p-4 border-r border-zinc-200 text-right">Total Aggregate Valuation</th>
+                <th className="p-4 border-r border-zinc-200 text-center">Execution Status</th>
                 <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-black bg-white">
+            <tbody className="divide-y divide-zinc-200/80 bg-white">
               {clientRecord.documents.map((doc) => (
-                <tr key={doc.id} className="hover:bg-zinc-50 transition-colors">
-                  <td className="p-4 border-r border-black font-bold text-black tracking-wider">
+                <tr key={doc.id} className="hover:bg-zinc-50/80 transition-colors">
+                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider">
                     <Link 
                       href={`/workspaces/${slug}/documents/${doc.id}`}
                       className="hover:underline underline-offset-2"
@@ -182,22 +182,22 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
                       {doc.docNumber}
                     </Link>
                   </td>
-                  <td className="p-4 border-r border-black">
-                    <span className="border border-black px-1.5 py-0.5 text-[9px] font-bold tracking-widest bg-white">
+                  <td className="p-4 border-r border-zinc-200/80">
+                    <span className="border border-zinc-300 px-2 py-0.5 text-[9px] font-semibold tracking-widest bg-white rounded">
                       {doc.type}
                     </span>
                   </td>
-                  <td className="p-4 border-r border-black text-zinc-500">
+                  <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
                     {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                   </td>
-                  <td className="p-4 border-r border-black font-bold text-sm text-black text-right">
+                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-sm text-black text-right">
                     {formatCurrency(doc.grandTotal, shop.currency)}
                   </td>
-                  <td className="p-4 border-r border-black text-center">
-                    <span className={`border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${
+                  <td className="p-4 border-r border-zinc-200/80 text-center">
+                    <span className={`border px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded ${
                       doc.status === "PAID" ? "bg-black text-white border-black" :
-                      doc.status === "SENT" ? "bg-white text-black border-black font-bold" :
-                      doc.status === "OVERDUE" ? "bg-zinc-100 border-rose-600 border-dashed text-rose-700" :
+                      doc.status === "SENT" ? "bg-white text-black border-zinc-300" :
+                      doc.status === "OVERDUE" ? "bg-rose-50 border-rose-300 text-rose-700" :
                       "bg-zinc-50 text-zinc-400 border-zinc-200"
                     }`}>
                       {doc.status}
@@ -206,7 +206,7 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
                   <td className="p-4 text-center">
                     <Link
                       href={`/workspaces/${slug}/documents/${doc.id}`}
-                      className="border border-black px-2 py-1 text-[10px] font-bold uppercase hover:bg-black hover:text-white transition-colors"
+                      className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"
                     >
                       View Details
                     </Link>

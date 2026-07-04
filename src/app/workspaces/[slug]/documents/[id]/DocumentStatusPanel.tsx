@@ -181,23 +181,31 @@ export function DocumentStatusPanel({
 
       {/* STATUS TOGGLE */}
       <div className="space-y-2">
-        <p className="text-[10px] text-zinc-400 uppercase">Update Document Status</p>
+        <div className="flex justify-between items-center">
+          <p className="text-[10px] text-zinc-400 uppercase">Update Document Status</p>
+          {status === "PAID" && (
+            <span className="text-[9px] text-zinc-400 italic">PAID status is final. Use Credit Note to reverse.</span>
+          )}
+        </div>
         <div className="flex flex-wrap gap-2">
-          {STATUS_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              disabled={saving}
-              onClick={() => handleStatusUpdate(opt.value)}
-              className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider border transition-colors rounded-none disabled:opacity-40 ${
-                status === opt.value
-                  ? "bg-black text-white border-black"
-                  : "bg-white text-zinc-600 border-zinc-300 hover:border-black hover:text-black"
-              }`}
-            >
-              {saving && status !== opt.value ? "..." : opt.label}
-            </button>
-          ))}
+          {STATUS_OPTIONS.map((opt) => {
+            const isBlocked = status === "PAID" && opt.value !== "PAID";
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                disabled={saving || isBlocked}
+                onClick={() => handleStatusUpdate(opt.value)}
+                className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider border transition-colors rounded-none disabled:opacity-40 ${
+                  status === opt.value
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-zinc-600 border-zinc-300 hover:border-black hover:text-black"
+                }`}
+              >
+                {saving && status !== opt.value ? "..." : opt.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -270,20 +278,29 @@ export function DocumentStatusPanel({
             Duplicate
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              if (!confirm("Are you sure you want to delete this document? This action cannot be undone.")) return;
-              deleteDocMutation.mutate(documentId, {
-                onSuccess: () => {
-                  router.push(`/workspaces/${shopSlug}/documents`);
-                },
-              });
-            }}
-            className="border border-rose-600 text-rose-600 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-600 hover:text-white transition-colors rounded-none"
-          >
-            Delete
-          </button>
+          {status === "DRAFT" ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (!confirm("Are you sure you want to delete this DRAFT document? This action cannot be undone.")) return;
+                deleteDocMutation.mutate(documentId, {
+                  onSuccess: () => {
+                    router.push(`/workspaces/${shopSlug}/documents`);
+                  },
+                });
+              }}
+              className="border border-rose-600 text-rose-600 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-600 hover:text-white transition-colors rounded-none"
+            >
+              Delete Draft
+            </button>
+          ) : (
+            <span
+              title="Issued or Paid documents cannot be deleted. Raise a Credit Note to reverse financial value."
+              className="border border-zinc-200 bg-zinc-100 text-zinc-400 px-3 py-2 text-[10px] font-bold uppercase tracking-wider cursor-not-allowed select-none"
+            >
+              🔒 Deletion Blocked (Audit Protected)
+            </span>
+          )}
         </div>
       </div>
     </div>

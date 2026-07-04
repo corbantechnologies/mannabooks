@@ -173,6 +173,14 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
             return { success: false, error: "Document not found or access denied." };
         }
 
+        // PERMANENT SETTLEMENT GUARD: Block reverting PAID documents
+        if (existing.status === "PAID" && input.status !== "PAID") {
+            return {
+                success: false,
+                error: "Statutory Rule: Settled PAID documents cannot be reverted. Issue a Credit Note to reverse value."
+            };
+        }
+
         await db.update(documents)
             .set({ status: input.status })
             .where(and(eq(documents.id, input.documentId), eq(documents.shopId, input.shopId)));
@@ -189,10 +197,27 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
 }
 
 /**
- * Permanently deletes a document record and its line items.
+ * Permanently deletes a DRAFT document record.
+ * Non-draft documents (SENT, OVERDUE, PAID) are audit-protected and blocked from deletion.
  */
 export async function deleteDocument(documentId: string, shopId: string, shopSlug: string) {
     try {
+        const existing = await db.query.documents.findFirst({
+            where: and(eq(documents.id, documentId), eq(documents.shopId, shopId)),
+        });
+
+        if (!existing) {
+            return { success: false, error: "Target document not found or access denied." };
+        }
+
+        // AUDIT DELETION GUARD: Only DRAFT documents can be hard deleted
+        if (existing.status !== "DRAFT") {
+            return {
+                success: false,
+                error: `Statutory Audit Protection: ${existing.type} (${existing.docNumber}) is in ${existing.status} status and cannot be deleted. Issue a Credit Note to adjust balance.`
+            };
+        }
+
         await db.delete(documents)
             .where(and(eq(documents.id, documentId), eq(documents.shopId, shopId)));
 

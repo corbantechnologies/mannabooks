@@ -1,6 +1,6 @@
 // src/app/workspaces/[slug]/documents/new/page.tsx
 import { db } from "@/db";
-import { clients, products, shops } from "@/db/schema";
+import { clients, products, shops, suppliers } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { DocumentBuilderClientForm } from "./DocumentBuilderClientForm";
@@ -28,6 +28,11 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
     orderBy: [desc(clients.createdAt)],
   });
 
+  const supplierRegistry = await db.query.suppliers.findMany({
+    where: eq(suppliers.shopId, shop.id),
+    orderBy: [desc(suppliers.createdAt)],
+  });
+
   const productRegistry = await db.query.products.findMany({
     where: eq(products.shopId, shop.id),
     orderBy: [desc(products.createdAt)],
@@ -44,6 +49,7 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
         shop={shop}
         shopSlug={slug}
         clients={clientRegistry}
+        suppliers={supplierRegistry}
         products={productRegistry}
       />
     </div>

@@ -29,7 +29,8 @@ interface CreateDocumentItemInput {
 interface CreateDocumentInput {
     shopId: string;
     shopSlug: string;
-    clientId: string;
+    clientId?: string;
+    supplierId?: string;
     type: DocumentType;
     dueDate?: Date;
     kraCuInvoiceNumber?: string;
@@ -94,7 +95,8 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
             // 4. Create the parent Document snapshot
             const [newDoc] = await tx.insert(documents).values({
                 shopId: input.shopId,
-                clientId: input.clientId,
+                clientId: input.clientId || null,
+                supplierId: input.supplierId || null,
                 type: input.type,
                 docNumber: formattedSerial,
                 status: "DRAFT", // Default newly generated files to editable draft status
@@ -221,7 +223,8 @@ export async function duplicateDocument(documentId: string, shopId: string, shop
         const res = await createBillingDocument({
             shopId,
             shopSlug,
-            clientId: existing.clientId,
+            clientId: existing.clientId || undefined,
+            supplierId: existing.supplierId || undefined,
             type: existing.type,
             dueDate: existing.dueDate || undefined,
             items: existing.items.map((item) => ({
@@ -269,7 +272,8 @@ export async function convertDocumentAction(
         const res = await createBillingDocument({
             shopId,
             shopSlug,
-            clientId: sourceDoc.clientId,
+            clientId: sourceDoc.clientId || undefined,
+            supplierId: sourceDoc.supplierId || undefined,
             type: targetType,
             parentDocumentId: sourceDoc.id,
             kraCuInvoiceNumber: sourceDoc.kraCuInvoiceNumber || undefined,
@@ -333,7 +337,8 @@ export async function raiseCreditNoteAction(input: RaiseCreditNoteInput) {
         const res = await createBillingDocument({
             shopId: input.shopId,
             shopSlug: input.shopSlug,
-            clientId: invoice.clientId,
+            clientId: invoice.clientId || undefined,
+            supplierId: invoice.supplierId || undefined,
             type: "CREDIT_NOTE",
             parentDocumentId: invoice.id,
             kraCuInvoiceNumber: input.creditNoteCuNumber || undefined,

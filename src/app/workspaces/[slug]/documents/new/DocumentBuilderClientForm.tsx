@@ -13,6 +13,7 @@ interface BuilderProps {
   shop: any;
   shopSlug: string;
   clients: any[];
+  suppliers?: any[];
   products: any[];
 }
 
@@ -23,27 +24,37 @@ interface UiRowItem {
   taxType: "V_16" | "V_0" | "EXEMPT";
 }
 
-export function DocumentBuilderClientForm({ shop, shopSlug, clients, products }: BuilderProps) {
+export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers = [], products }: BuilderProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form Parameters
-  const [clientId, setClientId] = useState("");
+  const [partyType, setPartyType] = useState<"CLIENT" | "SUPPLIER">("CLIENT");
+  const [targetId, setTargetId] = useState("");
   const [docType, setDocType] = useState<DocumentType>("INVOICE");
   const [dueDate, setDueDate] = useState("");
   const [kraCuInvoiceNumber, setKraCuInvoiceNumber] = useState("");
   const [requiresEtims, setRequiresEtims] = useState(false);
 
-  // Update client-level eTIMS preference when selecting client
+  // Automatically switch partyType when selecting Procurement documents (LPO, PO, GRN, PV)
   useEffect(() => {
-    if (clientId) {
-      const selectedClient = clients.find((c) => c.id === clientId);
-      if (selectedClient && selectedClient.requiresEtims) {
+    if (docType === "LPO" || docType === "PO" || docType === "GOODS_RECEIVED_NOTE" || docType === "PAYMENT_VOUCHER") {
+      setPartyType("SUPPLIER");
+      setTargetId("");
+    }
+  }, [docType]);
+
+  // Update eTIMS preference when selecting target client or supplier
+  useEffect(() => {
+    if (targetId) {
+      const list = partyType === "CLIENT" ? clients : suppliers;
+      const selected = list.find((p) => p.id === targetId);
+      if (selected && selected.requiresEtims) {
         setRequiresEtims(true);
       }
     }
-  }, [clientId, clients]);
+  }, [targetId, partyType, clients, suppliers]);
 
   // Dynamic Ledger Item Rows
   const [rows, setRows] = useState<UiRowItem[]>([
@@ -89,8 +100,8 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, products }:
     e.preventDefault();
     setError(null);
 
-    if (!clientId) {
-      const msg = "A targeted Client Profile must be explicitly mapped to this file.";
+    if (!targetId) {
+      const msg = `A targeted ${partyType === "CLIENT" ? "Client" : "Supplier"} Profile must be explicitly mapped to this file.`;
       setError(msg);
       toast.error(msg);
       return;
@@ -110,7 +121,8 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, products }:
     const res = await createBillingDocument({
       shopId: shop.id,
       shopSlug,
-      clientId,
+      clientId: partyType === "CLIENT" ? targetId : undefined,
+      supplierId: partyType === "SUPPLIER" ? targetId : undefined,
       type: docType,
       dueDate: dueDate ? new Date(dueDate) : undefined,
       kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
@@ -139,20 +151,50 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, products }:
 
       {/* PARENT ATTRIBUTE META GRID */}
       <div className="border border-black p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 bg-white">
+        
+        {/* PARTY TYPE & SELECTOR */}
         <div className="space-y-1">
-          <label className="text-zinc-400 uppercase block">Target Recipient Client</label>
+          <div className="flex justify-between items-center mb-1">
+            <label className="text-zinc-400 uppercase text-[10px]">Target Entity Node</label>
+            <div className="flex gap-1 text-[9px]">
+              <button
+                type="button"
+                onClick={() => { setPartyType("CLIENT"); setTargetId(""); }}
+                className={`px-1.5 py-0.5 border font-bold uppercase ${partyType === "CLIENT" ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-300"}`}
+              >
+                Client
+              </button>
+              <button
+                type="button"
+                onClick={() => { setPartyType("SUPPLIER"); setTargetId(""); }}
+                className={`px-1.5 py-0.5 border font-bold uppercase ${partyType === "SUPPLIER" ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-300"}`}
+              >
+                Supplier
+              </button>
+            </div>
+          </div>
+
           <select
-            value={clientId}
-            onChange={(e) => setClientId(e.target.value)}
+            value={targetId}
+            onChange={(e) => setTargetId(e.target.value)}
             className="w-full px-3 py-2 border border-black bg-white rounded-none focus:outline-none focus:ring-1 focus:ring-black font-sans text-sm"
             required
           >
-            <option value="">-- SELECT FROM CLIENT FLOW REGISTRY --</option>
-            {clients.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.name.toUpperCase()} {c.taxPin ? `(${c.taxPin})` : ""} {c.requiresEtims ? "[eTIMS Required]" : ""}
-              </option>
-            ))}
+            <option value="">
+              -- SELECT FROM {partyType === "CLIENT" ? "CLIENT FLOW" : "SUPPLIER NETWORK"} REGISTRY --
+            </option>
+            {partyType === "CLIENT"
+              ? clients.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name.toUpperCase()} {c.taxPin ? `(${c.taxPin})` : ""} {c.requiresEtims ? "[eTIMS Required]" : ""}
+                  </option>
+                ))
+              : suppliers.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.name.toUpperCase()} {s.taxPin ? `(${s.taxPin})` : ""} {s.requiresEtims ? "[eTIMS Required]" : ""}
+                  </option>
+                ))
+            }
           </select>
         </div>
 

@@ -21,12 +21,14 @@ export function PWAInstallPrompt() {
         });
     }
 
-    // 2. Check if already running in standalone PWA mode
+    // 2. Check if user previously dismissed or installed
     if (typeof window !== "undefined") {
+      const isDismissed = localStorage.getItem("manna_pwa_dismissed") === "true";
       const isStandalone =
         window.matchMedia("(display-mode: standalone)").matches ||
         (window.navigator as any).standalone === true;
-      if (isStandalone) {
+
+      if (isStandalone || isDismissed) {
         setInstalled(true);
         return;
       }
@@ -42,8 +44,11 @@ export function PWAInstallPrompt() {
     // 3. Listen for beforeinstallprompt event (Android, Chrome, Edge, Desktop)
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
-      setShowBanner(true);
+      const isDismissed = typeof window !== "undefined" && localStorage.getItem("manna_pwa_dismissed") === "true";
+      if (!isDismissed) {
+        setDeferredPrompt(e);
+        setShowBanner(true);
+      }
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -53,12 +58,20 @@ export function PWAInstallPrompt() {
     };
   }, []);
 
+  function handleDismiss() {
+    setShowBanner(false);
+    setIsIOS(false);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("manna_pwa_dismissed", "true");
+    }
+  }
+
   async function handleInstallClick() {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
-      setShowBanner(false);
+      handleDismiss();
       setInstalled(true);
     }
     setDeferredPrompt(null);
@@ -81,7 +94,7 @@ export function PWAInstallPrompt() {
               </p>
             </div>
             <button
-              onClick={() => setShowBanner(false)}
+              onClick={handleDismiss}
               className="text-zinc-400 hover:text-white text-base font-bold"
             >
               ✕
@@ -96,7 +109,7 @@ export function PWAInstallPrompt() {
               Install App
             </button>
             <button
-              onClick={() => setShowBanner(false)}
+              onClick={handleDismiss}
               className="border border-zinc-700 text-zinc-300 py-1.5 px-3 uppercase text-[10px] hover:border-white hover:text-white"
             >
               Dismiss
@@ -110,7 +123,7 @@ export function PWAInstallPrompt() {
         <div className="hidden lg:hidden fixed bottom-2 left-2 right-2 z-40 bg-zinc-900 text-white p-3 border border-zinc-700 font-mono text-[10px] space-y-1">
           <div className="flex justify-between items-center">
             <span className="font-bold uppercase text-amber-400">💡 Install on iPhone / iPad</span>
-            <button onClick={() => setIsIOS(false)} className="text-zinc-400">✕</button>
+            <button onClick={handleDismiss} className="text-zinc-400">✕</button>
           </div>
           <p className="font-sans text-zinc-300 text-[11px]">
             Tap <strong className="text-white">Share</strong> button in Safari, then select <strong className="text-white">Add to Home Screen</strong>.

@@ -247,7 +247,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
         </div>
 
         <div className="space-y-1">
-          <label className="text-zinc-400 uppercase block">Expected Payment Maturity Due Date</label>
+          <label className="text-zinc-400 uppercase block">Payment Due Date</label>
           <input
             type="date"
             value={dueDate}

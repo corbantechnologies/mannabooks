@@ -114,6 +114,12 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
               KRA eTIMS CU #: {doc.kraCuInvoiceNumber}
             </p>
           )}
+          {(doc.paymentChannel || doc.paymentReference) && (
+            <div className="font-mono text-[10px] border-t border-zinc-200 pt-1 mt-1 space-y-0.5">
+              {doc.paymentChannel && <p className="font-bold uppercase text-black">Paid via: {doc.paymentChannel}</p>}
+              {doc.paymentReference && <p className="text-zinc-600">Ref #: {doc.paymentReference}</p>}
+            </div>
+          )}
         </div>
       </div>
 
@@ -174,6 +180,8 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
         clientEmail={party.email}
         docNumber={doc.docNumber}
         kraCuInvoiceNumber={doc.kraCuInvoiceNumber}
+        initialPaymentChannel={doc.paymentChannel}
+        initialPaymentReference={doc.paymentReference}
         parentDocument={parentDoc ? { id: parentDoc.id, docNumber: parentDoc.docNumber, type: parentDoc.type } : null}
       />
 

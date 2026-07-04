@@ -9,7 +9,12 @@ export function useUpdateDocumentStatus(shopId: string, shopSlug: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { documentId: string; status: "DRAFT" | "SENT" | "OVERDUE" | "PAID" }) => {
+    mutationFn: async (data: {
+      documentId: string;
+      status: "DRAFT" | "SENT" | "OVERDUE" | "PAID";
+      paymentChannel?: string;
+      paymentReference?: string;
+    }) => {
       const res = await updateDocumentStatus({ shopId, shopSlug, ...data });
       if (!res.success) throw new Error(res.error || "Failed to update document status.");
       return res;

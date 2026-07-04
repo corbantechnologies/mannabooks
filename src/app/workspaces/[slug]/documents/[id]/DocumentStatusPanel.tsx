@@ -30,6 +30,8 @@ interface DocumentStatusPanelProps {
   clientEmail: string;
   docNumber: string;
   kraCuInvoiceNumber?: string | null;
+  initialPaymentChannel?: string | null;
+  initialPaymentReference?: string | null;
   parentDocument?: { id: string; docNumber: string; type: string } | null;
 }
 
@@ -51,11 +53,15 @@ export function DocumentStatusPanel({
   clientEmail,
   docNumber,
   kraCuInvoiceNumber,
+  initialPaymentChannel = "",
+  initialPaymentReference = "",
   parentDocument,
 }: DocumentStatusPanelProps) {
   const router = useRouter();
   const [status, setStatus] = useState<"DRAFT" | "SENT" | "OVERDUE" | "PAID">(currentStatus);
   const [cuNumber, setCuNumber] = useState(kraCuInvoiceNumber || "");
+  const [paymentChannel, setPaymentChannel] = useState(initialPaymentChannel || "");
+  const [paymentReference, setPaymentReference] = useState(initialPaymentReference || "");
   const [savingCu, setSavingCu] = useState(false);
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
@@ -176,6 +182,35 @@ export function DocumentStatusPanel({
           >
             {savingCu ? "Saving..." : "Save CU #"}
           </button>
+        </div>
+      </div>
+
+      {/* PAYMENT CONFIRMATION DETAILS (OPTIONAL) */}
+      <div className="border border-zinc-200 p-4 bg-zinc-50 space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] font-bold uppercase text-black">Payment Confirmation &amp; Remittance Ref</span>
+          <span className="text-[9px] text-zinc-400 italic">Optional Settlement Details</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <select
+            value={paymentChannel}
+            onChange={(e) => setPaymentChannel(e.target.value)}
+            className="w-full px-3 py-1.5 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase"
+          >
+            <option value="">-- PAYMENT CHANNEL / METHOD --</option>
+            <option value="BANK">Bank Account / Transfer</option>
+            <option value="MPESA">M-Pesa (Till / Paybill)</option>
+            <option value="CASH">Cash Settlement</option>
+            <option value="CHEQUE">Bank Cheque</option>
+            <option value="OTHER">Other Custom Method</option>
+          </select>
+          <input
+            type="text"
+            value={paymentReference}
+            onChange={(e) => setPaymentReference(e.target.value)}
+            placeholder="e.g. M-Pesa Code QAB71239X or Bank Ref"
+            className="w-full px-3 py-1.5 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase"
+          />
         </div>
       </div>
 

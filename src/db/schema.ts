@@ -127,6 +127,10 @@ export const documents = pgTable('documents', {
     requiresEtims: boolean('requires_etims').default(false).notNull(),
     notes: text('notes'),
 
+    // Optional Settlement Confirmation Details
+    paymentChannel: varchar('payment_channel', { length: 50 }), // e.g. BANK, MPESA, CASH, CHEQUE, OTHER
+    paymentReference: varchar('payment_reference', { length: 100 }), // e.g. M-Pesa Code QAB71239X or Bank Ref FT261900123
+
     // High-precision frozen metrics
     subTotal: numeric('sub_total', { precision: 12, scale: 2 }).notNull(),
     taxAmount: numeric('tax_amount', { precision: 12, scale: 2 }).default('0.00').notNull(),

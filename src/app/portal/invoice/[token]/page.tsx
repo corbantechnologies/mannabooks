@@ -141,6 +141,11 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
                 KRA eTIMS CU #: {doc.kraCuInvoiceNumber}
               </p>
             )}
+            {(doc.paymentChannel || doc.paymentReference) && (
+              <p className="text-[10px] font-bold text-emerald-800 border border-emerald-300 bg-emerald-50 px-2 py-0.5 inline-block">
+                {doc.paymentChannel ? `SETTLED VIA: ${doc.paymentChannel}` : "SETTLED"} {doc.paymentReference ? `(Ref: ${doc.paymentReference})` : ""}
+              </p>
+            )}
             <p className="text-zinc-500">Issued: {new Date(doc.issueDate).toLocaleDateString()}</p>
             {doc.dueDate && <p className="text-rose-600 font-bold">Maturity: {new Date(doc.dueDate).toLocaleDateString()}</p>}
           </div>

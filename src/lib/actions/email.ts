@@ -92,6 +92,11 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
                                 <td style="color: #71717a; padding-bottom: 8px;">${amountLabel}</td>
                                 <td style="text-align: right; font-weight: bold; font-size: 16px; color: ${brandColor}; padding-bottom: 8px;">${doc.shop.currency} ${doc.grandTotal}</td>
                             </tr>
+                            ${doc.paymentChannel ? `
+                            <tr>
+                                <td style="color: #71717a; padding-bottom: 8px;">PAYMENT CHANNEL:</td>
+                                <td style="text-align: right; font-weight: bold; padding-bottom: 8px;">${doc.paymentChannel} ${doc.paymentReference ? `(Ref: ${doc.paymentReference})` : ''}</td>
+                            </tr>` : ''}
                             ${doc.dueDate ? `
                             <tr>
                                 <td style="color: #71717a;">DUE DATE:</td>

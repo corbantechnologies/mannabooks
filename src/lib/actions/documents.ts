@@ -156,6 +156,8 @@ interface UpdateDocumentStatusInput {
     shopId: string;
     shopSlug: string;
     status: "DRAFT" | "SENT" | "OVERDUE" | "PAID";
+    paymentChannel?: string;
+    paymentReference?: string;
 }
 
 /**
@@ -181,8 +183,16 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
             };
         }
 
+        const updateData: any = { status: input.status };
+        if (input.paymentChannel !== undefined) {
+            updateData.paymentChannel = input.paymentChannel.trim() || null;
+        }
+        if (input.paymentReference !== undefined) {
+            updateData.paymentReference = input.paymentReference.trim() || null;
+        }
+
         await db.update(documents)
-            .set({ status: input.status })
+            .set(updateData)
             .where(and(eq(documents.id, input.documentId), eq(documents.shopId, input.shopId)));
 
         revalidatePath(`/workspaces/${input.shopSlug}/documents`);
@@ -410,5 +420,33 @@ export async function updateDocumentKraCuNumberAction(
     } catch (error) {
         console.error("Failed to update KRA eTIMS CU Number:", error);
         return { success: false, error: "Failed to update eTIMS CU Number." };
+    }
+}
+
+/**
+ * Updates or sets optional payment confirmation details (channel e.g. BANK/MPESA/CASH, and transaction reference #).
+ */
+export async function updateDocumentPaymentDetailsAction(
+    documentId: string,
+    shopId: string,
+    shopSlug: string,
+    paymentChannel?: string,
+    paymentReference?: string
+) {
+    try {
+        await db.update(documents)
+            .set({
+                paymentChannel: paymentChannel?.trim() || null,
+                paymentReference: paymentReference?.trim() || null,
+            })
+            .where(and(eq(documents.id, documentId), eq(documents.shopId, shopId)));
+
+        revalidatePath(`/workspaces/${shopSlug}/documents/${documentId}`);
+        revalidatePath(`/workspaces/${shopSlug}/documents`);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update payment confirmation details:", error);
+        return { success: false, error: "Failed to update payment details." };
     }
 }

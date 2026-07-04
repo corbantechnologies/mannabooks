@@ -128,10 +128,16 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
                 [04] Supplier Network
               </Link>
               <Link 
+                href={`/workspaces/${slug}/analytics`} 
+                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+              >
+                [05] Financial Analytics
+              </Link>
+              <Link 
                 href={`/workspaces/${slug}/settings`} 
                 className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
               >
-                [05] System Settings
+                [06] System Settings
               </Link>
             </nav>
           </div>

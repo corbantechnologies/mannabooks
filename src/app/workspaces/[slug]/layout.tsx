@@ -59,31 +59,37 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
       <MobileNavDrawer slug={slug} shop={shop} user={user} />
 
       {/* GLOBAL MINIMAL EDITORIAL SIDEBAR (1024px+) */}
-      <aside className="hidden lg:flex w-64 border-r border-black flex-col justify-between bg-white h-screen sticky top-0 shrink-0">
-        <div className="flex flex-col flex-1 overflow-y-auto p-6 space-y-12">
+      <aside className="hidden lg:flex w-64 border-r border-zinc-200/80 flex-col justify-between bg-white h-screen sticky top-0 shrink-0">
+        <div className="flex flex-col flex-1 overflow-y-auto p-6 space-y-10">
           
           {/* BUSINESS LOGO PROFILE INDICATOR */}
-          <div className="space-y-3 border-b border-zinc-200 pb-6">
+          <div className="space-y-3 border-b border-zinc-200/80 pb-6">
             <div className="flex justify-between items-center">
-              <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 block">Current Workspace</span>
-              <Link href="/workspaces" className="font-mono text-[9px] uppercase font-bold text-black underline hover:no-underline">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 block font-semibold">Workspace</span>
+              <Link href="/workspaces" className="font-mono text-[9px] uppercase font-semibold text-black underline hover:no-underline">
                 Switch / Add
               </Link>
             </div>
 
             <div className="flex items-center gap-3">
-              {shop.logoUrl && (
-                <img src={shop.logoUrl} alt={shop.name} className="w-8 h-8 object-contain border border-black p-0.5 bg-white shrink-0" />
+              {shop.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={shop.logoUrl} alt={shop.name} className="w-8 h-8 object-contain border border-zinc-200 p-0.5 bg-white rounded shrink-0" />
+              ) : (
+                <span
+                  className="w-3.5 h-3.5 border border-black/30 rounded-sm shrink-0 inline-block"
+                  style={{ backgroundColor: shop.primaryColor || "#000000" }}
+                />
               )}
               <div className="min-w-0">
-                <h2 className="font-bold uppercase tracking-tighter text-base truncate block leading-none">
+                <h2 className="font-sans font-semibold uppercase tracking-tight text-sm truncate block leading-none">
                   {shop.shortName || shop.name}
                 </h2>
                 {shop.phone && (
                   <p className="font-mono text-[9px] text-zinc-500 truncate mt-0.5">{shop.phone}</p>
                 )}
                 {shop.taxPin ? (
-                  <div className="inline-block border border-black font-mono text-[9px] px-1 py-0.5 uppercase tracking-tight text-zinc-600 bg-zinc-50 mt-1">
+                  <div className="inline-block border border-zinc-200 font-mono text-[9px] px-1.5 py-0.5 uppercase tracking-tight text-zinc-600 bg-zinc-50 rounded-sm mt-1 font-semibold">
                     PIN: {shop.taxPin}
                   </div>
                 ) : (
@@ -95,53 +101,53 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
 
           {/* APPLICATION DIRECTORY LINKS */}
           <div className="space-y-2 flex-1">
-            <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 block mb-3">Ledger Directories</span>
-            <nav className="flex flex-col gap-2 font-mono text-xs uppercase font-bold tracking-wider">
+            <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 block mb-3 font-semibold">Directories</span>
+            <nav className="flex flex-col gap-1 font-mono text-xs uppercase font-semibold tracking-wider">
               <Link 
                 href={`/workspaces/${slug}`} 
-                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
                 [00] Overview Log
               </Link>
               <Link 
                 href={`/workspaces/${slug}/documents`} 
-                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
                 [01] Fiscal Ledgers
               </Link>
               <Link 
                 href={`/workspaces/${slug}/clients`} 
-                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
                 [02] Client Flow
               </Link>
               <Link 
                 href={`/workspaces/${slug}/products`} 
-                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
                 [03] Product Catalog
               </Link>
               <Link 
                 href={`/workspaces/${slug}/suppliers`} 
-                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
                 [04] Supplier Network
               </Link>
               <Link 
                 href={`/workspaces/${slug}/analytics`} 
-                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
                 [05] Analytics
               </Link>
               <Link 
                 href={`/workspaces/${slug}/settings`} 
-                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
                 [06] System Settings
               </Link>
               <Link 
                 href={`/workspaces/${slug}/guide`} 
-                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
                 [07] Operator Guide
               </Link>
@@ -151,15 +157,15 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
         </div>
 
         {/* FOOTER USER MANAGEMENT COMPONENT */}
-        <div className="p-6 border-t border-black bg-zinc-50 flex flex-col gap-2 font-mono text-[11px]">
+        <div className="p-6 border-t border-zinc-200/80 bg-zinc-50/50 flex flex-col gap-2 font-mono text-[11px]">
           <div className="truncate">
-            <span className="text-zinc-400 block text-[9px] uppercase">OPERATOR</span>
-            <span className="font-bold text-black uppercase">{user.name}</span>
+            <span className="text-zinc-400 block text-[9px] uppercase font-semibold">OPERATOR</span>
+            <span className="font-semibold text-black uppercase">{user.name}</span>
           </div>
-          <div className="text-[9px] text-zinc-400 border-t border-zinc-200 pt-2 flex justify-between items-center">
+          <div className="text-[9px] text-zinc-400 border-t border-zinc-200/80 pt-2 flex justify-between items-center">
             <span>MANNA v2026.4</span>
             <form action={logoutAction}>
-              <button type="submit" className="text-black font-bold underline hover:no-underline uppercase cursor-pointer bg-transparent border-none p-0 font-mono text-[9px]">
+              <button type="submit" className="text-black font-semibold underline hover:no-underline uppercase cursor-pointer bg-transparent border-none p-0 font-mono text-[9px]">
                 Logout
               </button>
             </form>

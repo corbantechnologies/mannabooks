@@ -23,24 +23,24 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="lg:hidden border-b border-black bg-white sticky top-0 z-40">
+    <div className="lg:hidden border-b border-zinc-200/80 glass-panel sticky top-0 z-40">
       {/* MOBILE TOP NAVIGATION BAR */}
       <div className="flex justify-between items-center p-4">
         <div className="flex items-center gap-3 min-w-0">
           {shop.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={shop.logoUrl} alt={shop.name} className="w-7 h-7 object-contain border border-black p-0.5 bg-white shrink-0" />
+            <img src={shop.logoUrl} alt={shop.name} className="w-7 h-7 object-contain border border-zinc-200 p-0.5 bg-white rounded shrink-0" />
           ) : (
             <span
-              className="w-3.5 h-3.5 border border-black/30 shrink-0 inline-block"
+              className="w-3.5 h-3.5 border border-black/30 rounded-sm shrink-0 inline-block"
               style={{ backgroundColor: shop.primaryColor || "#000000" }}
             />
           )}
           <div className="min-w-0">
-            <h2 className="font-mono font-bold uppercase tracking-tighter text-sm truncate leading-none">
+            <h2 className="font-sans font-semibold uppercase tracking-tight text-sm truncate leading-none">
               {shop.shortName || shop.name}
             </h2>
-            <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 block mt-0.5">
+            <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 block mt-0.5 font-semibold">
               Workspace
             </span>
           </div>
@@ -48,7 +48,7 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
 
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="border border-black px-3 py-1.5 font-mono text-xs font-bold uppercase hover:bg-black hover:text-white transition-colors flex items-center gap-1.5"
+          className="border border-zinc-300 rounded px-3 py-1.5 font-mono text-xs font-semibold uppercase hover:bg-black hover:text-white transition-colors flex items-center gap-1.5 bg-white"
           aria-label="Toggle Navigation Menu"
         >
           <span>{isOpen ? "✕" : "☰"}</span>
@@ -58,7 +58,7 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
 
       {/* MOBILE OVERLAY DRAWER PANEL */}
       {isOpen && (
-        <div className="border-t border-black bg-white p-6 space-y-8 font-mono text-xs shadow-lg animate-in slide-in-from-top duration-200">
+        <div className="border-t border-zinc-200/80 bg-white/95 backdrop-blur-md p-6 space-y-6 font-mono text-xs shadow-lg animate-in slide-in-from-top duration-200">
           {/* WORKSPACE PROFILE BRIEF */}
           <div className="space-y-2 border-b border-zinc-200 pb-4">
             <div className="flex justify-between items-center">
@@ -82,61 +82,61 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
 
           {/* NAVIGATION LINKS */}
           <div className="space-y-2">
-            <span className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-2">LEDGER DIRECTORIES</span>
-            <nav className="flex flex-col gap-2 font-bold uppercase text-xs tracking-wider">
+            <span className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-2 font-semibold">LEDGER DIRECTORIES</span>
+            <nav className="flex flex-col gap-1.5 font-semibold uppercase text-xs tracking-wider">
               <Link
                 href={`/workspaces/${slug}`}
                 onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-black hover:bg-black hover:text-white transition-all block text-left"
+                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
                 [00] Overview Log
               </Link>
               <Link
                 href={`/workspaces/${slug}/documents`}
                 onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-black hover:bg-black hover:text-white transition-all block text-left"
+                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
                 [01] Fiscal Ledgers
               </Link>
               <Link
                 href={`/workspaces/${slug}/clients`}
                 onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-black hover:bg-black hover:text-white transition-all block text-left"
+                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
                 [02] Client Flow
               </Link>
               <Link
                 href={`/workspaces/${slug}/products`}
                 onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-black hover:bg-black hover:text-white transition-all block text-left"
+                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
                 [03] Product Catalog
               </Link>
               <Link
                 href={`/workspaces/${slug}/suppliers`}
                 onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-black hover:bg-black hover:text-white transition-all block text-left"
+                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
                 [04] Supplier Network
               </Link>
               <Link
                 href={`/workspaces/${slug}/analytics`}
                 onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-black hover:bg-black hover:text-white transition-all block text-left"
+                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
                 [05] Analytics
               </Link>
               <Link
                 href={`/workspaces/${slug}/settings`}
                 onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-black hover:bg-black hover:text-white transition-all block text-left"
+                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
                 [06] System Settings
               </Link>
               <Link
                 href={`/workspaces/${slug}/guide`}
                 onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-black hover:bg-black hover:text-white transition-all block text-left"
+                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
                 [07] Operator Guide
               </Link>

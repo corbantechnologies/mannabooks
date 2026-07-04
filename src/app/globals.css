@@ -1,17 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  /* Enforce sharp, architectural edges globally across all default utilities */
-  --radius-none: 0px;
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
-  --radius-2xl: 0px;
-  --radius-3xl: 0px;
-  --radius-full: 0px;
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
 
-  /* Bind custom CSS typography variables configured in your layout metadata */
+  /* Bind custom CSS typography variables configured in layout metadata */
   --font-sans: var(--font-inter), sans-serif;
   --font-mono: var(--font-roboto-mono), monospace;
 }
@@ -19,26 +13,74 @@
 @layer base {
   :root {
     color-scheme: light;
+    --brand-primary: #000000;
   }
 
   html, body {
     background-color: #ffffff !important;
-    color: #000000 !important;
+    color: #09090b !important;
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Force flat, square borders on native operational inputs globally */
-  input,
-  select,
-  textarea,
-  button {
-    border-radius: 0px !important;
-  }
-
   /* Custom high-contrast text selection style */
   ::selection {
-    background-color: #000000;
+    background-color: var(--brand-primary);
     color: #ffffff;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    background-color: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .card-modern {
+    background-color: #ffffff;
+    border: 1px solid rgba(228, 228, 231, 0.9);
+    border-radius: 6px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .card-modern:hover {
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  .btn-primary-modern {
+    background-color: var(--brand-primary);
+    color: #ffffff;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.15s ease-out;
+  }
+
+  .btn-primary-modern:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .btn-primary-modern:active {
+    transform: scale(0.98);
+  }
+
+  .btn-secondary-modern {
+    background-color: #ffffff;
+    color: #09090b;
+    border: 1px solid #e4e4e7;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.15s ease-out;
+  }
+
+  .btn-secondary-modern:hover {
+    border-color: #a1a1aa;
+    background-color: #fafafa;
+  }
+
+  .btn-secondary-modern:active {
+    transform: scale(0.98);
   }
 }

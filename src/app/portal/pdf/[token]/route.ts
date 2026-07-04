@@ -53,8 +53,10 @@ const PdfDocumentStructure = ({ doc, shop, client, settlements }: any) => {
                     React.createElement(
                         ReactPDF.View,
                         null,
-                        React.createElement(ReactPDF.Text, { style: styles.shopName }, shop.name),
-                        shop.taxPin && React.createElement(ReactPDF.Text, { style: { fontSize: 8, color: "#71717a" } }, "Tax PIN: " + shop.taxPin)
+                        React.createElement(ReactPDF.Text, { style: styles.shopName }, shop.shortName || shop.name),
+                        shop.taxPin && React.createElement(ReactPDF.Text, { style: { fontSize: 8, color: "#71717a" } }, "Tax PIN: " + shop.taxPin),
+                        shop.phone && React.createElement(ReactPDF.Text, { style: { fontSize: 8, color: "#71717a" } }, "Tel: " + shop.phone),
+                        shop.website && React.createElement(ReactPDF.Text, { style: { fontSize: 8, color: primaryColor } }, shop.website)
                     )
                 ),
                 React.createElement(

@@ -42,8 +42,11 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
               )}
               <div className="min-w-0">
                 <h2 className="font-bold uppercase tracking-tighter text-base truncate block leading-none">
-                  {shop.name}
+                  {shop.shortName || shop.name}
                 </h2>
+                {shop.phone && (
+                  <p className="font-mono text-[9px] text-zinc-500 truncate mt-0.5">{shop.phone}</p>
+                )}
                 {shop.taxPin ? (
                   <div className="inline-block border border-black font-mono text-[9px] px-1 py-0.5 uppercase tracking-tight text-zinc-600 bg-zinc-50 mt-1">
                     PIN: {shop.taxPin}

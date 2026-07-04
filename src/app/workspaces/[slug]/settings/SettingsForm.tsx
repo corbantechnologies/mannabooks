@@ -18,6 +18,10 @@ interface SettingsFormProps {
   shopId: string;
   shopSlug: string;
   initialName: string;
+  initialShortName?: string;
+  initialPhone?: string;
+  initialWebsite?: string;
+  initialPrimaryColor?: string;
   initialLogoUrl?: string;
   initialTaxPin: string;
   initialIsVatRegistered: boolean;
@@ -25,10 +29,24 @@ interface SettingsFormProps {
   paymentMethods: PaymentMethod[];
 }
 
+const COLOR_PALETTES = [
+  { name: "Obsidian Black", hex: "#000000" },
+  { name: "Navy Blue", hex: "#1e3a8a" },
+  { name: "Emerald Green", hex: "#065f46" },
+  { name: "Crimson Red", hex: "#991b1b" },
+  { name: "Royal Purple", hex: "#581c87" },
+  { name: "Teal", hex: "#0f766e" },
+  { name: "Amber Bronze", hex: "#92400e" },
+];
+
 export function SettingsForm({
   shopId,
   shopSlug,
   initialName,
+  initialShortName = "",
+  initialPhone = "",
+  initialWebsite = "",
+  initialPrimaryColor = "#000000",
   initialLogoUrl = "",
   initialTaxPin,
   initialIsVatRegistered,
@@ -39,6 +57,10 @@ export function SettingsForm({
 
   // Profile form state
   const [businessName, setBusinessName] = useState(initialName);
+  const [shortName, setShortName] = useState(initialShortName);
+  const [phone, setPhone] = useState(initialPhone);
+  const [website, setWebsite] = useState(initialWebsite);
+  const [primaryColor, setPrimaryColor] = useState(initialPrimaryColor);
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
   const [taxPin, setTaxPin] = useState(initialTaxPin);
   const [isVatRegistered, setIsVatRegistered] = useState(initialIsVatRegistered);
@@ -84,7 +106,18 @@ export function SettingsForm({
       return;
     }
 
-    const res = await updateShopSettings({ shopId, name: businessName, logoUrl, taxPin, isVatRegistered, currency });
+    const res = await updateShopSettings({
+      shopId,
+      name: businessName,
+      shortName,
+      phone,
+      website,
+      primaryColor,
+      logoUrl,
+      taxPin,
+      isVatRegistered,
+      currency,
+    });
     setSaving(false);
     if (res.success) {
       const text = "Configuration committed successfully.";
@@ -216,15 +249,107 @@ export function SettingsForm({
           </div>
         )}
 
-        <div className="space-y-1">
-          <label className="text-zinc-400 uppercase block">Trading Profile Name</label>
-          <input
-            type="text"
-            value={businessName}
-            onChange={(e) => setBusinessName(e.target.value)}
-            className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-none"
-            required
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-zinc-400 uppercase block">Trading Legal Name</label>
+            <input
+              type="text"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-none"
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-zinc-400 uppercase block">Short Alias / Trading Name</label>
+            <input
+              type="text"
+              value={shortName}
+              onChange={(e) => setShortName(e.target.value)}
+              placeholder="e.g. Corban Tech"
+              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-zinc-400 uppercase block">Business Phone Contact</label>
+            <input
+              type="text"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="e.g. +254 712 345 678"
+              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-zinc-400 uppercase block">Official Website URL</label>
+            <input
+              type="url"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              placeholder="https://corbantechnologies.org"
+              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none font-mono text-[11px]"
+            />
+          </div>
+        </div>
+
+        {/* SHOP PRIMARY THEME COLOR SELECTOR */}
+        <div className="border border-black p-4 bg-zinc-50 space-y-3">
+          <div className="flex justify-between items-center">
+            <div>
+              <span className="font-bold uppercase text-black text-xs block">Shop Brand Theme Color</span>
+              <span className="text-[10px] text-zinc-500 font-sans normal-case block">
+                Replaces default black across your workspace, client portals, PDFs, and transactional emails.
+              </span>
+            </div>
+            <div
+              className="w-7 h-7 border border-black shadow-sm shrink-0"
+              style={{ backgroundColor: primaryColor || "#000000" }}
+              title={`Current Theme: ${primaryColor}`}
+            />
+          </div>
+
+          {/* Preset Swatches */}
+          <div className="flex flex-wrap gap-2 pt-1">
+            {COLOR_PALETTES.map((c) => (
+              <button
+                key={c.hex}
+                type="button"
+                onClick={() => setPrimaryColor(c.hex)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase border transition-colors ${
+                  primaryColor.toLowerCase() === c.hex.toLowerCase()
+                    ? "border-black bg-black text-white"
+                    : "border-zinc-300 bg-white text-zinc-700 hover:border-black"
+                }`}
+              >
+                <span className="w-3 h-3 border border-black/20" style={{ backgroundColor: c.hex }} />
+                {c.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Custom Hex Code Input */}
+          <div className="flex items-center gap-2 pt-1">
+            <span className="text-[10px] font-bold text-zinc-500 uppercase">Custom Hex Code:</span>
+            <input
+              type="color"
+              value={primaryColor.startsWith("#") && primaryColor.length === 7 ? primaryColor : "#000000"}
+              onChange={(e) => setPrimaryColor(e.target.value)}
+              className="w-8 h-8 p-0 border border-black cursor-pointer bg-white"
+            />
+            <input
+              type="text"
+              value={primaryColor}
+              onChange={(e) => setPrimaryColor(e.target.value)}
+              placeholder="#000000"
+              maxLength={7}
+              className="w-28 px-2 py-1 border border-black bg-white text-xs uppercase font-mono font-bold"
+            />
+          </div>
         </div>
 
         {/* LOGO UPLOAD & URL FIELD */}

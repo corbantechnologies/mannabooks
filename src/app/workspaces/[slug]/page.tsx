@@ -28,6 +28,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
       where: eq(documents.shopId, shop.id),
       with: {
         client: true,
+        supplier: true,
       },
       orderBy: (docs, { desc }) => [desc(docs.createdAt)],
       limit: 5,
@@ -122,7 +123,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
             href={`/workspaces/${slug}/documents`}
             className="font-mono text-xs font-bold uppercase underline hover:no-underline"
           >
-            View Master Ledger →
+            View Fiscal Ledgers →
           </Link>
         </div>
 
@@ -147,7 +148,9 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
                     </Link>
                   </td>
                   <td className="p-4 border-r border-black uppercase text-zinc-600">{doc.type}</td>
-                  <td className="p-4 border-r border-black uppercase font-sans font-bold">{doc.client.name}</td>
+                  <td className="p-4 border-r border-black uppercase font-sans font-bold">
+                    {doc.client?.name || doc.supplier?.name || "General Contact"}
+                  </td>
                   <td className="p-4 border-r border-black text-right font-bold">
                     {formatCurrency(doc.grandTotal, shop.currency)}
                   </td>

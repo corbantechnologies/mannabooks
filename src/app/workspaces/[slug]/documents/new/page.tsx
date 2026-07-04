@@ -1,9 +1,11 @@
 // src/app/workspaces/[slug]/documents/new/page.tsx
 import { db } from "@/db";
-import { clients, products, shops } from "@/db/schema";
+import { clients, products, shops, suppliers } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { DocumentBuilderClientForm } from "./DocumentBuilderClientForm";
+
+import { Suspense } from "react";
 
 interface NewDocumentPageProps {
   params: Promise<{ slug: string }>;
@@ -28,6 +30,11 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
     orderBy: [desc(clients.createdAt)],
   });
 
+  const supplierRegistry = await db.query.suppliers.findMany({
+    where: eq(suppliers.shopId, shop.id),
+    orderBy: [desc(suppliers.createdAt)],
+  });
+
   const productRegistry = await db.query.products.findMany({
     where: eq(products.shopId, shop.id),
     orderBy: [desc(products.createdAt)],
@@ -40,12 +47,15 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
         <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">Generate Document</h1>
       </div>
 
-      <DocumentBuilderClientForm 
-        shop={shop}
-        shopSlug={slug}
-        clients={clientRegistry}
-        products={productRegistry}
-      />
+      <Suspense fallback={<div className="font-mono text-xs text-zinc-400 p-4 border border-black">&gt; LOADING DOCUMENT COMPILER...</div>}>
+        <DocumentBuilderClientForm 
+          shop={shop}
+          shopSlug={slug}
+          clients={clientRegistry}
+          suppliers={supplierRegistry}
+          products={productRegistry}
+        />
+      </Suspense>
     </div>
   );
 }

@@ -7,14 +7,30 @@ import { useUpdateDocumentStatus, useDuplicateDocument, useDeleteDocument } from
 import { dispatchDocumentEmail } from "@/lib/actions/email";
 import { toast } from "react-hot-toast";
 
+import { DocumentActionsPopover } from "./DocumentActionsPopover";
+import { updateDocumentKraCuNumberAction, DocumentType } from "@/lib/actions/documents";
+import Link from "next/link";
+
+interface DocumentItem {
+  id: string;
+  description: string;
+  quantity: string;
+  unitPrice: string;
+  itemTotal: string;
+}
+
 interface DocumentStatusPanelProps {
   documentId: string;
   shopId: string;
   shopSlug: string;
   currentStatus: "DRAFT" | "SENT" | "OVERDUE" | "PAID";
+  docType: DocumentType;
+  items: DocumentItem[];
   portalLink: string | null;
   clientEmail: string;
   docNumber: string;
+  kraCuInvoiceNumber?: string | null;
+  parentDocument?: { id: string; docNumber: string; type: string } | null;
 }
 
 const STATUS_OPTIONS = [
@@ -29,12 +45,18 @@ export function DocumentStatusPanel({
   shopId,
   shopSlug,
   currentStatus,
+  docType,
+  items,
   portalLink,
   clientEmail,
   docNumber,
+  kraCuInvoiceNumber,
+  parentDocument,
 }: DocumentStatusPanelProps) {
   const router = useRouter();
   const [status, setStatus] = useState<"DRAFT" | "SENT" | "OVERDUE" | "PAID">(currentStatus);
+  const [cuNumber, setCuNumber] = useState(kraCuInvoiceNumber || "");
+  const [savingCu, setSavingCu] = useState(false);
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -42,6 +64,23 @@ export function DocumentStatusPanel({
   const updateStatusMutation = useUpdateDocumentStatus(shopId, shopSlug);
   const duplicateDocMutation = useDuplicateDocument(shopId, shopSlug);
   const deleteDocMutation = useDeleteDocument(shopId, shopSlug);
+
+  async function handleSaveCuNumber() {
+    setSavingCu(true);
+    try {
+      const res = await updateDocumentKraCuNumberAction(documentId, shopId, shopSlug, cuNumber);
+      if (res.success) {
+        toast.success("KRA eTIMS CU Serial Number saved.");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to update eTIMS CU Number.");
+      }
+    } catch (err) {
+      toast.error("Failed to update eTIMS CU Number.");
+    } finally {
+      setSavingCu(false);
+    }
+  }
 
   async function handleStatusUpdate(newStatus: "DRAFT" | "SENT" | "OVERDUE" | "PAID") {
     if (newStatus === status) return;
@@ -77,9 +116,32 @@ export function DocumentStatusPanel({
 
   return (
     <div className="border border-black p-4 sm:p-6 bg-white space-y-6 font-mono text-xs">
-      <div>
-        <span className="text-[10px] text-zinc-400 uppercase">CONTROL_PANEL // LIFECYCLE_MANAGEMENT</span>
-        <h3 className="font-bold uppercase tracking-tight text-sm mt-1">Status &amp; Actions</h3>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black pb-4">
+        <div>
+          <span className="text-[10px] text-zinc-400 uppercase">CONTROL_PANEL // LIFECYCLE_MANAGEMENT</span>
+          <h3 className="font-bold uppercase tracking-tight text-sm mt-1">Status &amp; Actions</h3>
+          {parentDocument && (
+            <p className="text-[10px] text-zinc-500 mt-1">
+              Derived from:{" "}
+              <Link
+                href={`/workspaces/${shopSlug}/documents/${parentDocument.id}`}
+                className="font-bold text-black underline hover:no-underline"
+              >
+                {parentDocument.docNumber} ({parentDocument.type})
+              </Link>
+            </p>
+          )}
+        </div>
+
+        {/* 1-CLICK DOCUMENT ACTIONS POPOVER */}
+        <DocumentActionsPopover
+          documentId={documentId}
+          shopId={shopId}
+          shopSlug={shopSlug}
+          docType={docType}
+          items={items}
+          kraCuInvoiceNumber={kraCuInvoiceNumber}
+        />
       </div>
 
       {message && (
@@ -92,25 +154,58 @@ export function DocumentStatusPanel({
         </div>
       )}
 
+      {/* KRA eTIMS / CONTROL UNIT SERIAL NUMBER (OPTIONAL STATUTORY FIELD) */}
+      <div className="border border-zinc-200 p-4 bg-zinc-50 space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] font-bold uppercase text-black">Statutory KRA eTIMS CU Serial Number</span>
+          <span className="text-[9px] text-zinc-400 italic">Optional Tax Control Number</span>
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={cuNumber}
+            onChange={(e) => setCuNumber(e.target.value)}
+            placeholder="e.g. CU0123456789/2026"
+            className="flex-1 px-3 py-1.5 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase"
+          />
+          <button
+            type="button"
+            onClick={handleSaveCuNumber}
+            disabled={savingCu}
+            className="border border-black bg-black text-white px-4 py-1.5 font-bold uppercase text-[10px] hover:bg-zinc-800 transition-colors disabled:bg-zinc-400"
+          >
+            {savingCu ? "Saving..." : "Save CU #"}
+          </button>
+        </div>
+      </div>
+
       {/* STATUS TOGGLE */}
       <div className="space-y-2">
-        <p className="text-[10px] text-zinc-400 uppercase">Update Document Status</p>
+        <div className="flex justify-between items-center">
+          <p className="text-[10px] text-zinc-400 uppercase">Update Document Status</p>
+          {status === "PAID" && (
+            <span className="text-[9px] text-zinc-400 italic">PAID status is final. Use Credit Note to reverse.</span>
+          )}
+        </div>
         <div className="flex flex-wrap gap-2">
-          {STATUS_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              disabled={saving}
-              onClick={() => handleStatusUpdate(opt.value)}
-              className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider border transition-colors rounded-none disabled:opacity-40 ${
-                status === opt.value
-                  ? "bg-black text-white border-black"
-                  : "bg-white text-zinc-600 border-zinc-300 hover:border-black hover:text-black"
-              }`}
-            >
-              {saving && status !== opt.value ? "..." : opt.label}
-            </button>
-          ))}
+          {STATUS_OPTIONS.map((opt) => {
+            const isBlocked = status === "PAID" && opt.value !== "PAID";
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                disabled={saving || isBlocked}
+                onClick={() => handleStatusUpdate(opt.value)}
+                className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider border transition-colors rounded-none disabled:opacity-40 ${
+                  status === opt.value
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-zinc-600 border-zinc-300 hover:border-black hover:text-black"
+                }`}
+              >
+                {saving && status !== opt.value ? "..." : opt.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -183,20 +278,29 @@ export function DocumentStatusPanel({
             Duplicate
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              if (!confirm("Are you sure you want to delete this document? This action cannot be undone.")) return;
-              deleteDocMutation.mutate(documentId, {
-                onSuccess: () => {
-                  router.push(`/workspaces/${shopSlug}/documents`);
-                },
-              });
-            }}
-            className="border border-rose-600 text-rose-600 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-600 hover:text-white transition-colors rounded-none"
-          >
-            Delete
-          </button>
+          {status === "DRAFT" ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (!confirm("Are you sure you want to delete this DRAFT document? This action cannot be undone.")) return;
+                deleteDocMutation.mutate(documentId, {
+                  onSuccess: () => {
+                    router.push(`/workspaces/${shopSlug}/documents`);
+                  },
+                });
+              }}
+              className="border border-rose-600 text-rose-600 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-600 hover:text-white transition-colors rounded-none"
+            >
+              Delete Draft
+            </button>
+          ) : (
+            <span
+              title="Issued or Paid documents cannot be deleted. Raise a Credit Note to reverse financial value."
+              className="border border-zinc-200 bg-zinc-100 text-zinc-400 px-3 py-2 text-[10px] font-bold uppercase tracking-wider cursor-not-allowed select-none"
+            >
+              🔒 Deletion Blocked (Audit Protected)
+            </span>
+          )}
         </div>
       </div>
     </div>

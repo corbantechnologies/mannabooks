@@ -14,6 +14,7 @@ interface EditClientModalProps {
     phone: string | null;
     clientType: "WALK_IN" | "INDIVIDUAL" | "CORPORATE";
     taxPin: string | null;
+    requiresEtims?: boolean;
   };
   shopId: string;
   shopSlug: string;
@@ -28,6 +29,7 @@ export function EditClientModal({ client, shopId, shopSlug, redirectToDirectoryA
   const [phone, setPhone] = useState(client.phone || "");
   const [clientType, setClientType] = useState(client.clientType);
   const [taxPin, setTaxPin] = useState(client.taxPin || "");
+  const [requiresEtims, setRequiresEtims] = useState(client.requiresEtims || false);
   const [loading, setLoading] = useState(false);
 
   const updateClientMutation = useUpdateClient(shopId, shopSlug);
@@ -43,6 +45,7 @@ export function EditClientModal({ client, shopId, shopSlug, redirectToDirectoryA
         phone: phone || undefined,
         clientType,
         taxPin: taxPin || undefined,
+        requiresEtims,
       },
       {
         onSuccess: () => {
@@ -133,14 +136,28 @@ export function EditClientModal({ client, shopId, shopSlug, redirectToDirectoryA
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block">Tax PIN</label>
+                  <label className="text-zinc-400 uppercase block">KRA Tax PIN</label>
                   <input
                     type="text"
                     value={taxPin}
                     onChange={(e) => setTaxPin(e.target.value)}
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black uppercase"
+                    placeholder="Sole Prop (A...) or Corp (P...)"
+                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black uppercase text-xs"
                   />
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 p-3 bg-zinc-50 border border-black">
+                <input
+                  type="checkbox"
+                  id="editRequiresEtims"
+                  checked={requiresEtims}
+                  onChange={(e) => setRequiresEtims(e.target.checked)}
+                  className="accent-black w-4 h-4 cursor-pointer"
+                />
+                <label htmlFor="editRequiresEtims" className="font-bold uppercase text-[10px] cursor-pointer">
+                  Requires KRA eTIMS / CU Fiscal Compliance
+                </label>
               </div>
 
               <div className="border-t border-black pt-4 flex justify-between items-center">

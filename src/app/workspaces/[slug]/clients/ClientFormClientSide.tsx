@@ -24,6 +24,7 @@ export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; sho
     const email = formData.get("email") as string;
     const phone = formData.get("phone") as string;
     const taxPin = formData.get("taxPin") as string;
+    const requiresEtims = formData.get("requiresEtims") === "on";
 
     createClientMutation.mutate(
       {
@@ -31,7 +32,8 @@ export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; sho
         email,
         phone: phone || undefined,
         clientType,
-        taxPin: clientType === "WALK_IN" ? undefined : taxPin,
+        taxPin: taxPin || undefined,
+        requiresEtims,
       },
       {
         onSuccess: () => {
@@ -125,25 +127,33 @@ export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; sho
                 </div>
               </div>
 
-              {/* CONDITIONAL COMPLIANCE INPUT ELEMENT */}
-              {clientType !== "WALK_IN" && (
-                <div className="space-y-1 pt-2 border-t border-dashed border-zinc-200 animate-in fade-in duration-150">
-                  <label className="text-black font-bold uppercase block">
-                    {clientType === "CORPORATE" ? "Company Tax PIN" : "Personal Tax PIN"}
-                  </label>
-                  <input
-                    type="text"
-                    name="taxPin"
-                    placeholder="e.g., A00XXXXXXXXB"
-                    className="w-full px-3 py-2 border border-black bg-white font-mono text-sm uppercase focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
-                    maxLength={13}
-                    required
-                  />
-                  <p className="text-[10px] text-zinc-400 font-sans italic normal-case leading-tight">
-                    This statutory identifier is validated and directly linked onto generated transactional ledgers for audit compliance.
-                  </p>
+              {/* TAX PIN INPUT (CORPORATE P... OR SOLE PROPRIETOR/INDIVIDUAL A...) */}
+              <div className="space-y-1 pt-2 border-t border-dashed border-zinc-200">
+                <div className="flex justify-between items-center">
+                  <label className="text-black font-bold uppercase block">KRA Tax PIN</label>
+                  <span className="text-[9px] text-zinc-400 italic">Sole Prop (A...) or Corp (P...)</span>
                 </div>
-              )}
+                <input
+                  type="text"
+                  name="taxPin"
+                  placeholder="e.g. A012345678B (Personal/Sole Prop) or P051234567A (Company)"
+                  className="w-full px-3 py-2 border border-black bg-white font-mono text-xs uppercase focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+                  maxLength={20}
+                />
+              </div>
+
+              {/* STATUTORY eTIMS FISCAL REQUIREMENT TOGGLE */}
+              <div className="flex items-center gap-2 p-3 bg-zinc-50 border border-black">
+                <input
+                  type="checkbox"
+                  id="requiresEtims"
+                  name="requiresEtims"
+                  className="accent-black w-4 h-4 cursor-pointer"
+                />
+                <label htmlFor="requiresEtims" className="font-bold uppercase text-[10px] cursor-pointer">
+                  Requires KRA eTIMS / CU Fiscal Compliance
+                </label>
+              </div>
 
               {/* ACTION TOGGLE WRAPPER */}
               <div className="border-t border-black pt-4 flex justify-end gap-2">

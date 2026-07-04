@@ -13,6 +13,7 @@ interface CreateClientInput {
     phone?: string;
     clientType: "WALK_IN" | "INDIVIDUAL" | "CORPORATE";
     taxPin?: string;
+    requiresEtims?: boolean;
 }
 
 /**
@@ -25,10 +26,6 @@ export async function createClientProfile(input: CreateClientInput) {
         const cleanName = input.name.trim();
         const cleanPin = input.taxPin?.toUpperCase().trim() || null;
 
-        if (input.clientType !== "WALK_IN" && !cleanPin) {
-            return { success: false, error: "A valid Tax PIN is required for Individual or Corporate profiles." };
-        }
-
         // 3. Write data safely to the PostgreSQL repository
         const [newClient] = await db.insert(clients).values({
             shopId: input.shopId,
@@ -36,7 +33,8 @@ export async function createClientProfile(input: CreateClientInput) {
             email: cleanEmail,
             phone: input.phone?.trim() || null,
             clientType: input.clientType,
-            taxPin: input.clientType === "WALK_IN" ? null : cleanPin,
+            taxPin: cleanPin,
+            requiresEtims: input.requiresEtims || false,
         }).returning();
 
         // 4. Force Next.js to purge cached lists so the client directory updates instantly
@@ -77,7 +75,8 @@ export async function updateClientProfile({ id, shopId, shopSlug, ...updates }: 
                 email: updates.email?.toLowerCase().trim(),
                 phone: updates.phone?.trim(),
                 clientType: updates.clientType,
-                taxPin: updates.clientType === "WALK_IN" ? null : cleanPin || existing.taxPin,
+                taxPin: cleanPin !== undefined ? cleanPin : existing.taxPin,
+                requiresEtims: updates.requiresEtims !== undefined ? updates.requiresEtims : existing.requiresEtims,
             })
             .where(and(eq(clients.id, id), eq(clients.shopId, shopId)));
 

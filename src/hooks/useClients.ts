@@ -9,7 +9,7 @@ export function useCreateClient(shopId: string, shopSlug: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { name: string; email: string; phone?: string; clientType: "WALK_IN" | "INDIVIDUAL" | "CORPORATE"; taxPin?: string }) => {
+    mutationFn: async (data: { name: string; email: string; phone?: string; clientType: "WALK_IN" | "INDIVIDUAL" | "CORPORATE"; taxPin?: string; requiresEtims?: boolean }) => {
       const res = await createClientProfile({ shopId, shopSlug, ...data });
       if (!res.success) throw new Error(res.error || "Failed to create client.");
       return res;
@@ -28,7 +28,7 @@ export function useUpdateClient(shopId: string, shopSlug: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { id: string; name?: string; email?: string; phone?: string; clientType?: "WALK_IN" | "INDIVIDUAL" | "CORPORATE"; taxPin?: string }) => {
+    mutationFn: async (data: { id: string; name?: string; email?: string; phone?: string; clientType?: "WALK_IN" | "INDIVIDUAL" | "CORPORATE"; taxPin?: string; requiresEtims?: boolean }) => {
       const res = await updateClientProfile({ shopId, shopSlug, ...data });
       if (!res.success) throw new Error(res.error || "Failed to update client.");
       return res;

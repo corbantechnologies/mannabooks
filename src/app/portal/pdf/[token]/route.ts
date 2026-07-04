@@ -61,6 +61,7 @@ const PdfDocumentStructure = ({ doc, shop, client, settlements }: any) => {
                     ReactPDF.View,
                     null,
                     React.createElement(ReactPDF.Text, { style: styles.docTitle }, doc.type + " " + doc.docNumber),
+                    doc.kraCuInvoiceNumber && React.createElement(ReactPDF.Text, { style: { textAlign: "right", fontSize: 8, fontWeight: "bold", color: "#000000", marginTop: 2 } }, "KRA eTIMS CU #: " + doc.kraCuInvoiceNumber),
                     React.createElement(ReactPDF.Text, { style: { textAlign: "right", fontSize: 8, color: "#71717a", marginTop: 2 } }, "Issued: " + new Date(doc.issueDate).toLocaleDateString()),
                     doc.dueDate && React.createElement(ReactPDF.Text, { style: { textAlign: "right", fontSize: 8, color: "#71717a" } }, "Due: " + new Date(doc.dueDate).toLocaleDateString())
                 )
@@ -196,6 +197,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             where: eq(documents.id, targetDocumentId),
             with: {
                 client: true,
+                supplier: true,
                 shop: true,
                 items: true,
             },
@@ -205,11 +207,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             return new NextResponse("Document not found.", { status: 404 });
         }
 
+        const party = doc.client || doc.supplier || {
+            name: "General Contact",
+            email: "—",
+            phone: null,
+            taxPin: null,
+        };
+
         const settlements = await db.query.paymentMethods.findMany({ where: eq(paymentMethods.shopId, doc.shop.id) });
 
         // Render stream instance payload buffer
         const streamStream = await ReactPDF.renderToStream(
-            React.createElement(PdfDocumentStructure, { doc, shop: doc.shop, client: doc.client, settlements })
+            React.createElement(PdfDocumentStructure, { doc, shop: doc.shop, client: party, settlements })
         );
 
         const chunks: any[] = [];

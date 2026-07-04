@@ -7,6 +7,18 @@ import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 
+export type DocumentType = 
+  | "QUOTATION" 
+  | "INVOICE" 
+  | "RECEIPT" 
+  | "LPO" 
+  | "PO" 
+  | "DELIVERY_NOTE" 
+  | "CREDIT_NOTE" 
+  | "DEBIT_NOTE" 
+  | "GOODS_RECEIVED_NOTE" 
+  | "PAYMENT_VOUCHER";
+
 interface CreateDocumentItemInput {
     description: string;
     quantity: number;
@@ -17,9 +29,14 @@ interface CreateDocumentItemInput {
 interface CreateDocumentInput {
     shopId: string;
     shopSlug: string;
-    clientId: string;
-    type: "QUOTATION" | "INVOICE" | "RECEIPT";
+    clientId?: string;
+    supplierId?: string;
+    type: DocumentType;
     dueDate?: Date;
+    kraCuInvoiceNumber?: string;
+    parentDocumentId?: string;
+    requiresEtims?: boolean;
+    notes?: string;
     items: CreateDocumentItemInput[];
 }
 
@@ -54,7 +71,19 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
             });
 
             const nextSequence = activeTypeRecords.length + 1;
-            const prefix = input.type === "QUOTATION" ? "QT" : input.type === "INVOICE" ? "INV" : "RCP";
+            const prefixMap: Record<DocumentType, string> = {
+                QUOTATION: "QT",
+                INVOICE: "INV",
+                RECEIPT: "RCT",
+                LPO: "LPO",
+                PO: "PO",
+                DELIVERY_NOTE: "DN",
+                CREDIT_NOTE: "CN",
+                DEBIT_NOTE: "DBN",
+                GOODS_RECEIVED_NOTE: "GRN",
+                PAYMENT_VOUCHER: "PV",
+            };
+            const prefix = prefixMap[input.type] || "DOC";
             const formattedSerial = `${prefix}-${String(nextSequence).padStart(4, "0")}`;
 
             // 3. Process complete batch arrays using calculation engine rules
@@ -66,10 +95,15 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
             // 4. Create the parent Document snapshot
             const [newDoc] = await tx.insert(documents).values({
                 shopId: input.shopId,
-                clientId: input.clientId,
+                clientId: input.clientId || null,
+                supplierId: input.supplierId || null,
                 type: input.type,
                 docNumber: formattedSerial,
                 status: "DRAFT", // Default newly generated files to editable draft status
+                kraCuInvoiceNumber: input.kraCuInvoiceNumber || null,
+                parentDocumentId: input.parentDocumentId || null,
+                requiresEtims: input.requiresEtims || false,
+                notes: input.notes || null,
                 subTotal: calculatedTotals.subTotal.toString(),
                 taxAmount: calculatedTotals.taxAmount.toString(),
                 grandTotal: calculatedTotals.grandTotal.toString(),
@@ -126,7 +160,7 @@ interface UpdateDocumentStatusInput {
 
 /**
  * Updates the lifecycle status of an existing document.
- * Re-validates the document detail and master ledger pages on success.
+ * Re-validates the document detail and fiscal ledgers pages on success.
  */
 export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Promise<{ success: true } | { success: false; error: string }> {
     try {
@@ -137,6 +171,14 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
 
         if (!existing) {
             return { success: false, error: "Document not found or access denied." };
+        }
+
+        // PERMANENT SETTLEMENT GUARD: Block reverting PAID documents
+        if (existing.status === "PAID" && input.status !== "PAID") {
+            return {
+                success: false,
+                error: "Statutory Rule: Settled PAID documents cannot be reverted. Issue a Credit Note to reverse value."
+            };
         }
 
         await db.update(documents)
@@ -155,10 +197,27 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
 }
 
 /**
- * Permanently deletes a document record and its line items.
+ * Permanently deletes a DRAFT document record.
+ * Non-draft documents (SENT, OVERDUE, PAID) are audit-protected and blocked from deletion.
  */
 export async function deleteDocument(documentId: string, shopId: string, shopSlug: string) {
     try {
+        const existing = await db.query.documents.findFirst({
+            where: and(eq(documents.id, documentId), eq(documents.shopId, shopId)),
+        });
+
+        if (!existing) {
+            return { success: false, error: "Target document not found or access denied." };
+        }
+
+        // AUDIT DELETION GUARD: Only DRAFT documents can be hard deleted
+        if (existing.status !== "DRAFT") {
+            return {
+                success: false,
+                error: `Statutory Audit Protection: ${existing.type} (${existing.docNumber}) is in ${existing.status} status and cannot be deleted. Issue a Credit Note to adjust balance.`
+            };
+        }
+
         await db.delete(documents)
             .where(and(eq(documents.id, documentId), eq(documents.shopId, shopId)));
 
@@ -189,7 +248,8 @@ export async function duplicateDocument(documentId: string, shopId: string, shop
         const res = await createBillingDocument({
             shopId,
             shopSlug,
-            clientId: existing.clientId,
+            clientId: existing.clientId || undefined,
+            supplierId: existing.supplierId || undefined,
             type: existing.type,
             dueDate: existing.dueDate || undefined,
             items: existing.items.map((item) => ({
@@ -209,5 +269,146 @@ export async function duplicateDocument(documentId: string, shopId: string, shop
     } catch (error) {
         console.error("Failed to duplicate document:", error);
         return { success: false, error: "Failed to clone document entry." };
+    }
+}
+
+/**
+ * Converts a source document (e.g. Quote, Invoice, PO) into a new target document type.
+ * Sets parentDocumentId for complete audit trail lineage.
+ */
+export async function convertDocumentAction(
+    sourceDocId: string,
+    targetType: DocumentType,
+    shopId: string,
+    shopSlug: string
+) {
+    try {
+        const sourceDoc = await db.query.documents.findFirst({
+            where: and(eq(documents.id, sourceDocId), eq(documents.shopId, shopId)),
+            with: {
+                items: true,
+            },
+        });
+
+        if (!sourceDoc) {
+            return { success: false, error: "Source document not found." };
+        }
+
+        const res = await createBillingDocument({
+            shopId,
+            shopSlug,
+            clientId: sourceDoc.clientId || undefined,
+            supplierId: sourceDoc.supplierId || undefined,
+            type: targetType,
+            parentDocumentId: sourceDoc.id,
+            kraCuInvoiceNumber: sourceDoc.kraCuInvoiceNumber || undefined,
+            requiresEtims: sourceDoc.requiresEtims,
+            dueDate: sourceDoc.dueDate || undefined,
+            items: sourceDoc.items.map((item) => ({
+                description: item.description,
+                quantity: parseFloat(item.quantity),
+                unitPrice: parseFloat(item.unitPrice),
+                taxType: item.taxType,
+            })),
+        });
+
+        if (res.success) {
+            revalidatePath(`/workspaces/${shopSlug}/documents`);
+            revalidatePath(`/workspaces/${shopSlug}/documents/${sourceDocId}`);
+            return { success: true, newDocumentId: res.documentId, serial: res.serial };
+        } else {
+            return { success: false, error: res.error };
+        }
+    } catch (error) {
+        console.error("Failed to convert document:", error);
+        return { success: false, error: "Failed to execute document conversion." };
+    }
+}
+
+interface RaiseCreditNoteInput {
+    invoiceId: string;
+    shopId: string;
+    shopSlug: string;
+    isPartial: boolean;
+    selectedItemIds?: string[];
+    creditNoteCuNumber?: string;
+}
+
+/**
+ * Raises a full (100%) or partial Credit Note against an existing invoice.
+ */
+export async function raiseCreditNoteAction(input: RaiseCreditNoteInput) {
+    try {
+        const invoice = await db.query.documents.findFirst({
+            where: and(eq(documents.id, input.invoiceId), eq(documents.shopId, input.shopId)),
+            with: {
+                items: true,
+            },
+        });
+
+        if (!invoice) {
+            return { success: false, error: "Target invoice not found." };
+        }
+
+        let targetItems = invoice.items;
+        if (input.isPartial && input.selectedItemIds && input.selectedItemIds.length > 0) {
+            targetItems = invoice.items.filter((item) => input.selectedItemIds?.includes(item.id));
+        }
+
+        if (targetItems.length === 0) {
+            return { success: false, error: "No line items selected for partial credit note." };
+        }
+
+        const res = await createBillingDocument({
+            shopId: input.shopId,
+            shopSlug: input.shopSlug,
+            clientId: invoice.clientId || undefined,
+            supplierId: invoice.supplierId || undefined,
+            type: "CREDIT_NOTE",
+            parentDocumentId: invoice.id,
+            kraCuInvoiceNumber: input.creditNoteCuNumber || undefined,
+            requiresEtims: invoice.requiresEtims,
+            items: targetItems.map((item) => ({
+                description: `Credit Adjustment: ${item.description}`,
+                quantity: parseFloat(item.quantity),
+                unitPrice: parseFloat(item.unitPrice),
+                taxType: item.taxType,
+            })),
+        });
+
+        if (res.success) {
+            revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+            revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.invoiceId}`);
+            return { success: true, creditNoteId: res.documentId, serial: res.serial };
+        } else {
+            return { success: false, error: res.error };
+        }
+    } catch (error) {
+        console.error("Failed to raise credit note:", error);
+        return { success: false, error: "Failed to issue credit note." };
+    }
+}
+
+/**
+ * Updates or sets the statutory KRA eTIMS / Control Unit (CU) Invoice Number.
+ */
+export async function updateDocumentKraCuNumberAction(
+    documentId: string,
+    shopId: string,
+    shopSlug: string,
+    kraCuInvoiceNumber: string
+) {
+    try {
+        await db.update(documents)
+            .set({ kraCuInvoiceNumber: kraCuInvoiceNumber.trim() })
+            .where(and(eq(documents.id, documentId), eq(documents.shopId, shopId)));
+
+        revalidatePath(`/workspaces/${shopSlug}/documents/${documentId}`);
+        revalidatePath(`/workspaces/${shopSlug}/documents`);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update KRA eTIMS CU Number:", error);
+        return { success: false, error: "Failed to update eTIMS CU Number." };
     }
 }

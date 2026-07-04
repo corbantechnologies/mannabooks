@@ -18,15 +18,31 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
   const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
   if (!shop) notFound();
 
-  // 2. Fetch document with all related data
+  // 2. Fetch document with all related data & parent lineage
   const doc = await db.query.documents.findFirst({
     where: and(eq(documents.id, id), eq(documents.shopId, shop.id)),
     with: {
       client: true,
+      supplier: true,
       items: true,
     },
   });
   if (!doc) notFound();
+
+  const party = doc.client || doc.supplier || {
+    name: "General Contact",
+    email: "—",
+    phone: null,
+    taxPin: null,
+  };
+
+  // Fetch parent document if parentDocumentId exists
+  let parentDoc = null;
+  if (doc.parentDocumentId) {
+    parentDoc = await db.query.documents.findFirst({
+      where: eq(documents.id, doc.parentDocumentId),
+    });
+  }
 
   // 3. Fetch the public portal token
   const tokenRecord = await db.query.documentTokens.findFirst({
@@ -45,13 +61,13 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
           href={`/workspaces/${slug}/documents`}
           className="font-mono text-xs font-bold text-zinc-400 hover:underline block"
         >
-          {"<-"} BACK TO MASTER LEDGER
+          {"<-"} BACK TO FISCAL LEDGERS
         </Link>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
           <div>
             <span className="font-mono text-xs text-zinc-400">LEDGER_NODE // DOCUMENT_DETAIL</span>
             <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">{doc.docNumber}</h1>
-            <p className="font-mono text-xs text-zinc-500 lowercase mt-0.5">{"> client: "}{doc.client.name}</p>
+            <p className="font-mono text-xs text-zinc-500 lowercase mt-0.5">{"> party: "}{party.name}</p>
           </div>
           <div className="flex gap-2 font-mono text-[10px] flex-wrap">
             <span className="border border-black px-2 py-1 bg-zinc-50 font-bold uppercase">{doc.type}</span>
@@ -70,11 +86,11 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
       {/* METADATA GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-3 border border-black divide-y sm:divide-y-0 sm:divide-x divide-black bg-white">
         <div className="p-5 space-y-1">
-          <p className="font-mono text-[10px] text-zinc-400 uppercase">Client</p>
-          <p className="font-bold uppercase text-sm">{doc.client.name}</p>
-          <p className="font-mono text-xs text-zinc-500">{doc.client.email}</p>
-          {doc.client.taxPin && (
-            <p className="font-mono text-[10px] text-zinc-600">PIN: {doc.client.taxPin}</p>
+          <p className="font-mono text-[10px] text-zinc-400 uppercase">{doc.supplier ? "Supplier" : "Client"}</p>
+          <p className="font-bold uppercase text-sm">{party.name}</p>
+          <p className="font-mono text-xs text-zinc-500">{party.email}</p>
+          {party.taxPin && (
+            <p className="font-mono text-[10px] text-zinc-600">PIN: {party.taxPin}</p>
           )}
         </div>
         <div className="p-5 space-y-1">
@@ -93,6 +109,11 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
           <p className="font-mono text-[10px] text-zinc-500">
             Sub: {formatCurrency(doc.subTotal, shop.currency)} | VAT: {formatCurrency(doc.taxAmount, shop.currency)}
           </p>
+          {doc.kraCuInvoiceNumber && (
+            <p className="font-mono text-[10px] font-bold text-black border-t border-zinc-200 pt-1 mt-1">
+              KRA eTIMS CU #: {doc.kraCuInvoiceNumber}
+            </p>
+          )}
         </div>
       </div>
 
@@ -141,9 +162,19 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
         shopId={shop.id}
         shopSlug={slug}
         currentStatus={doc.status}
+        docType={doc.type as any}
+        items={doc.items.map((i) => ({
+          id: i.id,
+          description: i.description,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          itemTotal: i.itemTotal,
+        }))}
         portalLink={portalLink}
-        clientEmail={doc.client.email}
+        clientEmail={party.email}
         docNumber={doc.docNumber}
+        kraCuInvoiceNumber={doc.kraCuInvoiceNumber}
+        parentDocument={parentDoc ? { id: parentDoc.id, docNumber: parentDoc.docNumber, type: parentDoc.type } : null}
       />
 
     </div>

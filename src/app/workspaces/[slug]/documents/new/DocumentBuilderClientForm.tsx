@@ -7,10 +7,13 @@ import { calculateLineItem, calculateDocumentTotals, formatCurrency } from "@/li
 import { createBillingDocument } from "@/lib/actions/documents";
 import { toast } from "react-hot-toast";
 
+import { DocumentType } from "@/lib/actions/documents";
+
 interface BuilderProps {
   shop: any;
   shopSlug: string;
   clients: any[];
+  suppliers?: any[];
   products: any[];
 }
 
@@ -21,16 +24,52 @@ interface UiRowItem {
   taxType: "V_16" | "V_0" | "EXEMPT";
 }
 
-export function DocumentBuilderClientForm({ shop, shopSlug, clients, products }: BuilderProps) {
+import { useSearchParams } from "next/navigation";
+
+export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers = [], products }: BuilderProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialClientId = searchParams.get("clientId") || "";
+  const initialSupplierId = searchParams.get("supplierId") || "";
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form Parameters
-  const [clientId, setClientId] = useState("");
-  const [docType, setDocType] = useState<"QUOTATION" | "INVOICE" | "RECEIPT">("INVOICE");
+  const [partyType, setPartyType] = useState<"CLIENT" | "SUPPLIER">(
+    initialSupplierId ? "SUPPLIER" : "CLIENT"
+  );
+  const [targetId, setTargetId] = useState(
+    initialSupplierId || initialClientId || ""
+  );
+  const [docType, setDocType] = useState<DocumentType>(
+    initialSupplierId ? "LPO" : "INVOICE"
+  );
   const [dueDate, setDueDate] = useState("");
-  
+  const [kraCuInvoiceNumber, setKraCuInvoiceNumber] = useState("");
+  const [requiresEtims, setRequiresEtims] = useState(false);
+
+  // Automatically switch partyType when selecting Procurement documents (LPO, PO, GRN, PV)
+  useEffect(() => {
+    if (docType === "LPO" || docType === "PO" || docType === "GOODS_RECEIVED_NOTE" || docType === "PAYMENT_VOUCHER") {
+      if (partyType !== "SUPPLIER") {
+        setPartyType("SUPPLIER");
+        if (!initialSupplierId) setTargetId("");
+      }
+    }
+  }, [docType, partyType, initialSupplierId]);
+
+  // Update eTIMS preference when selecting target client or supplier
+  useEffect(() => {
+    if (targetId) {
+      const list = partyType === "CLIENT" ? clients : suppliers;
+      const selected = list.find((p) => p.id === targetId);
+      if (selected && selected.requiresEtims) {
+        setRequiresEtims(true);
+      }
+    }
+  }, [targetId, partyType, clients, suppliers]);
+
   // Dynamic Ledger Item Rows
   const [rows, setRows] = useState<UiRowItem[]>([
     { description: "", quantity: 1, unitPrice: 0, taxType: "V_16" }
@@ -75,8 +114,8 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, products }:
     e.preventDefault();
     setError(null);
 
-    if (!clientId) {
-      const msg = "A targeted Client Profile must be explicitly mapped to this file.";
+    if (!targetId) {
+      const msg = `A targeted ${partyType === "CLIENT" ? "Client" : "Supplier"} Profile must be explicitly mapped to this file.`;
       setError(msg);
       toast.error(msg);
       return;
@@ -96,9 +135,12 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, products }:
     const res = await createBillingDocument({
       shopId: shop.id,
       shopSlug,
-      clientId,
+      clientId: partyType === "CLIENT" ? targetId : undefined,
+      supplierId: partyType === "SUPPLIER" ? targetId : undefined,
       type: docType,
       dueDate: dueDate ? new Date(dueDate) : undefined,
+      kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
+      requiresEtims,
       items: rows,
     });
 
@@ -122,44 +164,90 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, products }:
       )}
 
       {/* PARENT ATTRIBUTE META GRID */}
-      <div className="border border-black p-6 grid grid-cols-1 md:grid-cols-3 gap-6 bg-white">
+      <div className="border border-black p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 bg-white">
+        
+        {/* PARTY TYPE & SELECTOR */}
         <div className="space-y-1">
-          <label className="text-zinc-400 uppercase block">Target Recipient Client</label>
+          <div className="flex justify-between items-center mb-1">
+            <label className="text-zinc-400 uppercase text-[10px]">Target Entity Node</label>
+            <div className="flex gap-1 text-[9px]">
+              <button
+                type="button"
+                onClick={() => { setPartyType("CLIENT"); setTargetId(""); }}
+                className={`px-1.5 py-0.5 border font-bold uppercase ${partyType === "CLIENT" ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-300"}`}
+              >
+                Client
+              </button>
+              <button
+                type="button"
+                onClick={() => { setPartyType("SUPPLIER"); setTargetId(""); }}
+                className={`px-1.5 py-0.5 border font-bold uppercase ${partyType === "SUPPLIER" ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-300"}`}
+              >
+                Supplier
+              </button>
+            </div>
+          </div>
+
           <select
-            value={clientId}
-            onChange={(e) => setClientId(e.target.value)}
+            value={targetId}
+            onChange={(e) => setTargetId(e.target.value)}
             className="w-full px-3 py-2 border border-black bg-white rounded-none focus:outline-none focus:ring-1 focus:ring-black font-sans text-sm"
             required
           >
-            <option value="">-- SELECT FROM CLIENT FLOW REGISTRY --</option>
-            {clients.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.name.toUpperCase()} {c.taxPin ? `(${c.taxPin})` : ""}
-              </option>
-            ))}
+            <option value="">
+              -- SELECT FROM {partyType === "CLIENT" ? "CLIENT FLOW" : "SUPPLIER NETWORK"} REGISTRY --
+            </option>
+            {partyType === "CLIENT"
+              ? clients.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name.toUpperCase()} {c.taxPin ? `(${c.taxPin})` : ""} {c.requiresEtims ? "[eTIMS Required]" : ""}
+                  </option>
+                ))
+              : suppliers.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.name.toUpperCase()} {s.taxPin ? `(${s.taxPin})` : ""} {s.requiresEtims ? "[eTIMS Required]" : ""}
+                  </option>
+                ))
+            }
           </select>
         </div>
 
         <div className="space-y-1">
           <label className="text-zinc-400 uppercase block">Document Target Node</label>
-          <div className="grid grid-cols-3 border border-black divide-x divide-black bg-white">
-            {(["INVOICE", "QUOTATION", "RECEIPT"] as const).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setDocType(type)}
-                className={`py-2 font-bold uppercase text-[10px] rounded-none transition-colors ${
-                  docType === type ? "bg-black text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"
-                }`}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
+          <select
+            value={docType}
+            onChange={(e) => setDocType(e.target.value as DocumentType)}
+            className="w-full px-3 py-2 border border-black bg-white rounded-none focus:outline-none focus:ring-1 focus:ring-black font-mono text-xs font-bold uppercase"
+          >
+            <option value="INVOICE">Customer Invoice (INV)</option>
+            <option value="QUOTATION">Quotation / Estimate (QT)</option>
+            <option value="RECEIPT">Official Receipt (RCT)</option>
+            <option value="LPO">Local Purchase Order (LPO)</option>
+            <option value="PO">Purchase Order (PO)</option>
+            <option value="DELIVERY_NOTE">Delivery Note (DN)</option>
+            <option value="CREDIT_NOTE">Credit Note (CN)</option>
+            <option value="DEBIT_NOTE">Debit Note (DBN)</option>
+            <option value="GOODS_RECEIVED_NOTE">Goods Received Note (GRN)</option>
+            <option value="PAYMENT_VOUCHER">Payment Voucher (PV)</option>
+          </select>
         </div>
 
         <div className="space-y-1">
-          <label className="text-zinc-400 uppercase block">Expected Payment Maturity Due Date</label>
+          <div className="flex justify-between">
+            <label className="text-zinc-400 uppercase block">KRA eTIMS CU Serial #</label>
+            <span className="text-[9px] text-zinc-400 italic">Optional</span>
+          </div>
+          <input
+            type="text"
+            value={kraCuInvoiceNumber}
+            onChange={(e) => setKraCuInvoiceNumber(e.target.value)}
+            placeholder="e.g. CU0123456789/2026"
+            className="w-full px-3 py-2 border border-black bg-white rounded-none focus:outline-none focus:ring-1 focus:ring-black font-mono text-xs uppercase"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-zinc-400 uppercase block">Payment Due Date</label>
           <input
             type="date"
             value={dueDate}

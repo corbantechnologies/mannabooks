@@ -110,6 +110,11 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
                 </td>
                 <td className="p-4 border-r border-black font-bold text-black tracking-widest">
                   {c.taxPin || <span className="text-zinc-300 font-normal italic lowercase">&gt; unassigned</span>}
+                  {c.requiresEtims && (
+                    <span className="ml-2 border border-black px-1 py-0.5 text-[8px] bg-zinc-50 font-bold uppercase">
+                      eTIMS
+                    </span>
+                  )}
                 </td>
                 <td className="p-4 text-center">
                   <EditClientModal client={c} shopId={shop.id} shopSlug={slug} />

@@ -69,7 +69,7 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
                 href={`/workspaces/${slug}/documents`} 
                 className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
               >
-                [01] Master Ledger
+                [01] Fiscal Ledgers
               </Link>
               <Link 
                 href={`/workspaces/${slug}/clients`} 
@@ -84,10 +84,16 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
                 [03] Product Catalog
               </Link>
               <Link 
+                href={`/workspaces/${slug}/suppliers`} 
+                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+              >
+                [04] Supplier Network
+              </Link>
+              <Link 
                 href={`/workspaces/${slug}/settings`} 
                 className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
               >
-                [04] System Settings
+                [05] System Settings
               </Link>
             </nav>
           </div>

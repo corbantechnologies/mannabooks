@@ -65,16 +65,17 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
     orderBy: [desc(documents.issueDate)],
     with: {
       client: true,
+      supplier: true,
     },
   });
 
-  // Client-side text search filtering (Serial Number or Client Name)
+  // Client/Supplier-side text search filtering (Serial Number or Party Name)
   if (search && search.trim() !== "") {
     const q = search.toLowerCase().trim();
     streamLedger = streamLedger.filter(
       (doc) =>
         doc.docNumber.toLowerCase().includes(q) ||
-        doc.client.name.toLowerCase().includes(q)
+        (doc.client?.name || doc.supplier?.name || "").toLowerCase().includes(q)
     );
   }
 
@@ -100,7 +101,7 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black pb-6">
         <div>
           <span className="font-mono text-xs text-zinc-400">FINANCIAL_LEDGER // CORE_STREAM</span>
-          <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">Master Ledger</h1>
+          <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">Fiscal Ledgers</h1>
         </div>
         
         <Link
@@ -159,7 +160,7 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
                   </span>
                 </td>
                 <td className="p-4 border-r border-black font-sans text-sm font-bold uppercase tracking-tight">
-                  {doc.client.name}
+                  {doc.client?.name || doc.supplier?.name || "General Contact"}
                 </td>
                 <td className="p-4 border-r border-black text-zinc-500">
                   {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}

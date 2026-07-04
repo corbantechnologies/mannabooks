@@ -57,11 +57,12 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
     notFound();
   }
 
-  // 2. Query full document with client, shop, and line items
+  // 2. Query full document with client, supplier, shop, and line items
   const doc = await db.query.documents.findFirst({
     where: eq(documents.id, targetDocumentId),
     with: {
       client: true,
+      supplier: true,
       shop: true,
       items: true,
     },
@@ -72,7 +73,12 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
   }
 
   const shop = doc.shop;
-  const client = doc.client;
+  const party = doc.client || doc.supplier || {
+    name: "General Contact",
+    email: "—",
+    phone: null,
+    taxPin: null,
+  };
 
   // 2. Fetch the active shop payment instructions to show settlement channels
   const activeSettlements = await db.query.paymentMethods.findMany({
@@ -106,14 +112,16 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
           </div>
         </div>
 
-        {/* METADATA CLIENT ROUTING PARTICULARS */}
+        {/* METADATA CLIENT / SUPPLIER ROUTING PARTICULARS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 border-b border-black pb-8">
           <div className="space-y-1">
-            <span className="text-zinc-400 uppercase text-[10px] block">Billing Destination:</span>
-            <p className="font-sans text-sm font-bold uppercase text-black">{client.name}</p>
-            <p className="font-sans text-zinc-600">{client.email}</p>
-            {client.phone && <p className="text-zinc-600">{client.phone}</p>}
-            {client.taxPin && <p className="text-black font-bold">Tax PIN: {client.taxPin}</p>}
+            <span className="text-zinc-400 uppercase text-[10px] block">
+              {doc.supplier ? "Supplier Destination:" : "Billing Destination:"}
+            </span>
+            <p className="font-sans text-sm font-bold uppercase text-black">{party.name}</p>
+            <p className="font-sans text-zinc-600">{party.email}</p>
+            {party.phone && <p className="text-zinc-600">{party.phone}</p>}
+            {party.taxPin && <p className="text-black font-bold">Tax PIN: {party.taxPin}</p>}
           </div>
           
           <div className="space-y-2 sm:text-right">

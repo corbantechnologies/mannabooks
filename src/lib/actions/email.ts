@@ -22,7 +22,7 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
             where: eq(documentTokens.documentId, documentId),
             with: {
                 document: {
-                    with: { client: true, shop: true }
+                    with: { client: true, supplier: true, shop: true }
                 }
             }
         });
@@ -32,6 +32,11 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
         }
 
         const doc = matchToken.document;
+        const recipient = doc.client || doc.supplier;
+        if (!recipient || !recipient.email) {
+            return { success: false, error: "No recipient email address available for this document." };
+        }
+
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://mannabooks.vercel.app";
         const publicSecureLink = `${appUrl}/portal/invoice/${matchToken.token}`;
 
@@ -56,7 +61,7 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
         // 2. Dispatch the transaction details via Resend with clean HTML layout
         const { data, error: resendError } = await resend.emails.send({
             from: fromAddress,
-            to: [doc.client.email],
+            to: [recipient.email],
             subject: `${doc.shop.name} — ${doc.type} ${doc.docNumber}`,
             html: `
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background-color: #ffffff; color: #000000; border: 1px solid #000000;">
@@ -65,7 +70,7 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
                         <p style="font-family: monospace; font-size: 11px; color: #71717a; margin: 4px 0 0 0; text-transform: uppercase;">Official Billing Statement</p>
                     </div>
 
-                    <p style="font-size: 14px; margin-bottom: 20px;">Dear <strong>${doc.client.name}</strong>,</p>
+                    <p style="font-size: 14px; margin-bottom: 20px;">Dear <strong>${recipient.name}</strong>,</p>
 
                     <p style="font-size: 14px; line-height: 1.5; color: #3f3f46; margin-bottom: 24px;">
                         ${introText}

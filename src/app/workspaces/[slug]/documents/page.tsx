@@ -169,14 +169,21 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
                   {formatCurrency(doc.grandTotal, shop.currency)}
                 </td>
                 <td className="p-4 text-center">
-                  <span className={`border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${
-                    doc.status === "PAID" ? "bg-black text-white border-black" :
-                    doc.status === "SENT" ? "bg-white text-black border-black font-bold" :
-                    doc.status === "OVERDUE" ? "bg-zinc-100 border-rose-600 border-dashed text-rose-700" :
-                    "bg-zinc-50 text-zinc-400 border-zinc-200"
-                  }`}>
-                    {doc.status}
-                  </span>
+                  <div className="flex flex-col gap-1 items-center">
+                    <span className={`border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${
+                      doc.status === "PAID" ? "bg-black text-white border-black" :
+                      doc.status === "SENT" ? "bg-white text-black border-black font-bold" :
+                      doc.status === "OVERDUE" ? "bg-zinc-100 border-rose-600 border-dashed text-rose-700" :
+                      "bg-zinc-50 text-zinc-400 border-zinc-200"
+                    }`}>
+                      {doc.status}
+                    </span>
+                    {doc.requiresEtims && !doc.kraCuInvoiceNumber && (
+                      <span className="border border-amber-400 bg-amber-50 text-amber-900 px-1.5 py-0.5 text-[9px] font-bold tracking-tight uppercase whitespace-nowrap">
+                        ⚠️ eTIMS CU Pending
+                      </span>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

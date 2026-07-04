@@ -136,11 +136,15 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
               {doc.type} SNAPSHOT
             </div>
             <p className="text-base font-bold mt-1" style={{ color: brandColor }}>{doc.docNumber}</p>
-            {doc.kraCuInvoiceNumber && (
+            {doc.kraCuInvoiceNumber ? (
               <p className="text-[10px] font-bold text-black border border-black px-1.5 py-0.5 bg-zinc-50 inline-block">
                 KRA eTIMS CU #: {doc.kraCuInvoiceNumber}
               </p>
-            )}
+            ) : doc.requiresEtims ? (
+              <p className="text-[10px] font-bold text-amber-900 border border-amber-400 bg-amber-50 px-1.5 py-0.5 inline-block">
+                ⚠️ eTIMS CU Serial Pending
+              </p>
+            ) : null}
             {(doc.paymentChannel || doc.paymentReference) && (
               <p className="text-[10px] font-bold text-emerald-800 border border-emerald-300 bg-emerald-50 px-2 py-0.5 inline-block">
                 {doc.paymentChannel ? `SETTLED VIA: ${doc.paymentChannel}` : "SETTLED"} {doc.paymentReference ? `(Ref: ${doc.paymentReference})` : ""}

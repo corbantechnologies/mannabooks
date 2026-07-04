@@ -30,6 +30,7 @@ interface DocumentStatusPanelProps {
   clientEmail: string;
   docNumber: string;
   kraCuInvoiceNumber?: string | null;
+  requiresEtims?: boolean;
   initialPaymentChannel?: string | null;
   initialPaymentReference?: string | null;
   parentDocument?: { id: string; docNumber: string; type: string } | null;
@@ -53,6 +54,7 @@ export function DocumentStatusPanel({
   clientEmail,
   docNumber,
   kraCuInvoiceNumber,
+  requiresEtims = false,
   initialPaymentChannel = "",
   initialPaymentReference = "",
   parentDocument,
@@ -164,7 +166,13 @@ export function DocumentStatusPanel({
       <div className="border border-zinc-200 p-4 bg-zinc-50 space-y-2">
         <div className="flex justify-between items-center">
           <span className="text-[10px] font-bold uppercase text-black">Statutory KRA eTIMS CU Serial Number</span>
-          <span className="text-[9px] text-zinc-400 italic">Optional Tax Control Number</span>
+          {requiresEtims && !cuNumber ? (
+            <span className="border border-amber-400 bg-amber-100 text-amber-900 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-tight">
+              ⚠️ eTIMS CU Serial Pending
+            </span>
+          ) : (
+            <span className="text-[9px] text-zinc-400 italic">Optional Tax Control Number</span>
+          )}
         </div>
         <div className="flex gap-2">
           <input

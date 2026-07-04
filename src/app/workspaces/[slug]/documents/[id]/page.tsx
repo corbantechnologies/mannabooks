@@ -109,11 +109,17 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
           <p className="font-mono text-[10px] text-zinc-500">
             Sub: {formatCurrency(doc.subTotal, shop.currency)} | VAT: {formatCurrency(doc.taxAmount, shop.currency)}
           </p>
-          {doc.kraCuInvoiceNumber && (
+          {doc.kraCuInvoiceNumber ? (
             <p className="font-mono text-[10px] font-bold text-black border-t border-zinc-200 pt-1 mt-1">
               KRA eTIMS CU #: {doc.kraCuInvoiceNumber}
             </p>
-          )}
+          ) : doc.requiresEtims ? (
+            <div className="border-t border-zinc-200 pt-1 mt-1">
+              <span className="inline-block border border-amber-400 bg-amber-50 text-amber-900 text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-tight">
+                ⚠️ eTIMS CU Serial Pending
+              </span>
+            </div>
+          ) : null}
           {(doc.paymentChannel || doc.paymentReference) && (
             <div className="font-mono text-[10px] border-t border-zinc-200 pt-1 mt-1 space-y-0.5">
               {doc.paymentChannel && <p className="font-bold uppercase text-black">Paid via: {doc.paymentChannel}</p>}
@@ -180,6 +186,7 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
         clientEmail={party.email}
         docNumber={doc.docNumber}
         kraCuInvoiceNumber={doc.kraCuInvoiceNumber}
+        requiresEtims={doc.requiresEtims}
         initialPaymentChannel={doc.paymentChannel}
         initialPaymentReference={doc.paymentReference}
         parentDocument={parentDoc ? { id: parentDoc.id, docNumber: parentDoc.docNumber, type: parentDoc.type } : null}

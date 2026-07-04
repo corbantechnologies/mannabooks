@@ -96,6 +96,11 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
               {doc.type} SNAPSHOT
             </div>
             <p className="text-base font-bold text-black mt-1">{doc.docNumber}</p>
+            {doc.kraCuInvoiceNumber && (
+              <p className="text-[10px] font-bold text-black border border-black px-1.5 py-0.5 bg-zinc-50 inline-block">
+                KRA eTIMS CU #: {doc.kraCuInvoiceNumber}
+              </p>
+            )}
             <p className="text-zinc-500">Issued: {new Date(doc.issueDate).toLocaleDateString()}</p>
             {doc.dueDate && <p className="text-rose-600 font-bold">Maturity: {new Date(doc.dueDate).toLocaleDateString()}</p>}
           </div>

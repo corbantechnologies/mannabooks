@@ -7,6 +7,18 @@ import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 
+export type DocumentType = 
+  | "QUOTATION" 
+  | "INVOICE" 
+  | "RECEIPT" 
+  | "LPO" 
+  | "PO" 
+  | "DELIVERY_NOTE" 
+  | "CREDIT_NOTE" 
+  | "DEBIT_NOTE" 
+  | "GOODS_RECEIVED_NOTE" 
+  | "PAYMENT_VOUCHER";
+
 interface CreateDocumentItemInput {
     description: string;
     quantity: number;
@@ -18,8 +30,12 @@ interface CreateDocumentInput {
     shopId: string;
     shopSlug: string;
     clientId: string;
-    type: "QUOTATION" | "INVOICE" | "RECEIPT";
+    type: DocumentType;
     dueDate?: Date;
+    kraCuInvoiceNumber?: string;
+    parentDocumentId?: string;
+    requiresEtims?: boolean;
+    notes?: string;
     items: CreateDocumentItemInput[];
 }
 
@@ -54,7 +70,19 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
             });
 
             const nextSequence = activeTypeRecords.length + 1;
-            const prefix = input.type === "QUOTATION" ? "QT" : input.type === "INVOICE" ? "INV" : "RCP";
+            const prefixMap: Record<DocumentType, string> = {
+                QUOTATION: "QT",
+                INVOICE: "INV",
+                RECEIPT: "RCT",
+                LPO: "LPO",
+                PO: "PO",
+                DELIVERY_NOTE: "DN",
+                CREDIT_NOTE: "CN",
+                DEBIT_NOTE: "DBN",
+                GOODS_RECEIVED_NOTE: "GRN",
+                PAYMENT_VOUCHER: "PV",
+            };
+            const prefix = prefixMap[input.type] || "DOC";
             const formattedSerial = `${prefix}-${String(nextSequence).padStart(4, "0")}`;
 
             // 3. Process complete batch arrays using calculation engine rules
@@ -70,6 +98,10 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 type: input.type,
                 docNumber: formattedSerial,
                 status: "DRAFT", // Default newly generated files to editable draft status
+                kraCuInvoiceNumber: input.kraCuInvoiceNumber || null,
+                parentDocumentId: input.parentDocumentId || null,
+                requiresEtims: input.requiresEtims || false,
+                notes: input.notes || null,
                 subTotal: calculatedTotals.subTotal.toString(),
                 taxAmount: calculatedTotals.taxAmount.toString(),
                 grandTotal: calculatedTotals.grandTotal.toString(),
@@ -209,5 +241,144 @@ export async function duplicateDocument(documentId: string, shopId: string, shop
     } catch (error) {
         console.error("Failed to duplicate document:", error);
         return { success: false, error: "Failed to clone document entry." };
+    }
+}
+
+/**
+ * Converts a source document (e.g. Quote, Invoice, PO) into a new target document type.
+ * Sets parentDocumentId for complete audit trail lineage.
+ */
+export async function convertDocumentAction(
+    sourceDocId: string,
+    targetType: DocumentType,
+    shopId: string,
+    shopSlug: string
+) {
+    try {
+        const sourceDoc = await db.query.documents.findFirst({
+            where: and(eq(documents.id, sourceDocId), eq(documents.shopId, shopId)),
+            with: {
+                items: true,
+            },
+        });
+
+        if (!sourceDoc) {
+            return { success: false, error: "Source document not found." };
+        }
+
+        const res = await createBillingDocument({
+            shopId,
+            shopSlug,
+            clientId: sourceDoc.clientId,
+            type: targetType,
+            parentDocumentId: sourceDoc.id,
+            kraCuInvoiceNumber: sourceDoc.kraCuInvoiceNumber || undefined,
+            requiresEtims: sourceDoc.requiresEtims,
+            dueDate: sourceDoc.dueDate || undefined,
+            items: sourceDoc.items.map((item) => ({
+                description: item.description,
+                quantity: parseFloat(item.quantity),
+                unitPrice: parseFloat(item.unitPrice),
+                taxType: item.taxType,
+            })),
+        });
+
+        if (res.success) {
+            revalidatePath(`/workspaces/${shopSlug}/documents`);
+            revalidatePath(`/workspaces/${shopSlug}/documents/${sourceDocId}`);
+            return { success: true, newDocumentId: res.documentId, serial: res.serial };
+        } else {
+            return { success: false, error: res.error };
+        }
+    } catch (error) {
+        console.error("Failed to convert document:", error);
+        return { success: false, error: "Failed to execute document conversion." };
+    }
+}
+
+interface RaiseCreditNoteInput {
+    invoiceId: string;
+    shopId: string;
+    shopSlug: string;
+    isPartial: boolean;
+    selectedItemIds?: string[];
+    creditNoteCuNumber?: string;
+}
+
+/**
+ * Raises a full (100%) or partial Credit Note against an existing invoice.
+ */
+export async function raiseCreditNoteAction(input: RaiseCreditNoteInput) {
+    try {
+        const invoice = await db.query.documents.findFirst({
+            where: and(eq(documents.id, input.invoiceId), eq(documents.shopId, input.shopId)),
+            with: {
+                items: true,
+            },
+        });
+
+        if (!invoice) {
+            return { success: false, error: "Target invoice not found." };
+        }
+
+        let targetItems = invoice.items;
+        if (input.isPartial && input.selectedItemIds && input.selectedItemIds.length > 0) {
+            targetItems = invoice.items.filter((item) => input.selectedItemIds?.includes(item.id));
+        }
+
+        if (targetItems.length === 0) {
+            return { success: false, error: "No line items selected for partial credit note." };
+        }
+
+        const res = await createBillingDocument({
+            shopId: input.shopId,
+            shopSlug: input.shopSlug,
+            clientId: invoice.clientId,
+            type: "CREDIT_NOTE",
+            parentDocumentId: invoice.id,
+            kraCuInvoiceNumber: input.creditNoteCuNumber || undefined,
+            requiresEtims: invoice.requiresEtims,
+            items: targetItems.map((item) => ({
+                description: `Credit Adjustment: ${item.description}`,
+                quantity: parseFloat(item.quantity),
+                unitPrice: parseFloat(item.unitPrice),
+                taxType: item.taxType,
+            })),
+        });
+
+        if (res.success) {
+            revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+            revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.invoiceId}`);
+            return { success: true, creditNoteId: res.documentId, serial: res.serial };
+        } else {
+            return { success: false, error: res.error };
+        }
+    } catch (error) {
+        console.error("Failed to raise credit note:", error);
+        return { success: false, error: "Failed to issue credit note." };
+    }
+}
+
+/**
+ * Updates or sets the statutory KRA eTIMS / Control Unit (CU) Invoice Number.
+ */
+export async function updateDocumentKraCuNumberAction(
+    documentId: string,
+    shopId: string,
+    shopSlug: string,
+    kraCuInvoiceNumber: string
+) {
+    try {
+        await db.update(documents)
+            .set({ kraCuInvoiceNumber: kraCuInvoiceNumber.trim() })
+            .where(and(eq(documents.id, documentId), eq(documents.shopId, shopId)));
+
+        revalidatePath(`/workspaces/${shopSlug}/documents/${documentId}`);
+        revalidatePath(`/workspaces/${shopSlug}/documents`);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update KRA eTIMS CU Number:", error);
+        return { success: false, error: "Failed to update eTIMS CU Number." };
     }
 }

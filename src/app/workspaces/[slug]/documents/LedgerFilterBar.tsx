@@ -98,6 +98,13 @@ export function LedgerFilterBar({ clients }: LedgerFilterBarProps) {
             <option value="INVOICE">Invoices</option>
             <option value="QUOTATION">Quotations</option>
             <option value="RECEIPT">Receipts</option>
+            <option value="LPO">Local Purchase Orders (LPO)</option>
+            <option value="PO">Purchase Orders (PO)</option>
+            <option value="DELIVERY_NOTE">Delivery Notes</option>
+            <option value="CREDIT_NOTE">Credit Notes</option>
+            <option value="DEBIT_NOTE">Debit Notes</option>
+            <option value="GOODS_RECEIVED_NOTE">Goods Received Notes</option>
+            <option value="PAYMENT_VOUCHER">Payment Vouchers</option>
           </select>
         </div>
 

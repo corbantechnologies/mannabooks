@@ -18,7 +18,7 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
   const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
   if (!shop) notFound();
 
-  // 2. Fetch document with all related data
+  // 2. Fetch document with all related data & parent lineage
   const doc = await db.query.documents.findFirst({
     where: and(eq(documents.id, id), eq(documents.shopId, shop.id)),
     with: {
@@ -27,6 +27,14 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
     },
   });
   if (!doc) notFound();
+
+  // Fetch parent document if parentDocumentId exists
+  let parentDoc = null;
+  if (doc.parentDocumentId) {
+    parentDoc = await db.query.documents.findFirst({
+      where: eq(documents.id, doc.parentDocumentId),
+    });
+  }
 
   // 3. Fetch the public portal token
   const tokenRecord = await db.query.documentTokens.findFirst({
@@ -93,6 +101,11 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
           <p className="font-mono text-[10px] text-zinc-500">
             Sub: {formatCurrency(doc.subTotal, shop.currency)} | VAT: {formatCurrency(doc.taxAmount, shop.currency)}
           </p>
+          {doc.kraCuInvoiceNumber && (
+            <p className="font-mono text-[10px] font-bold text-black border-t border-zinc-200 pt-1 mt-1">
+              KRA eTIMS CU #: {doc.kraCuInvoiceNumber}
+            </p>
+          )}
         </div>
       </div>
 
@@ -141,9 +154,19 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
         shopId={shop.id}
         shopSlug={slug}
         currentStatus={doc.status}
+        docType={doc.type as any}
+        items={doc.items.map((i) => ({
+          id: i.id,
+          description: i.description,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          itemTotal: i.itemTotal,
+        }))}
         portalLink={portalLink}
         clientEmail={doc.client.email}
         docNumber={doc.docNumber}
+        kraCuInvoiceNumber={doc.kraCuInvoiceNumber}
+        parentDocument={parentDoc ? { id: parentDoc.id, docNumber: parentDoc.docNumber, type: parentDoc.type } : null}
       />
 
     </div>

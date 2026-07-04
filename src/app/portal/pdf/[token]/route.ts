@@ -61,6 +61,7 @@ const PdfDocumentStructure = ({ doc, shop, client, settlements }: any) => {
                     ReactPDF.View,
                     null,
                     React.createElement(ReactPDF.Text, { style: styles.docTitle }, doc.type + " " + doc.docNumber),
+                    doc.kraCuInvoiceNumber && React.createElement(ReactPDF.Text, { style: { textAlign: "right", fontSize: 8, fontWeight: "bold", color: "#000000", marginTop: 2 } }, "KRA eTIMS CU #: " + doc.kraCuInvoiceNumber),
                     React.createElement(ReactPDF.Text, { style: { textAlign: "right", fontSize: 8, color: "#71717a", marginTop: 2 } }, "Issued: " + new Date(doc.issueDate).toLocaleDateString()),
                     doc.dueDate && React.createElement(ReactPDF.Text, { style: { textAlign: "right", fontSize: 8, color: "#71717a" } }, "Due: " + new Date(doc.dueDate).toLocaleDateString())
                 )

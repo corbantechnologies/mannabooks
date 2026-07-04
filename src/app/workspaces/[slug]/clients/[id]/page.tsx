@@ -89,6 +89,11 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
                 PIN: {clientRecord.taxPin}
               </span>
             )}
+            {clientRecord.requiresEtims && (
+              <span className="border border-black bg-zinc-50 text-black px-2 py-1 font-bold uppercase tracking-wide">
+                eTIMS Required
+              </span>
+            )}
             <EditClientModal
               client={clientRecord}
               shopId={shop.id}

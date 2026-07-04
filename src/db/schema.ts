@@ -4,7 +4,18 @@ import { relations } from 'drizzle-orm';
 // ==========================================
 // 1. ENUMS (Strict Database Constraints)
 // ==========================================
-export const docTypeEnum = pgEnum('doc_type', ['QUOTATION', 'INVOICE', 'RECEIPT']);
+export const docTypeEnum = pgEnum('doc_type', [
+    'QUOTATION',
+    'INVOICE',
+    'RECEIPT',
+    'LPO',
+    'PO',
+    'DELIVERY_NOTE',
+    'CREDIT_NOTE',
+    'DEBIT_NOTE',
+    'GOODS_RECEIVED_NOTE',
+    'PAYMENT_VOUCHER'
+]);
 export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'SENT', 'OVERDUE', 'PAID']);
 export const taxTypeEnum = pgEnum('tax_type', ['V_16', 'V_0', 'EXEMPT']); // 16% VAT, 0% VAT, Tax Exempt
 export const clientTypeEnum = pgEnum('client_type', ['WALK_IN', 'INDIVIDUAL', 'CORPORATE']);
@@ -32,7 +43,7 @@ export const shops = pgTable('shops', {
     currency: varchar('currency', { length: 3 }).default('KES').notNull(),
     logoUrl: text('logo_url'),
     primaryColor: varchar('primary_color', { length: 7 }).default('#000000').notNull(), // Sleek Black default
-    taxPin: varchar('tax_pin', { length: 30 }), // e.g., KRA PIN
+    taxPin: varchar('tax_pin', { length: 30 }), // e.g., KRA PIN (A... for personal/sole prop, P... for company)
     isVatRegistered: boolean('is_vat_registered').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -70,7 +81,7 @@ export const products = pgTable('products', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// CLIENTS TABLE (Supports both Corporate and Personal Tax PIN requirements)
+// CLIENTS TABLE (Supports Corporate, Sole Proprietor A..., and Personal Tax PINs)
 export const clients = pgTable('clients', {
     id: uuid('id').defaultRandom().primaryKey(),
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
@@ -78,18 +89,25 @@ export const clients = pgTable('clients', {
     email: text('email').notNull(),
     phone: varchar('phone', { length: 20 }),
     clientType: clientTypeEnum('client_type').default('WALK_IN').notNull(),
-    taxPin: varchar('tax_pin', { length: 30 }), // Personal or corporate tax identifier
+    taxPin: varchar('tax_pin', { length: 30 }), // Personal/Soleprop (A...) or Corporate (P...) tax PIN
+    requiresEtims: boolean('requires_etims').default(false).notNull(), // Client-level eTIMS fiscal requirement flag
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// DOCUMENTS TABLE (Quotations, Invoices, Receipts)
+// DOCUMENTS TABLE (Outbound Sales & Inbound Procurement Documents)
 export const documents = pgTable('documents', {
     id: uuid('id').defaultRandom().primaryKey(),
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
     clientId: uuid('client_id').references(() => clients.id).notNull(),
     type: docTypeEnum('type').notNull(),
-    docNumber: varchar('doc_number', { length: 50 }).notNull(), // e.g., INV-001
+    docNumber: varchar('doc_number', { length: 50 }).notNull(), // e.g., INV-001, RCT-001, LPO-001, CN-001
     status: docStatusEnum('status').default('DRAFT').notNull(),
+
+    // Statutory KRA eTIMS & Lineage Fields
+    kraCuInvoiceNumber: varchar('kra_cu_invoice_number', { length: 100 }), // Optional eTIMS CU serial number
+    parentDocumentId: uuid('parent_document_id'), // Self-reference link for conversions & credit notes
+    requiresEtims: boolean('requires_etims').default(false).notNull(),
+    notes: text('notes'),
 
     // High-precision frozen metrics
     subTotal: numeric('sub_total', { precision: 12, scale: 2 }).notNull(),
@@ -155,6 +173,7 @@ export const shopMembersRelations = relations(shopMembers, ({ one }) => ({
 export const documentsRelations = relations(documents, ({ one, many }) => ({
     shop: one(shops, { fields: [documents.shopId], references: [shops.id] }),
     client: one(clients, { fields: [documents.clientId], references: [clients.id] }),
+    parentDocument: one(documents, { fields: [documents.parentDocumentId], references: [documents.id], relationName: 'document_lineage' }),
     items: many(documentItems),
     token: one(documentTokens, { fields: [documents.id], references: [documentTokens.documentId] }),
 }));

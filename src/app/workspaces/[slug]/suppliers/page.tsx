@@ -57,10 +57,10 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
   return (
     <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white font-mono">
       {/* HEADER + CTA */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
         <div>
-          <span className="text-xs text-zinc-400">PROCUREMENT_NETWORK // ACCOUNTS_PAYABLE</span>
-          <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">Supplier Network</h1>
+          <span className="text-xs text-zinc-400 font-semibold">PROCUREMENT_NETWORK // ACCOUNTS_PAYABLE</span>
+          <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Supplier Network</h1>
         </div>
 
         <SupplierFormClientSide shopId={shop.id} shopSlug={slug} />
@@ -70,57 +70,57 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
       <SupplierFilterBar />
 
       {/* SUPPLIER REGISTRY TABLE */}
-      <div className="border border-black bg-white overflow-x-auto">
+      <div className="card-modern overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50 border-b border-black uppercase tracking-wider font-bold">
-              <th className="p-4 border-r border-black">Supplier / Vendor Name</th>
-              <th className="p-4 border-r border-black">Email Contact</th>
-              <th className="p-4 border-r border-black">Telephone</th>
-              <th className="p-4 border-r border-black">Type</th>
-              <th className="p-4 border-r border-black">KRA Tax PIN</th>
-              <th className="p-4 border-r border-black text-center">Terms</th>
+            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+              <th className="p-4 border-r border-zinc-200">Supplier / Vendor Name</th>
+              <th className="p-4 border-r border-zinc-200">Email Contact</th>
+              <th className="p-4 border-r border-zinc-200">Telephone</th>
+              <th className="p-4 border-r border-zinc-200">Type</th>
+              <th className="p-4 border-r border-zinc-200">KRA Tax PIN</th>
+              <th className="p-4 border-r border-zinc-200 text-center">Terms</th>
               <th className="p-4 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-black">
+          <tbody className="divide-y divide-zinc-200/80 bg-white">
             {supplierList.map((sup) => (
-              <tr key={sup.id} className="hover:bg-zinc-50 transition-colors">
-                <td className="p-4 border-r border-black font-bold uppercase">
+              <tr key={sup.id} className="hover:bg-zinc-50/80 transition-colors">
+                <td className="p-4 border-r border-zinc-200/80 font-semibold uppercase">
                   <Link
                     href={`/workspaces/${slug}/suppliers/${sup.id}`}
-                    className="hover:underline text-black"
+                    className="hover:underline text-black font-sans text-sm tracking-tight"
                   >
                     {sup.name}
                   </Link>
                 </td>
-                <td className="p-4 border-r border-black text-zinc-600 font-sans">
+                <td className="p-4 border-r border-zinc-200/80 text-zinc-600 font-sans">
                   {sup.email}
                 </td>
-                <td className="p-4 border-r border-black text-zinc-600">
+                <td className="p-4 border-r border-zinc-200/80 text-zinc-600 font-mono">
                   {sup.phone || "—"}
                 </td>
-                <td className="p-4 border-r border-black">
-                  <span className={`px-1.5 py-0.5 font-bold uppercase text-[10px] ${
+                <td className="p-4 border-r border-zinc-200/80 font-mono">
+                  <span className={`px-2.5 py-0.5 font-semibold uppercase text-[10px] rounded ${
                     sup.supplierType === "CORPORATE" ? "bg-black text-white" :
-                    sup.supplierType === "INDIVIDUAL" ? "border border-black bg-white" :
+                    sup.supplierType === "INDIVIDUAL" ? "border border-zinc-300 bg-white text-black" :
                     "bg-zinc-100 text-zinc-400"
                   }`}>
                     {sup.supplierType}
                   </span>
                 </td>
-                <td className="p-4 border-r border-black font-bold text-black tracking-widest">
+                <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-widest font-mono">
                   {sup.taxPin || <span className="text-zinc-300 font-normal italic lowercase">&gt; unassigned</span>}
                   {sup.requiresEtims && (
-                    <span className="ml-2 border border-black px-1 py-0.5 text-[8px] bg-zinc-50 font-bold uppercase">
+                    <span className="ml-2 border border-zinc-300 px-1.5 py-0.5 text-[8px] bg-zinc-50 font-semibold uppercase rounded">
                       eTIMS
                     </span>
                   )}
                 </td>
-                <td className="p-4 border-r border-black text-center font-bold text-[10px]">
+                <td className="p-4 border-r border-zinc-200/80 text-center font-semibold text-[10px] font-mono">
                   {sup.paymentTerms || "NET_30"}
                 </td>
-                <td className="p-4 text-center">
+                <td className="p-4 text-center font-mono">
                   <EditSupplierModal supplier={sup} shopId={shop.id} shopSlug={slug} />
                 </td>
               </tr>

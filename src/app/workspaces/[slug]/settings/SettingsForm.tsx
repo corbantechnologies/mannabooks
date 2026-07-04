@@ -256,7 +256,7 @@ export function SettingsForm({
               type="text"
               value={businessName}
               onChange={(e) => setBusinessName(e.target.value)}
-              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-none"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
               required
             />
           </div>

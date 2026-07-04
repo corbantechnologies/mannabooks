@@ -6,23 +6,23 @@ export default function PublicOperatorGuidePage() {
     <div className="flex-1 flex flex-col bg-white text-black selection:bg-black selection:text-white font-sans">
       
       {/* GLOBAL HEADER */}
-      <header className="border-b border-black px-6 py-4 flex justify-between items-center bg-white sticky top-0 z-50">
+      <header className="border-b border-zinc-200/80 px-6 py-4 flex justify-between items-center glass-panel sticky top-0 z-50">
         <div className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Manna Books" className="w-7 h-7 object-contain border border-black p-0.5 bg-white" />
-          <Link href="/" className="font-mono text-xl font-bold tracking-tighter uppercase">
+          <img src="/logo.png" alt="Manna Books" className="w-7 h-7 object-contain border border-zinc-200 p-0.5 bg-white rounded" />
+          <Link href="/" className="font-mono text-xl font-semibold tracking-tight uppercase text-black font-sans">
             Manna Books.
           </Link>
         </div>
 
-        <nav className="flex items-center gap-6 font-mono text-xs font-bold uppercase">
+        <nav className="flex items-center gap-3 sm:gap-6 font-mono text-xs font-semibold uppercase">
           <Link href="/" className="hover:underline underline-offset-4">
             Landing Page
           </Link>
           <Link href="/login" className="hover:underline underline-offset-4">
-            Console Login
+            Login
           </Link>
-          <Link href="/signup" className="bg-black text-white px-4 py-2 hover:bg-zinc-800 transition-colors">
+          <Link href="/signup" className="btn-primary-modern px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs">
             Initialize Workspace
           </Link>
         </nav>
@@ -32,11 +32,11 @@ export default function PublicOperatorGuidePage() {
       <main className="flex-1 max-w-5xl w-full mx-auto p-6 md:p-12 space-y-12 font-mono text-xs">
         
         {/* GUIDE TITLE HEADER */}
-        <div className="border-b border-black pb-8 space-y-3">
-          <div className="inline-block border border-black px-2 py-0.5 text-[10px] font-mono uppercase tracking-widest bg-zinc-50">
+        <div className="border-b border-zinc-200/80 pb-8 space-y-3">
+          <div className="inline-block border border-zinc-300 px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-widest bg-zinc-50 rounded font-semibold text-zinc-600">
             OFFICIAL OPERATOR MANUAL // VERSION 2026.4
           </div>
-          <h1 className="text-3xl md:text-5xl font-bold uppercase tracking-tight font-sans">
+          <h1 className="text-3xl md:text-4xl font-semibold uppercase tracking-tight font-sans text-black">
             Manna Books Platform Guide &amp; Operating Specifications
           </h1>
           <p className="font-sans text-sm text-zinc-600 max-w-2xl leading-relaxed">
@@ -45,11 +45,11 @@ export default function PublicOperatorGuidePage() {
         </div>
 
         {/* GUIDE SECTION NAVIGATION INDEX */}
-        <div className="border border-black p-6 bg-zinc-50 space-y-3">
-          <span className="font-bold text-black uppercase text-sm block border-b border-black pb-2">
+        <div className="card-modern p-6 space-y-3">
+          <span className="font-semibold text-black uppercase text-sm block border-b border-zinc-200/80 pb-2 font-sans">
             &gt; Documentation Index &amp; Operating Modules
           </span>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 font-bold text-[11px] uppercase">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 font-semibold text-[11px] uppercase">
             <a href="#module-1" className="hover:underline text-black">[01] Provisioning Workspaces &amp; Themes</a>
             <a href="#module-2" className="hover:underline text-black">[02] Client &amp; Supplier Directory</a>
             <a href="#module-3" className="hover:underline text-black">[03] Fiscal Invoices &amp; eTIMS Taxes</a>

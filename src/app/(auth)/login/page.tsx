@@ -65,36 +65,36 @@ function LoginFormContent() {
 
   return (
     <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-white selection:bg-black selection:text-white">
-      <div className="w-full max-w-sm border border-black p-8 space-y-8 bg-white">
+      <div className="card-modern w-full max-w-sm p-8 space-y-6 bg-white">
         
-        <div className="space-y-2">
-          <h2 className="text-2xl font-bold tracking-tighter uppercase leading-none">Console Log In</h2>
-          <p className="text-xs text-zinc-500 font-mono uppercase">Enter credentials to open ledger node</p>
+        <div className="space-y-1.5">
+          <h2 className="text-xl font-semibold tracking-tight uppercase leading-none font-sans text-black">Console Log In</h2>
+          <p className="text-xs text-zinc-500 font-mono uppercase font-semibold">Enter credentials to open ledger node</p>
         </div>
 
         {error && (
-          <div className="border border-black bg-zinc-50 p-3 font-mono text-xs text-black uppercase tracking-tight">
+          <div className="border border-zinc-200 bg-zinc-50 p-3 font-mono text-xs text-black uppercase tracking-tight rounded font-semibold">
             &gt; ERROR: {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs">
           <div className="space-y-1">
-            <label className="text-zinc-500 uppercase block">Account Email</label>
+            <label className="text-zinc-500 uppercase block font-semibold">Account Email</label>
             <input
               type="email"
               name="email"
-              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-none"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
               required
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-500 uppercase block">Account Password</label>
+            <label className="text-zinc-500 uppercase block font-semibold">Account Password</label>
             <input
               type="password"
               name="password"
-              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-none"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
               required
             />
           </div>
@@ -102,18 +102,19 @@ function LoginFormContent() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-black text-white text-center py-3 font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors disabled:bg-zinc-300 text-xs rounded-none mt-2"
+            className="btn-primary-modern w-full py-2.5 font-semibold uppercase tracking-wider disabled:bg-zinc-300 text-xs mt-2"
           >
-            {loading ? "AUTHORIZING NODE..." : "ESTABLISH CONNECTION"}
+            {loading ? "AUTHENTICATING..." : "LOG IN TO CONSOLE"}
           </button>
         </form>
 
-        <p className="text-center font-mono text-[11px] text-zinc-400">
-          New ledger group?{" "}
-          <Link href="/signup" className="text-black underline font-bold uppercase">
-            Initialize Here
+        <div className="border-t border-zinc-200/80 pt-4 font-mono text-xs text-center">
+          <span className="text-zinc-400">New operator? </span>
+          <Link href="/signup" className="font-semibold text-black underline hover:no-underline uppercase">
+            Initialize Account
           </Link>
-        </p>
+        </div>
+
       </div>
     </div>
   );

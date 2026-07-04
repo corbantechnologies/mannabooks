@@ -110,18 +110,18 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
           background-color: ${brandColor} !important;
         }
       `}</style>
-      <div className="max-w-3xl mx-auto bg-white border border-black p-4 sm:p-12 space-y-8 sm:space-y-12 shadow-sm">
+      <div className="max-w-3xl mx-auto card-modern p-6 sm:p-12 space-y-8 sm:space-y-10 shadow-sm">
         
         {/* PUBLIC PORTAL BRAND HEADER */}
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-b border-black pb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-b border-zinc-200/80 pb-8">
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold uppercase tracking-tighter font-sans" style={{ color: brandColor }}>
+            <h1 className="text-xl font-semibold uppercase tracking-tight font-sans" style={{ color: brandColor }}>
               {shop.shortName || shop.name}
             </h1>
             {shop.taxPin && <p className="text-[11px] text-zinc-500">VAT PIN: {shop.taxPin}</p>}
             {shop.phone && <p className="text-[11px] text-zinc-500">Tel: {shop.phone}</p>}
             {shop.website && (
-              <a href={shop.website} target="_blank" rel="noopener noreferrer" className="text-[11px] underline block" style={{ color: brandColor }}>
+              <a href={shop.website} target="_blank" rel="noopener noreferrer" className="text-[11px] underline block font-semibold" style={{ color: brandColor }}>
                 {shop.website}
               </a>
             )}
@@ -130,54 +130,54 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
           
           <div className="text-left sm:text-right space-y-1">
             <div
-              className="inline-block border border-black px-2 py-0.5 font-bold uppercase tracking-wider text-[10px]"
+              className="inline-block border border-black px-2.5 py-0.5 font-semibold uppercase tracking-wider text-[10px] rounded"
               style={{ backgroundColor: brandColor, color: "#ffffff" }}
             >
               {doc.type} SNAPSHOT
             </div>
-            <p className="text-base font-bold mt-1" style={{ color: brandColor }}>{doc.docNumber}</p>
+            <p className="text-base font-semibold mt-1 font-mono" style={{ color: brandColor }}>{doc.docNumber}</p>
             {doc.kraCuInvoiceNumber ? (
-              <p className="text-[10px] font-bold text-black border border-black px-1.5 py-0.5 bg-zinc-50 inline-block">
+              <p className="text-[10px] font-semibold text-black border border-zinc-300 px-1.5 py-0.5 bg-zinc-50 inline-block rounded">
                 KRA eTIMS CU #: {doc.kraCuInvoiceNumber}
               </p>
             ) : doc.requiresEtims ? (
-              <p className="text-[10px] font-bold text-amber-900 border border-amber-400 bg-amber-50 px-1.5 py-0.5 inline-block">
+              <p className="text-[10px] font-semibold text-amber-900 border border-amber-300 bg-amber-50 px-1.5 py-0.5 inline-block rounded">
                 ⚠️ eTIMS CU Serial Pending
               </p>
             ) : null}
             {(doc.paymentChannel || doc.paymentReference) && (
-              <p className="text-[10px] font-bold text-emerald-800 border border-emerald-300 bg-emerald-50 px-2 py-0.5 inline-block">
+              <p className="text-[10px] font-semibold text-emerald-800 border border-emerald-300 bg-emerald-50 px-2 py-0.5 inline-block rounded">
                 {doc.paymentChannel ? `SETTLED VIA: ${doc.paymentChannel}` : "SETTLED"} {doc.paymentReference ? `(Ref: ${doc.paymentReference})` : ""}
               </p>
             )}
             <p className="text-zinc-500">Issued: {new Date(doc.issueDate).toLocaleDateString()}</p>
-            {doc.dueDate && <p className="text-rose-600 font-bold">Maturity: {new Date(doc.dueDate).toLocaleDateString()}</p>}
+            {doc.dueDate && <p className="text-rose-600 font-semibold">Maturity: {new Date(doc.dueDate).toLocaleDateString()}</p>}
           </div>
         </div>
 
         {/* METADATA CLIENT / SUPPLIER ROUTING PARTICULARS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 border-b border-black pb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 border-b border-zinc-200/80 pb-8">
           <div className="space-y-1">
-            <span className="text-zinc-400 uppercase text-[10px] block">
+            <span className="text-zinc-400 uppercase text-[10px] block font-semibold">
               {doc.supplier ? "Supplier Destination:" : "Billing Destination:"}
             </span>
-            <p className="font-sans text-sm font-bold uppercase text-black">{party.name}</p>
+            <p className="font-sans text-sm font-semibold uppercase text-black">{party.name}</p>
             <p className="font-sans text-zinc-600">{party.email}</p>
             {party.phone && <p className="text-zinc-600">{party.phone}</p>}
-            {party.taxPin && <p className="text-black font-bold">Tax PIN: {party.taxPin}</p>}
+            {party.taxPin && <p className="text-black font-semibold">Tax PIN: {party.taxPin}</p>}
           </div>
           
           <div className="space-y-2 sm:text-right">
-            <span className="text-zinc-400 uppercase text-[10px] block">Current Status:</span>
-            <span className={`inline-block border px-3 py-1 font-bold text-xs uppercase tracking-widest ${
-              doc.status === "PAID" ? "bg-black text-white border-black" : "bg-white text-rose-600 border-rose-600 border-dashed"
+            <span className="text-zinc-400 uppercase text-[10px] block font-semibold">Current Status:</span>
+            <span className={`inline-block border px-3 py-1 font-semibold text-xs uppercase tracking-widest rounded ${
+              doc.status === "PAID" ? "bg-black text-white border-black" : "bg-white text-rose-600 border-rose-400"
             }`}>
               {doc.status}
             </span>
             <div className="pt-2">
               <a 
                 href={`/portal/pdf/${token}`}
-                className="inline-block border border-black px-4 py-1.5 text-[10px] font-bold uppercase hover:bg-zinc-50 transition-colors"
+                className="btn-secondary-modern px-4 py-1.5 text-[10px] font-semibold uppercase inline-block"
               >
                 ↓ Download Vector PDF
               </a>

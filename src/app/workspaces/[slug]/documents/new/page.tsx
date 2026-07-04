@@ -43,8 +43,8 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
   return (
     <div className="p-8 max-w-6xl space-y-8 selection:bg-black selection:text-white">
       <div>
-        <span className="font-mono text-xs text-zinc-400">COMPILER // TRANSACTION_ENTRY_NODE</span>
-        <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">Generate Document</h1>
+        <span className="font-mono text-xs text-zinc-400 font-semibold">COMPILER // TRANSACTION_ENTRY_NODE</span>
+        <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Generate Document</h1>
       </div>
 
       <Suspense fallback={<div className="font-mono text-xs text-zinc-400 p-4 border border-black">&gt; LOADING DOCUMENT COMPILER...</div>}>

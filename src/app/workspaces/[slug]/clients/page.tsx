@@ -59,10 +59,10 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
     <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
       
       {/* HEADER META STRIP */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
         <div>
-          <span className="font-mono text-xs text-zinc-400">REGISTRY // CLIENT_FLOW_PIPELINE</span>
-          <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">Client Directory</h1>
+          <span className="font-mono text-xs text-zinc-400 font-semibold">REGISTRY // CLIENT_FLOW_PIPELINE</span>
+          <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Client Directory</h1>
         </div>
         
         {/* Pass the server-side shopId directly down to the interactive handler */}
@@ -72,46 +72,46 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
       {/* FILTER & SEARCH CONTROL BAR */}
       <ClientFilterBar />
 
-      {/* STARK LOG DATA TABLE */}
-      <div className="border border-black bg-white overflow-x-auto">
+      {/* LOG DATA TABLE */}
+      <div className="card-modern overflow-x-auto">
         <table className="w-full text-left font-mono text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50 border-b border-black uppercase tracking-wider font-bold">
-              <th className="p-4 border-r border-black">Client Name</th>
-              <th className="p-4 border-r border-black">Email Identifier</th>
-              <th className="p-4 border-r border-black">Phone Reference</th>
-              <th className="p-4 border-r border-black font-mono">Classification</th>
-              <th className="p-4 border-r border-black font-mono">Statutory Tax PIN</th>
+            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+              <th className="p-4 border-r border-zinc-200">Client Name</th>
+              <th className="p-4 border-r border-zinc-200">Email Identifier</th>
+              <th className="p-4 border-r border-zinc-200">Phone Reference</th>
+              <th className="p-4 border-r border-zinc-200 font-mono">Classification</th>
+              <th className="p-4 border-r border-zinc-200 font-mono">Statutory Tax PIN</th>
               <th className="p-4 text-center font-mono">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-black">
+          <tbody className="divide-y divide-zinc-200/80 bg-white">
             {clientList.map((c) => (
-              <tr key={c.id} className="hover:bg-zinc-50 transition-colors">
-                <td className="p-4 border-r border-black font-sans text-sm font-bold uppercase tracking-tight">
+              <tr key={c.id} className="hover:bg-zinc-50/80 transition-colors">
+                <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-black">
                   <Link href={`/workspaces/${slug}/clients/${c.id}`} className="hover:underline underline-offset-2">
                     {c.name}
                   </Link>
                 </td>
-                <td className="p-4 border-r border-black text-zinc-600 font-sans">
+                <td className="p-4 border-r border-zinc-200/80 text-zinc-600 font-sans">
                   {c.email}
                 </td>
-                <td className="p-4 border-r border-black text-zinc-600">
+                <td className="p-4 border-r border-zinc-200/80 text-zinc-600">
                   {c.phone || "—"}
                 </td>
-                <td className="p-4 border-r border-black">
-                  <span className={`px-1.5 py-0.5 font-bold uppercase tracking-tight ${
+                <td className="p-4 border-r border-zinc-200/80">
+                  <span className={`px-2.5 py-0.5 font-semibold uppercase tracking-tight rounded text-[10px] ${
                     c.clientType === "CORPORATE" ? "bg-black text-white" :
-                    c.clientType === "INDIVIDUAL" ? "border border-black bg-white" :
-                    "bg-zinc-100 text-zinc-400"
+                    c.clientType === "INDIVIDUAL" ? "border border-zinc-300 bg-white text-black" :
+                    "bg-zinc-100 text-zinc-500"
                   }`}>
                     {c.clientType}
                   </span>
                 </td>
-                <td className="p-4 border-r border-black font-bold text-black tracking-widest">
+                <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-widest">
                   {c.taxPin || <span className="text-zinc-300 font-normal italic lowercase">&gt; unassigned</span>}
                   {c.requiresEtims && (
-                    <span className="ml-2 border border-black px-1 py-0.5 text-[8px] bg-zinc-50 font-bold uppercase">
+                    <span className="ml-2 border border-zinc-300 px-1.5 py-0.5 text-[8px] bg-zinc-50 font-semibold uppercase rounded">
                       eTIMS
                     </span>
                   )}

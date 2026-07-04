@@ -37,12 +37,12 @@ export function SupplierFilterBar() {
   const hasActiveFilters = search || classification !== "ALL";
 
   return (
-    <div className="border border-black p-4 bg-white space-y-4 font-mono text-xs">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-zinc-200 pb-3">
+    <div className="card-modern p-4 space-y-4 font-mono text-xs">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-zinc-200/80 pb-3">
         <div className="flex items-center gap-2">
-          <span className="font-bold uppercase tracking-wider text-black">FILTER // SUPPLIER_REGISTRY</span>
+          <span className="font-semibold uppercase tracking-wider text-black font-sans text-xs">FILTER // SUPPLIER_REGISTRY</span>
           {hasActiveFilters && (
-            <span className="bg-black text-white text-[9px] px-1.5 py-0.5 font-bold uppercase">
+            <span className="bg-black text-white text-[9px] px-2 py-0.5 font-semibold uppercase rounded">
               ACTIVE
             </span>
           )}
@@ -51,7 +51,7 @@ export function SupplierFilterBar() {
         {hasActiveFilters && (
           <button
             onClick={handleReset}
-            className="text-[10px] uppercase text-zinc-500 hover:text-black font-bold underline underline-offset-2"
+            className="text-[10px] uppercase text-zinc-500 hover:text-black font-semibold underline underline-offset-2"
           >
             Reset All Filters ✕
           </button>
@@ -61,23 +61,23 @@ export function SupplierFilterBar() {
       <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
         {/* TEXT SEARCH INPUT */}
         <div className="sm:col-span-8 space-y-1">
-          <label className="text-zinc-400 text-[10px] uppercase block">Search Name / Email / Phone / KRA PIN</label>
+          <label className="text-zinc-400 text-[10px] uppercase block font-semibold">Search Name / Email / Phone / KRA PIN</label>
           <input
             type="text"
             defaultValue={search}
             onChange={(e) => handleFilterChange("search", e.target.value)}
             placeholder="Search supplier name, PIN (e.g. P05123...), email or phone..."
-            className="w-full px-3 py-1.5 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none text-xs"
+            className="w-full px-3 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
           />
         </div>
 
         {/* CLASSIFICATION FILTER */}
         <div className="sm:col-span-4 space-y-1">
-          <label className="text-zinc-400 text-[10px] uppercase block">Classification</label>
+          <label className="text-zinc-400 text-[10px] uppercase block font-semibold">Classification</label>
           <select
             value={classification}
             onChange={(e) => handleFilterChange("classification", e.target.value)}
-            className="w-full px-2 py-1.5 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-none text-xs"
+            className="w-full px-2 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
           >
             <option value="ALL">All Classifications</option>
             <option value="CORPORATE">Corporate Vendors</option>

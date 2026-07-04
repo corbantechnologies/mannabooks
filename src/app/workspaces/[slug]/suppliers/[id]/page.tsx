@@ -54,38 +54,38 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
   return (
     <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white font-mono">
       {/* NAVIGATION & HEADER BLOCK */}
-      <div className="border-b border-black pb-6 space-y-2">
+      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
         <Link
           href={`/workspaces/${slug}/suppliers`}
-          className="text-xs font-bold text-zinc-400 hover:underline block"
+          className="text-xs font-semibold text-zinc-400 hover:underline block"
         >
           {"<-"} BACK TO SUPPLIER NETWORK
         </Link>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
           <div>
-            <span className="text-xs text-zinc-400">SUPPLIER_NODE // PROCUREMENT_SUMMARY</span>
-            <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">{supplierRecord.name}</h1>
+            <span className="text-xs text-zinc-400 font-semibold">SUPPLIER_NODE // PROCUREMENT_SUMMARY</span>
+            <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">{supplierRecord.name}</h1>
             <p className="text-xs text-zinc-500 lowercase mt-0.5">&gt; id: {supplierRecord.id}</p>
           </div>
 
-          <div className="flex items-center gap-2 text-[10px]">
-            <span className="border border-black px-2 py-1 bg-zinc-50 font-bold uppercase">
+          <div className="flex flex-wrap items-center gap-2 text-[10px]">
+            <span className="border border-zinc-300 px-2.5 py-1 bg-zinc-50 font-semibold uppercase rounded text-zinc-700">
               Class: {supplierRecord.supplierType}
             </span>
             {supplierRecord.taxPin && (
-              <span className="bg-black text-white px-2 py-1 font-bold uppercase tracking-wide">
+              <span className="bg-black text-white px-2.5 py-1 font-semibold uppercase tracking-wide rounded">
                 PIN: {supplierRecord.taxPin}
               </span>
             )}
             {supplierRecord.requiresEtims && (
-              <span className="border border-black bg-zinc-50 text-black px-2 py-1 font-bold uppercase tracking-wide">
+              <span className="border border-amber-300 bg-amber-50 text-amber-900 px-2.5 py-1 font-semibold uppercase tracking-wide rounded">
                 eTIMS Required
               </span>
             )}
             <Link
               href={`/workspaces/${slug}/documents/new?supplierId=${supplierRecord.id}`}
-              className="bg-black text-white border border-black px-3 py-1 font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors"
+              className="btn-primary-modern px-3 py-1 font-semibold uppercase tracking-wider text-[11px]"
             >
               + Generate Document
             </Link>
@@ -100,26 +100,26 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
       </div>
 
       {/* FINANCIAL SUMMARY CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 border border-black divide-y md:divide-y-0 md:divide-x divide-black bg-white">
+      <div className="card-modern divide-y md:divide-y-0 md:divide-x divide-zinc-200/80 bg-white grid grid-cols-1 md:grid-cols-3">
         <div className="p-6 space-y-1">
-          <p className="text-xs text-zinc-400 uppercase">Total Procurement Spend</p>
-          <p className="text-2xl font-bold tracking-tight text-black">
+          <p className="text-xs text-zinc-400 uppercase font-semibold">Total Procurement Spend</p>
+          <p className="text-xl font-semibold tracking-tight text-black font-mono">
             {formatCurrency(totalProcurementSpend, shop.currency)}
           </p>
           <p className="text-[10px] text-zinc-500 leading-tight">Total settled procurement orders to date.</p>
         </div>
 
         <div className="p-6 space-y-1">
-          <p className="text-xs text-zinc-400 uppercase">Accounts Payable Debt</p>
-          <p className="text-2xl font-bold tracking-tight text-black">
+          <p className="text-xs text-zinc-400 uppercase font-semibold">Accounts Payable Debt</p>
+          <p className="text-xl font-semibold tracking-tight text-black font-mono">
             {formatCurrency(accountsPayableDebt, shop.currency)}
           </p>
           <p className="text-[10px] text-zinc-500 leading-tight">Outstanding pending payment vouchers &amp; bills.</p>
         </div>
 
         <div className="p-6 space-y-1">
-          <p className="text-xs text-zinc-400 uppercase">Payment Terms</p>
-          <p className="text-xl font-bold uppercase tracking-tight text-black">
+          <p className="text-xs text-zinc-400 uppercase font-semibold">Payment Terms</p>
+          <p className="text-xl font-semibold uppercase tracking-tight text-black font-mono">
             {supplierRecord.paymentTerms || "NET_30"}
           </p>
           <p className="text-[10px] text-zinc-500 leading-tight">Agreed credit maturity timeframe.</p>
@@ -129,67 +129,70 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
       {/* PROCUREMENT SUB-LEDGER TABLE */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-sm font-bold uppercase tracking-wider">&gt; Supplier Procurement Ledger</h2>
-          <span className="text-[10px] text-zinc-400 uppercase">
+          <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">&gt; Supplier Procurement Ledger</h2>
+          <span className="text-[10px] text-zinc-400 uppercase font-semibold">
             Total Documents: {supplierDocuments.length}
           </span>
         </div>
 
-        <div className="border border-black bg-white overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="card-modern overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse font-mono">
             <thead>
-              <tr className="bg-zinc-50 border-b border-black uppercase tracking-wider font-bold">
-                <th className="p-4 border-r border-black">Serial #</th>
-                <th className="p-4 border-r border-black">Doc Type</th>
-                <th className="p-4 border-r border-black">Status</th>
-                <th className="p-4 border-r border-black">Issue Date</th>
-                <th className="p-4 border-r border-black text-right">Grand Total</th>
-                <th className="p-4 text-center">Action</th>
+              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+                <th className="p-4 border-r border-zinc-200">Serial Reference</th>
+                <th className="p-4 border-r border-zinc-200">Document Type</th>
+                <th className="p-4 border-r border-zinc-200">Issue Date</th>
+                <th className="p-4 border-r border-zinc-200 text-right">Total Aggregate Valuation</th>
+                <th className="p-4 border-r border-zinc-200 text-center">Status</th>
+                <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-black">
+            <tbody className="divide-y divide-zinc-200/80 bg-white">
               {supplierDocuments.map((doc) => (
-                <tr key={doc.id} className="hover:bg-zinc-50 transition-colors">
-                  <td className="p-4 border-r border-black font-bold">
+                <tr key={doc.id} className="hover:bg-zinc-50/80 transition-colors">
+                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider">
                     <Link
                       href={`/workspaces/${slug}/documents/${doc.id}`}
-                      className="hover:underline text-black"
+                      className="hover:underline underline-offset-2"
                     >
                       {doc.docNumber}
                     </Link>
                   </td>
-                  <td className="p-4 border-r border-black uppercase">{doc.type}</td>
-                  <td className="p-4 border-r border-black">
-                    <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase border ${
+                  <td className="p-4 border-r border-zinc-200/80">
+                    <span className="border border-zinc-300 px-2 py-0.5 text-[9px] font-semibold tracking-widest bg-white rounded">
+                      {doc.type}
+                    </span>
+                  </td>
+                  <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
+                    {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
+                  </td>
+                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-sm text-black text-right">
+                    {formatCurrency(doc.grandTotal, shop.currency)}
+                  </td>
+                  <td className="p-4 border-r border-zinc-200/80 text-center">
+                    <span className={`border px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded ${
                       doc.status === "PAID" ? "bg-black text-white border-black" :
-                      doc.status === "SENT" ? "bg-white text-black border-black" :
-                      doc.status === "OVERDUE" ? "bg-zinc-100 border-rose-600 border-dashed text-rose-700" :
+                      doc.status === "SENT" ? "bg-white text-black border-zinc-300" :
+                      doc.status === "OVERDUE" ? "bg-rose-50 border-rose-300 text-rose-700" :
                       "bg-zinc-50 text-zinc-400 border-zinc-200"
                     }`}>
                       {doc.status}
                     </span>
                   </td>
-                  <td className="p-4 border-r border-black">
-                    {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
-                  </td>
-                  <td className="p-4 border-r border-black text-right font-bold">
-                    {formatCurrency(doc.grandTotal, shop.currency)}
-                  </td>
                   <td className="p-4 text-center">
                     <Link
                       href={`/workspaces/${slug}/documents/${doc.id}`}
-                      className="border border-black bg-white px-2 py-1 text-[10px] font-bold uppercase hover:bg-black hover:text-white transition-colors"
+                      className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"
                     >
                       View Details
                     </Link>
                   </td>
                 </tr>
               ))}
-
               {supplierDocuments.length === 0 && (
                 <tr>
                   <td colSpan={6} className="p-12 text-center text-zinc-400 italic">
-                    &gt; NO PROCUREMENT DOCUMENTS LINKED TO THIS SUPPLIER RECORD.
+                    &gt; NO PROCUREMENT RECORDS LINKED TO THIS VENDOR NODE.
                   </td>
                 </tr>
               )}

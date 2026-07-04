@@ -83,70 +83,70 @@ export function EditSupplierModal({
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="border border-black bg-white px-3 py-1 font-mono text-xs font-bold uppercase hover:bg-black hover:text-white transition-colors"
+        className="btn-secondary-modern px-3 py-1 text-xs font-semibold uppercase"
       >
         EDIT VENDOR
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-black w-[95%] sm:w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-6 font-mono text-xs shadow-lg animate-in fade-in duration-150 text-left">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-zinc-200/80 rounded-md shadow-xl w-[95%] sm:w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-6 font-mono text-xs animate-in zoom-in-95 duration-150 text-left">
             
-            <div className="flex justify-between items-start border-b border-black pb-4">
+            <div className="flex justify-between items-start border-b border-zinc-200/80 pb-4">
               <div>
-                <h3 className="font-bold uppercase tracking-tight text-base">Edit Supplier Profile</h3>
-                <p className="text-[10px] text-zinc-400 uppercase">id: {supplier.id}</p>
+                <h3 className="font-semibold uppercase tracking-tight text-base font-sans text-black">Edit Supplier Profile</h3>
+                <p className="text-[10px] text-zinc-400 uppercase font-semibold">id: {supplier.id}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-black font-bold hover:bg-zinc-100 px-2 py-0.5 border border-black text-xs"
+                className="text-zinc-500 font-semibold hover:bg-zinc-100 px-2 py-0.5 border border-zinc-300 rounded text-xs"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleUpdate} className="space-y-4">
+            <form onSubmit={handleUpdate} className="space-y-4 font-mono text-xs">
               <div className="space-y-1">
-                <label className="text-black font-bold uppercase block">Supplier Name</label>
+                <label className="text-black font-semibold uppercase block">Supplier Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block text-[10px]">Email</label>
+                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Email</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
                     required
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block text-[10px]">Phone</label>
+                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Phone</label>
                   <input
                     type="text"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block text-[10px]">Classification</label>
+                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Classification</label>
                   <select
                     value={supplierType}
                     onChange={(e) => setSupplierType(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
                   >
                     <option value="CORPORATE">Corporate</option>
                     <option value="INDIVIDUAL">Sole Proprietor</option>
@@ -155,23 +155,23 @@ export function EditSupplierModal({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block text-[10px]">KRA Tax PIN</label>
+                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">KRA Tax PIN</label>
                   <input
                     type="text"
                     value={taxPin}
                     onChange={(e) => setTaxPin(e.target.value)}
                     placeholder="Sole Prop (A...) or Corp (P...)"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black uppercase text-xs"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black uppercase text-xs rounded"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block text-[10px]">Payment Terms</label>
+                <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Payment Terms</label>
                 <select
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value)}
-                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs font-bold uppercase"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black text-xs font-semibold uppercase rounded"
                 >
                   <option value="NET_30">Net 30 Days</option>
                   <option value="NET_15">Net 15 Days</option>
@@ -181,25 +181,25 @@ export function EditSupplierModal({
                 </select>
               </div>
 
-              <div className="flex items-center gap-2 p-3 bg-zinc-50 border border-black">
+              <div className="flex items-center gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded">
                 <input
                   type="checkbox"
                   id="editSupplierRequiresEtims"
                   checked={requiresEtims}
                   onChange={(e) => setRequiresEtims(e.target.checked)}
-                  className="accent-black w-4 h-4 cursor-pointer"
+                  className="accent-black w-4 h-4 cursor-pointer rounded-sm"
                 />
-                <label htmlFor="editSupplierRequiresEtims" className="font-bold uppercase text-[10px] cursor-pointer">
+                <label htmlFor="editSupplierRequiresEtims" className="font-semibold uppercase text-[10px] cursor-pointer">
                   Requires KRA eTIMS / CU Fiscal Receipt
                 </label>
               </div>
 
-              <div className="border-t border-black pt-4 flex justify-between items-center">
+              <div className="border-t border-zinc-200/80 pt-4 flex justify-between items-center">
                 <button
                   type="button"
                   onClick={handleDelete}
                   disabled={deleteSupplierMutation.isPending}
-                  className="border border-rose-600 text-rose-600 px-3 py-1.5 font-bold uppercase hover:bg-rose-600 hover:text-white transition-colors"
+                  className="border border-rose-200 bg-rose-50 text-rose-600 px-3 py-1.5 font-semibold uppercase hover:bg-rose-600 hover:text-white rounded transition-colors text-xs"
                 >
                   DELETE
                 </button>
@@ -208,14 +208,14 @@ export function EditSupplierModal({
                   <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="border border-zinc-300 px-3 py-1.5 text-zinc-600 hover:border-black hover:text-black transition-colors"
+                    className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase"
                   >
                     CANCEL
                   </button>
                   <button
                     type="submit"
                     disabled={updateSupplierMutation.isPending}
-                    className="bg-black text-white px-4 py-1.5 font-bold uppercase hover:bg-zinc-900 transition-colors disabled:bg-zinc-300"
+                    className="btn-primary-modern px-4 py-1.5 text-xs font-semibold uppercase disabled:bg-zinc-300"
                   >
                     {updateSupplierMutation.isPending ? "SAVING..." : "SAVE"}
                   </button>

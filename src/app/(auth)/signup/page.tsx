@@ -73,63 +73,63 @@ export default function SignupPage() {
 
   return (
     <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-white text-black selection:bg-black selection:text-white">
-      <div className="w-full max-w-md border border-black p-8 space-y-8 bg-white">
+      <div className="card-modern w-full max-w-md p-8 space-y-6 bg-white">
         
-        <div className="space-y-2">
-          <Link href="/" className="font-mono text-xs font-bold tracking-widest text-zinc-400 block hover:underline">
+        <div className="space-y-1.5">
+          <Link href="/" className="font-mono text-xs font-semibold tracking-widest text-zinc-400 block hover:underline">
             ← MANNA BOOKS HOME
           </Link>
-          <h2 className="text-2xl font-bold tracking-tighter uppercase leading-none">Initialize Ledger</h2>
-          <p className="text-xs text-zinc-500 font-mono uppercase">Create owner profile & setup shop workspace</p>
+          <h2 className="text-xl font-semibold tracking-tight uppercase leading-none font-sans text-black">Initialize Ledger</h2>
+          <p className="text-xs text-zinc-500 font-mono uppercase font-semibold">Create owner profile &amp; setup shop workspace</p>
         </div>
 
         {error && (
-          <div className="border border-black bg-zinc-50 p-3 font-mono text-xs text-black uppercase tracking-tight">
+          <div className="border border-zinc-200 bg-zinc-50 p-3 font-mono text-xs text-black uppercase tracking-tight rounded font-semibold">
             &gt; ERROR: {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs">
           <div className="space-y-1">
-            <label className="text-zinc-500 uppercase block">Full Legal Name</label>
+            <label className="text-zinc-500 uppercase block font-semibold">Full Legal Name</label>
             <input
               type="text"
               name="name"
               placeholder="e.g., John Doe"
-              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
               required
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-500 uppercase block">Email Address</label>
+            <label className="text-zinc-500 uppercase block font-semibold">Email Address</label>
             <input
               type="email"
               name="email"
               placeholder="e.g., owner@company.com"
-              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
               required
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-500 uppercase block">Business / Store Entity Name</label>
+            <label className="text-zinc-500 uppercase block font-semibold">Business / Store Entity Name</label>
             <input
               type="text"
               name="businessName"
               placeholder="e.g., Manna Hardware"
-              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
               required
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-500 uppercase block">Master Account Password</label>
+            <label className="text-zinc-500 uppercase block font-semibold">Master Account Password</label>
             <input
               type="password"
               name="password"
               placeholder="••••••••••••"
-              className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
               required
             />
           </div>
@@ -137,18 +137,19 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-black text-white text-center py-3 font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors disabled:bg-zinc-300 text-xs rounded-none mt-4"
+            className="btn-primary-modern w-full py-2.5 font-semibold uppercase tracking-wider disabled:bg-zinc-300 text-xs mt-2"
           >
             {loading ? "COMPILING REGISTRY..." : "CREATE MASTER PROFILE"}
           </button>
         </form>
 
-        <p className="text-center font-mono text-[11px] text-zinc-400">
-          Already registered?{" "}
-          <Link href="/login" className="text-black underline font-bold uppercase">
-            Execute Login
+        <div className="border-t border-zinc-200/80 pt-4 font-mono text-xs text-center">
+          <span className="text-zinc-400">Already registered? </span>
+          <Link href="/login" className="font-semibold text-black underline hover:no-underline uppercase">
+            Log In
           </Link>
-        </p>
+        </div>
+
       </div>
     </div>
   );

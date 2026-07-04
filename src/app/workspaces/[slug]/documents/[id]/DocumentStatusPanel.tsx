@@ -123,17 +123,17 @@ export function DocumentStatusPanel({
   }
 
   return (
-    <div className="border border-black p-4 sm:p-6 bg-white space-y-6 font-mono text-xs">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black pb-4">
+    <div className="card-modern p-4 sm:p-6 space-y-6 font-mono text-xs">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-4">
         <div>
-          <span className="text-[10px] text-zinc-400 uppercase">CONTROL_PANEL // LIFECYCLE_MANAGEMENT</span>
-          <h3 className="font-bold uppercase tracking-tight text-sm mt-1">Status &amp; Actions</h3>
+          <span className="text-[10px] text-zinc-400 uppercase font-semibold">CONTROL_PANEL // LIFECYCLE_MANAGEMENT</span>
+          <h3 className="font-semibold uppercase tracking-tight text-sm mt-1 text-black font-sans">Status &amp; Actions</h3>
           {parentDocument && (
             <p className="text-[10px] text-zinc-500 mt-1">
               Derived from:{" "}
               <Link
                 href={`/workspaces/${shopSlug}/documents/${parentDocument.id}`}
-                className="font-bold text-black underline hover:no-underline"
+                className="font-semibold text-black underline hover:no-underline"
               >
                 {parentDocument.docNumber} ({parentDocument.type})
               </Link>
@@ -153,21 +153,21 @@ export function DocumentStatusPanel({
       </div>
 
       {message && (
-        <div className={`border p-3 font-bold uppercase tracking-tight text-xs ${
+        <div className={`border p-3 font-semibold uppercase tracking-tight text-xs rounded ${
           message.type === "success"
             ? "border-black bg-black text-white"
-            : "border-black bg-zinc-50 text-black"
+            : "border-zinc-200 bg-zinc-50 text-black"
         }`}>
           &gt; {message.text}
         </div>
       )}
 
       {/* KRA eTIMS / CONTROL UNIT SERIAL NUMBER (OPTIONAL STATUTORY FIELD) */}
-      <div className="border border-zinc-200 p-4 bg-zinc-50 space-y-2">
+      <div className="border border-zinc-200/80 p-4 bg-zinc-50/50 rounded space-y-2">
         <div className="flex justify-between items-center">
-          <span className="text-[10px] font-bold uppercase text-black">Statutory KRA eTIMS CU Serial Number</span>
+          <span className="text-[10px] font-semibold uppercase text-black">Statutory KRA eTIMS CU Serial Number</span>
           {requiresEtims && !cuNumber ? (
-            <span className="border border-amber-400 bg-amber-100 text-amber-900 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-tight">
+            <span className="border border-amber-300 bg-amber-100 text-amber-900 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-tight rounded">
               ⚠️ eTIMS CU Serial Pending
             </span>
           ) : (
@@ -180,13 +180,13 @@ export function DocumentStatusPanel({
             value={cuNumber}
             onChange={(e) => setCuNumber(e.target.value)}
             placeholder="e.g. CU0123456789/2026"
-            className="flex-1 px-3 py-1.5 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase"
+            className="flex-1 px-3 py-1.5 border border-zinc-300 rounded bg-white focus:outline-none focus:border-black text-xs uppercase font-mono"
           />
           <button
             type="button"
             onClick={handleSaveCuNumber}
             disabled={savingCu}
-            className="border border-black bg-black text-white px-4 py-1.5 font-bold uppercase text-[10px] hover:bg-zinc-800 transition-colors disabled:bg-zinc-400"
+            className="btn-primary-modern px-4 py-1.5 font-semibold uppercase text-[10px] disabled:bg-zinc-400"
           >
             {savingCu ? "Saving..." : "Save CU #"}
           </button>
@@ -194,9 +194,9 @@ export function DocumentStatusPanel({
       </div>
 
       {/* PAYMENT CONFIRMATION DETAILS (OPTIONAL) */}
-      <div className="border border-zinc-200 p-4 bg-zinc-50 space-y-2">
+      <div className="border border-zinc-200/80 p-4 bg-zinc-50/50 rounded space-y-2">
         <div className="flex justify-between items-center">
-          <span className="text-[10px] font-bold uppercase text-black">Payment Confirmation &amp; Remittance Ref</span>
+          <span className="text-[10px] font-semibold uppercase text-black">Payment Confirmation &amp; Remittance Ref</span>
           <span className="text-[9px] text-zinc-400 italic">Optional Settlement Details</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

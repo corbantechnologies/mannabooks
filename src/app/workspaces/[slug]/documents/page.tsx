@@ -98,15 +98,15 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
     <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
       
       {/* HEADER SECTION AREA */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
         <div>
-          <span className="font-mono text-xs text-zinc-400">FINANCIAL_LEDGER // CORE_STREAM</span>
-          <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">Fiscal Ledgers</h1>
+          <span className="font-mono text-xs text-zinc-400 font-semibold">FINANCIAL_LEDGER // CORE_STREAM</span>
+          <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Fiscal Ledgers</h1>
         </div>
         
         <Link
           href={`/workspaces/${slug}/documents/new`}
-          className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors border border-black rounded-none w-full sm:w-auto text-center"
+          className="btn-primary-modern px-4 py-2 text-xs font-semibold uppercase tracking-wider w-full sm:w-auto text-center"
         >
           + Generate Document
         </Link>
@@ -115,16 +115,16 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
       {/* FILTER & SEARCH CONTROL BAR */}
       <LedgerFilterBar clients={shopClients} />
 
-      {/* STARK SORTING TABS STRIP */}
-      <div className="flex border border-black divide-x divide-black bg-white font-mono text-[10px] uppercase w-full sm:w-fit overflow-x-auto">
+      {/* SORTING TABS STRIP */}
+      <div className="flex border border-zinc-200/80 divide-x divide-zinc-200/80 bg-white font-mono text-[10px] uppercase w-full sm:w-fit overflow-x-auto rounded shadow-sm">
         {["ALL", "INVOICE", "QUOTATION", "RECEIPT"].map((t) => {
           const isActive = activeType === t;
           return (
             <Link
               key={t}
               href={`/workspaces/${slug}/documents?type=${t}`}
-              className={`px-4 py-2 font-bold transition-colors ${
-                isActive ? "bg-black text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"
+              className={`px-4 py-2 font-semibold transition-colors ${
+                isActive ? "bg-black text-white font-semibold" : "bg-white text-zinc-600 hover:bg-zinc-50"
               }`}
             >
               {t === "ALL" ? "All Streams" : `${t}s`}
@@ -134,52 +134,52 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
       </div>
 
       {/* CORE DATA LEDGER STREAM GRID */}
-      <div className="border border-black bg-white overflow-x-auto">
+      <div className="card-modern overflow-x-auto">
         <table className="w-full text-left font-mono text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50 border-b border-black uppercase tracking-wider font-bold">
-              <th className="p-4 border-r border-black">Serial No</th>
-              <th className="p-4 border-r border-black">Classification</th>
-              <th className="p-4 border-r border-black">Client Recipient</th>
-              <th className="p-4 border-r border-black">Date Issued</th>
-              <th className="p-4 border-r border-black text-right">Grand Valuation</th>
+            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+              <th className="p-4 border-r border-zinc-200">Serial No</th>
+              <th className="p-4 border-r border-zinc-200">Classification</th>
+              <th className="p-4 border-r border-zinc-200">Client Recipient</th>
+              <th className="p-4 border-r border-zinc-200">Date Issued</th>
+              <th className="p-4 border-r border-zinc-200 text-right">Grand Valuation</th>
               <th className="p-4 text-center">Status Flag</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-black bg-white">
+          <tbody className="divide-y divide-zinc-200/80 bg-white">
             {streamLedger.map((doc) => (
-              <tr key={doc.id} className="hover:bg-zinc-50 transition-colors group cursor-pointer">
-                <td className="p-4 border-r border-black font-bold text-black tracking-wider">
+              <tr key={doc.id} className="hover:bg-zinc-50/80 transition-colors group cursor-pointer">
+                <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider">
                   <Link href={`/workspaces/${slug}/documents/${doc.id}`} className="hover:underline">
                     {doc.docNumber}
                   </Link>
                 </td>
-                <td className="p-4 border-r border-black">
-                  <span className="border border-black px-1.5 py-0.5 text-[9px] font-bold tracking-widest bg-zinc-50">
+                <td className="p-4 border-r border-zinc-200/80">
+                  <span className="border border-zinc-200 px-1.5 py-0.5 text-[9px] font-semibold tracking-widest bg-zinc-50 rounded">
                     {doc.type}
                   </span>
                 </td>
-                <td className="p-4 border-r border-black font-sans text-sm font-bold uppercase tracking-tight">
+                <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-zinc-900">
                   {doc.client?.name || doc.supplier?.name || "General Contact"}
                 </td>
-                <td className="p-4 border-r border-black text-zinc-500">
+                <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
                   {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                 </td>
-                <td className="p-4 border-r border-black font-bold text-sm text-black text-right">
+                <td className="p-4 border-r border-zinc-200/80 font-semibold text-sm text-black text-right">
                   {formatCurrency(doc.grandTotal, shop.currency)}
                 </td>
                 <td className="p-4 text-center">
                   <div className="flex flex-col gap-1 items-center">
-                    <span className={`border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${
+                    <span className={`border px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded ${
                       doc.status === "PAID" ? "bg-black text-white border-black" :
-                      doc.status === "SENT" ? "bg-white text-black border-black font-bold" :
-                      doc.status === "OVERDUE" ? "bg-zinc-100 border-rose-600 border-dashed text-rose-700" :
+                      doc.status === "SENT" ? "bg-white text-black border-zinc-300 font-semibold" :
+                      doc.status === "OVERDUE" ? "bg-rose-50 border-rose-300 text-rose-700 font-semibold" :
                       "bg-zinc-50 text-zinc-400 border-zinc-200"
                     }`}>
                       {doc.status}
                     </span>
                     {doc.requiresEtims && !doc.kraCuInvoiceNumber && (
-                      <span className="border border-amber-400 bg-amber-50 text-amber-900 px-1.5 py-0.5 text-[9px] font-bold tracking-tight uppercase whitespace-nowrap">
+                      <span className="border border-amber-300 bg-amber-50 text-amber-900 px-1.5 py-0.5 text-[9px] font-semibold tracking-tight uppercase whitespace-nowrap rounded">
                         ⚠️ eTIMS CU Pending
                       </span>
                     )}

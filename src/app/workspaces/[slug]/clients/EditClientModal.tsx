@@ -74,60 +74,60 @@ export function EditClientModal({ client, shopId, shopSlug, redirectToDirectoryA
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="border border-black px-2 py-1 text-[10px] font-bold uppercase hover:bg-black hover:text-white transition-colors"
+        className="btn-secondary-modern px-2 py-1 text-[10px] font-semibold uppercase"
       >
         Edit Profile
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-black w-[95%] sm:w-full max-w-sm max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-6 relative font-mono text-xs">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-zinc-200/80 rounded-md shadow-xl w-[95%] sm:w-full max-w-sm max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-6 relative font-mono text-xs animate-in zoom-in-95 duration-150">
             
             <div className="space-y-1">
-              <h2 className="text-xl font-bold uppercase tracking-tight">Edit Client Profile</h2>
-              <p className="text-[10px] text-zinc-400 uppercase">Update client credentials &amp; PIN</p>
+              <h2 className="text-xl font-semibold uppercase tracking-tight font-sans text-black">Edit Client Profile</h2>
+              <p className="text-[10px] text-zinc-400 uppercase font-semibold">Update client credentials &amp; PIN</p>
             </div>
 
-            <form onSubmit={handleUpdate} className="space-y-4">
+            <form onSubmit={handleUpdate} className="space-y-4 font-mono text-xs">
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block">Client / Company Name</label>
+                <label className="text-zinc-400 uppercase block font-semibold">Client / Company Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block">Account Email</label>
+                <label className="text-zinc-400 uppercase block font-semibold">Account Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block">Contact Telephone</label>
+                <label className="text-zinc-400 uppercase block font-semibold">Contact Telephone</label>
                 <input
                   type="text"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block">Category</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">Category</label>
                   <select
                     value={clientType}
                     onChange={(e) => setClientType(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
                   >
                     <option value="WALK_IN">Walk-In</option>
                     <option value="INDIVIDUAL">Individual</option>
@@ -136,35 +136,35 @@ export function EditClientModal({ client, shopId, shopSlug, redirectToDirectoryA
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block">KRA Tax PIN</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">KRA Tax PIN</label>
                   <input
                     type="text"
                     value={taxPin}
                     onChange={(e) => setTaxPin(e.target.value)}
                     placeholder="Sole Prop (A...) or Corp (P...)"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black uppercase text-xs"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black uppercase text-xs rounded"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 p-3 bg-zinc-50 border border-black">
+              <div className="flex items-center gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded">
                 <input
                   type="checkbox"
                   id="editRequiresEtims"
                   checked={requiresEtims}
                   onChange={(e) => setRequiresEtims(e.target.checked)}
-                  className="accent-black w-4 h-4 cursor-pointer"
+                  className="accent-black w-4 h-4 cursor-pointer rounded-sm"
                 />
-                <label htmlFor="editRequiresEtims" className="font-bold uppercase text-[10px] cursor-pointer">
+                <label htmlFor="editRequiresEtims" className="font-semibold uppercase text-[10px] cursor-pointer">
                   Requires KRA eTIMS / CU Fiscal Compliance
                 </label>
               </div>
 
-              <div className="border-t border-black pt-4 flex justify-between items-center">
+              <div className="border-t border-zinc-200/80 pt-4 flex justify-between items-center">
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="border border-rose-600 text-rose-600 px-3 py-1.5 font-bold uppercase hover:bg-rose-600 hover:text-white transition-colors"
+                  className="border border-rose-200 bg-rose-50 text-rose-600 px-3 py-1.5 font-semibold uppercase hover:bg-rose-600 hover:text-white rounded transition-colors text-xs"
                 >
                   DELETE
                 </button>
@@ -173,14 +173,14 @@ export function EditClientModal({ client, shopId, shopSlug, redirectToDirectoryA
                   <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="border border-zinc-300 px-3 py-1.5 text-zinc-600 hover:border-black hover:text-black transition-colors"
+                    className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase"
                   >
                     CANCEL
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="bg-black text-white px-4 py-1.5 font-bold uppercase hover:bg-zinc-900 transition-colors disabled:bg-zinc-300"
+                    className="btn-primary-modern px-4 py-1.5 text-xs font-semibold uppercase disabled:bg-zinc-300"
                   >
                     {loading ? "SAVING..." : "SAVE"}
                   </button>

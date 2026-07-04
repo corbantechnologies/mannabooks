@@ -28,7 +28,7 @@ export default async function WorkspaceAnalyticsPage({ params }: AnalyticsPagePr
   if (!analyticsRes.success) {
     return (
       <div className="p-8 text-black font-mono">
-        <div className="border border-black p-4 bg-zinc-50 font-bold uppercase">
+        <div className="border border-zinc-200 bg-zinc-50 p-4 font-semibold uppercase rounded text-xs">
           &gt; ERROR_FETCHING_ANALYTICS: {analyticsRes.error}
         </div>
       </div>
@@ -38,8 +38,8 @@ export default async function WorkspaceAnalyticsPage({ params }: AnalyticsPagePr
   return (
     <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
       <div>
-        <span className="font-mono text-xs text-zinc-400 uppercase">INTELLIGENCE // BUSINESS_ANALYTICS_SUITE</span>
-        <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">{shop.name} Analytics</h1>
+        <span className="font-mono text-xs text-zinc-400 font-semibold uppercase">INTELLIGENCE // BUSINESS_ANALYTICS_SUITE</span>
+        <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">{shop.name} Analytics</h1>
       </div>
 
       <AnalyticsClientView

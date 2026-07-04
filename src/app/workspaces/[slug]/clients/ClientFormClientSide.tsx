@@ -47,42 +47,41 @@ export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; sho
 
   return (
     <>
-      {/* SHARP TRIGGER CTA BUTTON */}
+      {/* TRIGGER CTA BUTTON */}
       <button
         onClick={() => setIsOpen(true)}
-        className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors rounded-none border border-black"
+        className="btn-primary-modern px-4 py-2 text-xs font-semibold uppercase tracking-wider"
       >
         + Register Customer
       </button>
 
       {/* OVERLAY INTERFACE BACKDROP */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-none z-50 flex items-center justify-center p-4 animate-fade-in animate-duration-150">
-          <div className="bg-white border border-black w-full max-w-md p-6 space-y-6 flex flex-col relative rounded-none">
-            
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-zinc-200/80 rounded-md shadow-xl max-w-lg w-full p-6 space-y-6 font-mono text-xs animate-in zoom-in-95 duration-150 relative">
             <div className="space-y-1">
-              <h2 className="text-xl font-bold uppercase tracking-tight">Onboard Client</h2>
-              <p className="font-mono text-[10px] text-zinc-400 uppercase">Append new entity context to repository</p>
+              <h2 className="text-xl font-semibold uppercase tracking-tight font-sans text-black">Onboard Client</h2>
+              <p className="font-mono text-[10px] text-zinc-400 uppercase font-semibold">Append new entity context to repository</p>
             </div>
 
             {error && (
-              <div className="border border-black bg-zinc-50 p-3 font-mono text-[11px] text-black font-bold uppercase">
+              <div className="border border-zinc-200 bg-zinc-50 p-3 font-mono text-[11px] text-black font-semibold uppercase rounded">
                 &gt; VALIDATION_FAILURE: {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs">
               
-              {/* STARK TAB SELECTOR GRID */}
+              {/* TAB SELECTOR GRID */}
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block">Registry Profile Type</label>
-                <div className="grid grid-cols-3 border border-black divide-x divide-black bg-white">
+                <label className="text-zinc-400 uppercase block font-semibold">Registry Profile Type</label>
+                <div className="grid grid-cols-3 border border-zinc-200 divide-x divide-zinc-200 bg-white rounded">
                   {(["WALK_IN", "INDIVIDUAL", "CORPORATE"] as const).map((type) => (
                     <button
                       key={type}
                       type="button"
                       onClick={() => setClientType(type)}
-                      className={`py-2 text-[10px] font-bold uppercase tracking-tighter transition-colors rounded-none ${
+                      className={`py-2 text-[10px] font-semibold uppercase tracking-tighter transition-colors ${
                         clientType === type 
                           ? "bg-black text-white" 
                           : "bg-white text-zinc-600 hover:bg-zinc-50"
@@ -95,79 +94,79 @@ export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; sho
               </div>
 
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block">Client Name / Corporate Title</label>
+                <label className="text-zinc-400 uppercase block font-semibold">Client Name / Corporate Title</label>
                 <input
                   type="text"
                   name="name"
                   placeholder="e.g., Acme Supplies LTD"
-                  className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block">Email Address</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">Email Address</label>
                   <input
                     type="email"
                     name="email"
                     placeholder="name@domain.com"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                     required
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block">Phone Contact</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">Phone Contact</label>
                   <input
                     type="text"
                     name="phone"
                     placeholder="e.g., 0712345678"
-                    className="w-full px-3 py-2 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                   />
                 </div>
               </div>
 
-              {/* TAX PIN INPUT (CORPORATE P... OR SOLE PROPRIETOR/INDIVIDUAL A...) */}
+              {/* TAX PIN INPUT */}
               <div className="space-y-1 pt-2 border-t border-dashed border-zinc-200">
                 <div className="flex justify-between items-center">
-                  <label className="text-black font-bold uppercase block">KRA Tax PIN</label>
+                  <label className="text-black font-semibold uppercase block">KRA Tax PIN</label>
                   <span className="text-[9px] text-zinc-400 italic">Sole Prop (A...) or Corp (P...)</span>
                 </div>
                 <input
                   type="text"
                   name="taxPin"
                   placeholder="e.g. A012345678B (Personal/Sole Prop) or P051234567A (Company)"
-                  className="w-full px-3 py-2 border border-black bg-white font-mono text-xs uppercase focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-none"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white font-mono text-xs uppercase focus:outline-none focus:border-black placeholder:text-zinc-300 rounded"
                   maxLength={20}
                 />
               </div>
 
               {/* STATUTORY eTIMS FISCAL REQUIREMENT TOGGLE */}
-              <div className="flex items-center gap-2 p-3 bg-zinc-50 border border-black">
+              <div className="flex items-center gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded">
                 <input
                   type="checkbox"
                   id="requiresEtims"
                   name="requiresEtims"
-                  className="accent-black w-4 h-4 cursor-pointer"
+                  className="accent-black w-4 h-4 cursor-pointer rounded-sm"
                 />
-                <label htmlFor="requiresEtims" className="font-bold uppercase text-[10px] cursor-pointer">
+                <label htmlFor="requiresEtims" className="font-semibold uppercase text-[10px] cursor-pointer">
                   Requires KRA eTIMS / CU Fiscal Compliance
                 </label>
               </div>
 
               {/* ACTION TOGGLE WRAPPER */}
-              <div className="border-t border-black pt-4 flex justify-end gap-2">
+              <div className="border-t border-zinc-200/80 pt-4 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="border border-zinc-300 px-4 py-2 text-zinc-600 hover:border-black hover:text-black transition-colors rounded-none"
+                  className="btn-secondary-modern px-4 py-2 text-xs font-semibold uppercase"
                 >
                   CANCEL
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-black text-white px-6 py-2 font-bold uppercase hover:bg-zinc-900 transition-colors disabled:bg-zinc-300 rounded-none border border-black"
+                  className="btn-primary-modern px-6 py-2 font-semibold uppercase text-xs disabled:bg-zinc-300"
                 >
                   {loading ? "COMMITTING NODE..." : "SAVE PROFILE"}
                 </button>

@@ -22,21 +22,21 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
     <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-mono text-xs">
       
       {/* HEADER BAR */}
-      <div className="border-b border-black pb-6 space-y-2">
-        <span className="text-[10px] text-zinc-400 uppercase">DOCUMENTATION // IN_APP_OPERATOR_GUIDE</span>
-        <h1 className="text-3xl font-bold uppercase tracking-tighter font-sans">{shop.name} Operator Manual</h1>
+      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
+        <span className="text-[10px] text-zinc-400 uppercase font-semibold">DOCUMENTATION // IN_APP_OPERATOR_GUIDE</span>
+        <h1 className="text-xl font-semibold uppercase tracking-tight font-sans text-black">{shop.name} Operator Manual</h1>
         <p className="font-sans text-xs text-zinc-600">
           Comprehensive step-by-step operating guide for managing billing ledgers, eTIMS tax returns, payment channels, and financial analytics.
         </p>
       </div>
 
       {/* MODULE CARDS */}
-      <div className="grid grid-cols-1 gap-8 max-w-4xl">
+      <div className="grid grid-cols-1 gap-6 max-w-4xl">
         
         {/* MODULE 1 */}
-        <div className="border border-black p-6 bg-white space-y-3">
-          <div className="flex items-center gap-2 border-b border-black pb-2">
-            <span className="bg-black text-white px-2 py-0.5 font-bold uppercase text-[10px]">[01] SYSTEM SETTINGS &amp; BRAND THEMES</span>
+        <div className="card-modern p-6 space-y-3">
+          <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-2">
+            <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[01] SYSTEM SETTINGS &amp; BRAND THEMES</span>
           </div>
           <p className="font-sans text-xs text-zinc-600">
             Configure business profile parameters, VAT PIN, phone numbers, website, Cloudinary logo uploads, and custom shop theme colors.
@@ -44,7 +44,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
           <div className="pt-2">
             <Link
               href={`/workspaces/${slug}/settings`}
-              className="border border-black bg-zinc-50 px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-black hover:text-white transition-colors inline-block"
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
               Go to System Settings -&gt;
             </Link>
@@ -52,9 +52,9 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
         </div>
 
         {/* MODULE 2 */}
-        <div className="border border-black p-6 bg-white space-y-3">
-          <div className="flex items-center gap-2 border-b border-black pb-2">
-            <span className="bg-black text-white px-2 py-0.5 font-bold uppercase text-[10px]">[02] CLIENT FLOW &amp; SUPPLIER NETWORK</span>
+        <div className="card-modern p-6 space-y-3">
+          <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-2">
+            <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[02] CLIENT FLOW &amp; SUPPLIER NETWORK</span>
           </div>
           <p className="font-sans text-xs text-zinc-600">
             Register clients and suppliers with tax PINs for statutory eTIMS compliance. Generate invoices or LPOs directly from client/supplier detail pages.
@@ -62,13 +62,13 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
           <div className="flex gap-3 pt-2">
             <Link
               href={`/workspaces/${slug}/clients`}
-              className="border border-black bg-zinc-50 px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-black hover:text-white transition-colors"
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
               Go to Client Directory -&gt;
             </Link>
             <Link
               href={`/workspaces/${slug}/suppliers`}
-              className="border border-black bg-zinc-50 px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-black hover:text-white transition-colors"
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
               Go to Supplier Network -&gt;
             </Link>
@@ -76,9 +76,9 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
         </div>
 
         {/* MODULE 3 */}
-        <div className="border border-black p-6 bg-white space-y-3">
-          <div className="flex items-center gap-2 border-b border-black pb-2">
-            <span className="bg-black text-white px-2 py-0.5 font-bold uppercase text-[10px]">[03] FISCAL LEDGERS &amp; KRA eTIMS TAXES</span>
+        <div className="card-modern p-6 space-y-3">
+          <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-2">
+            <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[03] FISCAL LEDGERS &amp; KRA eTIMS TAXES</span>
           </div>
           <p className="font-sans text-xs text-zinc-600">
             Issue Invoices, Receipts, Quotations, LPOs, and Credit Notes. Assign row-level tax rates (16% VAT, 0% Zero-Rated, Exempt) and enter eTIMS CU serial numbers.
@@ -86,7 +86,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
           <div className="pt-2">
             <Link
               href={`/workspaces/${slug}/documents`}
-              className="border border-black bg-zinc-50 px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-black hover:text-white transition-colors inline-block"
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
               Go to Fiscal Ledgers -&gt;
             </Link>
@@ -94,9 +94,9 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
         </div>
 
         {/* MODULE 4 */}
-        <div className="border border-black p-6 bg-white space-y-3">
-          <div className="flex items-center gap-2 border-b border-black pb-2">
-            <span className="bg-black text-white px-2 py-0.5 font-bold uppercase text-[10px]">[04] PAYMENT CHANNELS &amp; REMITTANCE REF #</span>
+        <div className="card-modern p-6 space-y-3">
+          <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-2">
+            <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[04] PAYMENT CHANNELS &amp; REMITTANCE REF #</span>
           </div>
           <p className="font-sans text-xs text-zinc-600">
             When settling documents, record payment destination channels (Bank, M-Pesa Till/Paybill, Cash, Cheque) and transaction reference codes (e.g. M-Pesa Code `QAB71239X` or Bank Ref).
@@ -104,9 +104,9 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
         </div>
 
         {/* MODULE 5 */}
-        <div className="border border-black p-6 bg-white space-y-3">
-          <div className="flex items-center gap-2 border-b border-black pb-2">
-            <span className="bg-black text-white px-2 py-0.5 font-bold uppercase text-[10px]">[05] FINANCIAL INTELLIGENCE &amp; KRA 20TH VAT TRACKER</span>
+        <div className="card-modern p-6 space-y-3">
+          <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-2">
+            <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[05] FINANCIAL INTELLIGENCE &amp; KRA 20TH VAT TRACKER</span>
           </div>
           <p className="font-sans text-xs text-zinc-600">
             Monitor real-time cash flow streams, 0–90+ day A/R aging risk matrix, top bestseller product velocity, and the statutory 20th KRA monthly VAT return deadline tracker.
@@ -114,7 +114,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
           <div className="pt-2">
             <Link
               href={`/workspaces/${slug}/analytics`}
-              className="border border-black bg-zinc-50 px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-black hover:text-white transition-colors inline-block"
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
               Go to Financial Analytics -&gt;
             </Link>

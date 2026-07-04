@@ -14,14 +14,14 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        <nav className="flex items-center gap-6 font-mono text-xs font-bold uppercase">
-          <Link href="/guide" className="hover:underline underline-offset-4 hidden sm:inline-block">
-            Operator Guide
+        <nav className="flex items-center gap-3 sm:gap-6 font-mono text-xs font-bold uppercase">
+          <Link href="/guide" className="hover:underline underline-offset-4">
+            Guide
           </Link>
           <Link href="/login" className="hover:underline underline-offset-4">
-            Console Login
+            Login
           </Link>
-          <Link href="/signup" className="bg-black text-white px-4 py-2 hover:bg-zinc-800 transition-colors">
+          <Link href="/signup" className="bg-black text-white px-3 py-1.5 sm:px-4 sm:py-2 hover:bg-zinc-800 transition-colors text-[11px] sm:text-xs">
             Initialize Workspace
           </Link>
         </nav>

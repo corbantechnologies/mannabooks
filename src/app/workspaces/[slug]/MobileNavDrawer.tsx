@@ -133,6 +133,13 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
               >
                 [06] System Settings
               </Link>
+              <Link
+                href={`/workspaces/${slug}/guide`}
+                onClick={() => setIsOpen(false)}
+                className="px-3 py-2.5 border border-black hover:bg-black hover:text-white transition-all block text-left"
+              >
+                [07] Operator Guide
+              </Link>
             </nav>
           </div>
 

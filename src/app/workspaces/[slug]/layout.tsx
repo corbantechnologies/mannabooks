@@ -139,6 +139,12 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
               >
                 [06] System Settings
               </Link>
+              <Link 
+                href={`/workspaces/${slug}/guide`} 
+                className="px-3 py-2 border border-transparent hover:border-black hover:bg-zinc-50 transition-all block"
+              >
+                [07] Operator Guide
+              </Link>
             </nav>
           </div>
 

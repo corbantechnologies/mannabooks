@@ -124,7 +124,7 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-black hover:bg-black hover:text-white transition-all block text-left"
               >
-                [05] Financial Analytics
+                [05] Analytics
               </Link>
               <Link
                 href={`/workspaces/${slug}/settings`}

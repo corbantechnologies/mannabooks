@@ -68,7 +68,7 @@ function LoginFormContent() {
       <div className="card-modern w-full max-w-sm p-8 space-y-6 bg-white">
         
         <div className="space-y-1.5">
-          <h2 className="text-xl font-semibold tracking-tight uppercase leading-none font-sans text-black">Console Log In</h2>
+          <h2 className="text-xl font-semibold tracking-tight uppercase leading-none font-sans text-black">Log In</h2>
           <p className="text-xs text-zinc-500 font-mono uppercase font-semibold">Enter credentials to open ledger node</p>
         </div>
 

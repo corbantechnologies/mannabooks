@@ -94,6 +94,12 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
                 eTIMS Required
               </span>
             )}
+            <Link
+              href={`/workspaces/${slug}/documents/new?clientId=${clientRecord.id}`}
+              className="bg-black text-white border border-black px-3 py-1 font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors"
+            >
+              + Generate Document
+            </Link>
             <EditClientModal
               client={clientRecord}
               shopId={shop.id}

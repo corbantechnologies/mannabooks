@@ -24,15 +24,27 @@ interface UiRowItem {
   taxType: "V_16" | "V_0" | "EXEMPT";
 }
 
+import { useSearchParams } from "next/navigation";
+
 export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers = [], products }: BuilderProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialClientId = searchParams.get("clientId") || "";
+  const initialSupplierId = searchParams.get("supplierId") || "";
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form Parameters
-  const [partyType, setPartyType] = useState<"CLIENT" | "SUPPLIER">("CLIENT");
-  const [targetId, setTargetId] = useState("");
-  const [docType, setDocType] = useState<DocumentType>("INVOICE");
+  const [partyType, setPartyType] = useState<"CLIENT" | "SUPPLIER">(
+    initialSupplierId ? "SUPPLIER" : "CLIENT"
+  );
+  const [targetId, setTargetId] = useState(
+    initialSupplierId || initialClientId || ""
+  );
+  const [docType, setDocType] = useState<DocumentType>(
+    initialSupplierId ? "LPO" : "INVOICE"
+  );
   const [dueDate, setDueDate] = useState("");
   const [kraCuInvoiceNumber, setKraCuInvoiceNumber] = useState("");
   const [requiresEtims, setRequiresEtims] = useState(false);
@@ -40,10 +52,12 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
   // Automatically switch partyType when selecting Procurement documents (LPO, PO, GRN, PV)
   useEffect(() => {
     if (docType === "LPO" || docType === "PO" || docType === "GOODS_RECEIVED_NOTE" || docType === "PAYMENT_VOUCHER") {
-      setPartyType("SUPPLIER");
-      setTargetId("");
+      if (partyType !== "SUPPLIER") {
+        setPartyType("SUPPLIER");
+        if (!initialSupplierId) setTargetId("");
+      }
     }
-  }, [docType]);
+  }, [docType, partyType, initialSupplierId]);
 
   // Update eTIMS preference when selecting target client or supplier
   useEffect(() => {

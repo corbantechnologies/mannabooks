@@ -83,6 +83,12 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
                 eTIMS Required
               </span>
             )}
+            <Link
+              href={`/workspaces/${slug}/documents/new?supplierId=${supplierRecord.id}`}
+              className="bg-black text-white border border-black px-3 py-1 font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors"
+            >
+              + Generate Document
+            </Link>
             <EditSupplierModal
               supplier={supplierRecord}
               shopId={shop.id}

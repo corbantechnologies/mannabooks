@@ -5,6 +5,8 @@ import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { DocumentBuilderClientForm } from "./DocumentBuilderClientForm";
 
+import { Suspense } from "react";
+
 interface NewDocumentPageProps {
   params: Promise<{ slug: string }>;
 }
@@ -45,13 +47,15 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
         <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">Generate Document</h1>
       </div>
 
-      <DocumentBuilderClientForm 
-        shop={shop}
-        shopSlug={slug}
-        clients={clientRegistry}
-        suppliers={supplierRegistry}
-        products={productRegistry}
-      />
+      <Suspense fallback={<div className="font-mono text-xs text-zinc-400 p-4 border border-black">&gt; LOADING DOCUMENT COMPILER...</div>}>
+        <DocumentBuilderClientForm 
+          shop={shop}
+          shopSlug={slug}
+          clients={clientRegistry}
+          suppliers={supplierRegistry}
+          products={productRegistry}
+        />
+      </Suspense>
     </div>
   );
 }

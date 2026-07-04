@@ -89,6 +89,27 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
 
   return (
     <div className="min-h-screen bg-zinc-50 py-6 sm:py-12 px-3 sm:px-6 font-mono text-xs text-black selection:bg-black selection:text-white">
+      <style>{`
+        :root {
+          --brand-primary: ${brandColor};
+        }
+        ::selection {
+          background-color: ${brandColor} !important;
+          color: #ffffff !important;
+        }
+        .bg-black {
+          background-color: ${brandColor} !important;
+        }
+        .border-black {
+          border-color: ${brandColor} !important;
+        }
+        .divide-black > :not([hidden]) ~ :not([hidden]) {
+          border-color: ${brandColor} !important;
+        }
+        .hover\\:bg-black:hover {
+          background-color: ${brandColor} !important;
+        }
+      `}</style>
       <div className="max-w-3xl mx-auto bg-white border border-black p-4 sm:p-12 space-y-8 sm:space-y-12 shadow-sm">
         
         {/* PUBLIC PORTAL BRAND HEADER */}

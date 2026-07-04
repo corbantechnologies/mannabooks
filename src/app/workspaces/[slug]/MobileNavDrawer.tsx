@@ -9,6 +9,8 @@ interface MobileNavDrawerProps {
   slug: string;
   shop: {
     name: string;
+    shortName?: string | null;
+    primaryColor?: string | null;
     logoUrl?: string | null;
     taxPin?: string | null;
   };
@@ -25,13 +27,18 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
       {/* MOBILE TOP NAVIGATION BAR */}
       <div className="flex justify-between items-center p-4">
         <div className="flex items-center gap-3 min-w-0">
-          {shop.logoUrl && (
+          {shop.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={shop.logoUrl} alt={shop.name} className="w-7 h-7 object-contain border border-black p-0.5 bg-white shrink-0" />
+          ) : (
+            <span
+              className="w-3.5 h-3.5 border border-black/30 shrink-0 inline-block"
+              style={{ backgroundColor: shop.primaryColor || "#000000" }}
+            />
           )}
           <div className="min-w-0">
             <h2 className="font-mono font-bold uppercase tracking-tighter text-sm truncate leading-none">
-              {shop.name}
+              {shop.shortName || shop.name}
             </h2>
             <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 block mt-0.5">
               Workspace

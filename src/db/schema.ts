@@ -39,10 +39,13 @@ export const shops = pgTable('shops', {
     id: uuid('id').defaultRandom().primaryKey(),
     ownerId: uuid('owner_id').references(() => users.id).notNull(), // The user who created/owns the shop
     name: text('name').notNull(),
+    shortName: varchar('short_name', { length: 50 }), // Optional short trading alias e.g. Corban Tech
     slug: varchar('slug', { length: 100 }).notNull().unique(),
     currency: varchar('currency', { length: 3 }).default('KES').notNull(),
+    phone: varchar('phone', { length: 30 }), // Business phone contact e.g. +254 712 345 678
+    website: varchar('website', { length: 255 }), // Business website URL e.g. https://corbantechnologies.org
     logoUrl: text('logo_url'),
-    primaryColor: varchar('primary_color', { length: 7 }).default('#000000').notNull(), // Sleek Black default
+    primaryColor: varchar('primary_color', { length: 20 }).default('#000000').notNull(), // Sleek Black default, custom hex, or palette
     taxPin: varchar('tax_pin', { length: 30 }), // e.g., KRA PIN (A... for personal/sole prop, P... for company)
     isVatRegistered: boolean('is_vat_registered').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),

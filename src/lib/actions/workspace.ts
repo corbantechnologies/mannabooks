@@ -51,7 +51,11 @@ export const getActiveWorkspaceContext = cache(async function getActiveWorkspace
 interface UpdateShopSettingsInput {
     shopId: string;
     name: string;
+    shortName?: string;
+    phone?: string;
+    website?: string;
     logoUrl?: string;
+    primaryColor?: string;
     taxPin?: string;
     isVatRegistered: boolean;
     currency: string;
@@ -66,10 +70,19 @@ export async function updateShopSettings(input: UpdateShopSettingsInput) {
         const sessionRecord = await verifyAndGetSession();
         if (!sessionRecord) return { success: false, error: "Authentication expired." };
 
+        let primaryColor = input.primaryColor?.trim() || "#000000";
+        if (primaryColor && !primaryColor.startsWith("#")) {
+            primaryColor = `#${primaryColor}`;
+        }
+
         await db.update(shops)
             .set({
                 name: input.name.trim(),
+                shortName: input.shortName?.trim() || null,
+                phone: input.phone?.trim() || null,
+                website: input.website?.trim() || null,
                 logoUrl: input.logoUrl?.trim() || null,
+                primaryColor,
                 taxPin: input.taxPin?.trim() || null,
                 isVatRegistered: input.isVatRegistered,
                 currency: input.currency.toUpperCase().trim(),

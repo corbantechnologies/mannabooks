@@ -85,23 +85,57 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
     where: eq(paymentMethods.shopId, shop.id),
   });
 
+  const brandColor = shop.primaryColor || "#000000";
+
   return (
     <div className="min-h-screen bg-zinc-50 py-6 sm:py-12 px-3 sm:px-6 font-mono text-xs text-black selection:bg-black selection:text-white">
+      <style>{`
+        :root {
+          --brand-primary: ${brandColor};
+        }
+        ::selection {
+          background-color: ${brandColor} !important;
+          color: #ffffff !important;
+        }
+        .bg-black {
+          background-color: ${brandColor} !important;
+        }
+        .border-black {
+          border-color: ${brandColor} !important;
+        }
+        .divide-black > :not([hidden]) ~ :not([hidden]) {
+          border-color: ${brandColor} !important;
+        }
+        .hover\\:bg-black:hover {
+          background-color: ${brandColor} !important;
+        }
+      `}</style>
       <div className="max-w-3xl mx-auto bg-white border border-black p-4 sm:p-12 space-y-8 sm:space-y-12 shadow-sm">
         
         {/* PUBLIC PORTAL BRAND HEADER */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-b border-black pb-8">
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold uppercase tracking-tighter font-sans">{shop.name}</h1>
+            <h1 className="text-2xl font-bold uppercase tracking-tighter font-sans" style={{ color: brandColor }}>
+              {shop.shortName || shop.name}
+            </h1>
             {shop.taxPin && <p className="text-[11px] text-zinc-500">VAT PIN: {shop.taxPin}</p>}
+            {shop.phone && <p className="text-[11px] text-zinc-500">Tel: {shop.phone}</p>}
+            {shop.website && (
+              <a href={shop.website} target="_blank" rel="noopener noreferrer" className="text-[11px] underline block" style={{ color: brandColor }}>
+                {shop.website}
+              </a>
+            )}
             <p className="text-zinc-500 font-sans italic lowercase">Origin: Secure Ledger Channel</p>
           </div>
           
           <div className="text-left sm:text-right space-y-1">
-            <div className="inline-block border border-black px-2 py-0.5 font-bold uppercase tracking-wider bg-zinc-50 text-[10px]">
+            <div
+              className="inline-block border border-black px-2 py-0.5 font-bold uppercase tracking-wider text-[10px]"
+              style={{ backgroundColor: brandColor, color: "#ffffff" }}
+            >
               {doc.type} SNAPSHOT
             </div>
-            <p className="text-base font-bold text-black mt-1">{doc.docNumber}</p>
+            <p className="text-base font-bold mt-1" style={{ color: brandColor }}>{doc.docNumber}</p>
             {doc.kraCuInvoiceNumber && (
               <p className="text-[10px] font-bold text-black border border-black px-1.5 py-0.5 bg-zinc-50 inline-block">
                 KRA eTIMS CU #: {doc.kraCuInvoiceNumber}

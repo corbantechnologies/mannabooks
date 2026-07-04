@@ -57,9 +57,16 @@ export default async function WorkspacesDirectoryPage() {
                 className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-zinc-50 transition-colors group"
               >
                 <div className="space-y-1">
-                  <h3 className="text-xl font-bold uppercase tracking-tight group-hover:underline decoration-2 underline-offset-4">
-                    {member.shop.name}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-3.5 h-3.5 border border-black/30 shrink-0 inline-block"
+                      style={{ backgroundColor: member.shop.primaryColor || "#000000" }}
+                      title={`Theme: ${member.shop.primaryColor}`}
+                    />
+                    <h3 className="text-xl font-bold uppercase tracking-tight group-hover:underline decoration-2 underline-offset-4">
+                      {member.shop.shortName || member.shop.name}
+                    </h3>
+                  </div>
                   <p className="font-mono text-xs text-zinc-500">
                     URL Reference: /workspaces/{member.shop.slug}
                   </p>

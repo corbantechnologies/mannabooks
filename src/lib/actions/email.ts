@@ -58,15 +58,17 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
             ? `An official <strong>${doc.type}</strong> (Ref: <code>${doc.docNumber}</code>) has been issued for your records.`
             : `A new <strong>${doc.type}</strong> (Ref: <code>${doc.docNumber}</code>) has been issued for your account.`;
 
+        const brandColor = doc.shop.primaryColor || "#000000";
+
         // 2. Dispatch the transaction details via Resend with clean HTML layout
         const { data, error: resendError } = await resend.emails.send({
             from: fromAddress,
             to: [recipient.email],
             subject: `${doc.shop.name} — ${doc.type} ${doc.docNumber}`,
             html: `
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background-color: #ffffff; color: #000000; border: 1px solid #000000;">
-                    <div style="border-bottom: 2px solid #000000; padding-bottom: 16px; margin-bottom: 24px;">
-                        <h1 style="font-size: 20px; font-weight: 800; text-transform: uppercase; margin: 0; tracking: -0.05em;">${doc.shop.name}</h1>
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background-color: #ffffff; color: #000000; border: 1px solid ${brandColor};">
+                    <div style="border-bottom: 2px solid ${brandColor}; padding-bottom: 16px; margin-bottom: 24px;">
+                        <h1 style="font-size: 20px; font-weight: 800; text-transform: uppercase; margin: 0; color: ${brandColor}; tracking: -0.05em;">${doc.shop.name}</h1>
                         <p style="font-family: monospace; font-size: 11px; color: #71717a; margin: 4px 0 0 0; text-transform: uppercase;">Official Billing Statement</p>
                     </div>
 
@@ -76,7 +78,7 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
                         ${introText}
                     </p>
 
-                    <div style="background-color: #f4f4f5; border: 1px solid #000000; padding: 20px; margin-bottom: 28px;">
+                    <div style="background-color: #f4f4f5; border: 1px solid ${brandColor}; padding: 20px; margin-bottom: 28px;">
                         <table style="width: 100%; border-collapse: collapse; font-family: monospace; font-size: 13px;">
                             <tr>
                                 <td style="color: #71717a; padding-bottom: 8px;">DOCUMENT:</td>
@@ -88,7 +90,7 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
                             </tr>
                             <tr>
                                 <td style="color: #71717a; padding-bottom: 8px;">${amountLabel}</td>
-                                <td style="text-align: right; font-weight: bold; font-size: 16px; padding-bottom: 8px;">${doc.shop.currency} ${doc.grandTotal}</td>
+                                <td style="text-align: right; font-weight: bold; font-size: 16px; color: ${brandColor}; padding-bottom: 8px;">${doc.shop.currency} ${doc.grandTotal}</td>
                             </tr>
                             ${doc.dueDate ? `
                             <tr>
@@ -99,13 +101,13 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
                     </div>
 
                     <div style="text-align: center; margin-bottom: 32px;">
-                        <a href="${publicSecureLink}" target="_blank" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: bold; font-size: 13px; text-transform: uppercase; text-decoration: none; padding: 14px 28px; border: 1px solid #000000;">
+                        <a href="${publicSecureLink}" target="_blank" style="display: inline-block; background-color: ${brandColor}; color: #ffffff; font-weight: bold; font-size: 13px; text-transform: uppercase; text-decoration: none; padding: 14px 28px; border: 1px solid ${brandColor};">
                             ${buttonText}
                         </a>
                     </div>
 
                     <div style="border-t: 1px solid #e4e4e7; pt: 16px; font-family: monospace; font-size: 10px; color: #a1a1aa; text-align: center;">
-                        Direct Portal Link: <a href="${publicSecureLink}" style="color: #000000;">${publicSecureLink}</a>
+                        Direct Portal Link: <a href="${publicSecureLink}" style="color: ${brandColor};">${publicSecureLink}</a>
                     </div>
                 </div>
             `,

@@ -17,9 +17,44 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
   // 2. Authenticate session and fetch multi-tenant profile fields entirely on the server
   const { shop, user } = await getActiveWorkspaceContext(slug);
 
+  const brandColor = shop.primaryColor || "#000000";
+
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-white selection:bg-black selection:text-white">
-      
+    <div
+      style={{ "--brand-primary": brandColor } as React.CSSProperties}
+      className="flex flex-col lg:flex-row min-h-screen bg-white"
+    >
+      <style>{`
+        :root {
+          --brand-primary: ${brandColor};
+        }
+        ::selection {
+          background-color: ${brandColor} !important;
+          color: #ffffff !important;
+        }
+        .bg-black {
+          background-color: ${brandColor} !important;
+        }
+        .border-black {
+          border-color: ${brandColor} !important;
+        }
+        .divide-black > :not([hidden]) ~ :not([hidden]) {
+          border-color: ${brandColor} !important;
+        }
+        .accent-black {
+          accent-color: ${brandColor} !important;
+        }
+        .focus\\:ring-black:focus {
+          --tw-ring-color: ${brandColor} !important;
+        }
+        .hover\\:bg-black:hover {
+          background-color: ${brandColor} !important;
+        }
+        .hover\\:border-black:hover {
+          border-color: ${brandColor} !important;
+        }
+      `}</style>
+
       {/* MOBILE TOP NAVIGATION BAR WITH SLIDE DRAWER (< 1024px) */}
       <MobileNavDrawer slug={slug} shop={shop} user={user} />
 
@@ -42,8 +77,11 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
               )}
               <div className="min-w-0">
                 <h2 className="font-bold uppercase tracking-tighter text-base truncate block leading-none">
-                  {shop.name}
+                  {shop.shortName || shop.name}
                 </h2>
+                {shop.phone && (
+                  <p className="font-mono text-[9px] text-zinc-500 truncate mt-0.5">{shop.phone}</p>
+                )}
                 {shop.taxPin ? (
                   <div className="inline-block border border-black font-mono text-[9px] px-1 py-0.5 uppercase tracking-tight text-zinc-600 bg-zinc-50 mt-1">
                     PIN: {shop.taxPin}

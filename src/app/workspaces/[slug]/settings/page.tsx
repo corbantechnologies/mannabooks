@@ -25,6 +25,10 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
         shopId={shop.id}
         shopSlug={slug}
         initialName={shop.name}
+        initialShortName={shop.shortName || ""}
+        initialPhone={shop.phone || ""}
+        initialWebsite={shop.website || ""}
+        initialPrimaryColor={shop.primaryColor || "#000000"}
         initialLogoUrl={shop.logoUrl || ""}
         initialTaxPin={shop.taxPin || ""}
         initialIsVatRegistered={shop.isVatRegistered}

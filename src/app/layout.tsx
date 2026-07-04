@@ -41,12 +41,21 @@ export const metadata: Metadata = {
       follow: true,
       "max-video-preview": -1,
       "max-image-preview": "large",
-      "max-snippet": -1,
     },
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Manna Books",
+  },
+  icons: {
+    icon: "/icons/icon-192x192.png",
+    apple: "/icons/apple-touch-icon.png",
   },
 };
 
 import { QueryProvider } from "@/providers/QueryProvider";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 export default function RootLayout({
   children,
@@ -58,6 +67,7 @@ export default function RootLayout({
       <body className="font-sans min-h-screen flex flex-col bg-white text-black">
         <QueryProvider>
           {children}
+          <PWAInstallPrompt />
         </QueryProvider>
         <Analytics />
         <Toaster

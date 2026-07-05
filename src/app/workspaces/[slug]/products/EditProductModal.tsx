@@ -11,7 +11,9 @@ interface EditProductModalProps {
     id: string;
     name: string;
     sku: string | null;
+    itemType?: string;
     unitPrice: string;
+    costPrice?: string;
     defaultTaxType: "V_16" | "V_0" | "EXEMPT";
     trackStock?: boolean;
     stockQuantity?: string;
@@ -26,7 +28,9 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState(product.name);
   const [sku, setSku] = useState(product.sku || "");
+  const [itemType, setItemType] = useState<"PRODUCT" | "SERVICE">((product.itemType as any) || "PRODUCT");
   const [unitPrice, setUnitPrice] = useState(product.unitPrice);
+  const [costPrice, setCostPrice] = useState(product.costPrice || "0.00");
   const [taxType, setTaxType] = useState(product.defaultTaxType);
   const [trackStock, setTrackStock] = useState(product.trackStock || false);
   const [stockQuantity, setStockQuantity] = useState(product.stockQuantity || "0");
@@ -43,7 +47,9 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
         id: product.id,
         name,
         sku: sku || undefined,
+        itemType,
         unitPrice: parseFloat(unitPrice),
+        costPrice: parseFloat(costPrice),
         defaultTaxType: taxType,
         trackStock,
         stockQuantity: parseFloat(stockQuantity),
@@ -88,6 +94,18 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
 
             <form onSubmit={handleUpdate} className="space-y-4 font-mono text-xs">
               <div className="space-y-1">
+                <label className="text-zinc-400 uppercase block font-semibold">Item Classification</label>
+                <select
+                  value={itemType}
+                  onChange={(e) => setItemType(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
+                >
+                  <option value="PRODUCT">Product</option>
+                  <option value="SERVICE">Service</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
                 <label className="text-zinc-400 uppercase block font-semibold">Product Name / Description</label>
                 <input
                   type="text"
@@ -110,7 +128,7 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Unit Price</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">Selling Price (KES)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -122,17 +140,28 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Tax Type</label>
-                  <select
-                    value={taxType}
-                    onChange={(e) => setTaxType(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black text-xs font-semibold rounded"
-                  >
-                    <option value="V_16">16% VAT</option>
-                    <option value="V_0">0% VAT (Zero-Rated)</option>
-                    <option value="EXEMPT">Tax Exempt</option>
-                  </select>
+                  <label className="text-zinc-400 uppercase block font-semibold">Cost Price / COGS (KES)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={costPrice}
+                    onChange={(e) => setCostPrice(e.target.value)}
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black font-semibold text-xs rounded"
+                  />
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-zinc-400 uppercase block font-semibold">Tax Type</label>
+                <select
+                  value={taxType}
+                  onChange={(e) => setTaxType(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black text-xs font-semibold rounded"
+                >
+                  <option value="V_16">16% VAT</option>
+                  <option value="V_0">0% VAT (Zero-Rated)</option>
+                  <option value="EXEMPT">Tax Exempt</option>
+                </select>
               </div>
 
               {/* INVENTORY TRACKING BLOCK */}

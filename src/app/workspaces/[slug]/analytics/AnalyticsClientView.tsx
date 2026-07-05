@@ -157,6 +157,51 @@ export function AnalyticsClientView({ shopId, shopSlug, initialData }: Analytics
         </div>
       </div>
 
+      {/* GROSS PROFIT & COGS MARGIN INTELLIGENCE */}
+      <div className="card-modern p-6 bg-emerald-50/40 border border-emerald-200/80 space-y-4">
+        <div className="flex justify-between items-center border-b border-emerald-200/60 pb-3">
+          <div>
+            <h2 className="font-semibold uppercase text-sm tracking-wider text-black font-sans flex items-center gap-2">
+              <span>📈 COGS &amp; Gross Profit Margin Intelligence</span>
+            </h2>
+            <p className="font-sans text-xs text-zinc-500 mt-0.5">
+              Automated profitability analysis based on product production costs &amp; selling prices.
+            </p>
+          </div>
+          <div className="bg-emerald-700 text-white px-3 py-1 text-xs font-bold uppercase rounded font-mono">
+            Margin: {data.grossProfitMargin.toFixed(1)}%
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-4 bg-white border border-emerald-200 rounded space-y-1">
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Total Sales Revenue (Inflow)</span>
+            <span className="text-lg font-bold text-black block font-sans">
+              {formatCurrency(data.totalSettledInflow, data.currency)}
+            </span>
+            <span className="text-[9px] text-zinc-500 block">Gross receipts and settled sales</span>
+          </div>
+
+          <div className="p-4 bg-white border border-emerald-200 rounded space-y-1">
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Total Cost of Goods Sold (COGS)</span>
+            <span className="text-lg font-bold text-rose-800 block font-sans">
+              {formatCurrency(data.totalCostOfGoodsSold, data.currency)}
+            </span>
+            <span className="text-[9px] text-zinc-500 block">Direct cost of production / purchase</span>
+          </div>
+
+          <div className="p-4 bg-white border border-emerald-200 rounded space-y-1">
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Net Gross Operating Profit</span>
+            <span className="text-lg font-bold text-emerald-800 block font-sans">
+              {formatCurrency(data.netGrossProfit, data.currency)}
+            </span>
+            <span className="text-[9px] text-emerald-700 font-bold block">
+              {data.grossProfitMargin >= 0 ? "Profit (Revenue - COGS)" : "Operating Loss"}
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* CHRONOLOGICAL MONTHLY TIMELINE STREAM */}
       <div className="card-modern p-6 space-y-6">
         <div className="flex justify-between items-center">

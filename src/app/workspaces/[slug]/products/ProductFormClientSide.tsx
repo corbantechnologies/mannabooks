@@ -21,7 +21,9 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
     const formData = new FormData(event.currentTarget);
     const name = formData.get("name") as string;
     const sku = formData.get("sku") as string;
+    const itemType = formData.get("itemType") as "PRODUCT" | "SERVICE";
     const unitPrice = parseFloat(formData.get("unitPrice") as string);
+    const costPrice = parseFloat(formData.get("costPrice") as string || "0");
     const defaultTaxType = formData.get("defaultTaxType") as "V_16" | "V_0" | "EXEMPT";
     const trackStock = formData.get("trackStock") === "on";
     const stockQuantity = parseFloat(formData.get("stockQuantity") as string || "0");
@@ -35,7 +37,7 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
     }
 
     createProductMutation.mutate(
-      { name, sku: sku || undefined, unitPrice, defaultTaxType, trackStock, stockQuantity, reorderThreshold },
+      { name, sku: sku || undefined, itemType, unitPrice, costPrice, defaultTaxType, trackStock, stockQuantity, reorderThreshold },
       {
         onSuccess: () => {
           setIsOpen(false);
@@ -71,12 +73,26 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
 
             <form onSubmit={handleCatalogSubmit} className="space-y-4 font-mono text-xs">
               
+              {/* ITEM TYPE SELECTOR */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1 col-span-2">
+                  <label className="text-zinc-400 uppercase block font-semibold">Item Classification</label>
+                  <select
+                    name="itemType"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
+                  >
+                    <option value="PRODUCT">Product</option>
+                    <option value="SERVICE">Service</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block font-semibold">Product Name / Service Specification</label>
+                <label className="text-zinc-400 uppercase block font-semibold">Product Name / Description</label>
                 <input
                   type="text"
                   name="name"
-                  placeholder="e.g., Consulting Service Hour"
+                  placeholder="e.g., Laptop Stand or Consulting Hour"
                   className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                   required
                 />
@@ -95,9 +111,9 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Base Unit Price</label>
+                  <label className="text-zinc-400 uppercase block font-semibold">Selling Price (KES)</label>
                   <input
                     type="number"
                     name="unitPrice"
@@ -110,16 +126,28 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Default Tax Type</label>
-                  <select
-                    name="defaultTaxType"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
-                  >
-                    <option value="V_16">16% VAT</option>
-                    <option value="V_0">0% VAT (Zero-Rated)</option>
-                    <option value="EXEMPT">Tax Exempt</option>
-                  </select>
+                  <label className="text-zinc-400 uppercase block font-semibold">Cost Price / COGS (KES)</label>
+                  <input
+                    type="number"
+                    name="costPrice"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
+                  />
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-zinc-400 uppercase block font-semibold">Default Tax Type</label>
+                <select
+                  name="defaultTaxType"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
+                >
+                  <option value="V_16">16% VAT</option>
+                  <option value="V_0">0% VAT (Zero-Rated)</option>
+                  <option value="EXEMPT">Tax Exempt</option>
+                </select>
               </div>
 
               {/* INVENTORY TRACKING BLOCK */}

@@ -12,7 +12,9 @@ export function useCreateProduct(shopId: string, shopSlug: string) {
     mutationFn: async (data: {
       name: string;
       sku?: string;
+      itemType?: "PRODUCT" | "SERVICE";
       unitPrice: number;
+      costPrice?: number;
       defaultTaxType: "V_16" | "V_0" | "EXEMPT";
       trackStock?: boolean;
       stockQuantity?: number;
@@ -40,7 +42,9 @@ export function useUpdateProduct(shopId: string, shopSlug: string) {
       id: string;
       name?: string;
       sku?: string;
+      itemType?: "PRODUCT" | "SERVICE";
       unitPrice?: number;
+      costPrice?: number;
       defaultTaxType?: "V_16" | "V_0" | "EXEMPT";
       trackStock?: boolean;
       stockQuantity?: number;

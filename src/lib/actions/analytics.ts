@@ -15,6 +15,9 @@ export interface AnalyticsData {
   totalSettledInflow: number; // Receipts + Paid Invoices
   totalSettledOutflow: number; // Paid LPOs + POs + Payment Vouchers
   netOperatingCashFlow: number; // Inflow - Outflow
+  totalCostOfGoodsSold: number; // COGS
+  netGrossProfit: number; // Inflow - COGS
+  grossProfitMargin: number; // Profit Margin %
   pendingReceivables: number; // Sent + Overdue Invoices
   accountsPayableDebt: number; // Sent + Overdue LPOs/POs
 
@@ -102,7 +105,11 @@ export async function getWorkspaceAnalyticsData(
     const allDocs = await db.query.documents.findMany({
       where: eq(documents.shopId, shopId),
       with: {
-        items: true,
+        items: {
+          with: {
+            product: true,
+          },
+        },
         client: true,
         supplier: true,
       },
@@ -119,6 +126,7 @@ export async function getWorkspaceAnalyticsData(
     // 4. Compute Executive KPIs
     let totalSettledInflow = 0;
     let totalSettledOutflow = 0;
+    let totalCostOfGoodsSold = 0;
     let pendingReceivables = 0;
     let accountsPayableDebt = 0;
 
@@ -128,8 +136,16 @@ export async function getWorkspaceAnalyticsData(
       const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER" || d.type === "GOODS_RECEIVED_NOTE" || d.type === "PAYROLL_VOUCHER";
 
       if (d.status === "PAID" || d.type === "RECEIPT") {
-        if (isSales) totalSettledInflow += val;
-        else if (isOutflow) totalSettledOutflow += val;
+        if (isSales) {
+          totalSettledInflow += val;
+          d.items.forEach((item) => {
+            const qty = parseFloat(item.quantity || "1");
+            const cost = parseFloat(item.product?.costPrice || "0");
+            totalCostOfGoodsSold += qty * cost;
+          });
+        } else if (isOutflow) {
+          totalSettledOutflow += val;
+        }
       } else if (d.status === "SENT" || d.status === "OVERDUE") {
         if (isSales) pendingReceivables += val;
         else if (isOutflow && d.type !== "PAYROLL_VOUCHER") accountsPayableDebt += val;
@@ -137,6 +153,8 @@ export async function getWorkspaceAnalyticsData(
     });
 
     const netOperatingCashFlow = totalSettledInflow - totalSettledOutflow;
+    const netGrossProfit = totalSettledInflow - totalCostOfGoodsSold;
+    const grossProfitMargin = totalSettledInflow > 0 ? (netGrossProfit / totalSettledInflow) * 100 : 0;
 
     // 5. Compute Monthly Timeline Stream (Last 6 Months)
     const monthlyTimelineMap: Record<string, { inflow: number; outflow: number }> = {};
@@ -303,6 +321,9 @@ export async function getWorkspaceAnalyticsData(
         totalSettledInflow,
         totalSettledOutflow,
         netOperatingCashFlow,
+        totalCostOfGoodsSold,
+        netGrossProfit,
+        grossProfitMargin,
         pendingReceivables,
         accountsPayableDebt,
         monthlyTimeline,

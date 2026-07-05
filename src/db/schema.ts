@@ -80,7 +80,9 @@ export const products = pgTable('products', {
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
     name: varchar('name', { length: 255 }).notNull(),
     sku: varchar('sku', { length: 100 }),
+    itemType: varchar('item_type', { length: 20 }).default('PRODUCT').notNull(), // 'PRODUCT' | 'SERVICE'
     unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
+    costPrice: numeric('cost_price', { precision: 12, scale: 2 }).default('0.00').notNull(),
     defaultTaxType: taxTypeEnum('default_tax_type').default('V_16').notNull(),
     trackStock: boolean('track_stock').default(false).notNull(),
     stockQuantity: numeric('stock_quantity', { precision: 12, scale: 2 }).default('0.00').notNull(),

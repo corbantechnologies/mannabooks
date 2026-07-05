@@ -33,13 +33,13 @@ export default function LandingPage() {
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 border border-zinc-300 px-3 py-1 text-[11px] font-mono uppercase tracking-widest bg-zinc-50 rounded font-semibold text-zinc-600">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Edition 2026.4 // KRA eTIMS &amp; PWA Enabled
+              Edition 2026.5 // eTIMS, Multi-Tax &amp; Statutory Payroll Suite
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-none uppercase">
               Financial velocity &amp; statutory compliance for SMEs.
             </h1>
             <p className="text-base md:text-lg text-zinc-600 max-w-xl font-normal leading-relaxed">
-              A minimalist fiscal tracking engine to manage clients, issue multi-rate tax invoices, automate KRA 20th monthly VAT returns, track A/R aging, and dispatch custom branded client portals.
+              A minimalist fiscal tracking engine for multi-tenant business workspaces. Issue multi-rate KRA eTIMS invoices, automate 20th monthly VAT returns, execute statutory payroll runs with A4 Landscape PDF vouchers, track A/R aging, and dispatch passwordless client portals.
             </p>
             <div className="pt-2 flex flex-col sm:flex-row gap-4 font-mono text-xs">
               <Link href="/signup" className="btn-primary-modern text-center px-8 py-3.5 text-xs font-semibold uppercase tracking-wider">
@@ -51,7 +51,7 @@ export default function LandingPage() {
             </div>
           </div>
           
-          {/* STARK WIREFRAME VISUAL PREVIEW */}
+          {/* STARK WIREFRAME VISUAL CONSOLE PREVIEW */}
           <div className="lg:col-span-5 card-modern p-6 space-y-5 font-mono text-xs hidden lg:block shadow-md">
             <div className="flex justify-between border-b border-black pb-3 items-center">
               <div className="flex items-center gap-2">
@@ -59,7 +59,7 @@ export default function LandingPage() {
                 <span className="font-bold uppercase">Manna Console Node</span>
               </div>
               <span className="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 px-1.5 py-0.5 font-bold uppercase">
-                eTIMS 16% Active
+                eTIMS &amp; Payroll Active
               </span>
             </div>
 
@@ -67,12 +67,25 @@ export default function LandingPage() {
             <div className="bg-white border border-black p-3 space-y-1">
               <div className="flex justify-between items-center text-[10px] font-bold uppercase text-zinc-500">
                 <span>Statutory KRA 20th VAT Tracker</span>
-                <span className="text-amber-700">⏰ 16 Days Left</span>
+                <span className="text-amber-700">⏰ 15 Days Remaining</span>
               </div>
               <div className="flex justify-between text-xs font-bold text-black pt-1">
                 <span>Output VAT (16%):</span>
                 <span>KES 42,800.00</span>
               </div>
+            </div>
+
+            {/* RECENT STATUTORY PAYROLL RUN PREVIEW */}
+            <div className="bg-zinc-950 text-white p-3 border border-black space-y-1.5 rounded-sm">
+              <div className="flex justify-between items-center text-[10px] font-bold uppercase">
+                <span className="text-emerald-400">PAYROLL VOUCHER RUN</span>
+                <span className="bg-emerald-500 text-black px-1.5 py-0.5 text-[9px] font-bold">LOCKED &amp; PAID</span>
+              </div>
+              <div className="flex justify-between text-xs font-semibold pt-0.5">
+                <span>Ref: PAY-JULY-2026-9042</span>
+                <span className="text-emerald-300">KES 184,500.00</span>
+              </div>
+              <p className="text-[9px] text-zinc-400">Includes PAYE, SHIF (2.75%), AHL (1.5%), NSSF Tier I &amp; II Payouts.</p>
             </div>
 
             {/* LEDGER SNAPSHOT STACK */}
@@ -102,45 +115,57 @@ export default function LandingPage() {
 
             <div className="border-t border-black pt-3 flex justify-between items-center text-[10px] text-zinc-500">
               <span>PWA APPLIANCE: STANDALONE</span>
-              <span>THEME: BRAND_PRIMARY</span>
+              <span>PDF: A4 LANDSCAPE VECTOR</span>
             </div>
           </div>
         </section>
 
         {/* METRICS & FEATURES MATRIX GRID */}
-        <section id="features" className="border-b border-zinc-200/80 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-y lg:divide-y-0 divide-zinc-200/80 bg-zinc-50/50">
+        <section id="features" className="border-b border-zinc-200/80 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 divide-zinc-200/80 bg-zinc-50/50">
           <div className="p-8 space-y-2 border-r border-zinc-200/80">
-            <span className="font-mono text-xs text-zinc-400 font-semibold">[01] ARCHITECTURE</span>
-            <h3 className="font-semibold uppercase tracking-tight text-lg text-black font-sans">Passwordless Client Links</h3>
-            <p className="text-sm text-zinc-600 leading-relaxed">Your clients never configure passwords. They view, download PDFs, and inspect settlements via secure 64-character token links sent straight to their inbox.</p>
+            <span className="font-mono text-xs text-zinc-400 font-semibold">[01] PAYROLL ENGINE</span>
+            <h3 className="font-semibold uppercase tracking-tight text-lg text-black font-sans">Statutory &amp; Custom Payroll</h3>
+            <p className="text-sm text-zinc-600 leading-relaxed">Execute staff, wage, and commission runs. Calculates Kenyan PAYE, SHIF (2.75%), Housing Levy (AHL 1.5%), NSSF Tier I &amp; II, and custom advance recoveries with DRAFT vs PAID status states.</p>
           </div>
 
           <div className="p-8 space-y-2 border-r border-zinc-200/80">
             <span className="font-mono text-xs text-zinc-400 font-semibold">[02] KRA TAX ENGINE</span>
             <h3 className="font-semibold uppercase tracking-tight text-lg text-black font-sans">Statutory 20th VAT Tracker</h3>
-            <p className="text-sm text-zinc-600 leading-relaxed">Automate monthly KRA eTIMS VAT return preparation. Automatically aggregate 16% Output VAT, 0% Zero-Rated, and Exempt sales with 20th filing deadline alerts.</p>
+            <p className="text-sm text-zinc-600 leading-relaxed">Automate monthly KRA eTIMS VAT return preparation. Automatically aggregate 16% Output VAT, 0% Zero-Rated, and Exempt sales with live 20th filing deadline alerts.</p>
+          </div>
+
+          <div className="p-8 space-y-2 border-r border-zinc-200/80">
+            <span className="font-mono text-xs text-zinc-400 font-semibold">[03] VECTOR PDF ENGINE</span>
+            <h3 className="font-semibold uppercase tracking-tight text-lg text-black font-sans">A4 Landscape PDF Engine</h3>
+            <p className="text-sm text-zinc-600 leading-relaxed">Download official, print-ready vector PDF documents (Invoices, Receipts, Quotations, LPOs, and A4 Landscape Statutory Payroll Vouchers) complete with shop logos and tax PINs.</p>
           </div>
 
           <div className="p-8 space-y-2">
-            <span className="font-mono text-xs text-zinc-400 font-semibold">[03] INTELLIGENCE</span>
+            <span className="font-mono text-xs text-zinc-400 font-semibold">[04] ARCHITECTURE</span>
+            <h3 className="font-semibold uppercase tracking-tight text-lg text-black font-sans">Passwordless Client Links</h3>
+            <p className="text-sm text-zinc-600 leading-relaxed">Clients never configure passwords. They view, download PDFs, and inspect settlements via secure 64-character token links sent straight to their inbox.</p>
+          </div>
+
+          <div className="p-8 space-y-2 border-t border-zinc-200/80 border-r border-zinc-200/80">
+            <span className="font-mono text-xs text-zinc-400 font-semibold">[05] DIRECTORY &amp; COMPLIANCE</span>
+            <h3 className="font-semibold uppercase tracking-tight text-lg text-black font-sans">Staff &amp; ID PIN Directory</h3>
+            <p className="text-sm text-zinc-600 leading-relaxed">Dedicated employee directory with National ID and KRA PIN uniqueness validation, base commitment metrics, and individual historical payment sub-ledgers.</p>
+          </div>
+
+          <div className="p-8 space-y-2 border-t border-zinc-200/80 border-r border-zinc-200/80">
+            <span className="font-mono text-xs text-zinc-400 font-semibold">[06] INTELLIGENCE</span>
             <h3 className="font-semibold uppercase tracking-tight text-lg text-black font-sans">A/R Aging &amp; Cash Streams</h3>
-            <p className="text-sm text-zinc-600 leading-relaxed">Monitor chronological 6-month revenue vs. expense streams, 0–30/31–60/90+ day Accounts Receivable risk matrix, product velocity, and client LTV leaderboards.</p>
+            <p className="text-sm text-zinc-600 leading-relaxed">Monitor 6-month revenue vs. expense streams, 0–30/31–60/90+ day Accounts Receivable risk matrix, product velocity, and client LTV leaderboards.</p>
           </div>
 
           <div className="p-8 space-y-2 border-t border-zinc-200/80 border-r border-zinc-200/80">
-            <span className="font-mono text-xs text-zinc-400 font-semibold">[04] BRANDING</span>
-            <h3 className="font-semibold uppercase tracking-tight text-lg text-black font-sans">Custom Shop Themes</h3>
-            <p className="text-sm text-zinc-600 leading-relaxed">Upload custom logos to Cloudinary and choose your shop's primary brand hex color. Themes dynamically reflect across the workspace app, portals, PDFs, and Resend emails.</p>
-          </div>
-
-          <div className="p-8 space-y-2 border-t border-zinc-200/80 border-r border-zinc-200/80">
-            <span className="font-mono text-xs text-zinc-400 font-semibold">[05] SETTLEMENTS</span>
-            <h3 className="font-semibold uppercase tracking-tight text-lg text-black font-sans">Payment Channels &amp; Ref #</h3>
-            <p className="text-sm text-zinc-600 leading-relaxed">Record remittance destinations (Bank, M-Pesa Till/Paybill, Cash, Cheque) alongside transaction reference codes (M-Pesa Code / Bank Ref) for full ledger auditing.</p>
+            <span className="font-mono text-xs text-zinc-400 font-semibold">[07] BRANDING &amp; REMITTANCE</span>
+            <h3 className="font-semibold uppercase tracking-tight text-lg text-black font-sans">Shop Themes &amp; Channels</h3>
+            <p className="text-sm text-zinc-600 leading-relaxed">Custom shop branding, logo uploads, and payment destination auditing (Bank, M-Pesa Till/Paybill, Cash, Cheque) with transaction reference tracking.</p>
           </div>
 
           <div className="p-8 space-y-2 border-t border-zinc-200/80">
-            <span className="font-mono text-xs text-zinc-400 font-semibold">[06] PWA APPLIANCE</span>
+            <span className="font-mono text-xs text-zinc-400 font-semibold">[08] PWA APPLIANCE</span>
             <h3 className="font-semibold uppercase tracking-tight text-lg text-black font-sans">Installable PWA Appliance</h3>
             <p className="text-sm text-zinc-600 leading-relaxed">Install Manna Books directly to desktop or mobile home screens as a native standalone PWA appliance with offline fallback resilience.</p>
           </div>

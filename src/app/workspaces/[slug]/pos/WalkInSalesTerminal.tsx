@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatCurrency, calculateLineItem, calculateDocumentTotals } from "@/lib/utils";
+import { formatCurrency, calculateDocumentTotals } from "@/lib/utils";
 import { createBillingDocument } from "@/lib/actions/documents";
 import { toast } from "react-hot-toast";
 
@@ -31,6 +31,7 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
   const [customerNote, setCustomerNote] = useState("");
   const [amountTendered, setAmountTendered] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [mobileView, setMobileView] = useState<"catalog" | "basket">("catalog");
 
   // Basket Items
   const [basket, setBasket] = useState<PosBasketItem[]>([]);
@@ -64,14 +65,17 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
         },
       ]);
     }
+    // Auto-switch to basket view on mobile after adding
+    if (window.innerWidth < 1024) {
+      toast.success(`${product.name} added`, { duration: 1200, icon: "🛒" });
+    }
   }
 
-  function updateQuantity(index: number, delta: number) {
-    const updated = [...basket];
-    const newQty = updated[index].quantity + delta;
+  function updateQuantity(index: number, newQty: number) {
     if (newQty <= 0) {
       setBasket(basket.filter((_, i) => i !== index));
     } else {
+      const updated = [...basket];
       updated[index].quantity = newQty;
       setBasket(updated);
     }
@@ -94,8 +98,7 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
   const tenderedNum = parseFloat(amountTendered) || 0;
   const changeDue = Math.max(0, tenderedNum - totals.grandTotal);
 
-  async function handleCheckout(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleCheckout() {
     if (basket.length === 0) {
       toast.error("Your sale basket is empty. Add at least one item.");
       return;
@@ -128,274 +131,318 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 font-mono text-xs selection:bg-black selection:text-white">
+    <div className="font-mono text-xs selection:bg-black selection:text-white">
       
-      {/* LEFT PANEL: PRODUCT CATALOG QUICK PICKER (7 COLS) */}
-      <div className="lg:col-span-7 space-y-6">
-        
-        {/* SEARCH BAR */}
-        <div className="bg-white border border-zinc-200/80 rounded-lg p-4 shadow-sm space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="font-sans text-xs font-bold uppercase tracking-tight text-black">
-              1. Catalog Quick Picker
+      {/* MOBILE TAB TOGGLE */}
+      <div className="lg:hidden flex mb-5 rounded-lg border border-zinc-200 overflow-hidden bg-zinc-50">
+        <button
+          type="button"
+          onClick={() => setMobileView("catalog")}
+          className={`flex-1 py-2.5 text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 ${
+            mobileView === "catalog" ? "bg-black text-white" : "text-zinc-500 hover:text-black"
+          }`}
+        >
+          🏪 Catalog
+          {products.length > 0 && (
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${mobileView === "catalog" ? "bg-white/20 text-white" : "bg-zinc-200 text-zinc-600"}`}>
+              {filteredProducts.length}
             </span>
-            <span className="text-[10px] text-zinc-400 font-mono">
-              Click item to add to basket
-            </span>
-          </div>
-
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="🔍 Search items by name or SKU code..."
-            className="w-full px-3.5 py-2.5 border border-zinc-300 bg-white rounded-md font-sans text-xs focus:outline-none focus:ring-2 focus:ring-black"
-          />
-        </div>
-
-        {/* PRODUCTS GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {filteredProducts.map((p) => {
-            const stockVal = parseFloat(p.stockQuantity || "0");
-            const isLow = p.trackStock && stockVal <= parseFloat(p.reorderThreshold || "5") && stockVal > 0;
-            const isOut = p.trackStock && stockVal <= 0;
-
-            return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => addToBasket(p)}
-                className="bg-white border border-zinc-200/80 hover:border-black rounded-lg p-4 text-left shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3 group"
-              >
-                <div>
-                  <div className="flex justify-between items-start gap-2">
-                    <span className="font-sans text-sm font-bold uppercase tracking-tight text-black group-hover:text-emerald-700 transition-colors">
-                      {p.name}
-                    </span>
-                    {p.trackStock && (
-                      <span
-                        className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded ${
-                          isOut
-                            ? "bg-rose-100 text-rose-800 border border-rose-300"
-                            : isLow
-                            ? "bg-amber-100 text-amber-900 border border-amber-300"
-                            : "bg-emerald-100 text-emerald-900 border border-emerald-300"
-                        }`}
-                      >
-                        {isOut ? "OUT" : isLow ? `⚠️ ${stockVal} left` : `${stockVal} in stock`}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[10px] text-zinc-400 font-mono block mt-1">
-                    SKU: {p.sku || "N/A"}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center pt-2 border-t border-zinc-100 font-sans">
-                  <span className="text-xs font-bold text-black">
-                    {formatCurrency(parseFloat(p.unitPrice), shop.currency)}
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-black bg-zinc-100 group-hover:bg-black group-hover:text-white px-2.5 py-1 rounded transition-colors">
-                    + Add to Sale
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-
-          {filteredProducts.length === 0 && (
-            <div className="col-span-full bg-white border border-zinc-200 p-8 rounded-lg text-center text-zinc-400 italic">
-              No matching products found in catalog.
-            </div>
           )}
-        </div>
-
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileView("basket")}
+          className={`flex-1 py-2.5 text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 ${
+            mobileView === "basket" ? "bg-black text-white" : "text-zinc-500 hover:text-black"
+          }`}
+        >
+          🛒 Basket
+          {basket.length > 0 && (
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${mobileView === "basket" ? "bg-white/20 text-white" : "bg-black text-white"}`}>
+              {basket.length}
+            </span>
+          )}
+        </button>
       </div>
 
-      {/* RIGHT PANEL: ACTIVE BASKET & CHECKOUT (5 COLS) */}
-      <div className="lg:col-span-5 bg-white border border-zinc-200/80 rounded-lg p-6 shadow-sm space-y-6">
-        <div className="border-b border-zinc-100 pb-3 flex justify-between items-center">
-          <h2 className="font-sans text-sm font-bold uppercase tracking-tight text-black flex items-center gap-2">
-            <span>⚡ Counter Checkout</span>
-          </h2>
-          <span className="text-[10px] border border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold px-2 py-0.5 rounded uppercase">
-            Official Receipt (PAID)
-          </span>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        {/* BASKET ITEMS LIST */}
-        <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-          {basket.length === 0 ? (
-            <div className="p-8 border border-dashed border-zinc-300 rounded-md text-center text-zinc-400 space-y-1">
-              <span className="text-xl block">🛒</span>
-              <span className="font-sans text-xs block font-semibold text-zinc-500">Sale Basket Empty</span>
-              <span className="text-[10px] block">Click items on the left to add them to this walk-in sale.</span>
+        {/* LEFT: PRODUCT CATALOG (7 cols) */}
+        <div className={`lg:col-span-7 space-y-4 ${mobileView === "basket" ? "hidden lg:block" : "block"}`}>
+          
+          {/* SEARCH */}
+          <div className="bg-white border border-zinc-200/80 rounded-xl p-4 shadow-sm space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="font-sans text-xs font-bold uppercase tracking-tight text-black">
+                Catalog Quick Picker
+              </span>
+              <span className="text-[10px] text-zinc-400 font-mono">
+                {filteredProducts.length} items · click to add
+              </span>
             </div>
-          ) : (
-            basket.map((item, index) => {
-              const rowTotal = item.quantity * item.unitPrice;
-              const isOver = item.trackStock && item.quantity > item.availableStock;
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="🔍 Search items by name or SKU..."
+              className="w-full px-3.5 py-2.5 border border-zinc-300 bg-white rounded-lg font-sans text-xs focus:outline-none focus:ring-2 focus:ring-black"
+            />
+          </div>
+
+          {/* PRODUCT GRID */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {filteredProducts.map((p) => {
+              const stockVal = parseFloat(p.stockQuantity || "0");
+              const isLow = p.trackStock && stockVal <= parseFloat(p.reorderThreshold || "5") && stockVal > 0;
+              const isOut = p.trackStock && stockVal <= 0;
+              const basketQty = basket.find((b) => b.productId === p.id)?.quantity || 0;
 
               return (
-                <div key={index} className="bg-zinc-50 border border-zinc-200 p-3 rounded-md space-y-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="font-sans text-xs font-bold uppercase text-black block">
-                        {item.description}
-                      </span>
-                      <span className="text-[10px] text-zinc-500">
-                        {formatCurrency(item.unitPrice, shop.currency)} each
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => addToBasket(p)}
+                  disabled={isOut}
+                  className={`bg-white border rounded-xl p-4 text-left shadow-sm transition-all flex flex-col justify-between space-y-3 group relative ${
+                    isOut
+                      ? "opacity-50 cursor-not-allowed border-zinc-200"
+                      : "hover:border-black hover:shadow-md border-zinc-200/80 cursor-pointer"
+                  }`}
+                >
+                  {/* Cart indicator badge */}
+                  {basketQty > 0 && (
+                    <span className="absolute top-3 right-3 w-5 h-5 bg-black text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {basketQty}
+                    </span>
+                  )}
+
+                  <div>
+                    <div className="flex justify-between items-start gap-2 pr-6">
+                      <span className="font-sans text-sm font-bold uppercase tracking-tight text-black group-hover:text-emerald-700 transition-colors leading-tight">
+                        {p.name}
                       </span>
                     </div>
-
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(index, -1)}
-                        className="w-6 h-6 border border-zinc-300 bg-white hover:bg-zinc-200 rounded font-bold text-center flex items-center justify-center text-xs"
-                      >
-                        -
-                      </button>
-                      <span className="w-8 text-center font-bold text-xs">{item.quantity}</span>
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(index, 1)}
-                        className="w-6 h-6 border border-zinc-300 bg-white hover:bg-zinc-200 rounded font-bold text-center flex items-center justify-center text-xs"
-                      >
-                        +
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeFromBasket(index)}
-                        className="text-rose-600 hover:text-rose-800 ml-1 p-1 text-xs"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center text-[10px] text-zinc-500 pt-1 border-t border-zinc-200">
-                    <span>Row Total:</span>
-                    <span className="font-bold text-black font-sans text-xs">
-                      {formatCurrency(rowTotal, shop.currency)}
+                    <span className="text-[10px] text-zinc-400 font-mono block mt-1">
+                      SKU: {p.sku || "N/A"}
                     </span>
                   </div>
 
-                  {isOver && (
-                    <div className="text-[9px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded">
-                      ⚠️ Qty ({item.quantity}) exceeds available stock ({item.availableStock})
+                  <div className="flex justify-between items-center pt-2 border-t border-zinc-100 font-sans">
+                    <span className="text-sm font-bold text-black">
+                      {formatCurrency(parseFloat(p.unitPrice), shop.currency)}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {p.trackStock && (
+                        <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                          isOut
+                            ? "bg-rose-100 text-rose-800"
+                            : isLow
+                            ? "bg-amber-100 text-amber-900"
+                            : "bg-emerald-100 text-emerald-900"
+                        }`}>
+                          {isOut ? "OUT" : isLow ? `⚠ ${stockVal}` : `${stockVal} left`}
+                        </span>
+                      )}
+                      {!isOut && (
+                        <span className="text-[10px] font-bold uppercase text-black bg-zinc-100 group-hover:bg-black group-hover:text-white px-2.5 py-1 rounded-lg transition-colors">
+                          + Add
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+
+            {filteredProducts.length === 0 && (
+              <div className="col-span-full bg-white border border-zinc-200 p-10 rounded-xl text-center text-zinc-400 italic font-sans">
+                No matching products found in catalog.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT: BASKET & CHECKOUT (5 cols) */}
+        <div className={`lg:col-span-5 ${mobileView === "catalog" ? "hidden lg:block" : "block"}`}>
+          <div className="bg-white border border-zinc-200/80 rounded-xl shadow-sm overflow-hidden sticky top-4">
+            
+            {/* CHECKOUT HEADER */}
+            <div className="border-b border-zinc-100 p-4 flex justify-between items-center bg-zinc-50/50">
+              <h2 className="font-sans text-sm font-bold uppercase tracking-tight text-black flex items-center gap-2">
+                ⚡ Counter Checkout
+              </h2>
+              <span className="text-[10px] border border-emerald-300 bg-emerald-50 text-emerald-800 font-bold px-2.5 py-1 rounded-full uppercase">
+                Official Receipt (PAID)
+              </span>
+            </div>
+
+            {/* BASKET ITEMS */}
+            <div className="p-4 space-y-2 max-h-72 overflow-y-auto">
+              {basket.length === 0 ? (
+                <div className="py-10 border border-dashed border-zinc-300 rounded-xl text-center text-zinc-400 space-y-2">
+                  <span className="text-2xl block">🛒</span>
+                  <span className="font-sans text-xs block font-semibold text-zinc-500">Sale Basket Empty</span>
+                  <span className="text-[10px] block">Click products to add them here.</span>
+                </div>
+              ) : (
+                basket.map((item, index) => {
+                  const rowTotal = item.quantity * item.unitPrice;
+                  const isOver = item.trackStock && item.quantity > item.availableStock;
+
+                  return (
+                    <div key={index} className={`border rounded-lg p-3 space-y-2 ${isOver ? "border-amber-300 bg-amber-50" : "border-zinc-200 bg-zinc-50"}`}>
+                      <div className="flex justify-between items-start">
+                        <div className="min-w-0 flex-1">
+                          <span className="font-sans text-xs font-bold uppercase text-black block truncate">{item.description}</span>
+                          <span className="text-[10px] text-zinc-500">{formatCurrency(item.unitPrice, shop.currency)} each</span>
+                        </div>
+
+                        <div className="flex items-center gap-1 ml-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(index, item.quantity - 1)}
+                            className="w-7 h-7 border border-zinc-300 bg-white hover:bg-zinc-100 rounded-lg font-bold text-center flex items-center justify-center text-sm"
+                          >
+                            −
+                          </button>
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const v = parseInt(e.target.value);
+                              if (!isNaN(v)) updateQuantity(index, v);
+                            }}
+                            className="w-10 text-center font-bold text-xs border border-zinc-300 rounded-md h-7 bg-white focus:outline-none focus:border-black"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(index, item.quantity + 1)}
+                            className="w-7 h-7 border border-zinc-300 bg-white hover:bg-zinc-100 rounded-lg font-bold text-center flex items-center justify-center text-sm"
+                          >
+                            +
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeFromBasket(index)}
+                            className="text-rose-500 hover:text-rose-700 ml-0.5 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-rose-50 transition-colors"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center text-[10px] text-zinc-500 pt-1 border-t border-zinc-200">
+                        <span>Subtotal:</span>
+                        <span className="font-bold text-black font-sans text-xs">{formatCurrency(rowTotal, shop.currency)}</span>
+                      </div>
+
+                      {isOver && (
+                        <div className="text-[9px] font-bold text-amber-800 bg-amber-100 px-2 py-1 rounded-md">
+                          ⚠ Qty ({item.quantity}) exceeds stock ({item.availableStock} available)
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* PAYMENT METHOD */}
+            <div className="border-t border-zinc-100 p-4 space-y-3">
+              <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Payment Method</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: "MPESA", emoji: "📱", label: "M-PESA" },
+                  { id: "CASH", emoji: "💵", label: "CASH" },
+                  { id: "BANK", emoji: "💳", label: "BANK" },
+                ].map((method) => (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => setPaymentChannel(method.id as any)}
+                    className={`py-2 text-center font-bold uppercase rounded-lg border text-[10px] transition-all ${
+                      paymentChannel === method.id
+                        ? method.id === "MPESA"
+                          ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                          : "bg-black text-white border-black shadow-sm"
+                        : "bg-white text-zinc-600 border-zinc-300 hover:border-black"
+                    }`}
+                  >
+                    {method.emoji} {method.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* CASH CHANGE CALCULATOR */}
+              {paymentChannel === "CASH" && (
+                <div className="bg-zinc-50 border border-zinc-200 p-3 rounded-lg space-y-2">
+                  <label className="text-[10px] text-zinc-500 font-semibold uppercase block">Amount Received</label>
+                  <input
+                    type="number"
+                    step="1"
+                    value={amountTendered}
+                    onChange={(e) => setAmountTendered(e.target.value)}
+                    placeholder={`e.g. ${Math.ceil(totals.grandTotal / 100) * 100}`}
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-lg font-sans font-bold text-sm focus:outline-none focus:border-black"
+                  />
+                  {tenderedNum > 0 && (
+                    <div className="flex justify-between items-center text-xs font-bold pt-1 border-t border-zinc-200">
+                      <span className="text-zinc-600 uppercase">Change to Return:</span>
+                      <span className={`font-mono text-sm ${changeDue > 0 ? "text-emerald-700" : "text-zinc-500"}`}>
+                        {formatCurrency(changeDue, shop.currency)}
+                      </span>
                     </div>
                   )}
                 </div>
-              );
-            })
-          )}
-        </div>
+              )}
 
-        {/* PAYMENT METHOD SELECTOR */}
-        <div className="space-y-3 pt-2 border-t border-zinc-100">
-          <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Payment Method</label>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => setPaymentChannel("MPESA")}
-              className={`py-2 px-1 text-center font-bold uppercase rounded border text-[10px] transition-all ${
-                paymentChannel === "MPESA"
-                  ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
-                  : "bg-white text-zinc-600 border-zinc-300 hover:border-black"
-              }`}
-            >
-              📱 M-PESA
-            </button>
-            <button
-              type="button"
-              onClick={() => setPaymentChannel("CASH")}
-              className={`py-2 px-1 text-center font-bold uppercase rounded border text-[10px] transition-all ${
-                paymentChannel === "CASH"
-                  ? "bg-black text-white border-black shadow-sm"
-                  : "bg-white text-zinc-600 border-zinc-300 hover:border-black"
-              }`}
-            >
-              💵 CASH
-            </button>
-            <button
-              type="button"
-              onClick={() => setPaymentChannel("BANK")}
-              className={`py-2 px-1 text-center font-bold uppercase rounded border text-[10px] transition-all ${
-                paymentChannel === "BANK"
-                  ? "bg-black text-white border-black shadow-sm"
-                  : "bg-white text-zinc-600 border-zinc-300 hover:border-black"
-              }`}
-            >
-              💳 BANK/CARD
-            </button>
-          </div>
-
-          {/* CASH TENDERED & CHANGE CALCULATOR */}
-          {paymentChannel === "CASH" && (
-            <div className="bg-zinc-50 border border-zinc-200 p-3 rounded-md space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="text-[10px] text-zinc-500 font-semibold uppercase">Amount Received from Customer</label>
-              </div>
-              <input
-                type="number"
-                step="1"
-                value={amountTendered}
-                onChange={(e) => setAmountTendered(e.target.value)}
-                placeholder={`e.g. ${totals.grandTotal}`}
-                className="w-full px-3 py-2 border border-zinc-300 bg-white rounded font-sans font-bold text-sm focus:outline-none focus:border-black"
-              />
-              {tenderedNum > 0 && (
-                <div className="flex justify-between items-center text-xs font-bold pt-1 border-t border-zinc-200">
-                  <span className="text-zinc-600">CHANGE TO RETURN:</span>
-                  <span className="text-emerald-700 font-mono text-sm">
-                    {formatCurrency(changeDue, shop.currency)}
-                  </span>
-                </div>
+              {/* MPESA REFERENCE */}
+              {paymentChannel === "MPESA" && (
+                <input
+                  type="text"
+                  value={paymentReference}
+                  onChange={(e) => setPaymentReference(e.target.value)}
+                  placeholder="Enter M-Pesa Transaction Ref (e.g. QAB71239X)..."
+                  className="w-full px-3 py-2.5 border border-zinc-300 bg-white rounded-lg uppercase text-xs focus:outline-none focus:border-black"
+                />
               )}
             </div>
-          )}
 
-          {paymentChannel === "MPESA" && (
-            <input
-              type="text"
-              value={paymentReference}
-              onChange={(e) => setPaymentReference(e.target.value)}
-              placeholder="Enter M-Pesa Transaction Ref (e.g. QAB71239X)..."
-              className="w-full px-3 py-2 border border-zinc-300 bg-white rounded uppercase text-xs focus:outline-none focus:border-black"
-            />
-          )}
-        </div>
+            {/* TOTALS & CHECKOUT */}
+            <div className="border-t border-zinc-200 p-4 space-y-3">
+              <div className="space-y-1.5 text-xs">
+                <div className="flex justify-between text-zinc-500">
+                  <span>Sub-Total:</span>
+                  <span className="font-semibold text-black">{formatCurrency(totals.subTotal, shop.currency)}</span>
+                </div>
+                <div className="flex justify-between text-zinc-500">
+                  <span>VAT ({shop.isVatRegistered ? "16%" : "0%"}):</span>
+                  <span className="font-semibold text-black">{formatCurrency(totals.taxAmount, shop.currency)}</span>
+                </div>
+                <div className="flex justify-between text-black font-bold text-sm pt-2 border-t border-zinc-200">
+                  <span className="uppercase">Total Payable:</span>
+                  <span className="text-base font-extrabold">{formatCurrency(totals.grandTotal, shop.currency)}</span>
+                </div>
+              </div>
 
-        {/* FINANCIAL SUMMARY & SUBMIT */}
-        <div className="space-y-3 pt-3 border-t border-zinc-200">
-          <div className="space-y-1 text-xs">
-            <div className="flex justify-between text-zinc-500">
-              <span>Sub-Total:</span>
-              <span className="font-semibold text-black">{formatCurrency(totals.subTotal, shop.currency)}</span>
+              <button
+                type="button"
+                onClick={handleCheckout}
+                disabled={loading || basket.length === 0}
+                className="w-full py-4 bg-emerald-700 hover:bg-emerald-800 text-white font-bold uppercase text-sm rounded-xl shadow-md transition-all disabled:bg-zinc-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 tracking-wide"
+              >
+                {loading ? (
+                  <span>⏳ Processing Sale...</span>
+                ) : (
+                  <span>⚡ Complete Sale &amp; Print Receipt</span>
+                )}
+              </button>
             </div>
-            <div className="flex justify-between text-zinc-500">
-              <span>VAT Tax Pool ({shop.isVatRegistered ? "16%" : "0%"}):</span>
-              <span className="font-semibold text-black">{formatCurrency(totals.taxAmount, shop.currency)}</span>
-            </div>
-            <div className="flex justify-between text-black font-bold text-sm pt-2 border-t border-zinc-200">
-              <span>TOTAL PAYABLE:</span>
-              <span className="text-base font-extrabold text-black">{formatCurrency(totals.grandTotal, shop.currency)}</span>
-            </div>
+
           </div>
-
-          <button
-            type="button"
-            onClick={handleCheckout}
-            disabled={loading || basket.length === 0}
-            className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold uppercase text-xs rounded-md shadow-md transition-colors disabled:bg-zinc-300 flex items-center justify-center gap-2"
-          >
-            <span>{loading ? "PROCESSING SALE..." : "⚡ COMPLETE SALE & PRINT RECEIPT"}</span>
-          </button>
         </div>
-
       </div>
-
     </div>
   );
 }

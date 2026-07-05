@@ -11,6 +11,8 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [itemType, setItemType] = useState<"PRODUCT" | "SERVICE">("PRODUCT");
+  const [trackStock, setTrackStock] = useState(false);
 
   const createProductMutation = useCreateProduct(shopId, shopSlug);
 
@@ -21,11 +23,9 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
     const formData = new FormData(event.currentTarget);
     const name = formData.get("name") as string;
     const sku = formData.get("sku") as string;
-    const itemType = formData.get("itemType") as "PRODUCT" | "SERVICE";
     const unitPrice = parseFloat(formData.get("unitPrice") as string);
     const costPrice = parseFloat(formData.get("costPrice") as string || "0");
     const defaultTaxType = formData.get("defaultTaxType") as "V_16" | "V_0" | "EXEMPT";
-    const trackStock = formData.get("trackStock") === "on";
     const stockQuantity = parseFloat(formData.get("stockQuantity") as string || "0");
     const reorderThreshold = parseFloat(formData.get("reorderThreshold") as string || "5");
 
@@ -41,6 +41,8 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
       {
         onSuccess: () => {
           setIsOpen(false);
+          setItemType("PRODUCT");
+          setTrackStock(false);
           router.refresh();
         },
       }
@@ -57,151 +59,196 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-zinc-200/80 rounded-md shadow-xl max-w-md w-full p-6 space-y-6 font-mono text-xs animate-in zoom-in-95 duration-150 relative">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white border border-zinc-200/80 rounded-xl shadow-2xl w-full max-w-2xl my-4 sm:my-0 font-mono text-xs animate-in zoom-in-95 duration-150 relative overflow-hidden">
             
-            <div className="space-y-1">
-              <h2 className="text-xl font-semibold uppercase tracking-tight font-sans text-black">Add Catalog Node</h2>
-              <p className="font-mono text-[10px] text-zinc-400 uppercase font-semibold">Define product rate profile metrics</p>
+            {/* MODAL HEADER */}
+            <div className="border-b border-zinc-100 p-6 flex justify-between items-start bg-zinc-50/50">
+              <div className="space-y-0.5">
+                <h2 className="text-lg font-bold uppercase tracking-tight font-sans text-black">Add Catalog Node</h2>
+                <p className="font-mono text-[10px] text-zinc-400 uppercase font-semibold">Define product rate profile metrics</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="text-zinc-400 hover:text-black text-sm font-bold px-2 py-1 rounded transition-colors"
+              >
+                ✕
+              </button>
             </div>
 
             {error && (
-              <div className="border border-zinc-200 bg-zinc-50 p-3 font-mono text-[11px] text-black font-semibold uppercase rounded">
-                &gt; TRANSACTION_DENIED: {error}
+              <div className="mx-6 mt-4 border border-rose-200 bg-rose-50 p-3 font-mono text-[11px] text-rose-800 font-semibold uppercase rounded">
+                ⚠ VALIDATION_ERROR: {error}
               </div>
             )}
 
-            <form onSubmit={handleCatalogSubmit} className="space-y-4 font-mono text-xs">
+            <form onSubmit={handleCatalogSubmit} className="p-6 space-y-5">
               
-              {/* ITEM TYPE SELECTOR */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1 col-span-2">
-                  <label className="text-zinc-400 uppercase block font-semibold">Item Classification</label>
-                  <select
-                    name="itemType"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
+              {/* ITEM TYPE TOGGLE */}
+              <div className="space-y-1.5">
+                <label className="text-zinc-400 uppercase block font-semibold text-[10px]">Item Classification</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setItemType("PRODUCT")}
+                    className={`py-3 px-4 rounded-lg border-2 text-left transition-all ${
+                      itemType === "PRODUCT"
+                        ? "border-black bg-black text-white"
+                        : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-400"
+                    }`}
                   >
-                    <option value="PRODUCT">Product</option>
-                    <option value="SERVICE">Service</option>
-                  </select>
+                    <div className="text-lg mb-0.5">📦</div>
+                    <div className="font-bold uppercase text-xs">Product</div>
+                    <div className="text-[10px] opacity-70">Tangible / Physical Good</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setItemType("SERVICE")}
+                    className={`py-3 px-4 rounded-lg border-2 text-left transition-all ${
+                      itemType === "SERVICE"
+                        ? "border-black bg-black text-white"
+                        : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-400"
+                    }`}
+                  >
+                    <div className="text-lg mb-0.5">🛠️</div>
+                    <div className="font-bold uppercase text-xs">Service</div>
+                    <div className="text-[10px] opacity-70">Labor / Consulting</div>
+                  </button>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block font-semibold">Product Name / Description</label>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="e.g., Laptop Stand or Consulting Hour"
-                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <label className="text-zinc-400 uppercase block font-semibold">SKU / Code Reference</label>
-                  <span className="text-[9px] text-zinc-400 font-mono italic">Optional</span>
-                </div>
-                <input
-                  type="text"
-                  name="sku"
-                  placeholder="e.g., CON-SER-4821 (Auto-generated if blank)"
-                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              {/* NAME & SKU ROW */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Selling Price (KES)</label>
+                  <label className="text-zinc-400 uppercase block font-semibold text-[10px]">
+                    {itemType === "SERVICE" ? "Service Name / Description" : "Product Name / Description"}
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder={itemType === "SERVICE" ? "e.g., Consulting Hour, Legal Review" : "e.g., Laptop Stand, Coffee Bag"}
+                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded-md text-xs font-sans h-10"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <label className="text-zinc-400 uppercase block font-semibold text-[10px]">SKU / Code Reference</label>
+                    <span className="text-[9px] text-zinc-400 italic">Optional</span>
+                  </div>
+                  <input
+                    type="text"
+                    name="sku"
+                    placeholder="e.g., CON-SER-4821 (auto-generated if blank)"
+                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded-md text-xs uppercase h-10"
+                  />
+                </div>
+              </div>
+
+              {/* PRICING ROW */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="text-zinc-400 uppercase block font-semibold text-[10px]">Selling Price (KES)</label>
                   <input
                     type="number"
                     name="unitPrice"
                     step="0.01"
                     min="0"
                     placeholder="0.00"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
+                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded-md text-xs font-semibold h-10"
                     required
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Cost Price / COGS (KES)</label>
+                  <div className="flex items-center gap-1">
+                    <label className="text-zinc-400 uppercase block font-semibold text-[10px]">Cost Price / COGS (KES)</label>
+                  </div>
                   <input
                     type="number"
                     name="costPrice"
                     step="0.01"
                     min="0"
                     placeholder="0.00"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
+                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded-md text-xs font-semibold h-10"
                   />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-zinc-400 uppercase block font-semibold text-[10px]">Default Tax Type</label>
+                  <select
+                    name="defaultTaxType"
+                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded-md text-xs font-semibold h-10"
+                  >
+                    <option value="V_16">16% VAT (Standard)</option>
+                    <option value="V_0">0% VAT (Zero-Rated)</option>
+                    <option value="EXEMPT">Tax Exempt</option>
+                  </select>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block font-semibold">Default Tax Type</label>
-                <select
-                  name="defaultTaxType"
-                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
-                >
-                  <option value="V_16">16% VAT</option>
-                  <option value="V_0">0% VAT (Zero-Rated)</option>
-                  <option value="EXEMPT">Tax Exempt</option>
-                </select>
-              </div>
+              {/* INVENTORY TRACKING BLOCK — only for products */}
+              {itemType === "PRODUCT" && (
+                <div className="border border-zinc-200 bg-zinc-50/60 p-4 space-y-3 rounded-lg">
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <div
+                      className={`w-10 h-6 rounded-full transition-colors relative ${trackStock ? "bg-black" : "bg-zinc-300"}`}
+                      onClick={() => setTrackStock(!trackStock)}
+                    >
+                      <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${trackStock ? "left-5" : "left-1"}`} />
+                    </div>
+                    <div>
+                      <span className="font-bold uppercase text-xs text-black block">Track Inventory Stock</span>
+                      <span className="text-[10px] text-zinc-500">Auto-deduct stock when sold via receipts / POS</span>
+                    </div>
+                  </label>
 
-              {/* INVENTORY TRACKING BLOCK */}
-              <div className="border border-zinc-200 bg-zinc-50 p-3.5 space-y-3 rounded">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    name="trackStock"
-                    className="accent-black"
-                  />
-                  <span className="font-semibold uppercase text-xs text-black">Track Item</span>
-                </label>
-
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <div className="space-y-1">
-                    <label className="text-zinc-400 uppercase block text-[9px] font-semibold">Available Stock Qty</label>
-                    <input
-                      type="number"
-                      name="stockQuantity"
-                      step="1"
-                      min="0"
-                      defaultValue="0"
-                      className="w-full px-2.5 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-zinc-400 uppercase block text-[9px] font-semibold">Low Stock Alert Limit</label>
-                    <input
-                      type="number"
-                      name="reorderThreshold"
-                      step="1"
-                      min="1"
-                      defaultValue="5"
-                      className="w-full px-2.5 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
-                    />
-                  </div>
+                  {trackStock && (
+                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-zinc-200">
+                      <div className="space-y-1">
+                        <label className="text-zinc-500 uppercase block text-[10px] font-semibold">Opening Stock Qty</label>
+                        <input
+                          type="number"
+                          name="stockQuantity"
+                          step="1"
+                          min="0"
+                          defaultValue="0"
+                          className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded-md text-xs font-semibold h-9"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-zinc-500 uppercase block text-[10px] font-semibold">Low Stock Alert Limit</label>
+                        <input
+                          type="number"
+                          name="reorderThreshold"
+                          step="1"
+                          min="1"
+                          defaultValue="5"
+                          className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded-md text-xs font-semibold h-9"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
-              {/* ACTIONS LAYER */}
-              <div className="border-t border-zinc-200/80 pt-4 flex justify-end gap-2">
+              {/* ACTIONS */}
+              <div className="border-t border-zinc-200/80 pt-4 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="btn-secondary-modern px-4 py-2 text-xs font-semibold uppercase"
+                  className="btn-secondary-modern px-5 py-2.5 text-xs font-semibold uppercase"
                 >
-                  CANCEL
+                  Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="btn-primary-modern px-6 py-2 font-semibold uppercase text-xs disabled:bg-zinc-300"
+                  disabled={createProductMutation.isPending}
+                  className="btn-primary-modern px-6 py-2.5 font-semibold uppercase text-xs disabled:bg-zinc-300 disabled:cursor-not-allowed"
                 >
-                  {loading ? "RECORDING..." : "SAVE ITEM"}
+                  {createProductMutation.isPending ? "Saving..." : "Save Item"}
                 </button>
               </div>
 

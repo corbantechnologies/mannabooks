@@ -116,46 +116,52 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
                 [01] Fiscal Ledgers
               </Link>
               <Link 
+                href={`/workspaces/${slug}/pos`} 
+                className="px-3 py-2 border border-emerald-300 bg-emerald-50 text-emerald-900 font-bold rounded hover:border-emerald-500 transition-all block"
+              >
+                [02] Walk-in Sales
+              </Link>
+              <Link 
                 href={`/workspaces/${slug}/clients`} 
                 className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
-                [02] Client Flow
+                [03] Client Flow
               </Link>
               <Link 
                 href={`/workspaces/${slug}/products`} 
                 className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
-                [03] Product Catalog
+                [04] Product Catalog
               </Link>
               <Link 
                 href={`/workspaces/${slug}/suppliers`} 
                 className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
-                [04] Supplier Network
+                [05] Supplier Network
               </Link>
               <Link 
                 href={`/workspaces/${slug}/employees`} 
                 className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
-                [05] Employee Directory
+                [06] Employee Directory
               </Link>
               <Link 
                 href={`/workspaces/${slug}/payroll`} 
                 className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
-                [06] Payroll Vouchers
+                [07] Payroll Vouchers
               </Link>
               <Link 
                 href={`/workspaces/${slug}/analytics`} 
                 className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
-                [07] Analytics
+                [08] Analytics
               </Link>
               <Link 
                 href={`/workspaces/${slug}/settings`} 
                 className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
-                [08] System Settings
+                [09] System Settings
               </Link>
               <Link 
                 href={`/workspaces/${slug}/guide`} 

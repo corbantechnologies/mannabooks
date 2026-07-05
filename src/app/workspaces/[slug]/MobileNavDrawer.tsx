@@ -99,60 +99,67 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
                 [01] Fiscal Ledgers
               </Link>
               <Link
+                href={`/workspaces/${slug}/pos`}
+                onClick={() => setIsOpen(false)}
+                className="px-3 py-2.5 border border-emerald-300 bg-emerald-50 text-emerald-900 font-bold rounded hover:border-emerald-500 transition-all block text-left"
+              >
+                [02] Walk-in Sales
+              </Link>
+              <Link
                 href={`/workspaces/${slug}/clients`}
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
-                [02] Client Flow
+                [03] Client Flow
               </Link>
               <Link
                 href={`/workspaces/${slug}/products`}
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
-                [03] Product Catalog
+                [04] Product Catalog
               </Link>
               <Link
                 href={`/workspaces/${slug}/suppliers`}
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
-                [04] Supplier Network
+                [05] Supplier Network
               </Link>
               <Link
                 href={`/workspaces/${slug}/employees`}
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
-                [05] Employee Directory
+                [06] Employee Directory
               </Link>
               <Link
                 href={`/workspaces/${slug}/payroll`}
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
-                [06] Payroll Vouchers
+                [07] Payroll Vouchers
               </Link>
               <Link
                 href={`/workspaces/${slug}/analytics`}
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
-                [07] Analytics
+                [08] Analytics
               </Link>
               <Link
                 href={`/workspaces/${slug}/settings`}
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
-                [08] System Settings
+                [09] System Settings
               </Link>
               <Link
                 href={`/workspaces/${slug}/guide`}
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
-                [09] Operator Guide
+                [10] Operator Guide
               </Link>
             </nav>
           </div>

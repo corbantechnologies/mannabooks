@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { getEmployeeById } from "@/lib/actions/payroll";
+import { DeleteEmployeeButton } from "@/app/workspaces/[slug]/employees/DeleteEmployeeButton";
 
 interface EmployeeDetailPageProps {
   params: Promise<{ slug: string; id: string }>;
@@ -72,6 +73,13 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
             }`}>
               {employeeData.isActive ? "Active Node" : "Inactive Node"}
             </span>
+            <DeleteEmployeeButton
+              employeeId={employeeData.id}
+              fullName={employeeData.fullName}
+              shopId={shop.id}
+              shopSlug={slug}
+              redirectToDirectory={true}
+            />
           </div>
         </div>
       </div>

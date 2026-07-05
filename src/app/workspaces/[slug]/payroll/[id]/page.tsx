@@ -48,11 +48,11 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
           <div>
-            <span className="text-xs text-zinc-400 font-semibold">HUMAN_CAPITAL // PAYROLL_VOUCHER_RUN</span>
+            <span className="text-xs text-zinc-400 font-semibold">PAYROLL_VOUCHER_RUN</span>
             <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
               Payroll Voucher {voucherRecord.docNumber}
             </h1>
-            <p className="text-xs text-zinc-500 lowercase mt-0.5">&gt; id: {voucherRecord.id}</p>
+            <p className="text-xs text-zinc-500 lowercase mt-0.5">&gt; Reference: {voucherRecord.id}</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-[10px]">

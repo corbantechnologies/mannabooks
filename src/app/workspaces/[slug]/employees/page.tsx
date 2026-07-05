@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { RegisterEmployeeModal } from "../payroll/RegisterEmployeeModal";
+import { DeleteEmployeeButton } from "./DeleteEmployeeButton";
 
 interface WorkspaceEmployeesPageProps {
   params: Promise<{ slug: string }>;
@@ -141,12 +142,20 @@ export default async function WorkspaceEmployeesPage({ params }: WorkspaceEmploy
                     </span>
                   </td>
                   <td className="p-4 text-center">
-                    <Link
-                      href={`/workspaces/${slug}/payroll/employees/${emp.id}`}
-                      className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"
-                    >
-                      View Profile &amp; Sub-Ledger
-                    </Link>
+                    <div className="flex items-center justify-center gap-2">
+                      <Link
+                        href={`/workspaces/${slug}/payroll/employees/${emp.id}`}
+                        className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"
+                      >
+                        View Profile
+                      </Link>
+                      <DeleteEmployeeButton
+                        employeeId={emp.id}
+                        fullName={emp.fullName}
+                        shopId={shop.id}
+                        shopSlug={slug}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

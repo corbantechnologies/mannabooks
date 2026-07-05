@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { RegisterEmployeeModal } from "./RegisterEmployeeModal";
+import { DeleteEmployeeButton } from "../employees/DeleteEmployeeButton";
 
 interface WorkspacePayrollPageProps {
   params: Promise<{ slug: string }>;
@@ -96,79 +97,6 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
         </div>
       </div>
 
-      {/* EMPLOYEE DIRECTORY REGISTRY */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">&gt; Employee &amp; Staff Directory</h2>
-          <span className="text-[10px] text-zinc-400 uppercase font-semibold">Total: {staffList.length}</span>
-        </div>
-
-        <div className="card-modern overflow-x-auto">
-          <table className="w-full text-left font-mono text-xs border-collapse">
-            <thead>
-              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Staff Full Name</th>
-                <th className="p-4 border-r border-zinc-200">National ID</th>
-                <th className="p-4 border-r border-zinc-200">KRA Tax PIN</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Base Salary</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Comm Rate</th>
-                <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-                <th className="p-4 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200/80 bg-white">
-              {staffList.map((emp) => (
-                <tr key={emp.id} className="hover:bg-zinc-50/80 transition-colors">
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider font-sans text-sm">
-                    <Link
-                      href={`/workspaces/${slug}/payroll/employees/${emp.id}`}
-                      className="hover:underline underline-offset-2"
-                    >
-                      {emp.fullName}
-                    </Link>
-                  </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-zinc-600">
-                    {emp.nationalId || "N/A"}
-                  </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-zinc-600 uppercase font-semibold">
-                    {emp.kraPin || "N/A"}
-                  </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black text-right">
-                    {formatCurrency(parseFloat(emp.baseSalary), shop.currency)}
-                  </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-right text-zinc-600">
-                    {parseFloat(emp.commissionRate).toFixed(1)}%
-                  </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-center">
-                    <span className={`px-2 py-0.5 text-[9px] font-semibold tracking-wider uppercase rounded ${
-                      emp.isActive ? "bg-black text-white" : "bg-zinc-100 text-zinc-400 border border-zinc-300"
-                    }`}>
-                      {emp.isActive ? "ACTIVE" : "INACTIVE"}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    <Link
-                      href={`/workspaces/${slug}/payroll/employees/${emp.id}`}
-                      className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"
-                    >
-                      View Profile &amp; Sub-Ledger
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-
-              {staffList.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="p-12 text-center text-zinc-400 italic">
-                    &gt; NO STAFF NODES REGISTERED YET. CLICK "+ REGISTER EMPLOYEE" TO GET STARTED.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       {/* HISTORICAL PAYROLL VOUCHERS RUNS */}
       <div className="space-y-4 pt-4">
         <div className="flex justify-between items-center">
@@ -233,6 +161,89 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
           </table>
         </div>
       </div>
+
+      {/* EMPLOYEE DIRECTORY REGISTRY */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">&gt; Employee &amp; Staff Directory</h2>
+          <span className="text-[10px] text-zinc-400 uppercase font-semibold">Total: {staffList.length}</span>
+        </div>
+
+        <div className="card-modern overflow-x-auto">
+          <table className="w-full text-left font-mono text-xs border-collapse">
+            <thead>
+              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+                <th className="p-4 border-r border-zinc-200">Staff Full Name</th>
+                <th className="p-4 border-r border-zinc-200">National ID</th>
+                <th className="p-4 border-r border-zinc-200">KRA Tax PIN</th>
+                <th className="p-4 border-r border-zinc-200 text-right">Base Salary</th>
+                <th className="p-4 border-r border-zinc-200 text-right">Comm Rate</th>
+                <th className="p-4 border-r border-zinc-200 text-center">Status</th>
+                <th className="p-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-200/80 bg-white">
+              {staffList.map((emp) => (
+                <tr key={emp.id} className="hover:bg-zinc-50/80 transition-colors">
+                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider font-sans text-sm">
+                    <Link
+                      href={`/workspaces/${slug}/payroll/employees/${emp.id}`}
+                      className="hover:underline underline-offset-2"
+                    >
+                      {emp.fullName}
+                    </Link>
+                  </td>
+                  <td className="p-4 border-r border-zinc-200/80 text-zinc-600">
+                    {emp.nationalId || "N/A"}
+                  </td>
+                  <td className="p-4 border-r border-zinc-200/80 text-zinc-600 uppercase font-semibold">
+                    {emp.kraPin || "N/A"}
+                  </td>
+                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black text-right">
+                    {formatCurrency(parseFloat(emp.baseSalary), shop.currency)}
+                  </td>
+                  <td className="p-4 border-r border-zinc-200/80 text-right text-zinc-600">
+                    {parseFloat(emp.commissionRate).toFixed(1)}%
+                  </td>
+                  <td className="p-4 border-r border-zinc-200/80 text-center">
+                    <span className={`px-2 py-0.5 text-[9px] font-semibold tracking-wider uppercase rounded ${
+                      emp.isActive ? "bg-black text-white" : "bg-zinc-100 text-zinc-400 border border-zinc-300"
+                    }`}>
+                      {emp.isActive ? "ACTIVE" : "INACTIVE"}
+                    </span>
+                  </td>
+                  <td className="p-4 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <Link
+                        href={`/workspaces/${slug}/payroll/employees/${emp.id}`}
+                        className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"
+                      >
+                        View Profile
+                      </Link>
+                      <DeleteEmployeeButton
+                        employeeId={emp.id}
+                        fullName={emp.fullName}
+                        shopId={shop.id}
+                        shopSlug={slug}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+
+              {staffList.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="p-12 text-center text-zinc-400 italic">
+                    &gt; NO STAFF NODES REGISTERED YET. CLICK "+ REGISTER EMPLOYEE" TO GET STARTED.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      
 
     </div>
   );

@@ -107,11 +107,31 @@ export async function updateEmployee(formData: {
         const shop = await db.query.shops.findFirst({ where: eq(shops.id, formData.shopId) });
         if (shop) {
             revalidatePath(`/workspaces/${shop.slug}/payroll`);
+            revalidatePath(`/workspaces/${shop.slug}/employees`);
             revalidatePath(`/workspaces/${shop.slug}/payroll/employees/${formData.id}`);
         }
         return { success: true };
     } catch (err: any) {
         return { success: false, error: err.message || "Failed to update employee details." };
+    }
+}
+
+export async function deleteEmployee(employeeId: string, shopId: string) {
+    const session = await verifyAndGetSession();
+    if (!session) return { success: false, error: "Unauthorized operation context." };
+
+    try {
+        await db.delete(employees)
+            .where(and(eq(employees.id, employeeId), eq(employees.shopId, shopId)));
+
+        const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
+        if (shop) {
+            revalidatePath(`/workspaces/${shop.slug}/payroll`);
+            revalidatePath(`/workspaces/${shop.slug}/employees`);
+        }
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message || "Failed to delete employee entry." };
     }
 }
 

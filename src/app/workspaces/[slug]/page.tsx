@@ -5,6 +5,7 @@ import { eq, count, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
+import { OnboardingTracker } from "./OnboardingTracker";
 
 interface WorkspaceOverviewPageProps {
   params: Promise<{ slug: string }>;
@@ -75,6 +76,13 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
           </Link>
         </div>
       </div>
+
+      <OnboardingTracker 
+        shopSlug={slug}
+        hasProducts={(productCountRes[0]?.value || 0) > 0}
+        hasClients={(clientCountRes[0]?.value || 0) > 0}
+        hasDocuments={allDocs.length > 0}
+      />
 
       {/* METRIC CARDS GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 card-modern divide-y sm:divide-y-0 sm:divide-x divide-zinc-200/80 bg-white">

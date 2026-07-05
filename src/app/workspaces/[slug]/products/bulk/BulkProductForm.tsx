@@ -136,7 +136,7 @@ export function BulkProductForm({ shopId, shopSlug }: BulkProductFormProps) {
                     value={item.name}
                     onChange={(e) => updateItem(item.id, "name", e.target.value)}
                     className="w-full p-2 border border-zinc-200 rounded font-sans tracking-tight text-xs"
-                    placeholder="E.g. Server Rack 42U"
+                    placeholder="E.g. Product Name"
                   />
                 </td>
                 <td className="p-2 border-r border-zinc-200">

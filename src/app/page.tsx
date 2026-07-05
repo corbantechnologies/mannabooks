@@ -86,16 +86,20 @@ export default function LandingPage() {
             </div>
 
             {/* TRUST STATS */}
-            <div className="flex flex-wrap gap-6 font-mono text-xs text-zinc-500 border-t border-zinc-100 pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 px-6">
               {[
-                { num: "11+", label: "Document Types" },
-                { num: "KRA", label: "eTIMS Compliant" },
-                { num: "PWA", label: "Installable App" },
-                { num: "PAYE", label: "Statutory Payroll" },
-              ].map((s) => (
-                <div key={s.label} className="space-y-0.5">
-                  <div className="text-lg font-bold text-black font-sans">{s.num}</div>
-                  <div className="text-[10px] uppercase font-semibold tracking-widest">{s.label}</div>
+                { title: "KRA eTIMS Integrated", text: "Built-in tax control mapping for full compliance." },
+                { title: "Multi-Currency Billing", text: "Bill clients globally in USD, GBP, or KES natively." },
+                { title: "Recurring & Aging", text: "Auto-generate retainers and dispatch overdue reminders." },
+                { title: "Walk-in POS & POS Terminal", text: "Rapid checkout with automatic inventory outflow." },
+                { title: "Smart Stock & Procurement", text: "Auto-replenish stock directly from paid Purchase Orders." },
+                { title: "Bulk Product Import", text: "Provision 15+ items instantly with rapid bulk entry." },
+                { title: "Statutory Payroll (PAYE)", text: "Automated KRA PAYE, SHIF, and NSSF deduction engine." },
+                { title: "Client Payment Portals", text: "Unguessable public links for secure client settlement." },
+              ].map((feat, i) => (
+                <div key={i} className="card-modern p-4 text-left">
+                  <h4 className="font-bold text-xs uppercase text-black mb-2">{feat.title}</h4>
+                  <p className="text-zinc-500 font-sans">{feat.text}</p>
                 </div>
               ))}
             </div>

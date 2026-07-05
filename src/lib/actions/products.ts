@@ -120,3 +120,56 @@ export async function deleteProductItem(id: string, shopId: string, shopSlug: st
         return { success: false, error: "Failed to delete product item." };
     }
 }
+
+interface BulkCreateProductInput {
+    shopId: string;
+    shopSlug: string;
+    items: {
+        name: string;
+        sku?: string;
+        itemType?: "PRODUCT" | "SERVICE";
+        unitPrice: number;
+        costPrice?: number;
+        defaultTaxType: "V_16" | "V_0" | "EXEMPT";
+        trackStock?: boolean;
+        stockQuantity?: number;
+        reorderThreshold?: number;
+    }[];
+}
+
+/**
+ * Bulk insert catalog items for rapid provisioning
+ */
+export async function createBulkProducts(input: BulkCreateProductInput) {
+    try {
+        if (!input.items || input.items.length === 0) {
+             return { success: false, error: "No items provided for bulk insert." };
+        }
+
+        const compiledPayload = input.items.map(item => {
+            const finalSku = item.sku?.trim() || generateAutoSku(item.name);
+            const isService = item.itemType === "SERVICE";
+            
+            return {
+                shopId: input.shopId,
+                name: item.name.trim(),
+                sku: finalSku,
+                itemType: item.itemType || "PRODUCT",
+                unitPrice: item.unitPrice.toString(),
+                costPrice: (item.costPrice || 0).toString(),
+                defaultTaxType: item.defaultTaxType,
+                trackStock: isService ? false : (item.trackStock || false),
+                stockQuantity: (item.stockQuantity || 0).toString(),
+                reorderThreshold: (item.reorderThreshold ?? 5).toString(),
+            };
+        });
+
+        await db.insert(products).values(compiledPayload);
+
+        revalidatePath(`/workspaces/${input.shopSlug}/products`);
+        return { success: true, count: compiledPayload.length };
+    } catch (error) {
+        console.error("Failed to execute bulk catalog insert:", error);
+        return { success: false, error: "Failed to process bulk import. Check data formatting." };
+    }
+}

@@ -23,7 +23,7 @@ interface DocumentStatusPanelProps {
   documentId: string;
   shopId: string;
   shopSlug: string;
-  currentStatus: "DRAFT" | "SENT" | "OVERDUE" | "PAID";
+  currentStatus: "DRAFT" | "SENT" | "OVERDUE" | "PAID" | "RECEIVED";
   docType: DocumentType;
   items: DocumentItem[];
   portalLink: string | null;
@@ -41,6 +41,7 @@ const STATUS_OPTIONS = [
   { value: "SENT", label: "Sent" },
   { value: "OVERDUE", label: "Overdue" },
   { value: "PAID", label: "Paid" },
+  { value: "RECEIVED", label: "Received" },
 ] as const;
 
 export function DocumentStatusPanel({
@@ -60,7 +61,7 @@ export function DocumentStatusPanel({
   parentDocument,
 }: DocumentStatusPanelProps) {
   const router = useRouter();
-  const [status, setStatus] = useState<"DRAFT" | "SENT" | "OVERDUE" | "PAID">(currentStatus);
+  const [status, setStatus] = useState<"DRAFT" | "SENT" | "OVERDUE" | "PAID" | "RECEIVED">(currentStatus as any);
   const [cuNumber, setCuNumber] = useState(kraCuInvoiceNumber || "");
   const [paymentChannel, setPaymentChannel] = useState(initialPaymentChannel || "");
   const [paymentReference, setPaymentReference] = useState(initialPaymentReference || "");
@@ -90,7 +91,7 @@ export function DocumentStatusPanel({
     }
   }
 
-  async function handleStatusUpdate(newStatus: "DRAFT" | "SENT" | "OVERDUE" | "PAID") {
+  async function handleStatusUpdate(newStatus: "DRAFT" | "SENT" | "OVERDUE" | "PAID" | "RECEIVED") {
     if (newStatus === status) return;
     updateStatusMutation.mutate(
       { documentId, status: newStatus },
@@ -108,7 +109,7 @@ export function DocumentStatusPanel({
     setMessage(null);
     const toastId = toast.loading(`Dispatching email to ${clientEmail}...`);
 
-    const res = await dispatchDocumentEmail({ documentId });
+    const res = await dispatchDocumentEmail({ documentId, isReminder: false });
     setSending(false);
 
     if (res.success) {
@@ -117,6 +118,25 @@ export function DocumentStatusPanel({
       toast.success(text, { id: toastId });
     } else {
       const text = res.error || "Failed to send email.";
+      setMessage({ type: "error", text });
+      toast.error(text, { id: toastId });
+    }
+  }
+
+  async function handleSendReminder() {
+    setSending(true);
+    setMessage(null);
+    const toastId = toast.loading(`Dispatching aging reminder to ${clientEmail}...`);
+
+    const res = await dispatchDocumentEmail({ documentId, isReminder: true });
+    setSending(false);
+
+    if (res.success) {
+      const text = `Aging reminder emailed to ${clientEmail} successfully.`;
+      setMessage({ type: "success", text });
+      toast.success(text, { id: toastId });
+    } else {
+      const text = res.error || "Failed to send reminder.";
       setMessage({ type: "error", text });
       toast.error(text, { id: toastId });
     }
@@ -191,6 +211,27 @@ export function DocumentStatusPanel({
             {savingCu ? "Saving..." : "Save CU #"}
           </button>
         </div>
+      </div>
+
+      {/* MAIN EMAIL DISPATCH & REMINDER */}
+      <div className="flex gap-4">
+        <button
+          onClick={handleSendEmail}
+          disabled={sending || !clientEmail}
+          className="flex-1 border border-zinc-200 bg-white hover:bg-zinc-50 px-4 py-2 font-mono text-[10px] font-bold uppercase transition-colors"
+        >
+          {sending ? "Dispatching..." : clientEmail ? "✉ Email Secure Portal Link" : "✉ Missing Client Email"}
+        </button>
+        
+        {(docType === "INVOICE" && currentStatus === "OVERDUE") && (
+          <button
+            onClick={handleSendReminder}
+            disabled={sending || !clientEmail}
+            className="flex-1 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 px-4 py-2 font-mono text-[10px] font-bold uppercase transition-colors"
+          >
+            {sending ? "Dispatching..." : "🔔 Send Aging Reminder"}
+          </button>
+        )}
       </div>
 
       {/* PAYMENT CONFIRMATION DETAILS (OPTIONAL) */}

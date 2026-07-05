@@ -10,12 +10,13 @@ const resend = new Resend(process.env.RESEND_API_KEY || "re_mock_key");
 
 interface EmailDeliveryInput {
     documentId: string;
+    isReminder?: boolean;
 }
 
 /**
  * Automates document dispatch by querying the crypt token and emailing the client.
  */
-export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) {
+export async function dispatchDocumentEmail({ documentId, isReminder = false }: EmailDeliveryInput) {
     try {
         // 1. Locate the public secure path token for this document
         const matchToken = await db.query.documentTokens.findFirst({
@@ -54,9 +55,11 @@ export async function dispatchDocumentEmail({ documentId }: EmailDeliveryInput) 
             doc.type === "LPO" || doc.type === "PO" ? "View Purchase Order →" :
             "View &amp; Settle Invoice →";
 
-        const introText = isPaidOrReceipt
-            ? `An official <strong>${doc.type}</strong> (Ref: <code>${doc.docNumber}</code>) has been issued for your records.`
-            : `A new <strong>${doc.type}</strong> (Ref: <code>${doc.docNumber}</code>) has been issued for your account.`;
+        const introText = isReminder
+            ? `This is a polite reminder that your <strong>${doc.type}</strong> (Ref: <code>${doc.docNumber}</code>) is pending settlement.`
+            : (isPaidOrReceipt
+                ? `An official <strong>${doc.type}</strong> (Ref: <code>${doc.docNumber}</code>) has been issued for your records.`
+                : `A new <strong>${doc.type}</strong> (Ref: <code>${doc.docNumber}</code>) has been issued for your account.`);
 
         const brandColor = doc.shop.primaryColor || "#000000";
 

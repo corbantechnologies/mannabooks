@@ -9,6 +9,7 @@ import { EditProductModal } from "./EditProductModal";
 
 import { and } from "drizzle-orm";
 import { ProductFilterBar } from "./ProductFilterBar";
+import Link from "next/link";
 
 interface ProductsPageProps {
   params: Promise<{ slug: string }>;
@@ -62,9 +63,16 @@ export default async function WorkspaceProductsPage({ params, searchParams }: Pr
           <span className="font-mono text-xs text-zinc-400 font-semibold">CATALOG // ITEM_REGISTRY_LEDGER</span>
           <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Product Catalog</h1>
         </div>
-        
-        {/* Inject interactive creation portal block */}
-        <ProductFormClientSide shopId={shop.id} shopSlug={slug} />
+        <div className="flex items-center gap-3">
+          <Link 
+            href={`/workspaces/${slug}/products/bulk`}
+            className="border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-black px-4 py-2 font-mono text-xs font-semibold uppercase rounded transition-colors"
+          >
+            Bulk Import
+          </Link>
+          {/* Inject interactive creation portal block */}
+          <ProductFormClientSide shopId={shop.id} shopSlug={slug} />
+        </div>
       </div>
 
       {/* FILTER & SEARCH CONTROL BAR */}

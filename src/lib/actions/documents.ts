@@ -7,6 +7,8 @@ import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 
+import { applyDocumentStockMovements } from "@/lib/actions/stock";
+
 export type DocumentType = 
   | "QUOTATION" 
   | "INVOICE" 
@@ -21,6 +23,7 @@ export type DocumentType =
   | "PAYROLL_VOUCHER";
 
 interface CreateDocumentItemInput {
+    productId?: string;
     description: string;
     quantity: number;
     unitPrice: number;
@@ -101,7 +104,7 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 supplierId: input.supplierId || null,
                 type: input.type,
                 docNumber: formattedSerial,
-                status: "DRAFT", // Default newly generated files to editable draft status
+                status: input.type === "RECEIPT" ? "PAID" : "DRAFT", // Receipts are proof of settled payment (PAID status)
                 kraCuInvoiceNumber: input.kraCuInvoiceNumber || null,
                 parentDocumentId: input.parentDocumentId || null,
                 requiresEtims: input.requiresEtims || false,
@@ -124,6 +127,7 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
 
                 return {
                     documentId: newDoc.id,
+                    productId: rowItem.productId || null,
                     description: rowItem.description.trim(),
                     quantity: rowItem.quantity.toString(),
                     unitPrice: rowItem.unitPrice.toString(),
@@ -135,7 +139,12 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
 
             await tx.insert(documentItems).values(compiledRowsPayload);
 
-            // 6. Provision the secure public gateway token key
+            // 6. Trigger Stock Outflow for direct Receipts (when not linked to a parent invoice)
+            if (input.type === "RECEIPT" && !input.parentDocumentId) {
+                await applyDocumentStockMovements(newDoc.id, "OUTFLOW", tx);
+            }
+
+            // 7. Provision the secure public gateway token key
             const secureHexToken = crypto.randomBytes(32).toString("hex");
             await tx.insert(documentTokens).values({
                 documentId: newDoc.id,
@@ -196,6 +205,15 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
         await db.update(documents)
             .set(updateData)
             .where(and(eq(documents.id, input.documentId), eq(documents.shopId, input.shopId)));
+
+        // STOCK MOVEMENT ENGINE: Trigger stock movements on status transition
+        if (existing.status === "DRAFT" && (input.status === "SENT" || input.status === "PAID")) {
+            if (existing.type === "INVOICE" || existing.type === "RECEIPT") {
+                await applyDocumentStockMovements(existing.id, "OUTFLOW");
+            } else if (existing.type === "GOODS_RECEIVED_NOTE" || existing.type === "LPO" || existing.type === "PO") {
+                await applyDocumentStockMovements(existing.id, "INFLOW");
+            }
+        }
 
         revalidatePath(`/workspaces/${input.shopSlug}/documents`);
         revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.documentId}`);
@@ -325,6 +343,15 @@ export async function convertDocumentAction(
         });
 
         if (res.success) {
+            if (targetType === "RECEIPT" && sourceDoc.type === "INVOICE") {
+                await updateDocumentStatus({
+                    documentId: sourceDoc.id,
+                    shopId,
+                    shopSlug,
+                    status: "PAID",
+                    paymentChannel: "RECEIPT_ISSUED",
+                });
+            }
             revalidatePath(`/workspaces/${shopSlug}/documents`);
             revalidatePath(`/workspaces/${shopSlug}/documents/${sourceDocId}`);
             return { success: true, newDocumentId: res.documentId, serial: res.serial };

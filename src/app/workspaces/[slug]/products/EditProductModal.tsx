@@ -13,6 +13,9 @@ interface EditProductModalProps {
     sku: string | null;
     unitPrice: string;
     defaultTaxType: "V_16" | "V_0" | "EXEMPT";
+    trackStock?: boolean;
+    stockQuantity?: string;
+    reorderThreshold?: string;
   };
   shopId: string;
   shopSlug: string;
@@ -25,10 +28,13 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
   const [sku, setSku] = useState(product.sku || "");
   const [unitPrice, setUnitPrice] = useState(product.unitPrice);
   const [taxType, setTaxType] = useState(product.defaultTaxType);
-  const [loading, setLoading] = useState(false);
+  const [trackStock, setTrackStock] = useState(product.trackStock || false);
+  const [stockQuantity, setStockQuantity] = useState(product.stockQuantity || "0");
+  const [reorderThreshold, setReorderThreshold] = useState(product.reorderThreshold || "5");
 
   const updateProductMutation = useUpdateProduct(shopId, shopSlug);
   const deleteProductMutation = useDeleteProduct(shopId, shopSlug);
+  const loading = updateProductMutation.isPending || deleteProductMutation.isPending;
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
@@ -39,6 +45,9 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
         sku: sku || undefined,
         unitPrice: parseFloat(unitPrice),
         defaultTaxType: taxType,
+        trackStock,
+        stockQuantity: parseFloat(stockQuantity),
+        reorderThreshold: parseFloat(reorderThreshold),
       },
       {
         onSuccess: () => {
@@ -120,10 +129,50 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
                     className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black text-xs font-semibold rounded"
                   >
                     <option value="V_16">16% VAT</option>
-                    <option value="V_0">0% VAT</option>
-                    <option value="EXEMPT">Exempt</option>
+                    <option value="V_0">0% VAT (Zero-Rated)</option>
+                    <option value="EXEMPT">Tax Exempt</option>
                   </select>
                 </div>
+              </div>
+
+              {/* INVENTORY TRACKING BLOCK */}
+              <div className="border border-zinc-200 bg-zinc-50 p-3.5 space-y-3 rounded">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={trackStock}
+                    onChange={(e) => setTrackStock(e.target.checked)}
+                    className="accent-black"
+                  />
+                  <span className="font-semibold uppercase text-xs text-black">Track Item</span>
+                </label>
+
+                {trackStock && (
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div className="space-y-1">
+                      <label className="text-zinc-400 uppercase block text-[9px] font-semibold">Available Stock Qty</label>
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={stockQuantity}
+                        onChange={(e) => setStockQuantity(e.target.value)}
+                        className="w-full px-2.5 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-zinc-400 uppercase block text-[9px] font-semibold">Low Stock Alert Limit</label>
+                      <input
+                        type="number"
+                        step="1"
+                        min="1"
+                        value={reorderThreshold}
+                        onChange={(e) => setReorderThreshold(e.target.value)}
+                        className="w-full px-2.5 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-zinc-200/80 pt-4 flex justify-between items-center">

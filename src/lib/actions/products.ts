@@ -12,6 +12,9 @@ interface CreateProductInput {
     sku?: string;
     unitPrice: number;
     defaultTaxType: "V_16" | "V_0" | "EXEMPT";
+    trackStock?: boolean;
+    stockQuantity?: number;
+    reorderThreshold?: number;
 }
 
 function generateAutoSku(name: string): string {
@@ -41,6 +44,9 @@ export async function createProductItem(input: CreateProductInput) {
             sku: finalSku,
             unitPrice: input.unitPrice.toString(), // Store as string to preserve precision with PostgreSQL numeric
             defaultTaxType: input.defaultTaxType,
+            trackStock: input.trackStock || false,
+            stockQuantity: (input.stockQuantity || 0).toString(),
+            reorderThreshold: (input.reorderThreshold ?? 5).toString(),
         }).returning();
 
         revalidatePath(`/workspaces/${input.shopSlug}/products`);
@@ -76,6 +82,9 @@ export async function updateProductItem({ id, shopId, shopSlug, ...updates }: Up
                 sku: updates.sku?.trim(),
                 unitPrice: updates.unitPrice !== undefined ? updates.unitPrice.toString() : undefined,
                 defaultTaxType: updates.defaultTaxType,
+                trackStock: updates.trackStock !== undefined ? updates.trackStock : undefined,
+                stockQuantity: updates.stockQuantity !== undefined ? updates.stockQuantity.toString() : undefined,
+                reorderThreshold: updates.reorderThreshold !== undefined ? updates.reorderThreshold.toString() : undefined,
             })
             .where(and(eq(products.id, id), eq(products.shopId, shopId)));
 

@@ -82,6 +82,9 @@ export const products = pgTable('products', {
     sku: varchar('sku', { length: 100 }),
     unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
     defaultTaxType: taxTypeEnum('default_tax_type').default('V_16').notNull(),
+    trackStock: boolean('track_stock').default(false).notNull(),
+    stockQuantity: numeric('stock_quantity', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    reorderThreshold: numeric('reorder_threshold', { precision: 12, scale: 2 }).default('5.00').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -148,6 +151,7 @@ export const documents = pgTable('documents', {
 export const documentItems = pgTable('document_items', {
     id: uuid('id').defaultRandom().primaryKey(),
     documentId: uuid('document_id').references(() => documents.id, { onDelete: 'cascade' }).notNull(),
+    productId: uuid('product_id').references(() => products.id, { onDelete: 'set null' }),
     description: text('description').notNull(),
     quantity: numeric('quantity', { precision: 10, scale: 2 }).notNull(),
     unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
@@ -223,6 +227,7 @@ export const documentsRelations = relations(documents, ({ one, many }) => ({
 
 export const documentItemsRelations = relations(documentItems, ({ one }) => ({
     document: one(documents, { fields: [documentItems.documentId], references: [documents.id] }),
+    product: one(products, { fields: [documentItems.productId], references: [products.id] }),
 }));
 
 export const documentTokensRelations = relations(documentTokens, ({ one }) => ({

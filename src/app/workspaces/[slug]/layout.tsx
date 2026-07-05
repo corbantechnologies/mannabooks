@@ -134,28 +134,34 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
                 [04] Supplier Network
               </Link>
               <Link 
+                href={`/workspaces/${slug}/employees`} 
+                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
+              >
+                [05] Employee Directory
+              </Link>
+              <Link 
                 href={`/workspaces/${slug}/payroll`} 
                 className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
-                [05] Payroll Vouchers
+                [06] Payroll Vouchers
               </Link>
               <Link 
                 href={`/workspaces/${slug}/analytics`} 
                 className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
-                [06] Analytics
+                [07] Analytics
               </Link>
               <Link 
                 href={`/workspaces/${slug}/settings`} 
                 className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
-                [07] System Settings
+                [08] System Settings
               </Link>
               <Link 
                 href={`/workspaces/${slug}/guide`} 
                 className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
               >
-                [08] Operator Guide
+                [09] Operator Guide
               </Link>
             </nav>
           </div>

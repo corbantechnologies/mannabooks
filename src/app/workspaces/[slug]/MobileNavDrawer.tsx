@@ -120,32 +120,39 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
                 [04] Supplier Network
               </Link>
               <Link
+                href={`/workspaces/${slug}/employees`}
+                onClick={() => setIsOpen(false)}
+                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
+              >
+                [05] Employee Directory
+              </Link>
+              <Link
                 href={`/workspaces/${slug}/payroll`}
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
-                [05] Payroll Vouchers
+                [06] Payroll Vouchers
               </Link>
               <Link
                 href={`/workspaces/${slug}/analytics`}
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
-                [06] Analytics
+                [07] Analytics
               </Link>
               <Link
                 href={`/workspaces/${slug}/settings`}
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
-                [07] System Settings
+                [08] System Settings
               </Link>
               <Link
                 href={`/workspaces/${slug}/guide`}
                 onClick={() => setIsOpen(false)}
                 className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
               >
-                [08] Operator Guide
+                [09] Operator Guide
               </Link>
             </nav>
           </div>

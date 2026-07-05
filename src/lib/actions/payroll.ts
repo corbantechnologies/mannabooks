@@ -30,11 +30,40 @@ export async function registerNewEmployee(formData: {
     if (!session) return { success: false, error: "Unauthorized operation context." };
 
     try {
+        const trimmedId = formData.nationalId?.trim();
+        const trimmedPin = formData.kraPin?.trim().toUpperCase();
+
+        // 1. Validate uniqueness for National ID
+        if (trimmedId) {
+            const existingId = await db.query.employees.findFirst({
+                where: and(
+                    eq(employees.shopId, formData.shopId),
+                    eq(employees.nationalId, trimmedId)
+                ),
+            });
+            if (existingId) {
+                return { success: false, error: `An employee with National ID "${trimmedId}" is already registered in this workspace.` };
+            }
+        }
+
+        // 2. Validate uniqueness for KRA PIN
+        if (trimmedPin) {
+            const existingPin = await db.query.employees.findFirst({
+                where: and(
+                    eq(employees.shopId, formData.shopId),
+                    eq(employees.kraPin, trimmedPin)
+                ),
+            });
+            if (existingPin) {
+                return { success: false, error: `An employee with KRA PIN "${trimmedPin}" is already registered in this workspace.` };
+            }
+        }
+
         await db.insert(employees).values({
             shopId: formData.shopId,
-            fullName: formData.fullName,
-            nationalId: formData.nationalId || null,
-            kraPin: formData.kraPin || null,
+            fullName: formData.fullName.trim(),
+            nationalId: trimmedId || null,
+            kraPin: trimmedPin || null,
             baseSalary: formData.baseSalary.toString(),
             commissionRate: formData.commissionRate.toString(),
         });
@@ -42,6 +71,7 @@ export async function registerNewEmployee(formData: {
         const shop = await db.query.shops.findFirst({ where: eq(shops.id, formData.shopId) });
         if (shop) {
             revalidatePath(`/workspaces/${shop.slug}/payroll`);
+            revalidatePath(`/workspaces/${shop.slug}/employees`);
         }
         return { success: true };
     } catch (err: any) {

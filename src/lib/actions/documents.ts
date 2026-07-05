@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { documents, documentItems, documentTokens, shops } from "@/db/schema";
+import { documents, documentItems, documentTokens, shops, clients } from "@/db/schema";
 import { calculateLineItem, calculateDocumentTotals } from "@/lib/utils";
 import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
@@ -42,6 +42,7 @@ interface CreateDocumentInput {
     requiresEtims?: boolean;
     notes?: string;
     currency?: string;
+    customerEmail?: string;
     isRecurring?: boolean;
     recurringInterval?: "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY";
     items: CreateDocumentItemInput[];
@@ -94,16 +95,35 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
             const prefix = prefixMap[input.type] || "DOC";
             const formattedSerial = `${prefix}-${String(nextSequence).padStart(4, "0")}`;
 
-            // 3. Process complete batch arrays using calculation engine rules
+            // 3. Process walk-in customer email dynamically
+            let finalClientId = input.clientId;
+            if (input.customerEmail && !finalClientId) {
+                const existingWalkIn = await tx.query.clients.findFirst({
+                    where: and(eq(clients.shopId, input.shopId), eq(clients.email, input.customerEmail))
+                });
+                if (existingWalkIn) {
+                    finalClientId = existingWalkIn.id;
+                } else {
+                    const [newClient] = await tx.insert(clients).values({
+                        shopId: input.shopId,
+                        name: "Walk-In Customer",
+                        email: input.customerEmail,
+                        clientType: "WALK_IN"
+                    }).returning();
+                    finalClientId = newClient.id;
+                }
+            }
+
+            // 4. Process complete batch arrays using calculation engine rules
             const calculatedTotals = calculateDocumentTotals({
                 items: input.items,
                 isShopVatRegistered: isVatActive,
             });
 
-            // 4. Create the parent Document snapshot
+            // 5. Insert master header registry (The Document)
             const [newDoc] = await tx.insert(documents).values({
                 shopId: input.shopId,
-                clientId: input.clientId || null,
+                clientId: finalClientId || null,
                 supplierId: input.supplierId || null,
                 type: input.type,
                 docNumber: formattedSerial,

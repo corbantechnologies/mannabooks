@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import ReactPDF from "@react-pdf/renderer";
 import { formatCurrency } from "@/lib/utils";
 import React from "react";
+import QRCode from "qrcode";
 
 function parsePayrollDescription(description: string, fallbackUnitPrice: string) {
     const staffMatch = description.match(/Staff:\s*([^|]+)/i);
@@ -35,7 +36,7 @@ function parsePayrollDescription(description: string, fallbackUnitPrice: string)
 }
 
 // Dedicated Landscape Layout for Statutory Payroll Vouchers
-const PayrollPdfDocumentStructure = ({ doc, shop }: any) => {
+const PayrollPdfDocumentStructure = ({ doc, shop, qrCodeDataUrl }: any) => {
     const primaryColor = shop.primaryColor || "#047857";
 
     const styles = ReactPDF.StyleSheet.create({
@@ -201,7 +202,8 @@ const PayrollPdfDocumentStructure = ({ doc, shop }: any) => {
             // Legal Footer
             React.createElement(
                 ReactPDF.View,
-                { style: styles.legalFooter },
+                { style: { ...styles.legalFooter, flexDirection: "row", justifyContent: "space-between", alignItems: "center" } },
+                qrCodeDataUrl ? React.createElement(ReactPDF.Image, { src: qrCodeDataUrl, style: { width: 40, height: 40 } }) : React.createElement(ReactPDF.View, null),
                 React.createElement(ReactPDF.Text, null, `Generated via Manna Books Financial Platform • Official Statutory Payroll Document for ${shop.name}`)
             )
         )
@@ -209,7 +211,7 @@ const PayrollPdfDocumentStructure = ({ doc, shop }: any) => {
 };
 
 // Inline Standard Document PDF Layout (Invoices, Receipts, Quotations, LPOs, etc.)
-const StandardPdfDocumentStructure = ({ doc, shop, client, settlements }: any) => {
+const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDataUrl }: any) => {
     const primaryColor = shop.primaryColor || "#000000";
 
     const styles = ReactPDF.StyleSheet.create({
@@ -349,8 +351,14 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements }: any) =
 
             React.createElement(
                 ReactPDF.View,
-                { style: styles.legalFooter },
-                React.createElement(ReactPDF.Text, null, `Generated via Manna Books Financial Platform • Official Statutory Document for ${shop.name}`)
+                { style: { ...styles.legalFooter, flexDirection: "row", justifyContent: "space-between", alignItems: "center" } },
+                qrCodeDataUrl ? React.createElement(ReactPDF.Image, { src: qrCodeDataUrl, style: { width: 50, height: 50 } }) : React.createElement(ReactPDF.View, null),
+                React.createElement(
+                    ReactPDF.View,
+                    null,
+                    React.createElement(ReactPDF.Text, { style: { textAlign: "right" } }, `Generated via Manna Books Platform • Official Statutory Document for ${shop.name}`),
+                    React.createElement(ReactPDF.Text, { style: { textAlign: "right", marginTop: 2, fontSize: 7, color: "#a1a1aa" } }, "Scan the QR code to verify this document securely online.")
+                )
             )
         )
     );
@@ -417,10 +425,26 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
         const settlements = await db.query.paymentMethods.findMany({ where: eq(paymentMethods.shopId, doc.shop.id) });
 
+        let actualToken = tokenRecord?.token;
+        if (!actualToken) {
+            const tokenByDoc = await db.query.documentTokens.findFirst({
+                where: eq(documentTokens.documentId, targetDocumentId),
+            });
+            actualToken = tokenByDoc?.token || token;
+        }
+        
+        let qrCodeDataUrl = "";
+        try {
+            const portalUrl = `https://mannabooks.co.ke/portal/invoice/${actualToken}`;
+            qrCodeDataUrl = await QRCode.toDataURL(portalUrl, { errorCorrectionLevel: 'H', margin: 1 });
+        } catch (err) {
+            console.error("Failed to generate QR Code", err);
+        }
+
         // Select PDF layout structure: Landscape Payroll Vector vs Standard Vector Document
         const PDFElement = isPayroll
-            ? React.createElement(PayrollPdfDocumentStructure, { doc, shop: doc.shop })
-            : React.createElement(StandardPdfDocumentStructure, { doc, shop: doc.shop, client: party, settlements });
+            ? React.createElement(PayrollPdfDocumentStructure, { doc, shop: doc.shop, qrCodeDataUrl })
+            : React.createElement(StandardPdfDocumentStructure, { doc, shop: doc.shop, client: party, settlements, qrCodeDataUrl });
 
         const streamStream = await ReactPDF.renderToStream(PDFElement);
 

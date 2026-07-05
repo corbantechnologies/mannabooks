@@ -29,6 +29,7 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
   const [paymentChannel, setPaymentChannel] = useState<"CASH" | "MPESA" | "BANK" | "OTHER">("MPESA");
   const [paymentReference, setPaymentReference] = useState("");
   const [customerNote, setCustomerNote] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [amountTendered, setAmountTendered] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [mobileView, setMobileView] = useState<"catalog" | "basket">("catalog");
@@ -111,6 +112,7 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
       shopId: shop.id,
       shopSlug,
       type: "RECEIPT",
+      customerEmail: customerEmail.trim() || undefined,
       notes: customerNote.trim() || undefined,
       items: basket.map((item) => ({
         productId: item.productId,
@@ -407,6 +409,24 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
                   className="w-full px-3 py-2.5 border border-zinc-300 bg-white rounded-lg uppercase text-xs focus:outline-none focus:border-black"
                 />
               )}
+
+              {/* CUSTOMER EMAIL & NOTES */}
+              <div className="space-y-3">
+                <input
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder="Customer Email (For digital receipt)..."
+                  className="w-full px-3 py-2 border border-zinc-200 bg-white rounded-lg focus:outline-none focus:border-black font-sans text-xs"
+                />
+                <textarea
+                  value={customerNote}
+                  onChange={(e) => setCustomerNote(e.target.value)}
+                  placeholder="Add a customer note or reference (optional)..."
+                  rows={2}
+                  className="w-full px-3 py-2 border border-zinc-200 bg-white rounded-lg focus:outline-none focus:border-black resize-none font-sans text-xs"
+                />
+              </div>
             </div>
 
             {/* TOTALS & CHECKOUT */}

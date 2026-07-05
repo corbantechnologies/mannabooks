@@ -81,6 +81,11 @@ export function DocumentStatusPanel({
       if (res.success) {
         toast.success("KRA eTIMS CU Serial Number saved.");
         router.refresh();
+        
+        // Auto-dispatch the finalized receipt to the client if email exists
+        if (clientEmail && clientEmail !== "—") {
+            handleSendEmail();
+        }
       } else {
         toast.error(res.error || "Failed to update eTIMS CU Number.");
       }

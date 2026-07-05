@@ -110,6 +110,18 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
           background-color: ${brandColor} !important;
         }
       `}</style>
+      
+      {doc.requiresEtims && !doc.kraCuInvoiceNumber && (
+        <div className="max-w-3xl mx-auto mb-6 bg-amber-50 border border-amber-300 rounded-lg p-4 shadow-sm animate-in fade-in slide-in-from-top-4">
+          <h3 className="font-bold text-amber-900 uppercase text-xs flex items-center gap-2">
+            <span>⚠️</span> KRA eTIMS CU Pending
+          </h3>
+          <p className="text-amber-800 text-[11px] font-sans mt-1">
+            This receipt is provisional. Your finalized KRA tax control number is being processed and will appear here shortly. Please check back later to download your finalized statutory PDF.
+          </p>
+        </div>
+      )}
+
       <div className="max-w-3xl mx-auto card-modern p-6 sm:p-12 space-y-8 sm:space-y-10 shadow-sm">
         
         {/* PUBLIC PORTAL BRAND HEADER */}

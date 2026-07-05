@@ -10,8 +10,13 @@ interface CreateProductInput {
     shopSlug: string;
     name: string;
     sku?: string;
+    itemType?: "PRODUCT" | "SERVICE";
     unitPrice: number;
+    costPrice?: number;
     defaultTaxType: "V_16" | "V_0" | "EXEMPT";
+    trackStock?: boolean;
+    stockQuantity?: number;
+    reorderThreshold?: number;
 }
 
 function generateAutoSku(name: string): string {
@@ -34,13 +39,19 @@ function generateAutoSku(name: string): string {
 export async function createProductItem(input: CreateProductInput) {
     try {
         const finalSku = input.sku?.trim() || generateAutoSku(input.name);
+        const isService = input.itemType === "SERVICE";
 
         const [newProduct] = await db.insert(products).values({
             shopId: input.shopId,
             name: input.name.trim(),
             sku: finalSku,
+            itemType: input.itemType || "PRODUCT",
             unitPrice: input.unitPrice.toString(), // Store as string to preserve precision with PostgreSQL numeric
+            costPrice: (input.costPrice || 0).toString(),
             defaultTaxType: input.defaultTaxType,
+            trackStock: isService ? false : (input.trackStock || false),
+            stockQuantity: (input.stockQuantity || 0).toString(),
+            reorderThreshold: (input.reorderThreshold ?? 5).toString(),
         }).returning();
 
         revalidatePath(`/workspaces/${input.shopSlug}/products`);
@@ -70,12 +81,19 @@ export async function updateProductItem({ id, shopId, shopSlug, ...updates }: Up
             return { success: false, error: "Catalog item not found or unauthorized access." };
         }
 
+        const isService = updates.itemType === "SERVICE";
+
         await db.update(products)
             .set({
                 name: updates.name?.trim(),
                 sku: updates.sku?.trim(),
+                itemType: updates.itemType,
                 unitPrice: updates.unitPrice !== undefined ? updates.unitPrice.toString() : undefined,
+                costPrice: updates.costPrice !== undefined ? updates.costPrice.toString() : undefined,
                 defaultTaxType: updates.defaultTaxType,
+                trackStock: isService ? false : (updates.trackStock !== undefined ? updates.trackStock : undefined),
+                stockQuantity: updates.stockQuantity !== undefined ? updates.stockQuantity.toString() : undefined,
+                reorderThreshold: updates.reorderThreshold !== undefined ? updates.reorderThreshold.toString() : undefined,
             })
             .where(and(eq(products.id, id), eq(products.shopId, shopId)));
 

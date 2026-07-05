@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/actions/logout";
 
 interface MobileNavDrawerProps {
@@ -21,6 +22,26 @@ interface MobileNavDrawerProps {
 
 export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  const navLinks = [
+    { href: `/workspaces/${slug}`, label: "[00] Overview Log", exact: true },
+    { href: `/workspaces/${slug}/documents`, label: "[01] Fiscal Ledgers" },
+    { href: `/workspaces/${slug}/pos`, label: "[02] Walk-in Sales" },
+    { href: `/workspaces/${slug}/clients`, label: "[03] Client Flow" },
+    { href: `/workspaces/${slug}/products`, label: "[04] Product Catalog" },
+    { href: `/workspaces/${slug}/suppliers`, label: "[05] Supplier Network" },
+    { href: `/workspaces/${slug}/employees`, label: "[06] Employee Directory" },
+    { href: `/workspaces/${slug}/payroll`, label: "[07] Payroll Vouchers" },
+    { href: `/workspaces/${slug}/analytics`, label: "[08] Analytics" },
+    { href: `/workspaces/${slug}/settings`, label: "[09] System Settings" },
+    { href: `/workspaces/${slug}/guide`, label: "[10] Operator Guide" },
+  ];
+
+  function isActive(href: string, exact?: boolean) {
+    if (exact) return pathname === href;
+    return pathname === href || pathname.startsWith(href + "/");
+  }
 
   return (
     <div className="lg:hidden border-b border-zinc-200/80 glass-panel sticky top-0 z-40">
@@ -84,76 +105,23 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
           <div className="space-y-2">
             <span className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-2 font-semibold">LEDGER DIRECTORIES</span>
             <nav className="flex flex-col gap-1.5 font-semibold uppercase text-xs tracking-wider">
-              <Link
-                href={`/workspaces/${slug}`}
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
-              >
-                [00] Overview Log
-              </Link>
-              <Link
-                href={`/workspaces/${slug}/documents`}
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
-              >
-                [01] Fiscal Ledgers
-              </Link>
-              <Link
-                href={`/workspaces/${slug}/clients`}
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
-              >
-                [02] Client Flow
-              </Link>
-              <Link
-                href={`/workspaces/${slug}/products`}
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
-              >
-                [03] Product Catalog
-              </Link>
-              <Link
-                href={`/workspaces/${slug}/suppliers`}
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
-              >
-                [04] Supplier Network
-              </Link>
-              <Link
-                href={`/workspaces/${slug}/employees`}
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
-              >
-                [05] Employee Directory
-              </Link>
-              <Link
-                href={`/workspaces/${slug}/payroll`}
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
-              >
-                [06] Payroll Vouchers
-              </Link>
-              <Link
-                href={`/workspaces/${slug}/analytics`}
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
-              >
-                [07] Analytics
-              </Link>
-              <Link
-                href={`/workspaces/${slug}/settings`}
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
-              >
-                [08] System Settings
-              </Link>
-              <Link
-                href={`/workspaces/${slug}/guide`}
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 border border-zinc-200 rounded hover:border-black hover:bg-zinc-50 transition-all block text-left"
-              >
-                [09] Operator Guide
-              </Link>
+              {navLinks.map((link) => {
+                const active = isActive(link.href, link.exact);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className={`px-3 py-2.5 border rounded transition-all block text-left ${
+                      active
+                        ? "border-black bg-black text-white"
+                        : "border-zinc-200 hover:border-black hover:bg-zinc-50"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 

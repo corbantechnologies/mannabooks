@@ -9,7 +9,17 @@ export function useCreateProduct(shopId: string, shopSlug: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { name: string; sku?: string; unitPrice: number; defaultTaxType: "V_16" | "V_0" | "EXEMPT" }) => {
+    mutationFn: async (data: {
+      name: string;
+      sku?: string;
+      itemType?: "PRODUCT" | "SERVICE";
+      unitPrice: number;
+      costPrice?: number;
+      defaultTaxType: "V_16" | "V_0" | "EXEMPT";
+      trackStock?: boolean;
+      stockQuantity?: number;
+      reorderThreshold?: number;
+    }) => {
       const res = await createProductItem({ shopId, shopSlug, ...data });
       if (!res.success) throw new Error(res.error || "Failed to create catalog item.");
       return res;
@@ -28,7 +38,18 @@ export function useUpdateProduct(shopId: string, shopSlug: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { id: string; name?: string; sku?: string; unitPrice?: number; defaultTaxType?: "V_16" | "V_0" | "EXEMPT" }) => {
+    mutationFn: async (data: {
+      id: string;
+      name?: string;
+      sku?: string;
+      itemType?: "PRODUCT" | "SERVICE";
+      unitPrice?: number;
+      costPrice?: number;
+      defaultTaxType?: "V_16" | "V_0" | "EXEMPT";
+      trackStock?: boolean;
+      stockQuantity?: number;
+      reorderThreshold?: number;
+    }) => {
       const res = await updateProductItem({ shopId, shopSlug, ...data });
       if (!res.success) throw new Error(res.error || "Failed to update catalog item.");
       return res;

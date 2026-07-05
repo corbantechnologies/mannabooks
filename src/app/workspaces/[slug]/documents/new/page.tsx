@@ -4,7 +4,7 @@ import { clients, products, shops, suppliers } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { DocumentBuilderClientForm } from "./DocumentBuilderClientForm";
-
+import Link from "next/link";
 import { Suspense } from "react";
 
 interface NewDocumentPageProps {
@@ -24,7 +24,7 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
     notFound();
   }
 
-  // 2. Fetch active registries to feed lookup menus
+  // 3. Fetch active registries to feed lookup menus
   const clientRegistry = await db.query.clients.findMany({
     where: eq(clients.shopId, shop.id),
     orderBy: [desc(clients.createdAt)],
@@ -41,13 +41,35 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
   });
 
   return (
-    <div className="p-8 max-w-6xl space-y-8 selection:bg-black selection:text-white">
-      <div>
-        <span className="font-mono text-xs text-zinc-400 font-semibold">COMPILER // TRANSACTION_ENTRY_NODE</span>
-        <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Generate Document</h1>
+    <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white font-mono text-xs">
+      
+      {/* PAGE HEADER WITH BACK LINK */}
+      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
+        <Link
+          href={`/workspaces/${slug}/documents`}
+          className="text-xs font-semibold text-zinc-400 hover:text-black transition-colors block"
+        >
+          ← BACK TO FISCAL LEDGERS
+        </Link>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <span className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider block">COMPILER // TRANSACTION_BUILDER</span>
+            <h1 className="text-2xl font-bold uppercase tracking-tight text-black font-sans mt-0.5">
+              Issue Financial Document
+            </h1>
+            <p className="font-sans text-xs text-zinc-500 mt-1">
+              Create eTIMS compliant invoices, receipts, quotations, purchase orders, and financial vouchers for {shop.name}.
+            </p>
+          </div>
+
+          <div className="inline-flex items-center gap-2 border border-zinc-300 px-3 py-1.5 bg-zinc-50 rounded text-[10px] font-semibold text-zinc-700 uppercase">
+            <span className={`w-2 h-2 rounded-full ${shop.isVatRegistered ? "bg-emerald-500 animate-pulse" : "bg-zinc-400"}`} />
+            <span>{shop.isVatRegistered ? "eTIMS 16% VAT Active" : "Non-VAT Account"}</span>
+          </div>
+        </div>
       </div>
 
-      <Suspense fallback={<div className="font-mono text-xs text-zinc-400 p-4 border border-black">&gt; LOADING DOCUMENT COMPILER...</div>}>
+      <Suspense fallback={<div className="font-mono text-xs text-zinc-400 p-8 border border-zinc-200 bg-zinc-50 rounded text-center">&gt; LOADING DOCUMENT COMPILER...</div>}>
         <DocumentBuilderClientForm 
           shop={shop}
           shopSlug={slug}

@@ -4,6 +4,7 @@ import { logoutAction } from "@/lib/actions/logout";
 import Link from "next/link";
 
 import { MobileNavDrawer } from "./MobileNavDrawer";
+import { DesktopSideNav } from "./DesktopSideNav";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -102,68 +103,7 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
           {/* APPLICATION DIRECTORY LINKS */}
           <div className="space-y-2 flex-1">
             <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 block mb-3 font-semibold">Directories</span>
-            <nav className="flex flex-col gap-1 font-mono text-xs uppercase font-semibold tracking-wider">
-              <Link 
-                href={`/workspaces/${slug}`} 
-                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
-              >
-                [00] Overview Log
-              </Link>
-              <Link 
-                href={`/workspaces/${slug}/documents`} 
-                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
-              >
-                [01] Fiscal Ledgers
-              </Link>
-              <Link 
-                href={`/workspaces/${slug}/clients`} 
-                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
-              >
-                [02] Client Flow
-              </Link>
-              <Link 
-                href={`/workspaces/${slug}/products`} 
-                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
-              >
-                [03] Product Catalog
-              </Link>
-              <Link 
-                href={`/workspaces/${slug}/suppliers`} 
-                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
-              >
-                [04] Supplier Network
-              </Link>
-              <Link 
-                href={`/workspaces/${slug}/employees`} 
-                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
-              >
-                [05] Employee Directory
-              </Link>
-              <Link 
-                href={`/workspaces/${slug}/payroll`} 
-                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
-              >
-                [06] Payroll Vouchers
-              </Link>
-              <Link 
-                href={`/workspaces/${slug}/analytics`} 
-                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
-              >
-                [07] Analytics
-              </Link>
-              <Link 
-                href={`/workspaces/${slug}/settings`} 
-                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
-              >
-                [08] System Settings
-              </Link>
-              <Link 
-                href={`/workspaces/${slug}/guide`} 
-                className="px-3 py-2 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 transition-all block"
-              >
-                [09] Operator Guide
-              </Link>
-            </nav>
+            <DesktopSideNav slug={slug} />
           </div>
 
         </div>

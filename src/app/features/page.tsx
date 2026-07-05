@@ -1,297 +1,306 @@
 // src/app/features/page.tsx
 import Link from "next/link";
 
+const NAV_LINKS = [
+  { href: "/features", label: "Features" },
+  { href: "/guide", label: "Guide" },
+  { href: "/login", label: "Login" },
+];
+
 export default function FeaturesPage() {
   return (
     <div className="flex-1 flex flex-col bg-white text-black selection:bg-black selection:text-white font-sans">
-      
+
       {/* GLOBAL NAVIGATION HEADER */}
       <header className="border-b border-zinc-200/80 px-6 py-4 flex justify-between items-center glass-panel sticky top-0 z-50">
         <div className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="Manna Books" className="w-7 h-7 object-contain border border-zinc-200 p-0.5 bg-white rounded" />
-          <Link href="/" className="font-mono text-xl font-semibold tracking-tight uppercase text-black font-sans">
+          <Link href="/" className="font-mono text-xl font-semibold tracking-tight uppercase text-black">
             Manna Books.
           </Link>
         </div>
-
         <nav className="flex items-center gap-3 sm:gap-6 font-mono text-xs font-semibold uppercase">
-          <Link href="/features" className="underline underline-offset-4 text-black font-bold">
-            Features
-          </Link>
-          <Link href="/guide" className="hover:underline underline-offset-4">
-            Guide
-          </Link>
-          <Link href="/login" className="hover:underline underline-offset-4">
-            Login
-          </Link>
+          <Link href="/features" className="underline underline-offset-4 text-black font-bold">Features</Link>
+          <Link href="/guide" className="hidden sm:block hover:underline underline-offset-4 text-zinc-600 hover:text-black transition-colors">Guide</Link>
+          <Link href="/login" className="hover:underline underline-offset-4 text-zinc-600 hover:text-black transition-colors">Login</Link>
           <Link href="/signup" className="btn-primary-modern px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs">
             Initialize Workspace
           </Link>
         </nav>
       </header>
 
-      {/* HERO SECTION */}
       <main className="flex-1 flex flex-col">
-        <section className="border-b border-zinc-200/80 px-6 py-16 md:py-24 max-w-7xl mx-auto w-full space-y-6">
-          <div className="inline-flex items-center gap-2 border border-zinc-300 px-3 py-1 text-[11px] font-mono uppercase tracking-widest bg-zinc-50 rounded font-semibold text-zinc-600">
+
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* HERO */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <section className="border-b border-zinc-200/80 px-6 py-16 md:py-24 max-w-7xl mx-auto w-full space-y-7">
+          <div className="inline-flex items-center gap-2 border border-zinc-300 px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest bg-zinc-50 rounded-full font-semibold text-zinc-600">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Platform Capabilities &amp; Specifications
+            Platform Capabilities &amp; Technical Specifications
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-none uppercase max-w-4xl">
-            Complete platform feature specifications.
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-none uppercase max-w-5xl">
+            Complete platform<br />
+            <span className="text-zinc-400">feature specifications.</span>
           </h1>
           <p className="text-base md:text-lg text-zinc-600 max-w-3xl font-normal leading-relaxed">
-            Manna Books is an end-to-end financial operations &amp; statutory compliance platform engineered for Kenyan and African SMEs. Explore every module, compliance engine, and architectural pillar built into the platform.
+            Manna Books is an end-to-end financial operations &amp; statutory compliance platform engineered for Kenyan and African SMEs. Explore every module, compliance engine, inventory system, and architectural pillar built into the platform.
           </p>
-
-          <div className="pt-4 flex flex-wrap gap-3 font-mono text-xs">
-            <a href="#invoicing" className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase">
-              Invoicing &amp; eTIMS
-            </a>
-            <a href="#payroll" className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase">
-              Statutory Payroll
-            </a>
-            <a href="#vat" className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase">
-              20th VAT Tracker
-            </a>
-            <a href="#pdf-engine" className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase">
-              Landscape Vector PDF
-            </a>
-            <a href="#portals" className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase">
-              Passwordless Portals
-            </a>
-            <a href="#analytics" className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase">
-              A/R &amp; Cash Analytics
-            </a>
+          <div className="pt-2 flex flex-wrap gap-3 font-mono text-xs">
+            {[
+              { href: "#pos", label: "Walk-in POS" },
+              { href: "#invoicing", label: "Invoicing & eTIMS" },
+              { href: "#inventory", label: "Smart Inventory" },
+              { href: "#payroll", label: "Statutory Payroll" },
+              { href: "#vat", label: "20th VAT Tracker" },
+              { href: "#pdf-engine", label: "Vector PDF" },
+              { href: "#portals", label: "Passwordless Portals" },
+              { href: "#analytics", label: "A/R & Analytics" },
+            ].map((link) => (
+              <a key={link.href} href={link.href} className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase">
+                {link.label}
+              </a>
+            ))}
           </div>
         </section>
 
+        {/* ═══════════════════════════════════════════════════════ */}
         {/* DETAILED FEATURE MODULES */}
+        {/* ═══════════════════════════════════════════════════════ */}
         <section className="max-w-7xl mx-auto w-full px-6 py-16 space-y-20">
+
+          {/* MODULE 0: WALK-IN POS */}
+          <div id="pos" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-emerald-700 text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 00</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Walk-in Sales POS Counter Terminal
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Dedicated rapid point-of-sale terminal for instant counter sales. No client account required — select items, process payment, and an official PAID receipt is generated with automatic inventory deduction.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Rapid Product Catalog", body: "Search and add catalog items by name or SKU code. Cart indicator badges show quantities already added. Blocked-out items when stock runs out." },
+                { title: "Multi-Method Payment", body: "Accept M-Pesa (with transaction reference), Cash (with change calculator), or Bank/Card payments. All logged against the receipt for audit trails." },
+                { title: "Instant Receipt & Stock", body: "One-tap checkout generates an official PAID receipt and automatically decrements tracked inventory levels in real-time. Walk-in or assigned client." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-emerald-400 hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* MODULE 1: INVOICING & ETIMS */}
           <div id="invoicing" className="space-y-6 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2 py-1 uppercase">MODULE 01</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 01</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 Invoicing, Procurement &amp; eTIMS Engine
               </h2>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; Multi-Rate Tax Billing</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Support for KRA 16% Standard Output VAT, 0% Zero-Rated export lines, and Tax EXEMPT items on a line-by-line basis.
-                </p>
-              </div>
-
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; KRA CU &amp; PIN Validation</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Embed official KRA eTIMS Control Unit (CU) numbers and merchant/client KRA PINs on all formal financial documents.
-                </p>
-              </div>
-
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; Full Lifecycle Documents</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Issue Quotations with 1-click conversion to Invoices, Receipts, Purchase Orders (POs), LPOs, and Goods Received Notes (GRNs).
-                </p>
-              </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Full billing lifecycle from Quotation → Invoice → Receipt. Issue formal procurement LPOs, POs, and GRNs for suppliers. Embed KRA eTIMS CU numbers and multi-rate tax calculations on every document.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Multi-Rate Tax Billing", body: "Support for KRA 16% Standard Output VAT, 0% Zero-Rated export lines, and Tax EXEMPT items on a per-line-item basis with automatic tax pooling." },
+                { title: "KRA CU & PIN Fields", body: "Embed official KRA eTIMS Control Unit (CU) serial numbers and merchant/client KRA PINs on all formal financial documents for statutory audit compliance." },
+                { title: "Full Document Lifecycle", body: "Issue Quotations with 1-click conversion to Invoices, Receipts, Purchase Orders, LPOs, GRNs, Credit Notes, and Debit Notes — tracked through DRAFT → SENT → PAID states." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* MODULE 2: STATUTORY PAYROLL & WAGE COMPILER */}
+          {/* MODULE 2: SMART INVENTORY & COGS */}
+          <div id="inventory" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 02</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Smart Inventory &amp; COGS Margin Tracking
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Register catalog items as Products (with stock tracking) or Services. Set selling prices and cost prices (COGS) to automatically power gross profit margin intelligence in the analytics dashboard.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Product vs. Service Types", body: "Classify catalog items as tangible Products (eligible for stock tracking) or intangible Services (labor, consulting). Services skip inventory tracking entirely." },
+                { title: "Auto Stock Deduction", body: "When a RECEIPT or POS walk-in sale is completed, tracked product quantities are automatically decremented. Low-stock alerts fire at configurable threshold levels." },
+                { title: "COGS & Profit Margins", body: "Set a cost price (COGS) per product. The analytics engine automatically calculates gross profit (Revenue − COGS) and gross margin % across all settled sales." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 3: STATUTORY PAYROLL */}
           <div id="payroll" className="space-y-6 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2 py-1 uppercase">MODULE 02</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 03</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 Statutory Payroll &amp; Wage Compiler
               </h2>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; Kenyan Statutory Tax Bands</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Automatic progressive PAYE tax computation (10%, 25%, 30%, 32.5%, 35%) with KES 2,400 monthly Personal Relief offsets.
-                </p>
-              </div>
-
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; SHIF, AHL &amp; NSSF Reserves</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Calculates Social Health Insurance Fund (SHIF 2.75%), Affordable Housing Levy (AHL 1.5%), and NSSF Tier I &amp; II deductions.
-                </p>
-              </div>
-
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; Custom Advances &amp; Draft States</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Log salary advances, commissions, and custom deductions. Save runs as DRAFT to continue adding staff before finalizing.
-                </p>
-              </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Execute full statutory payroll runs for staff, casual wages, and commissions. Automatically computes all Kenyan statutory deductions and generates A4 Landscape multi-column payroll voucher PDFs.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Kenyan Statutory Tax Bands", body: "Automatic progressive PAYE computation (10%, 25%, 30%, 32.5%, 35% bands) with KES 2,400 monthly Personal Relief offsets and gross-to-net reconciliation." },
+                { title: "SHIF, AHL & NSSF Reserves", body: "Calculates Social Health Insurance Fund (SHIF 2.75%), Affordable Housing Levy (AHL 1.5%), and NSSF Tier I & II deductions automatically per employee." },
+                { title: "Custom Advances & Draft States", body: "Log salary advances, transport allowances, commissions, and custom deductions. Save payroll runs as DRAFT to review before locking and paying." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* MODULE 3: KRA 20TH VAT TRACKER */}
+          {/* MODULE 4: KRA 20TH VAT TRACKER */}
           <div id="vat" className="space-y-6 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2 py-1 uppercase">MODULE 03</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 04</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 Statutory KRA 20th VAT Return Tracker
               </h2>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; Real-Time Tax Aggregation</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Automatically calculates 16% Output VAT liability, zero-rated volumes, and tax-exempt sales for the active calendar month.
-                </p>
-              </div>
-
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; Live 20th Filing Countdown</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Displays a live countdown timer pointing to KRA's monthly 20th VAT filing deadline to prevent late penalty fees.
-                </p>
-              </div>
-
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; Compliance Audit Ledgers</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Generates immutable tax records for easy cross-referencing during KRA iTax and eTIMS compliance audits.
-                </p>
-              </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Kenya requires monthly VAT returns to be remitted on iTax before the 20th of each month. Manna Books automates all the number aggregation so you can file accurately and on time.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Real-Time Tax Aggregation", body: "Automatically calculates 16% Output VAT liability, zero-rated volumes, and tax-exempt sales for the active calendar month from all issued documents." },
+                { title: "Live 20th Countdown", body: "Displays a live countdown to KRA's monthly 20th VAT filing deadline — color-coded urgency (green > 10 days, amber < 10, red < 5) to prevent late penalties." },
+                { title: "Compliance Audit Ledgers", body: "All issued invoices, receipts, and tax positions are stored immutably for easy cross-referencing during KRA iTax and eTIMS compliance audits." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* MODULE 4: VECTOR PDF ENGINE */}
+          {/* MODULE 5: VECTOR PDF ENGINE */}
           <div id="pdf-engine" className="space-y-6 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2 py-1 uppercase">MODULE 04</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 05</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 A4 Landscape Vector PDF Engine
               </h2>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; Native Vector PDF Rendering</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Powered by `@react-pdf/renderer` for ultra-sharp, professional vector PDF output with embedded business logos.
-                </p>
-              </div>
-
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; 11-Column Landscape Payroll PDF</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Generates A4 Landscape Payroll Vouchers featuring 11 unbundled breakdown columns (Base, Allow, Comm, PAYE, SHIF, AHL, NSSF, Net).
-                </p>
-              </div>
-
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; Direct Download Links</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Download official PDF files instantly with proper file naming (`MannaBooks_PAY-JULY-2026-XXXX.pdf`).
-                </p>
-              </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Powered by @react-pdf/renderer. Every document generates a professional, print-ready vector PDF with embedded logos, tax PINs, payment references, and line-item breakdowns.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Native Vector PDF", body: "Ultra-sharp vector PDF output for invoices, receipts, quotations, LPOs, and delivery notes — with embedded business logos, brand colors, and KRA PINs." },
+                { title: "11-Column Payroll PDF", body: "Generates A4 Landscape payroll vouchers with 11 unbundled columns: Base, Allowances, Commission, Gross, PAYE, SHIF, AHL, NSSF, Advances, Deductions, Net Pay." },
+                { title: "Instant Download Links", body: "Download PDFs instantly from any document detail page with standardized file naming (MannaBooks_INV-2026-XXXX.pdf) for organized record keeping." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* MODULE 5: PASSWORDLESS PORTALS */}
+          {/* MODULE 6: PASSWORDLESS PORTALS */}
           <div id="portals" className="space-y-6 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2 py-1 uppercase">MODULE 05</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 06</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 Passwordless Client &amp; Staff Portals
               </h2>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; 64-Character Token Security</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Every document generates a cryptographically secure 64-character hex token link for public or client access.
-                </p>
-              </div>
-
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; Zero-Password Setup</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Clients view invoices, inspect remittance details, and download vector PDFs without creating accounts or entering passwords.
-                </p>
-              </div>
-
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; Resend Email Integration</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Dispatch custom branded email notifications containing secure portal links directly from your workspace.
-                </p>
-              </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Clients receive secure 64-character token links to their invoices and receipts — no accounts, no passwords, no friction. Share via WhatsApp, email, or any messaging channel.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "64-Character Token Security", body: "Every document generates a cryptographically secure, unguessable 64-character hex token link — unique per document, public-safe, and revokable." },
+                { title: "Zero-Password Client Access", body: "Clients view invoices, inspect remittance details, and download vector PDFs without creating accounts or entering passwords — works in any browser." },
+                { title: "Resend Email Dispatch", body: "Send branded HTML email notifications with shop logo, brand color CTA buttons, and secure portal links directly from your Manna workspace." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* MODULE 6: ANALYTICS & A/R AGING */}
+          {/* MODULE 7: ANALYTICS & A/R AGING */}
           <div id="analytics" className="space-y-6 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2 py-1 uppercase">MODULE 06</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 07</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 Business Intelligence &amp; A/R Aging Matrix
               </h2>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; Executive Cash Outflows</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Tracks total settled inflows, procurement outflows, and paid payroll disbursements for real-time net operating cash flow metrics.
-                </p>
-              </div>
-
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; A/R Aging Breakdown</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Categorizes pending invoices into 0–30, 31–60, 61–90, and 90+ day Accounts Receivable risk brackets.
-                </p>
-              </div>
-
-              <div className="card-modern p-6 bg-white space-y-3">
-                <span className="text-emerald-700 font-bold uppercase block">&gt; Sales Velocity &amp; LTV</span>
-                <p className="text-zinc-600 text-xs font-sans leading-relaxed">
-                  Analyzes top product bestsellers, sales quantity velocity, and client Lifetime Value (LTV) revenue share percentages.
-                </p>
-              </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Real-time executive analytics across every dimension of your business: cash flow streams, profitability margins, inventory velocity, client lifetime value, and accounts receivable aging risk.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "COGS & Gross Margin", body: "Live gross profit margin analysis (Revenue − COGS) using product cost prices. Visual margin progress bar and profitability breakdown across all settled sales in the timeframe." },
+                { title: "A/R Aging Breakdown", body: "Categorizes pending invoices into 0–30, 31–60, 61–90, and 90+ day Accounts Receivable risk brackets with proportional risk bar visualization." },
+                { title: "Sales Velocity & Client LTV", body: "Top product bestsellers by revenue and quantity sold. Client Lifetime Value (LTV) ranking with revenue concentration share — across This Month, Quarter, Year, or All Time." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
             </div>
           </div>
 
         </section>
 
         {/* CTA BANNER */}
-        <section className="border-t border-zinc-200/80 bg-zinc-950 text-white py-16 px-6 text-center space-y-6 font-mono">
-          <h2 className="text-2xl sm:text-4xl font-bold uppercase tracking-tight font-sans">
-            Ready to streamline your business finances?
-          </h2>
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto font-sans leading-relaxed">
-            Initialize your free Manna Books workspace in seconds. eTIMS, multi-tax billing, and statutory payroll ready out of the box.
-          </p>
-          <div className="pt-2">
-            <Link href="/signup" className="btn-primary-modern bg-white text-black hover:bg-zinc-200 px-8 py-3.5 text-xs font-semibold uppercase tracking-wider inline-block">
-              Initialize Free Workspace
-            </Link>
+        <section className="border-t border-zinc-200/80 bg-zinc-950 text-white py-20 px-6 text-center space-y-6">
+          <div className="max-w-2xl mx-auto space-y-5">
+            <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest font-semibold block">Get Started Today</span>
+            <h2 className="text-2xl sm:text-4xl font-bold uppercase tracking-tight font-sans">
+              Every module. One free workspace.
+            </h2>
+            <p className="text-sm text-zinc-400 font-sans leading-relaxed">
+              Initialize your Manna Books workspace in under 3 minutes. POS, eTIMS invoicing, statutory payroll, inventory tracking, and analytics — all ready out of the box.
+            </p>
+            <div className="pt-2 flex flex-col sm:flex-row gap-4 justify-center font-mono text-xs">
+              <Link href="/signup" className="btn-primary-modern bg-white text-black hover:bg-zinc-100 px-10 py-4 text-xs font-bold uppercase tracking-wider inline-block">
+                Initialize Free Workspace →
+              </Link>
+              <Link href="/guide" className="border border-zinc-700 text-zinc-300 hover:border-white hover:text-white px-10 py-4 text-xs font-semibold uppercase tracking-wider inline-block rounded transition-all">
+                Read the Operator Guide
+              </Link>
+            </div>
           </div>
         </section>
+
       </main>
 
       {/* FOOTER */}
-      <footer className="border-t border-zinc-200/80 px-6 py-8 flex flex-col sm:flex-row justify-between items-center bg-white text-xs text-zinc-500 font-mono gap-4">
+      <footer className="border-t border-zinc-200/80 px-6 py-8 flex flex-col sm:flex-row justify-between items-center bg-zinc-50 text-xs text-zinc-500 font-mono gap-4">
         <p>© 2026 Manna Books LTD. All rights reserved. Powered by <Link href="https://corbantechnologies.org/" target="_blank" className="hover:underline text-black font-semibold">Corban Technologies LTD</Link></p>
         <div className="flex gap-6">
-          <Link href="/terms" className="hover:underline">Terms of Specification</Link>
-          <Link href="/privacy" className="hover:underline">Privacy Logic</Link>
+          <Link href="/terms" className="hover:underline hover:text-black">Terms</Link>
+          <Link href="/privacy" className="hover:underline hover:text-black">Privacy</Link>
         </div>
       </footer>
     </div>

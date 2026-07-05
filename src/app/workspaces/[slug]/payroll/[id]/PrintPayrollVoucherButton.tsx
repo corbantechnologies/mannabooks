@@ -1,19 +1,20 @@
 // src/app/workspaces/[slug]/payroll/[id]/PrintPayrollVoucherButton.tsx
 "use client";
 
-export function PrintPayrollVoucherButton() {
-  function handlePrint() {
-    window.print();
-  }
+interface DownloadPayrollPdfButtonProps {
+  voucherId: string;
+}
 
+export function PrintPayrollVoucherButton({ voucherId }: DownloadPayrollPdfButtonProps) {
   return (
-    <button
-      type="button"
-      onClick={handlePrint}
-      className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider print:hidden inline-flex items-center gap-1.5"
+    <a
+      href={`/portal/pdf/${voucherId}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider inline-flex items-center gap-1.5"
     >
-      <span>🖨️</span>
-      <span>Print / Download PDF</span>
-    </button>
+      <span>📥</span>
+      <span>Download Official PDF</span>
+    </a>
   );
 }

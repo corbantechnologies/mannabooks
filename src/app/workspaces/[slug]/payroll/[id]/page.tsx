@@ -73,7 +73,7 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
               <FinalizePayrollRunButton voucherId={voucherRecord.id} shopId={shop.id} />
             )}
 
-            <PrintPayrollVoucherButton />
+            <PrintPayrollVoucherButton voucherId={voucherRecord.id} />
           </div>
         </div>
       </div>

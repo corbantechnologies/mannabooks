@@ -2,11 +2,12 @@
 "use server";
 
 import { db } from "@/db";
-import { employees, documents, documentItems, shops } from "@/db/schema";
+import { employees, documents, documentItems, documentTokens, shops } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { verifyAndGetSession } from "@/lib/actions/auth";
 import { computeKenyanDeductions, PayrollMode } from "@/lib/payroll-utils";
 import { revalidatePath } from "next/cache";
+import crypto from "crypto";
 
 export async function getEmployees(shopId: string) {
     const session = await verifyAndGetSession();
@@ -243,6 +244,13 @@ export async function commitPayrollVoucherRun(input: {
             }));
 
             await tx.insert(documentItems).values(itemsPayload);
+
+            // 4. Provision secure PDF gateway token
+            const secureHexToken = crypto.randomBytes(32).toString("hex");
+            await tx.insert(documentTokens).values({
+                documentId: voucher.id,
+                token: secureHexToken,
+            });
 
             const shop = await tx.query.shops.findFirst({ where: eq(shops.id, input.shopId) });
             if (shop) {

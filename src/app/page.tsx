@@ -15,6 +15,9 @@ export default function LandingPage() {
         </div>
 
         <nav className="flex items-center gap-3 sm:gap-6 font-mono text-xs font-semibold uppercase">
+          <Link href="/features" className="hover:underline underline-offset-4">
+            Features
+          </Link>
           <Link href="/guide" className="hover:underline underline-offset-4">
             Guide
           </Link>

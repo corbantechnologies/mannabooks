@@ -92,6 +92,7 @@ export function BulkProductForm({ shopId, shopSlug }: BulkProductFormProps) {
 
       if (res.success) {
         toast.success(`Successfully imported ${res.count} items.`, { id: toastId });
+        router.refresh();
         router.push(`/workspaces/${shopSlug}/products`);
       } else {
         toast.error(res.error || "Failed to process bulk import.", { id: toastId });

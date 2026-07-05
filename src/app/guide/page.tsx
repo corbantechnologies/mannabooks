@@ -1,28 +1,39 @@
 // src/app/guide/page.tsx
+import type { Metadata } from "next";
 import Link from "next/link";
+import { PublicNavbar } from "@/components/PublicNavbar";
+
+export const metadata: Metadata = {
+  title: "Operator Guide | Manna Books — How to Use KRA eTIMS Invoicing, Payroll & POS",
+  description:
+    "Step-by-step operator manual for Manna Books. Learn how to issue KRA eTIMS invoices, run statutory payroll, manage walk-in POS sales, track inventory and COGS, automate your monthly 20th VAT return, and use the A/R aging analytics dashboard.",
+  keywords: [
+    "Manna Books guide",
+    "KRA eTIMS invoicing tutorial Kenya",
+    "statutory payroll guide Kenya",
+    "POS sales Kenya",
+    "20th VAT return Kenya tutorial",
+    "mannabooks.co.ke guide",
+    "how to use Manna Books",
+  ],
+  openGraph: {
+    title: "Operator Guide | Manna Books — KRA eTIMS, Payroll & Analytics",
+    description: "Complete step-by-step guide for Manna Books: eTIMS invoicing, statutory payroll, walk-in POS, COGS tracking, VAT return automation, and A/R analytics.",
+    url: "https://mannabooks.co.ke/guide",
+    siteName: "Manna Books",
+    locale: "en_KE",
+    type: "article",
+  },
+  alternates: {
+    canonical: "https://mannabooks.co.ke/guide",
+  },
+};
 
 export default function PublicOperatorGuidePage() {
   return (
     <div className="flex-1 flex flex-col bg-white text-black selection:bg-black selection:text-white font-sans">
 
-      {/* GLOBAL HEADER */}
-      <header className="border-b border-zinc-200/80 px-6 py-4 flex justify-between items-center glass-panel sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Manna Books" className="w-7 h-7 object-contain border border-zinc-200 p-0.5 bg-white rounded" />
-          <Link href="/" className="font-mono text-xl font-semibold tracking-tight uppercase text-black">
-            Manna Books.
-          </Link>
-        </div>
-        <nav className="flex items-center gap-3 sm:gap-6 font-mono text-xs font-semibold uppercase">
-          <Link href="/features" className="hidden sm:block hover:underline underline-offset-4 text-zinc-600 hover:text-black transition-colors">Features</Link>
-          <Link href="/guide" className="underline underline-offset-4 font-bold text-black">Guide</Link>
-          <Link href="/login" className="hover:underline underline-offset-4 text-zinc-600 hover:text-black transition-colors">Login</Link>
-          <Link href="/signup" className="btn-primary-modern px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs">
-            Initialize Workspace
-          </Link>
-        </nav>
-      </header>
+      <PublicNavbar />
 
       {/* DOCUMENTATION CONTENT BODY */}
       <div className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full">

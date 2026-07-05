@@ -1,27 +1,42 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { PublicNavbar } from "@/components/PublicNavbar";
+
+export const metadata: Metadata = {
+  title: "Manna Books | KRA eTIMS Invoicing, Payroll & Business Analytics for Kenyan SMEs",
+  description:
+    "Manna Books is the all-in-one financial platform for Kenyan businesses. Issue KRA eTIMS invoices, run statutory payroll (PAYE, SHIF, AHL, NSSF), manage walk-in POS sales, track COGS margins, and automate your monthly 20th VAT return.",
+  keywords: [
+    "KRA eTIMS invoicing Kenya",
+    "Kenya statutory payroll software",
+    "PAYE SHIF NSSF payroll calculator Kenya",
+    "SME accounting software Kenya",
+    "VAT return tracker Kenya",
+    "invoicing software Kenya",
+    "Manna Books",
+    "mannabooks.co.ke",
+    "KRA PIN compliance",
+    "business management software Kenya",
+  ],
+  openGraph: {
+    title: "Manna Books — KRA eTIMS, Payroll & POS for Kenyan SMEs",
+    description:
+      "Issue multi-rate KRA invoices, automate 20th VAT returns, run statutory payroll, and manage walk-in POS sales. Built from the ground up for Kenyan and African SMEs.",
+    url: "https://mannabooks.co.ke",
+    siteName: "Manna Books",
+    locale: "en_KE",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://mannabooks.co.ke",
+  },
+};
 
 export default function LandingPage() {
   return (
     <div className="flex-1 flex flex-col bg-white text-black selection:bg-black selection:text-white font-sans">
 
-      {/* GLOBAL NAVIGATION HEADER */}
-      <header className="border-b border-zinc-200/80 px-6 py-4 flex justify-between items-center glass-panel sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Manna Books" className="w-7 h-7 object-contain border border-zinc-200 p-0.5 bg-white rounded" />
-          <Link href="/" className="font-mono text-xl font-semibold tracking-tight uppercase text-black">
-            Manna Books.
-          </Link>
-        </div>
-        <nav className="flex items-center gap-3 sm:gap-6 font-mono text-xs font-semibold uppercase">
-          <Link href="/features" className="hidden sm:block hover:underline underline-offset-4 text-zinc-600 hover:text-black transition-colors">Features</Link>
-          <Link href="/guide" className="hidden sm:block hover:underline underline-offset-4 text-zinc-600 hover:text-black transition-colors">Guide</Link>
-          <Link href="/login" className="hover:underline underline-offset-4 text-zinc-600 hover:text-black transition-colors">Login</Link>
-          <Link href="/signup" className="btn-primary-modern px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs">
-            Get Started Free
-          </Link>
-        </nav>
-      </header>
+      <PublicNavbar />
 
       <main className="flex-1 flex flex-col">
 
@@ -29,44 +44,54 @@ export default function LandingPage() {
         {/* HERO SECTION */}
         {/* ═══════════════════════════════════════════════════════ */}
         <section className="relative overflow-hidden border-b border-zinc-200/80 px-6 py-20 md:py-28 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-
-          {/* Subtle grid background */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{
-            backgroundImage: "linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)",
-            backgroundSize: "40px 40px"
-          }} />
+          {/* Subtle grid bg */}
+          <div
+            className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            aria-hidden="true"
+            style={{
+              backgroundImage:
+                "linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)",
+              backgroundSize: "40px 40px",
+            }}
+          />
 
           <div className="lg:col-span-7 space-y-7 relative z-10">
             <div className="inline-flex items-center gap-2 border border-zinc-300 px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest bg-zinc-50 rounded-full font-semibold text-zinc-600">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
               Edition 2026.5 — Walk-in POS, Smart Inventory &amp; eTIMS Payroll
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-[1.02] uppercase">
-              Financial velocity &amp; statutory compliance<br />
-              <span className="text-zinc-400">for African SMEs.</span>
+              Financial velocity &amp; statutory compliance<br className="hidden sm:block" />
+              <span className="text-zinc-400"> for Kenyan SMEs.</span>
             </h1>
 
             <p className="text-base md:text-lg text-zinc-600 max-w-xl font-normal leading-relaxed">
-              A minimalist fiscal engine for Kenyan businesses. Issue multi-rate KRA eTIMS invoices, run statutory payroll, execute walk-in POS sales with instant stock deduction, track COGS margins, and automate monthly VAT returns — all in one workspace.
+              A complete financial operating system for Kenyan businesses. Issue multi-rate KRA eTIMS invoices, run statutory payroll, execute walk-in POS counter sales with instant stock deduction, track COGS margins, and automate your monthly 20th VAT return — all in one workspace.
             </p>
 
             <div className="pt-1 flex flex-col sm:flex-row gap-4 font-mono text-xs">
-              <Link href="/signup" className="btn-primary-modern text-center px-8 py-3.5 text-xs font-bold uppercase tracking-wider">
-                Initialize Free Workspace →
+              <Link
+                href="/signup"
+                className="btn-primary-modern text-center px-8 py-3.5 text-xs font-bold uppercase tracking-wider"
+              >
+                Initialize Your Workspace →
               </Link>
-              <Link href="/features" className="btn-secondary-modern text-center px-8 py-3.5 text-xs font-semibold uppercase tracking-wider">
+              <Link
+                href="/features"
+                className="btn-secondary-modern text-center px-8 py-3.5 text-xs font-semibold uppercase tracking-wider"
+              >
                 Explore All Features
               </Link>
             </div>
 
-            {/* TRUST STATS ROW */}
-            <div className="pt-4 flex flex-wrap gap-6 font-mono text-xs text-zinc-500 border-t border-zinc-100 pt-6">
+            {/* TRUST STATS */}
+            <div className="flex flex-wrap gap-6 font-mono text-xs text-zinc-500 border-t border-zinc-100 pt-6">
               {[
                 { num: "11+", label: "Document Types" },
                 { num: "KRA", label: "eTIMS Compliant" },
                 { num: "PWA", label: "Installable App" },
-                { num: "Free", label: "Multi-Workspace" },
+                { num: "PAYE", label: "Statutory Payroll" },
               ].map((s) => (
                 <div key={s.label} className="space-y-0.5">
                   <div className="text-lg font-bold text-black font-sans">{s.num}</div>
@@ -76,26 +101,26 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* CONSOLE PREVIEW CARD */}
+          {/* CONSOLE PREVIEW CARD — desktop only */}
           <div className="lg:col-span-5 relative z-10 hidden lg:block">
-            <div className="card-modern p-0 shadow-2xl overflow-hidden font-mono text-xs">
-
-              {/* Terminal title bar */}
+            <div className="border border-zinc-200/80 rounded-2xl shadow-2xl overflow-hidden font-mono text-xs bg-white">
+              {/* Terminal bar */}
               <div className="bg-zinc-950 px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-rose-500" />
                   <div className="w-3 h-3 rounded-full bg-amber-400" />
                   <div className="w-3 h-3 rounded-full bg-emerald-500" />
                 </div>
-                <span className="text-zinc-400 text-[10px] font-semibold uppercase tracking-widest">manna console node</span>
+                <span className="text-zinc-400 text-[10px] font-semibold uppercase tracking-widest">
+                  manna console node
+                </span>
                 <span className="text-[10px] bg-emerald-900/60 text-emerald-400 border border-emerald-700/50 px-2 py-0.5 font-bold uppercase rounded-sm">
                   eTIMS ACTIVE
                 </span>
               </div>
 
               <div className="bg-white p-5 space-y-4">
-
-                {/* KRA 20th VAT ALERT */}
+                {/* KRA VAT ALERT */}
                 <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg space-y-1.5">
                   <div className="flex justify-between items-center text-[10px] font-bold uppercase text-amber-700">
                     <span className="flex items-center gap-1.5">
@@ -113,11 +138,13 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                {/* WALK-IN POS SALE */}
+                {/* POS SALE */}
                 <div className="bg-emerald-950 text-white p-3 rounded-lg space-y-1.5">
                   <div className="flex justify-between items-center text-[10px] font-bold uppercase">
                     <span className="text-emerald-400">⚡ WALK-IN POS RECEIPT</span>
-                    <span className="bg-emerald-500 text-black px-1.5 py-0.5 text-[9px] font-bold rounded-sm">PAID · STOCK DEDUCTED</span>
+                    <span className="bg-emerald-500 text-black px-1.5 py-0.5 text-[9px] font-bold rounded-sm">
+                      PAID · STOCK DEDUCTED
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs font-semibold pt-0.5">
                     <span>RCT-2026-041 · M-Pesa QAB71239X</span>
@@ -126,7 +153,7 @@ export default function LandingPage() {
                   <div className="text-[9px] text-zinc-400">2 items · Margin: 38.4% · Stock auto-decremented</div>
                 </div>
 
-                {/* PAYROLL RUN */}
+                {/* PAYROLL */}
                 <div className="border border-zinc-200 p-3 rounded-lg space-y-1.5 bg-zinc-50/50">
                   <div className="flex justify-between items-center text-[10px] font-bold uppercase text-zinc-500">
                     <span>Payroll Voucher Run</span>
@@ -142,23 +169,40 @@ export default function LandingPage() {
                 {/* DOCUMENT ROWS */}
                 <div className="space-y-2">
                   {[
-                    { ref: "INV-2026-042", sub: "KRA CU #: CU012345/2026", amount: "KES 310,000.00", badge: "SENT", badgeClass: "bg-amber-100 text-amber-900 border border-amber-300" },
-                    { ref: "LPO-2026-018", sub: "Supplier: Apex Distributors Ltd", amount: "KES 58,400.00", badge: "DRAFT", badgeClass: "bg-zinc-100 text-zinc-600 border border-zinc-300" },
+                    {
+                      ref: "INV-2026-042",
+                      sub: "KRA CU #: CU012345/2026",
+                      amount: "KES 310,000.00",
+                      badge: "SENT",
+                      cls: "bg-amber-100 text-amber-900 border border-amber-300",
+                    },
+                    {
+                      ref: "LPO-2026-018",
+                      sub: "Supplier: Apex Distributors Ltd",
+                      amount: "KES 58,400.00",
+                      badge: "DRAFT",
+                      cls: "bg-zinc-100 text-zinc-600 border border-zinc-300",
+                    },
                   ].map((doc) => (
-                    <div key={doc.ref} className="flex justify-between bg-white p-2.5 border border-zinc-200 items-center rounded-md">
+                    <div
+                      key={doc.ref}
+                      className="flex justify-between bg-white p-2.5 border border-zinc-200 items-center rounded-md"
+                    >
                       <div>
                         <span className="font-bold block text-xs">{doc.ref}</span>
                         <span className="text-[9px] text-zinc-500">{doc.sub}</span>
                       </div>
                       <div className="text-right">
                         <span className="font-bold block text-xs">{doc.amount}</span>
-                        <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-sm ${doc.badgeClass}`}>{doc.badge}</span>
+                        <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-sm ${doc.cls}`}>
+                          {doc.badge}
+                        </span>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="border-t border-zinc-200 pt-3 flex justify-between items-center text-[9px] text-zinc-400 font-mono">
+                <div className="border-t border-zinc-200 pt-3 flex justify-between items-center text-[9px] text-zinc-400">
                   <span>PWA APPLIANCE: STANDALONE</span>
                   <span className="text-emerald-700 font-bold">● LIVE SYSTEM</span>
                 </div>
@@ -168,80 +212,79 @@ export default function LandingPage() {
         </section>
 
         {/* ═══════════════════════════════════════════════════════ */}
-        {/* FEATURE MATRIX GRID */}
+        {/* FEATURE MODULE GRID */}
         {/* ═══════════════════════════════════════════════════════ */}
         <section id="features" className="border-b border-zinc-200/80">
           <div className="max-w-7xl mx-auto px-6 py-16 space-y-10">
-            <div className="text-center space-y-3">
-              <span className="font-mono text-[10px] text-zinc-400 uppercase tracking-widest font-semibold block">Platform Modules</span>
-              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black">Everything your business needs.</h2>
+            <div className="text-center space-y-2">
+              <span className="font-mono text-[10px] text-zinc-400 uppercase tracking-widest font-semibold block">
+                Platform Modules
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Everything your business needs — in one platform.
+              </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 {
                   tag: "[01] POS Terminal",
                   title: "Walk-in Sales Counter",
-                  body: "Rapid point-of-sale terminal for counter sales. Add catalog items, select M-Pesa / Cash / Bank payment, complete sale with one tap — an official PAID receipt is generated instantly with automatic stock deduction.",
+                  body: "Rapid point-of-sale terminal for counter sales. Select items, process M-Pesa / Cash / Bank payment — an official PAID receipt generates instantly with automatic stock deduction.",
                   emoji: "⚡",
-                  accent: "emerald",
                 },
                 {
                   tag: "[02] Payroll Engine",
                   title: "Statutory Payroll",
-                  body: "Execute staff, wage, and commission runs. Calculates PAYE, SHIF (2.75%), AHL (1.5%), NSSF Tier I & II, and custom advance recoveries with full A4 Landscape PDF payroll vouchers.",
+                  body: "Execute payroll runs with automatic PAYE, SHIF (2.75%), AHL (1.5%), and NSSF Tier I & II calculations. Download official A4 Landscape PDF payroll vouchers.",
                   emoji: "💼",
-                  accent: "blue",
                 },
                 {
                   tag: "[03] KRA Tax Engine",
                   title: "20th VAT Tracker",
-                  body: "Automate monthly KRA eTIMS VAT return preparation. Aggregates 16% Output VAT, 0% Zero-Rated, and Exempt sales with live 20th filing deadline countdown.",
+                  body: "Automate monthly KRA eTIMS VAT return preparation. Aggregates 16% Output VAT, 0% Zero-Rated, and Exempt sales with a live 20th filing deadline countdown.",
                   emoji: "🏛️",
-                  accent: "amber",
                 },
                 {
                   tag: "[04] Document Suite",
                   title: "Full Lifecycle Billing",
-                  body: "Issue Quotations, Invoices, Receipts, LPOs, POs, GRNs, Credit & Debit Notes. One-click document conversions with KRA eTIMS CU number embedding.",
+                  body: "Issue Quotations, Invoices, Receipts, LPOs, POs, GRNs, Credit & Debit Notes. One-click conversions with KRA eTIMS CU number embedding.",
                   emoji: "📄",
-                  accent: "zinc",
                 },
                 {
                   tag: "[05] Smart Inventory",
                   title: "Stock & COGS Tracking",
-                  body: "Track product inventory with automatic stock deductions on sale. Set cost prices (COGS) to power live gross profit margin and profitability intelligence across your catalog.",
+                  body: "Track product inventory with automatic stock deductions on sale. Set cost prices to power live gross profit margin and profitability intelligence.",
                   emoji: "📦",
-                  accent: "emerald",
                 },
                 {
                   tag: "[06] Intelligence",
                   title: "A/R Aging & Analytics",
-                  body: "Monitor 6-month revenue streams, 0–90+ day Accounts Receivable risk matrix, COGS vs revenue profitability, product velocity leaderboards, and client LTV ranking.",
+                  body: "Monitor 6-month revenue streams, 0–90+ day Accounts Receivable risk matrix, COGS vs revenue profitability, and client LTV leaderboards.",
                   emoji: "📊",
-                  accent: "zinc",
                 },
                 {
                   tag: "[07] PDF Engine",
                   title: "A4 Vector PDFs",
-                  body: "Download official, print-ready vector PDF documents for Invoices, Receipts, LPOs, and A4 Landscape Statutory Payroll Vouchers with shop logos and KRA PINs.",
+                  body: "Download official, print-ready vector PDFs for Invoices, Receipts, LPOs, and A4 Landscape Statutory Payroll Vouchers with logos and KRA PINs.",
                   emoji: "🖨️",
-                  accent: "zinc",
                 },
                 {
                   tag: "[08] Portals",
-                  title: "Passwordless Links",
-                  body: "Clients view, download PDFs, and inspect settlements via cryptographically secure 64-character token links — no accounts or passwords required.",
+                  title: "Passwordless Client Links",
+                  body: "Clients view, download PDFs, and inspect settlements via secure 64-character token links — no accounts or passwords required.",
                   emoji: "🔐",
-                  accent: "zinc",
                 },
               ].map((f) => (
-                <div key={f.tag} className="bg-white border border-zinc-200/80 rounded-xl p-6 space-y-3 hover:border-black hover:shadow-md transition-all group">
+                <div
+                  key={f.tag}
+                  className="bg-white border border-zinc-200/80 rounded-xl p-6 space-y-3 hover:border-black hover:shadow-md transition-all group"
+                >
                   <div className="flex justify-between items-start">
-                    <span className="text-2xl">{f.emoji}</span>
+                    <span className="text-2xl" aria-hidden="true">{f.emoji}</span>
                     <span className="font-mono text-[9px] text-zinc-400 font-semibold uppercase">{f.tag}</span>
                   </div>
-                  <h3 className="font-bold uppercase tracking-tight text-base text-black font-sans group-hover:text-black">{f.title}</h3>
+                  <h3 className="font-bold uppercase tracking-tight text-base text-black font-sans">{f.title}</h3>
                   <p className="text-sm text-zinc-600 leading-relaxed font-sans">{f.body}</p>
                 </div>
               ))}
@@ -250,20 +293,40 @@ export default function LandingPage() {
         </section>
 
         {/* ═══════════════════════════════════════════════════════ */}
-        {/* SOCIAL PROOF / HOW IT WORKS STRIP */}
+        {/* HOW IT WORKS STRIP */}
         {/* ═══════════════════════════════════════════════════════ */}
         <section className="border-b border-zinc-200/80 bg-zinc-950 text-white px-6 py-16">
           <div className="max-w-7xl mx-auto space-y-12">
             <div className="text-center space-y-2">
-              <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest font-semibold block">How It Works</span>
-              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight">From setup to compliance in minutes.</h2>
+              <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest font-semibold block">
+                How It Works
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight font-sans">
+                From setup to compliance in minutes.
+              </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 font-mono text-xs">
               {[
-                { step: "01", title: "Initialize Workspace", body: "Sign up free, create your business workspace, upload your logo, set your KRA PIN and brand color — all in under 3 minutes." },
-                { step: "02", title: "Register Catalog", body: "Add your products and services with selling prices, cost prices (COGS), tax types, and inventory tracking levels." },
-                { step: "03", title: "Issue & Sell", body: "Generate formal invoices, run walk-in POS counter sales, create LPOs for suppliers, and run statutory payroll batches." },
-                { step: "04", title: "Track & File", body: "Monitor your live cash flow, gross profit margins, A/R aging risk, and auto-calculated KRA 20th monthly VAT return." },
+                {
+                  step: "01",
+                  title: "Initialize Workspace",
+                  body: "Create your business workspace, upload your logo, configure your KRA PIN and brand color — operational in under 3 minutes.",
+                },
+                {
+                  step: "02",
+                  title: "Register Catalog",
+                  body: "Add products and services with selling prices, cost prices (COGS), tax types, and inventory tracking levels.",
+                },
+                {
+                  step: "03",
+                  title: "Issue & Sell",
+                  body: "Generate eTIMS invoices, run walk-in POS counter sales, create LPOs for suppliers, and run statutory payroll batches.",
+                },
+                {
+                  step: "04",
+                  title: "Track & File",
+                  body: "Monitor live cash flow, gross profit margins, A/R aging risk, and your auto-calculated KRA 20th monthly VAT return.",
+                },
               ].map((s) => (
                 <div key={s.step} className="space-y-3">
                   <div className="w-10 h-10 bg-white/10 border border-white/20 rounded-lg flex items-center justify-center font-bold text-white text-sm">
@@ -285,13 +348,19 @@ export default function LandingPage() {
             The complete financial operating system for your business.
           </h2>
           <p className="text-base text-zinc-600 font-sans leading-relaxed">
-            One free workspace. Unlimited documents, payroll runs, POS sales, and analytics. Built for Kenyan compliance from the ground up.
+            Unlimited documents, payroll runs, POS sales, and analytics — built for Kenyan compliance from the ground up.
           </p>
           <div className="pt-2 flex flex-col sm:flex-row gap-4 justify-center font-mono text-xs">
-            <Link href="/signup" className="btn-primary-modern text-center px-10 py-4 text-xs font-bold uppercase tracking-wider">
-              Initialize Free Workspace →
+            <Link
+              href="/signup"
+              className="btn-primary-modern text-center px-10 py-4 text-xs font-bold uppercase tracking-wider"
+            >
+              Initialize Your Workspace →
             </Link>
-            <Link href="/guide" className="btn-secondary-modern text-center px-10 py-4 text-xs font-semibold uppercase tracking-wider">
+            <Link
+              href="/guide"
+              className="btn-secondary-modern text-center px-10 py-4 text-xs font-semibold uppercase tracking-wider"
+            >
               Read the Operator Guide
             </Link>
           </div>
@@ -300,18 +369,25 @@ export default function LandingPage() {
       </main>
 
       {/* FOOTER */}
-      <footer className="border-t border-zinc-200/80 px-6 py-8 flex flex-col sm:flex-row justify-between items-center bg-zinc-50 text-xs text-zinc-500 font-mono gap-4">
-        <p>
-          © 2026 Manna Books LTD. All rights reserved. Powered by{" "}
-          <Link href="https://corbantechnologies.org/" target="_blank" className="hover:underline text-black font-semibold">
-            Corban Technologies LTD
-          </Link>
-        </p>
-        <div className="flex gap-6">
-          <Link href="/features" className="hover:underline hover:text-black transition-colors">Features</Link>
-          <Link href="/guide" className="hover:underline hover:text-black transition-colors">Operator Guide</Link>
-          <Link href="/terms" className="hover:underline hover:text-black transition-colors">Terms</Link>
-          <Link href="/privacy" className="hover:underline hover:text-black transition-colors">Privacy</Link>
+      <footer className="border-t border-zinc-200/80 px-6 py-8 bg-zinc-50 font-mono text-xs text-zinc-500">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p>
+            © 2026 Manna Books LTD. All rights reserved. Powered by{" "}
+            <Link
+              href="https://corbantechnologies.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline text-black font-semibold"
+            >
+              Corban Technologies LTD
+            </Link>
+          </p>
+          <div className="flex flex-wrap gap-5">
+            <Link href="/features" className="hover:underline hover:text-black transition-colors">Features</Link>
+            <Link href="/guide" className="hover:underline hover:text-black transition-colors">Operator Guide</Link>
+            <Link href="/terms" className="hover:underline hover:text-black transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:underline hover:text-black transition-colors">Privacy</Link>
+          </div>
         </div>
       </footer>
 

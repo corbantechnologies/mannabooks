@@ -1,5 +1,33 @@
 // src/app/features/page.tsx
+import type { Metadata } from "next";
 import Link from "next/link";
+import { PublicNavbar } from "@/components/PublicNavbar";
+
+export const metadata: Metadata = {
+  title: "Features | Manna Books — KRA eTIMS Invoicing, Statutory Payroll & POS Platform",
+  description:
+    "Explore all Manna Books platform features: KRA eTIMS multi-rate invoicing, statutory payroll (PAYE, SHIF, AHL, NSSF), walk-in POS terminal, smart inventory with COGS tracking, 20th VAT return automation, A4 vector PDF engine, and passwordless client portals.",
+  keywords: [
+    "KRA eTIMS features Kenya",
+    "statutory payroll PAYE SHIF NSSF Kenya",
+    "invoicing software features Kenya",
+    "walk-in POS Kenya",
+    "inventory management Kenya",
+    "VAT tracker Kenya",
+    "mannabooks.co.ke features",
+  ],
+  openGraph: {
+    title: "Platform Features | Manna Books — KRA eTIMS, Payroll & POS",
+    description: "Complete feature specifications for Manna Books: eTIMS invoicing, statutory payroll, walk-in POS, COGS analytics, and passwordless client portals — built for Kenyan SMEs.",
+    url: "https://mannabooks.co.ke/features",
+    siteName: "Manna Books",
+    locale: "en_KE",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://mannabooks.co.ke/features",
+  },
+};
 
 const NAV_LINKS = [
   { href: "/features", label: "Features" },
@@ -11,24 +39,9 @@ export default function FeaturesPage() {
   return (
     <div className="flex-1 flex flex-col bg-white text-black selection:bg-black selection:text-white font-sans">
 
-      {/* GLOBAL NAVIGATION HEADER */}
-      <header className="border-b border-zinc-200/80 px-6 py-4 flex justify-between items-center glass-panel sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Manna Books" className="w-7 h-7 object-contain border border-zinc-200 p-0.5 bg-white rounded" />
-          <Link href="/" className="font-mono text-xl font-semibold tracking-tight uppercase text-black">
-            Manna Books.
-          </Link>
-        </div>
-        <nav className="flex items-center gap-3 sm:gap-6 font-mono text-xs font-semibold uppercase">
-          <Link href="/features" className="underline underline-offset-4 text-black font-bold">Features</Link>
-          <Link href="/guide" className="hidden sm:block hover:underline underline-offset-4 text-zinc-600 hover:text-black transition-colors">Guide</Link>
-          <Link href="/login" className="hover:underline underline-offset-4 text-zinc-600 hover:text-black transition-colors">Login</Link>
-          <Link href="/signup" className="btn-primary-modern px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs">
-            Initialize Workspace
-          </Link>
-        </nav>
-      </header>
+      <PublicNavbar />
+
+
 
       <main className="flex-1 flex flex-col">
 
@@ -275,16 +288,16 @@ export default function FeaturesPage() {
         {/* CTA BANNER */}
         <section className="border-t border-zinc-200/80 bg-zinc-950 text-white py-20 px-6 text-center space-y-6">
           <div className="max-w-2xl mx-auto space-y-5">
-            <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest font-semibold block">Get Started Today</span>
+            <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest font-semibold block">Get Started</span>
             <h2 className="text-2xl sm:text-4xl font-bold uppercase tracking-tight font-sans">
-              Every module. One free workspace.
+              Every module. One workspace.
             </h2>
             <p className="text-sm text-zinc-400 font-sans leading-relaxed">
               Initialize your Manna Books workspace in under 3 minutes. POS, eTIMS invoicing, statutory payroll, inventory tracking, and analytics — all ready out of the box.
             </p>
             <div className="pt-2 flex flex-col sm:flex-row gap-4 justify-center font-mono text-xs">
               <Link href="/signup" className="btn-primary-modern bg-white text-black hover:bg-zinc-100 px-10 py-4 text-xs font-bold uppercase tracking-wider inline-block">
-                Initialize Free Workspace →
+                Initialize Your Workspace →
               </Link>
               <Link href="/guide" className="border border-zinc-700 text-zinc-300 hover:border-white hover:text-white px-10 py-4 text-xs font-semibold uppercase tracking-wider inline-block rounded transition-all">
                 Read the Operator Guide

@@ -18,20 +18,48 @@ const robotoMono = Roboto_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Manna Books | Simple Financial Tracking & Client Flow for SMEs",
-    template: "%s | Manna Books"
+    default: "Manna Books | KRA eTIMS Invoicing, Statutory Payroll & Business Analytics for Kenyan SMEs",
+    template: "%s | Manna Books",
   },
-  description: "Track quotations, automate invoices, manage corporate tax PIN compliance, and monitor client cash flows with zero friction. Built for modern small and medium businesses.",
-  keywords: ["SME invoicing software", "KRA tax PIN invoice tracker", "simple bookkeeping", "client flow tracking", "passwordless client billing portal", "Manna Books"],
-  authors: [{ name: "Manna Books Engineering" }],
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://mannabooks.com"),
+  description:
+    "Manna Books is the all-in-one financial platform for Kenyan businesses. Issue KRA eTIMS multi-rate invoices, automate monthly 20th VAT returns, run statutory payroll (PAYE, SHIF, AHL, NSSF), manage walk-in POS sales with automatic stock deduction, and track COGS profitability analytics — all in one workspace.",
+  keywords: [
+    "KRA eTIMS invoicing Kenya",
+    "invoicing software Kenya",
+    "Kenya statutory payroll software",
+    "PAYE calculator Kenya",
+    "SHIF NSSF AHL payroll Kenya",
+    "SME accounting software Kenya",
+    "VAT return tracker Kenya",
+    "20th VAT Kenya",
+    "walk-in POS Kenya",
+    "inventory management Kenya",
+    "COGS profit margin tracker",
+    "accounts receivable aging Kenya",
+    "passwordless client billing portal",
+    "Manna Books",
+    "mannabooks.co.ke",
+    "KRA PIN compliance software",
+    "business management software Kenya",
+    "Corban Technologies",
+  ],
+  authors: [{ name: "Manna Books — Corban Technologies LTD" }],
+  metadataBase: new URL("https://mannabooks.co.ke"),
   openGraph: {
-    title: "Manna Books | High-Velocity SME Ledger",
-    description: "Elegant, zero-friction financial document tracking and client pipelines built from scratch for agile businesses.",
-    url: "./",
+    title: "Manna Books | KRA eTIMS, Statutory Payroll & POS for Kenyan SMEs",
+    description:
+      "Issue multi-rate KRA invoices, automate 20th VAT returns, run statutory payroll, manage walk-in POS sales with stock deduction, and track COGS margins — built for Kenyan and African SMEs.",
+    url: "https://mannabooks.co.ke",
     siteName: "Manna Books",
-    locale: "en_US",
+    locale: "en_KE",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Manna Books | KRA eTIMS Invoicing, Payroll & POS for Kenyan SMEs",
+    description:
+      "The complete financial operating system for Kenyan businesses: eTIMS invoicing, statutory payroll, walk-in POS, COGS analytics, and 20th VAT return automation.",
+    site: "@mannabooks",
   },
   robots: {
     index: true,

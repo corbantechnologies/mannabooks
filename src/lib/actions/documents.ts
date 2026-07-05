@@ -41,6 +41,9 @@ interface CreateDocumentInput {
     parentDocumentId?: string;
     requiresEtims?: boolean;
     notes?: string;
+    currency?: string;
+    isRecurring?: boolean;
+    recurringInterval?: "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY";
     items: CreateDocumentItemInput[];
 }
 
@@ -109,6 +112,10 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 parentDocumentId: input.parentDocumentId || null,
                 requiresEtims: input.requiresEtims || false,
                 notes: input.notes || null,
+                currency: input.currency || shopProfile.currency,
+                isRecurring: input.isRecurring || false,
+                recurringInterval: input.recurringInterval || null,
+                nextRecurringDate: input.isRecurring ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : null, // Default to next month if recurring
                 subTotal: calculatedTotals.subTotal.toString(),
                 taxAmount: calculatedTotals.taxAmount.toString(),
                 grandTotal: calculatedTotals.grandTotal.toString(),
@@ -166,7 +173,7 @@ interface UpdateDocumentStatusInput {
     documentId: string;
     shopId: string;
     shopSlug: string;
-    status: "DRAFT" | "SENT" | "OVERDUE" | "PAID";
+    status: "DRAFT" | "SENT" | "OVERDUE" | "PAID" | "RECEIVED";
     paymentChannel?: string;
     paymentReference?: string;
 }
@@ -210,9 +217,16 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
         if (existing.status === "DRAFT" && (input.status === "SENT" || input.status === "PAID")) {
             if (existing.type === "INVOICE" || existing.type === "RECEIPT") {
                 await applyDocumentStockMovements(existing.id, "OUTFLOW");
-            } else if (existing.type === "GOODS_RECEIVED_NOTE" || existing.type === "LPO" || existing.type === "PO") {
+            } else if (existing.type === "GOODS_RECEIVED_NOTE") {
                 await applyDocumentStockMovements(existing.id, "INFLOW");
             }
+        }
+        
+        // Ensure LPOs and POs trigger INFLOW when marked as PAID (received/settled)
+        if (existing.status !== "PAID" && input.status === "PAID") {
+             if (existing.type === "LPO" || existing.type === "PO") {
+                 await applyDocumentStockMovements(existing.id, "INFLOW");
+             }
         }
 
         revalidatePath(`/workspaces/${input.shopSlug}/documents`);

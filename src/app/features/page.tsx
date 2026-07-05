@@ -221,13 +221,37 @@ export default function FeaturesPage() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
-                { title: "Native Vector PDF", body: "Ultra-sharp vector PDF output for invoices, receipts, quotations, LPOs, and delivery notes — with embedded business logos, brand colors, and KRA PINs." },
+                {
+                  icon: "🧾",
+                  title: "A4 Vector PDF Engine",
+                  desc: "Generate pixel-perfect A4 invoice and receipt PDFs instantly, optimized for both digital sharing and physical thermal or laser printing."
+                },
+                {
+                  icon: "🔄",
+                  title: "Retainers & Recurring Billing",
+                  desc: "Put service billing on autopilot. Set monthly, quarterly, or yearly recurring schedules, and auto-dispatch overdue aging reminders with a single click."
+                },
+                {
+                  icon: "💱",
+                  title: "Multi-Currency Native",
+                  desc: "Bill local and international clients effectively. Switch between KES, USD, GBP or EUR natively on a per-document basis without breaking ledger math."
+                },
+                {
+                  icon: "📦",
+                  title: "Smart Procurement Flow",
+                  desc: "Generate Purchase Orders and LPOs. When marked as PAID/RECEIVED, your inventory inflow is automatically updated in real-time."
+                },
+                {
+                  icon: "⚡",
+                  title: "Rapid Bulk Provisioning",
+                  desc: "Import catalogs faster than a CSV upload with our dynamic 15-item bulk provisioner. Set COGS, margins, and VAT classes in one screen."
+                },
                 { title: "11-Column Payroll PDF", body: "Generates A4 Landscape payroll vouchers with 11 unbundled columns: Base, Allowances, Commission, Gross, PAYE, SHIF, AHL, NSSF, Advances, Deductions, Net Pay." },
                 { title: "Instant Download Links", body: "Download PDFs instantly from any document detail page with standardized file naming (MannaBooks_INV-2026-XXXX.pdf) for organized record keeping." },
               ].map((item) => (
                 <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
                   <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
-                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body || item.desc}</p>
                 </div>
               ))}
             </div>

@@ -11,7 +11,7 @@ export function useUpdateDocumentStatus(shopId: string, shopSlug: string) {
   return useMutation({
     mutationFn: async (data: {
       documentId: string;
-      status: "DRAFT" | "SENT" | "OVERDUE" | "PAID";
+      status: "DRAFT" | "SENT" | "OVERDUE" | "PAID" | "RECEIVED";
       paymentChannel?: string;
       paymentReference?: string;
     }) => {

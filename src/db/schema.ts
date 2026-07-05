@@ -17,10 +17,11 @@ export const docTypeEnum = pgEnum('doc_type', [
     'PAYMENT_VOUCHER',
     'PAYROLL_VOUCHER'
 ]);
-export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'SENT', 'OVERDUE', 'PAID']);
+export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'SENT', 'OVERDUE', 'PAID', 'RECEIVED']);
 export const taxTypeEnum = pgEnum('tax_type', ['V_16', 'V_0', 'EXEMPT']); // 16% VAT, 0% VAT, Tax Exempt
 export const clientTypeEnum = pgEnum('client_type', ['WALK_IN', 'INDIVIDUAL', 'CORPORATE']);
 export const userRoleEnum = pgEnum('user_role', ['OWNER', 'ADMIN', 'EMPLOYEE']);
+export const recurringIntervalEnum = pgEnum('recurring_interval', ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']);
 
 // ==========================================
 // 2. TABLES
@@ -137,10 +138,17 @@ export const documents = pgTable('documents', {
     paymentChannel: varchar('payment_channel', { length: 50 }), // e.g. BANK, MPESA, CASH, CHEQUE, OTHER
     paymentReference: varchar('payment_reference', { length: 100 }), // e.g. M-Pesa Code QAB71239X or Bank Ref FT261900123
 
-    // High-precision frozen metrics
+    // Multi-currency and High-precision frozen metrics
+    currency: varchar('currency', { length: 3 }), // Defaults to shop currency if null
     subTotal: numeric('sub_total', { precision: 12, scale: 2 }).notNull(),
     taxAmount: numeric('tax_amount', { precision: 12, scale: 2 }).default('0.00').notNull(),
     grandTotal: numeric('grand_total', { precision: 12, scale: 2 }).notNull(),
+
+    // Recurring Invoicing & Reminders
+    isRecurring: boolean('is_recurring').default(false).notNull(),
+    recurringInterval: recurringIntervalEnum('recurring_interval'),
+    nextRecurringDate: timestamp('next_recurring_date'),
+    lastReminderSentAt: timestamp('last_reminder_sent_at'),
 
     issueDate: timestamp('issue_date').defaultNow().notNull(),
     dueDate: timestamp('due_date'),

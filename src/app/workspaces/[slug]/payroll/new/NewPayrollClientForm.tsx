@@ -86,14 +86,14 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
   const totalDeductions = rowsWithCalcs.reduce((sum, r) => sum + r.computed.totalDeductions, 0);
   const totalNetPayPayout = rowsWithCalcs.reduce((sum, r) => sum + r.computed.netPay, 0);
 
-  const handleExecutionSubmit = async () => {
+  const handleExecutionSubmit = async (targetStatus: "DRAFT" | "PAID" = "DRAFT") => {
     if (!period.trim()) {
       toast.error("Please specify target payroll tracking period.");
       return;
     }
 
     setLoading(true);
-    const toastId = toast.loading("Processing and locking payroll run...");
+    const toastId = toast.loading(targetStatus === "DRAFT" ? "Saving payroll run as draft..." : "Finalizing and locking payroll run...");
 
     const payload = rowsWithCalcs.map((r) => ({
       employeeId: r.employeeId,
@@ -108,13 +108,14 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
       shopId: shop.id,
       payrollPeriodCode: period,
       mode,
+      status: targetStatus,
       lines: payload,
     });
 
     setLoading(false);
 
     if (res.success && "docNumber" in res && "voucherId" in res) {
-      toast.success(`Payroll Voucher Locked: ${res.docNumber}`, { id: toastId });
+      toast.success(`Payroll Voucher ${targetStatus === "DRAFT" ? "Draft Saved" : "Locked"}: ${res.docNumber}`, { id: toastId });
       router.push(`/workspaces/${shopSlug}/payroll/${res.voucherId}`);
     } else if ("error" in res) {
       toast.error(`Execution Error: ${res.error}`, { id: toastId });
@@ -329,14 +330,24 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={handleExecutionSubmit}
-            disabled={loading || rows.length === 0}
-            className="btn-primary-modern bg-emerald-600 hover:bg-emerald-500 text-white w-full py-3 font-semibold uppercase tracking-wider text-xs disabled:bg-zinc-800 disabled:text-zinc-600 border-none"
-          >
-            {loading ? "EXECUTING TRANSACTION..." : "✓ Lock & Commit Payroll Run"}
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => handleExecutionSubmit("DRAFT")}
+              disabled={loading || rows.length === 0}
+              className="btn-secondary-modern bg-zinc-800 text-zinc-100 hover:bg-zinc-700 border-zinc-700 w-full py-2 font-semibold uppercase text-xs disabled:opacity-30"
+            >
+              {loading ? "SAVING..." : "Save Draft Payroll Run"}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleExecutionSubmit("PAID")}
+              disabled={loading || rows.length === 0}
+              className="btn-primary-modern bg-emerald-600 hover:bg-emerald-500 text-white w-full py-2.5 font-semibold uppercase tracking-wider text-xs disabled:bg-zinc-800 disabled:text-zinc-600 border-none"
+            >
+              {loading ? "EXECUTING TRANSACTION..." : "✓ Lock & Finalize Disbursal"}
+            </button>
+          </div>
         </div>
       </div>
 

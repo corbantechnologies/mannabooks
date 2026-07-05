@@ -5,6 +5,8 @@ import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
+import { PrintPayrollVoucherButton } from "./PrintPayrollVoucherButton";
+import { FinalizePayrollRunButton } from "./FinalizePayrollRunButton";
 
 interface PayrollRunDetailPageProps {
   params: Promise<{ slug: string; id: string }>;
@@ -34,6 +36,8 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
     notFound();
   }
 
+  const isDraft = voucherRecord.status === "DRAFT";
+
   return (
     <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-mono text-xs">
       
@@ -41,14 +45,14 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
       <div className="border-b border-zinc-200/80 pb-6 space-y-2">
         <Link
           href={`/workspaces/${slug}/payroll`}
-          className="text-xs font-semibold text-zinc-400 hover:underline block"
+          className="text-xs font-semibold text-zinc-400 hover:underline block print:hidden"
         >
           ← BACK TO PAYROLL HUB &amp; DIRECTORY
         </Link>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
           <div>
-            <span className="text-xs text-zinc-400 font-semibold">PAYROLL_VOUCHER_RUN</span>
+            <span className="text-xs text-zinc-400 font-semibold uppercase">PAYROLL_VOUCHER_RUN</span>
             <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
               Payroll Voucher {voucherRecord.docNumber}
             </h1>
@@ -59,9 +63,17 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
             <span className="border border-zinc-300 px-2.5 py-1 bg-zinc-50 font-semibold uppercase rounded text-zinc-700">
               Execution Date: {new Date(voucherRecord.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
             </span>
-            <span className="bg-black text-white px-2.5 py-1 font-semibold uppercase tracking-wide rounded">
-              Status: LOCKED &amp; PAID
+            <span className={`px-2.5 py-1 font-semibold uppercase tracking-wide rounded ${
+              isDraft ? "bg-amber-100 text-amber-900 border border-amber-300" : "bg-black text-white"
+            }`}>
+              Status: {isDraft ? "DRAFT (UNLOCKED)" : "PAID & LOCKED"}
             </span>
+
+            {isDraft && (
+              <FinalizePayrollRunButton voucherId={voucherRecord.id} shopId={shop.id} />
+            )}
+
+            <PrintPayrollVoucherButton />
           </div>
         </div>
       </div>
@@ -101,7 +113,7 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
           </h2>
         </div>
 
-        <div className="card-modern overflow-x-auto">
+        <div className="card-modern overflow-x-auto bg-white">
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
               <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">

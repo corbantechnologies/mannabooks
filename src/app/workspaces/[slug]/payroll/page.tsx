@@ -110,6 +110,7 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
               <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
                 <th className="p-4 border-r border-zinc-200">Voucher Serial Ref</th>
                 <th className="p-4 border-r border-zinc-200">Issue Date</th>
+                <th className="p-4 border-r border-zinc-200 text-center">Status</th>
                 <th className="p-4 border-r border-zinc-200 text-right">Gross Earnings Pool</th>
                 <th className="p-4 border-r border-zinc-200 text-right">Deductions Pool</th>
                 <th className="p-4 border-r border-zinc-200 text-right">Net Disbursed Cash</th>
@@ -130,6 +131,13 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
                   <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
                     {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                   </td>
+                  <td className="p-4 border-r border-zinc-200/80 text-center">
+                    <span className={`px-2 py-0.5 text-[9px] font-semibold tracking-wider uppercase rounded ${
+                      doc.status === "DRAFT" ? "bg-amber-100 text-amber-900 border border-amber-300" : "bg-black text-white"
+                    }`}>
+                      {doc.status}
+                    </span>
+                  </td>
                   <td className="p-4 border-r border-zinc-200/80 font-semibold text-black text-right">
                     {formatCurrency(parseFloat(doc.subTotal), shop.currency)}
                   </td>
@@ -144,7 +152,7 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
                       href={`/workspaces/${slug}/payroll/${doc.id}`}
                       className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"
                     >
-                      View Full Breakdown Matrix
+                      {doc.status === "DRAFT" ? "Edit / Finalize Draft" : "View Breakdown"}
                     </Link>
                   </td>
                 </tr>

@@ -179,6 +179,7 @@ export async function commitPayrollVoucherRun(input: {
     shopId: string;
     payrollPeriodCode: string; // e.g. "JULY-2026"
     mode?: PayrollMode;
+    status?: "DRAFT" | "PAID";
     lines: {
         employeeId?: string;
         employeeName: string;
@@ -198,6 +199,7 @@ export async function commitPayrollVoucherRun(input: {
             let globalGrandTotal = 0;
 
             const mode = input.mode || "KENYA_STATUTORY";
+            const targetStatus = input.status || "DRAFT";
 
             // 1. Pre-calculate line totals
             const processedLines = input.lines.map((line) => {
@@ -221,10 +223,10 @@ export async function commitPayrollVoucherRun(input: {
 
             const [voucher] = await tx.insert(documents).values({
                 shopId: input.shopId,
-                clientId: null, // Internal company document node
+                clientId: null,
                 docNumber: voucherDocNumber,
                 type: "PAYROLL_VOUCHER",
-                status: "PAID",
+                status: targetStatus,
                 subTotal: globalSubTotal.toString(),
                 taxAmount: globalTaxPool.toString(),
                 grandTotal: globalGrandTotal.toString(),
@@ -248,9 +250,31 @@ export async function commitPayrollVoucherRun(input: {
                 revalidatePath(`/workspaces/${shop.slug}/documents`);
             }
 
-            return { success: true, docNumber: voucherDocNumber, voucherId: voucher.id };
+            return { success: true, docNumber: voucherDocNumber, voucherId: voucher.id, status: targetStatus };
         });
     } catch (err: any) {
         return { success: false, error: err.message || "Failed to finalize payroll voucher execution." };
+    }
+}
+
+export async function updatePayrollVoucherStatus(voucherId: string, shopId: string, status: "DRAFT" | "PAID") {
+    const session = await verifyAndGetSession();
+    if (!session) return { success: false, error: "Unauthorized session context." };
+
+    try {
+        await db.update(documents)
+            .set({ status })
+            .where(and(eq(documents.id, voucherId), eq(documents.shopId, shopId), eq(documents.type, "PAYROLL_VOUCHER")));
+
+        const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
+        if (shop) {
+            revalidatePath(`/workspaces/${shop.slug}/payroll`);
+            revalidatePath(`/workspaces/${shop.slug}/payroll/${voucherId}`);
+            revalidatePath(`/workspaces/${shop.slug}/documents`);
+        }
+
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message || "Failed to update voucher status." };
     }
 }

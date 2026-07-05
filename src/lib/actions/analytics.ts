@@ -125,14 +125,14 @@ export async function getWorkspaceAnalyticsData(
     filteredDocs.forEach((d) => {
       const val = parseFloat(d.grandTotal || "0");
       const isSales = d.type === "INVOICE" || d.type === "RECEIPT" || d.type === "QUOTATION";
-      const isProcurement = d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER" || d.type === "GOODS_RECEIVED_NOTE";
+      const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER" || d.type === "GOODS_RECEIVED_NOTE" || d.type === "PAYROLL_VOUCHER";
 
       if (d.status === "PAID" || d.type === "RECEIPT") {
         if (isSales) totalSettledInflow += val;
-        else if (isProcurement) totalSettledOutflow += val;
+        else if (isOutflow) totalSettledOutflow += val;
       } else if (d.status === "SENT" || d.status === "OVERDUE") {
         if (isSales) pendingReceivables += val;
-        else if (isProcurement) accountsPayableDebt += val;
+        else if (isOutflow && d.type !== "PAYROLL_VOUCHER") accountsPayableDebt += val;
       }
     });
 
@@ -152,11 +152,11 @@ export async function getWorkspaceAnalyticsData(
       if (monthlyTimelineMap[label]) {
         const val = parseFloat(d.grandTotal || "0");
         const isSales = d.type === "INVOICE" || d.type === "RECEIPT";
-        const isProcurement = d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER";
+        const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER" || d.type === "PAYROLL_VOUCHER";
 
         if (d.status === "PAID" || d.type === "RECEIPT") {
           if (isSales) monthlyTimelineMap[label].inflow += val;
-          else if (isProcurement) monthlyTimelineMap[label].outflow += val;
+          else if (isOutflow) monthlyTimelineMap[label].outflow += val;
         }
       }
     });

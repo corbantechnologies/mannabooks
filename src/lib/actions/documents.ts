@@ -17,7 +17,8 @@ export type DocumentType =
   | "CREDIT_NOTE" 
   | "DEBIT_NOTE" 
   | "GOODS_RECEIVED_NOTE" 
-  | "PAYMENT_VOUCHER";
+  | "PAYMENT_VOUCHER"
+  | "PAYROLL_VOUCHER";
 
 interface CreateDocumentItemInput {
     description: string;
@@ -82,6 +83,7 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 DEBIT_NOTE: "DBN",
                 GOODS_RECEIVED_NOTE: "GRN",
                 PAYMENT_VOUCHER: "PV",
+                PAYROLL_VOUCHER: "PAY",
             };
             const prefix = prefixMap[input.type] || "DOC";
             const formattedSerial = `${prefix}-${String(nextSequence).padStart(4, "0")}`;

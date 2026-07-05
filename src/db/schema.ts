@@ -14,7 +14,8 @@ export const docTypeEnum = pgEnum('doc_type', [
     'CREDIT_NOTE',
     'DEBIT_NOTE',
     'GOODS_RECEIVED_NOTE',
-    'PAYMENT_VOUCHER'
+    'PAYMENT_VOUCHER',
+    'PAYROLL_VOUCHER'
 ]);
 export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'SENT', 'OVERDUE', 'PAID']);
 export const taxTypeEnum = pgEnum('tax_type', ['V_16', 'V_0', 'EXEMPT']); // 16% VAT, 0% VAT, Tax Exempt
@@ -165,6 +166,19 @@ export const documentTokens = pgTable('document_tokens', {
     index('token_idx').on(table.token)
 ]);
 
+// EMPLOYEES TABLE
+export const employees = pgTable('employees', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    fullName: varchar('full_name', { length: 255 }).notNull(),
+    nationalId: varchar('national_id', { length: 50 }),
+    kraPin: varchar('kra_pin', { length: 13 }),
+    baseSalary: numeric('base_salary', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    commissionRate: numeric('commission_rate', { precision: 5, scale: 2 }).default('0.00').notNull(),
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // ==========================================
 // 3. RELATIONS (Application Level Hydration Helpers)
 // ==========================================
@@ -227,4 +241,8 @@ export const sessions = pgTable('sessions', {
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
     user: one(users, { fields: [sessions.userId], references: [users.id] }),
+}));
+
+export const employeesRelations = relations(employees, ({ one }) => ({
+    shop: one(shops, { fields: [employees.shopId], references: [shops.id] }),
 }));

@@ -15,11 +15,11 @@ interface BulkItem {
   name: string;
   sku: string;
   itemType: "PRODUCT" | "SERVICE";
-  unitPrice: number;
-  costPrice: number;
+  unitPrice: number | "";
+  costPrice: number | "";
   defaultTaxType: "V_16" | "V_0" | "EXEMPT";
   trackStock: boolean;
-  stockQuantity: number;
+  stockQuantity: number | "";
 }
 
 const DEFAULT_ITEM = (): BulkItem => ({
@@ -27,11 +27,11 @@ const DEFAULT_ITEM = (): BulkItem => ({
   name: "",
   sku: "",
   itemType: "PRODUCT",
-  unitPrice: 0,
-  costPrice: 0,
+  unitPrice: "",
+  costPrice: "",
   defaultTaxType: "V_16",
   trackStock: true,
-  stockQuantity: 0,
+  stockQuantity: "",
 });
 
 export function BulkProductForm({ shopId, shopSlug }: BulkProductFormProps) {
@@ -82,11 +82,11 @@ export function BulkProductForm({ shopId, shopSlug }: BulkProductFormProps) {
           name: item.name,
           sku: item.sku,
           itemType: item.itemType,
-          unitPrice: item.unitPrice,
-          costPrice: item.costPrice,
+          unitPrice: Number(item.unitPrice) || 0,
+          costPrice: Number(item.costPrice) || 0,
           defaultTaxType: item.defaultTaxType,
           trackStock: item.itemType === "PRODUCT" ? item.trackStock : false,
-          stockQuantity: item.stockQuantity,
+          stockQuantity: Number(item.stockQuantity) || 0,
         })),
       });
 
@@ -134,8 +134,8 @@ export function BulkProductForm({ shopId, shopSlug }: BulkProductFormProps) {
                     required
                     value={item.name}
                     onChange={(e) => updateItem(item.id, "name", e.target.value)}
-                    className="w-full p-2 border border-zinc-200 rounded font-sans uppercase tracking-tight text-xs"
-                    placeholder="E.g. SERVER RACK 42U"
+                    className="w-full p-2 border border-zinc-200 rounded font-sans tracking-tight text-xs"
+                    placeholder="E.g. Server Rack 42U"
                   />
                 </td>
                 <td className="p-2 border-r border-zinc-200">
@@ -164,7 +164,7 @@ export function BulkProductForm({ shopId, shopSlug }: BulkProductFormProps) {
                     step="0.01"
                     required
                     value={item.unitPrice}
-                    onChange={(e) => updateItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
+                    onChange={(e) => updateItem(item.id, "unitPrice", e.target.value === "" ? "" : parseFloat(e.target.value))}
                     className="w-full p-2 border border-zinc-200 rounded font-mono text-[10px]"
                   />
                 </td>
@@ -174,7 +174,7 @@ export function BulkProductForm({ shopId, shopSlug }: BulkProductFormProps) {
                     min="0"
                     step="0.01"
                     value={item.costPrice}
-                    onChange={(e) => updateItem(item.id, "costPrice", parseFloat(e.target.value) || 0)}
+                    onChange={(e) => updateItem(item.id, "costPrice", e.target.value === "" ? "" : parseFloat(e.target.value))}
                     className="w-full p-2 border border-zinc-200 rounded font-mono text-[10px]"
                   />
                 </td>
@@ -205,7 +205,7 @@ export function BulkProductForm({ shopId, shopSlug }: BulkProductFormProps) {
                     step="0.01"
                     disabled={!item.trackStock || item.itemType === "SERVICE"}
                     value={item.stockQuantity}
-                    onChange={(e) => updateItem(item.id, "stockQuantity", parseFloat(e.target.value) || 0)}
+                    onChange={(e) => updateItem(item.id, "stockQuantity", e.target.value === "" ? "" : parseFloat(e.target.value))}
                     className="w-full p-2 border border-zinc-200 rounded font-mono text-[10px]"
                   />
                 </td>

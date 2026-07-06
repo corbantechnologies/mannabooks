@@ -193,9 +193,13 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
 
             await tx.insert(documentItems).values(compiledRowsPayload);
 
-            // 6. Trigger Stock Outflow for direct Receipts (when not linked to a parent invoice)
+            // 6. Trigger Stock Movements
             if (input.type === "RECEIPT" && !input.parentDocumentId) {
+                // Direct Receipts cause immediate outflow
                 await applyDocumentStockMovements(newDoc.id, "OUTFLOW", tx);
+            } else if (input.type === "GOODS_RECEIVED_NOTE") {
+                // Goods Received Notes cause immediate inflow
+                await applyDocumentStockMovements(newDoc.id, "INFLOW", tx);
             }
 
             // 7. Provision the secure public gateway token key

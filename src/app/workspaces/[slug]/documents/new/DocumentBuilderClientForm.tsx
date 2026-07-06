@@ -45,6 +45,9 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
   const [dueDate, setDueDate] = useState("");
   const [kraCuInvoiceNumber, setKraCuInvoiceNumber] = useState("");
   const [requiresEtims, setRequiresEtims] = useState(false);
+  const [currency, setCurrency] = useState(shop.currency || "KES");
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringInterval, setRecurringInterval] = useState<"WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY">("MONTHLY");
 
   // Automatically switch partyType when selecting Procurement documents (LPO, PO, GRN, PV)
   useEffect(() => {
@@ -151,6 +154,9 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
       dueDate: dueDate ? new Date(dueDate) : undefined,
       kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
       requiresEtims,
+      currency,
+      isRecurring,
+      recurringInterval: isRecurring ? recurringInterval : undefined,
       items: rows.map(r => ({
         productId: r.productId,
         description: r.description,
@@ -397,7 +403,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
 
                   {/* UNIT PRICE */}
                   <div className="lg:col-span-2 space-y-2">
-                    <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Unit Price ({shop.currency})</label>
+                    <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Unit Price ({currency})</label>
                     <input
                       type="number"
                       step="0.01"
@@ -432,7 +438,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                     <div className="w-full text-right">
                       <span className="text-[9px] text-zinc-400 block font-mono font-semibold uppercase">Row Total</span>
                       <span className="font-sans text-xs font-bold text-black block mt-1">
-                        {formatCurrency(calculatedRow.itemTotal, shop.currency)}
+                        {formatCurrency(calculatedRow.itemTotal, currency)}
                       </span>
                     </div>
 
@@ -452,7 +458,57 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
             );
           })}
         </div>
+
+        {/* BILLING & AUTOMATION CONFIGURATION */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-zinc-100">
+          <div className="flex flex-col justify-end">
+            <label className="text-[10px] text-zinc-400 uppercase font-semibold mb-1.5">Document Currency</label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="w-full px-3 py-2.5 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-sans text-xs font-semibold h-10"
+            >
+              {["KES", "USD", "EUR", "GBP", "UGX", "TZS", "ZAR", "RWF"].map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col justify-end">
+            <label className="text-[10px] text-zinc-400 uppercase font-semibold mb-1.5 flex items-center justify-between">
+               Recurring Automation
+            </label>
+            <div className="flex items-center h-10 border border-zinc-300 rounded-md px-3 bg-white hover:border-black transition-colors">
+              <label className="flex items-center gap-2 cursor-pointer w-full text-xs font-semibold">
+                <input 
+                  type="checkbox" 
+                  checked={isRecurring} 
+                  onChange={(e) => setIsRecurring(e.target.checked)}
+                  className="accent-black w-4 h-4 cursor-pointer"
+                />
+                Make this a Recurring {docType === "INVOICE" || docType === "RECEIPT" ? docType.toLowerCase() : "document"}
+              </label>
+            </div>
+          </div>
+
+          {isRecurring && (
+             <div className="flex flex-col justify-end">
+               <label className="text-[10px] text-zinc-400 uppercase font-semibold mb-1.5">Billing Interval</label>
+               <select
+                 value={recurringInterval}
+                 onChange={(e) => setRecurringInterval(e.target.value as any)}
+                 className="w-full px-3 py-2.5 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-sans text-xs font-semibold h-10"
+               >
+                 <option value="WEEKLY">Weekly</option>
+                 <option value="MONTHLY">Monthly</option>
+                 <option value="QUARTERLY">Quarterly</option>
+                 <option value="YEARLY">Yearly</option>
+               </select>
+             </div>
+          )}
+        </div>
         
+
         {/* ADD ROW BUTTON */}
         <div className="p-4 border-t border-zinc-200/80 bg-zinc-50 flex justify-between items-center">
           <button
@@ -493,17 +549,19 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           </h3>
 
           <div className="space-y-2 text-xs">
-            <div className="flex justify-between text-zinc-500 py-1">
-              <span>Sub-Total</span>
-              <span className="font-semibold text-black">{formatCurrency(totals.subTotal, shop.currency)}</span>
-            </div>
-            <div className="flex justify-between text-zinc-500 py-1">
-              <span>VAT Tax Pool ({shop.isVatRegistered ? "16%" : "0%"})</span>
-              <span className="font-semibold text-black">{formatCurrency(totals.taxAmount, shop.currency)}</span>
-            </div>
-            <div className="flex justify-between text-black text-sm font-bold pt-3 border-t border-zinc-200">
-              <span>GRAND TOTAL PAYABLE</span>
-              <span className="text-base font-extrabold text-black">{formatCurrency(totals.grandTotal, shop.currency)}</span>
+            <div className="bg-white rounded p-4 border border-zinc-200/80 shadow-sm space-y-3 font-mono">
+              <div className="flex justify-between text-zinc-600 text-[10px] font-semibold">
+                <span>SUB-TOTAL ({currency}):</span>
+                <span className="text-black">{formatCurrency(totals.subTotal, currency)}</span>
+              </div>
+              <div className="flex justify-between text-zinc-600 text-[10px] font-semibold">
+                <span>VAT / TAX ({currency}):</span>
+                <span className="text-black">{formatCurrency(totals.taxAmount, currency)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-black border-t border-zinc-200 pt-3 text-sm">
+                <span>GRAND TOTAL:</span>
+                <span>{formatCurrency(totals.grandTotal, currency)}</span>
+              </div>
             </div>
           </div>
           

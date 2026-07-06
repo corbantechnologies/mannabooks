@@ -118,7 +118,7 @@ export function LedgerFilterBar({ clients }: LedgerFilterBarProps) {
           >
             <option value="ALL">All Statuses</option>
             <option value="DRAFT">Draft</option>
-            <option value="SENT">Sent</option>
+            <option value="ISSUED">Issued</option>
             <option value="OVERDUE">Overdue</option>
             <option value="PAID">Paid</option>
           </select>

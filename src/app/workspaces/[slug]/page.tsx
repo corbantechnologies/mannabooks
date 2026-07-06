@@ -50,7 +50,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
     const val = parseFloat(d.grandTotal || "0");
     if (d.status === "PAID") {
       totalRevenue += val;
-    } else if (d.status === "SENT" || d.status === "OVERDUE") {
+    } else if (d.status === "ISSUED" || d.status === "OVERDUE") {
       pendingAmount += val;
     } else if (d.status === "DRAFT") {
       draftCount += 1;
@@ -165,7 +165,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
                   <td className="p-4 border-r border-zinc-200/80 text-center">
                     <span className={`px-2.5 py-0.5 text-[10px] font-semibold uppercase border rounded ${
                       doc.status === "PAID" ? "bg-black text-white border-black" :
-                      doc.status === "SENT" ? "bg-white text-black border-zinc-300 font-semibold" :
+                      doc.status === "ISSUED" ? "bg-white text-black border-zinc-300 font-semibold" :
                       doc.status === "OVERDUE" ? "bg-rose-50 border-rose-300 text-rose-700 font-semibold" :
                       "bg-zinc-50 text-zinc-400 border-zinc-200"
                     }`}>

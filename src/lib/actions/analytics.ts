@@ -146,7 +146,7 @@ export async function getWorkspaceAnalyticsData(
         } else if (isOutflow) {
           totalSettledOutflow += val;
         }
-      } else if (d.status === "SENT" || d.status === "OVERDUE") {
+      } else if (d.status === "ISSUED" || d.status === "OVERDUE") {
         if (isSales) pendingReceivables += val;
         else if (isOutflow && d.type !== "PAYROLL_VOUCHER") accountsPayableDebt += val;
       }
@@ -233,7 +233,7 @@ export async function getWorkspaceAnalyticsData(
     let overdue90Plus = 0;
 
     allDocs.forEach((d) => {
-      if ((d.type === "INVOICE") && (d.status === "SENT" || d.status === "OVERDUE")) {
+      if ((d.type === "INVOICE") && (d.status === "ISSUED" || d.status === "OVERDUE")) {
         const val = parseFloat(d.grandTotal || "0");
         const issue = new Date(d.issueDate);
         const ageInDays = Math.floor((now.getTime() - issue.getTime()) / (1000 * 3600 * 24));

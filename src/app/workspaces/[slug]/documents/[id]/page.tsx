@@ -73,7 +73,7 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
             <span className="border border-black px-2 py-1 bg-zinc-50 font-bold uppercase">{doc.type}</span>
             <span className={`border px-2 py-1 font-bold uppercase ${
               doc.status === "PAID" ? "bg-black text-white border-black" :
-              doc.status === "SENT" ? "bg-white text-black border-black" :
+              doc.status === "ISSUED" ? "bg-white text-black border-black" :
               doc.status === "OVERDUE" ? "bg-zinc-100 border-rose-600 border-dashed text-rose-700" :
               "bg-zinc-50 text-zinc-400 border-zinc-200"
             }`}>

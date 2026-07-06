@@ -177,7 +177,7 @@ export default function LandingPage() {
                       ref: "INV-2026-042",
                       sub: "KRA CU #: CU012345/2026",
                       amount: "KES 310,000.00",
-                      badge: "SENT",
+                      badge: "ISSUED",
                       cls: "bg-amber-100 text-amber-900 border border-amber-300",
                     },
                     {

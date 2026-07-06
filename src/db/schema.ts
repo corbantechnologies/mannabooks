@@ -17,7 +17,7 @@ export const docTypeEnum = pgEnum('doc_type', [
     'PAYMENT_VOUCHER',
     'PAYROLL_VOUCHER'
 ]);
-export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'SENT', 'OVERDUE', 'PAID', 'RECEIVED']);
+export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'ISSUED', 'OVERDUE', 'PAID', 'RECEIVED']);
 export const taxTypeEnum = pgEnum('tax_type', ['V_16', 'V_0', 'EXEMPT']); // 16% VAT, 0% VAT, Tax Exempt
 export const clientTypeEnum = pgEnum('client_type', ['WALK_IN', 'INDIVIDUAL', 'CORPORATE']);
 export const userRoleEnum = pgEnum('user_role', ['OWNER', 'ADMIN', 'EMPLOYEE']);

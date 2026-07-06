@@ -23,7 +23,7 @@ interface DocumentStatusPanelProps {
   documentId: string;
   shopId: string;
   shopSlug: string;
-  currentStatus: "DRAFT" | "SENT" | "OVERDUE" | "PAID" | "RECEIVED";
+  currentStatus: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED";
   docType: DocumentType;
   items: DocumentItem[];
   portalLink: string | null;
@@ -38,7 +38,7 @@ interface DocumentStatusPanelProps {
 
 const STATUS_OPTIONS = [
   { value: "DRAFT", label: "Draft" },
-  { value: "SENT", label: "Sent" },
+  { value: "ISSUED", label: "Issued" },
   { value: "OVERDUE", label: "Overdue" },
   { value: "PAID", label: "Paid" },
   { value: "RECEIVED", label: "Received" },
@@ -61,7 +61,7 @@ export function DocumentStatusPanel({
   parentDocument,
 }: DocumentStatusPanelProps) {
   const router = useRouter();
-  const [status, setStatus] = useState<"DRAFT" | "SENT" | "OVERDUE" | "PAID" | "RECEIVED">(currentStatus as any);
+  const [status, setStatus] = useState<"DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED">(currentStatus as any);
   const [cuNumber, setCuNumber] = useState(kraCuInvoiceNumber || "");
   const [paymentChannel, setPaymentChannel] = useState(initialPaymentChannel || "");
   const [paymentReference, setPaymentReference] = useState(initialPaymentReference || "");
@@ -96,7 +96,7 @@ export function DocumentStatusPanel({
     }
   }
 
-  async function handleStatusUpdate(newStatus: "DRAFT" | "SENT" | "OVERDUE" | "PAID" | "RECEIVED") {
+  async function handleStatusUpdate(newStatus: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED") {
     if (newStatus === status) return;
     updateStatusMutation.mutate(
       { documentId, status: newStatus },

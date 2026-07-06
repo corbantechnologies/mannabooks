@@ -43,9 +43,36 @@ interface CreateDocumentInput {
     notes?: string;
     currency?: string;
     customerEmail?: string;
+    sourceDocType?: DocumentType;
     isRecurring?: boolean;
     recurringInterval?: "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY";
     items: CreateDocumentItemInput[];
+}
+
+function determineDefaultStatus(type: DocumentType, sourceDocType?: DocumentType): "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED" {
+    // If converting Quotation -> Invoice, automatically issue it
+    if (type === "INVOICE" && sourceDocType === "QUOTATION") {
+        return "ISSUED";
+    }
+
+    switch (type) {
+        case "RECEIPT":
+        case "PAYMENT_VOUCHER":
+        case "PAYROLL_VOUCHER":
+            return "PAID";
+        case "CREDIT_NOTE":
+        case "DEBIT_NOTE":
+        case "DELIVERY_NOTE":
+            return "ISSUED";
+        case "GOODS_RECEIVED_NOTE":
+            return "RECEIVED";
+        case "QUOTATION":
+        case "INVOICE":
+        case "LPO":
+        case "PO":
+        default:
+            return "DRAFT";
+    }
 }
 
 /**
@@ -127,7 +154,7 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 supplierId: input.supplierId || null,
                 type: input.type,
                 docNumber: formattedSerial,
-                status: input.type === "RECEIPT" ? "PAID" : "DRAFT", // Receipts are proof of settled payment (PAID status)
+                status: determineDefaultStatus(input.type, input.sourceDocType),
                 kraCuInvoiceNumber: input.kraCuInvoiceNumber || null,
                 parentDocumentId: input.parentDocumentId || null,
                 requiresEtims: input.requiresEtims || false,
@@ -166,9 +193,13 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
 
             await tx.insert(documentItems).values(compiledRowsPayload);
 
-            // 6. Trigger Stock Outflow for direct Receipts (when not linked to a parent invoice)
+            // 6. Trigger Stock Movements
             if (input.type === "RECEIPT" && !input.parentDocumentId) {
+                // Direct Receipts cause immediate outflow
                 await applyDocumentStockMovements(newDoc.id, "OUTFLOW", tx);
+            } else if (input.type === "GOODS_RECEIVED_NOTE") {
+                // Goods Received Notes cause immediate inflow
+                await applyDocumentStockMovements(newDoc.id, "INFLOW", tx);
             }
 
             // 7. Provision the secure public gateway token key
@@ -193,7 +224,7 @@ interface UpdateDocumentStatusInput {
     documentId: string;
     shopId: string;
     shopSlug: string;
-    status: "DRAFT" | "SENT" | "OVERDUE" | "PAID" | "RECEIVED";
+    status: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED";
     paymentChannel?: string;
     paymentReference?: string;
 }
@@ -234,7 +265,7 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
             .where(and(eq(documents.id, input.documentId), eq(documents.shopId, input.shopId)));
 
         // STOCK MOVEMENT ENGINE: Trigger stock movements on status transition
-        if (existing.status === "DRAFT" && (input.status === "SENT" || input.status === "PAID")) {
+        if (existing.status === "DRAFT" && (input.status === "ISSUED" || input.status === "PAID")) {
             if (existing.type === "INVOICE" || existing.type === "RECEIPT") {
                 await applyDocumentStockMovements(existing.id, "OUTFLOW");
             } else if (existing.type === "GOODS_RECEIVED_NOTE") {
@@ -261,8 +292,8 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
 }
 
 /**
- * Permanently deletes a DRAFT document record.
- * Non-draft documents (SENT, OVERDUE, PAID) are audit-protected and blocked from deletion.
+ * Safely deletes a document and cleans up its line items.
+ * Non-draft documents (ISSUED, OVERDUE, PAID) are audit-protected and blocked from deletion.
  */
 export async function deleteDocument(documentId: string, shopId: string, shopSlug: string) {
     try {
@@ -364,6 +395,7 @@ export async function convertDocumentAction(
             clientId: sourceDoc.clientId || undefined,
             supplierId: sourceDoc.supplierId || undefined,
             type: targetType,
+            sourceDocType: sourceDoc.type,
             parentDocumentId: sourceDoc.id,
             kraCuInvoiceNumber: sourceDoc.kraCuInvoiceNumber || undefined,
             requiresEtims: sourceDoc.requiresEtims,

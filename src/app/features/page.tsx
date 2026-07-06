@@ -123,7 +123,7 @@ export default function FeaturesPage() {
               {[
                 { title: "Multi-Rate Tax Billing", body: "Support for KRA 16% Standard Output VAT, 0% Zero-Rated export lines, and Tax EXEMPT items on a per-line-item basis with automatic tax pooling." },
                 { title: "KRA CU & PIN Fields", body: "Embed official KRA eTIMS Control Unit (CU) serial numbers and merchant/client KRA PINs on all formal financial documents for statutory audit compliance." },
-                { title: "Full Document Lifecycle", body: "Issue Quotations with 1-click conversion to Invoices, Receipts, Purchase Orders, LPOs, GRNs, Credit Notes, and Debit Notes — tracked through DRAFT → SENT → PAID states." },
+                { title: "Full Document Lifecycle", body: "Issue Quotations with 1-click conversion to Invoices, Receipts, Purchase Orders, LPOs, GRNs, Credit Notes, and Debit Notes — tracked through DRAFT → ISSUED → PAID states." },
               ].map((item) => (
                 <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
                   <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>

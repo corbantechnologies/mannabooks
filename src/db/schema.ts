@@ -33,6 +33,7 @@ export const users = pgTable('users', {
     name: text('name').notNull(),
     email: text('email').notNull().unique(),
     passwordHash: text('password_hash').notNull(),
+    isSuperAdmin: boolean('is_super_admin').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -257,6 +258,15 @@ export const sessions = pgTable('sessions', {
 export const sessionsRelations = relations(sessions, ({ one }) => ({
     user: one(users, { fields: [sessions.userId], references: [users.id] }),
 }));
+
+// PASSWORD RESET TOKENS
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    token: text('token').notNull().unique(),
+    expiresAt: timestamp('expires_at').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
 
 export const employeesRelations = relations(employees, ({ one }) => ({
     shop: one(shops, { fields: [employees.shopId], references: [shops.id] }),

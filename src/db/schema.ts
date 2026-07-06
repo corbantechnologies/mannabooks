@@ -20,8 +20,9 @@ export const docTypeEnum = pgEnum('doc_type', [
 export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'ISSUED', 'OVERDUE', 'PAID', 'RECEIVED']);
 export const taxTypeEnum = pgEnum('tax_type', ['V_16', 'V_0', 'EXEMPT']); // 16% VAT, 0% VAT, Tax Exempt
 export const clientTypeEnum = pgEnum('client_type', ['WALK_IN', 'INDIVIDUAL', 'CORPORATE']);
-export const userRoleEnum = pgEnum('user_role', ['OWNER', 'ADMIN', 'EMPLOYEE']);
+export const userRoleEnum = pgEnum('user_role', ['OWNER', 'ADMIN', 'MANAGER', 'ACCOUNTANT', 'EMPLOYEE', 'VIEWER']);
 export const recurringIntervalEnum = pgEnum('recurring_interval', ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']);
+export const expenseCategoryEnum = pgEnum('expense_category', ['RENT', 'UTILITIES', 'FUEL', 'MARKETING', 'SALARIES', 'OFFICE_SUPPLIES', 'OTHER']);
 
 // ==========================================
 // 2. TABLES
@@ -60,6 +61,7 @@ export const shopMembers = pgTable('shop_members', {
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
     userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
     role: userRoleEnum('role').default('OWNER').notNull(),
+    customPermissions: text('custom_permissions').default('{}').notNull(), // JSON string for granular employee permissions
     isActive: boolean('is_active').default(true).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
@@ -194,8 +196,21 @@ export const employees = pgTable('employees', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// EXPENSES TABLE (Feature 8)
+export const expenses = pgTable('expenses', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    description: text('description').notNull(),
+    amount: numeric('amount', { precision: 15, scale: 2 }).notNull(),
+    currency: varchar('currency', { length: 3 }).default('KES').notNull(),
+    category: expenseCategoryEnum('category').default('OTHER').notNull(),
+    expenseDate: timestamp('expense_date').notNull(),
+    receiptUrl: text('receipt_url'), // Cloudinary URL for attached receipt
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // ==========================================
-// 3. RELATIONS (Application Level Hydration Helpers)
+// 3. RELATIONS (For ORM Querying)
 // ==========================================
 export const usersRelations = relations(users, ({ many }) => ({
     memberships: many(shopMembers),
@@ -210,6 +225,7 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     clients: many(clients),
     suppliers: many(suppliers),
     documents: many(documents),
+    expenses: many(expenses),
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
@@ -267,6 +283,10 @@ export const passwordResetTokens = pgTable('password_reset_tokens', {
     expiresAt: timestamp('expires_at').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+export const expensesRelations = relations(expenses, ({ one }) => ({
+    shop: one(shops, { fields: [expenses.shopId], references: [shops.id] }),
+}));
 
 export const employeesRelations = relations(employees, ({ one }) => ({
     shop: one(shops, { fields: [employees.shopId], references: [shops.id] }),

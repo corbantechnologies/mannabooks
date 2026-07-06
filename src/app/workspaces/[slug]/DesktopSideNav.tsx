@@ -11,7 +11,7 @@ interface DesktopSideNavProps {
 export function DesktopSideNav({ slug }: DesktopSideNavProps) {
   const pathname = usePathname();
 
-  const navLinks = [
+    const navLinks = [
     { href: `/workspaces/${slug}`, label: "[00] Overview Log", exact: true },
     { href: `/workspaces/${slug}/documents`, label: "[01] Fiscal Ledgers" },
     { href: `/workspaces/${slug}/pos`, label: "[02] Walk-in Sales" },
@@ -20,9 +20,11 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
     { href: `/workspaces/${slug}/suppliers`, label: "[05] Supplier Network" },
     { href: `/workspaces/${slug}/employees`, label: "[06] Employee Directory" },
     { href: `/workspaces/${slug}/payroll`, label: "[07] Payroll Vouchers" },
-    { href: `/workspaces/${slug}/analytics`, label: "[08] Analytics" },
-    { href: `/workspaces/${slug}/settings`, label: "[09] System Settings" },
-    { href: `/workspaces/${slug}/guide`, label: "[10] Operator Guide" },
+    { href: `/workspaces/${slug}/expenses`, label: "[08] Operating Expenses" },
+    { href: `/workspaces/${slug}/analytics`, label: "[09] Analytics" },
+    { href: `/workspaces/${slug}/team`, label: "[10] Team Management" },
+    { href: `/workspaces/${slug}/settings`, label: "[11] System Settings" },
+    { href: `/workspaces/${slug}/guide`, label: "[12] Operator Guide" },
   ];
 
   function isActive(href: string, exact?: boolean) {

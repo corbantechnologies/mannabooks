@@ -172,7 +172,7 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
                   <div className="flex flex-col gap-1 items-center">
                     <span className={`border px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded ${
                       doc.status === "PAID" ? "bg-black text-white border-black" :
-                      doc.status === "SENT" ? "bg-white text-black border-zinc-300 font-semibold" :
+                      doc.status === "ISSUED" ? "bg-white text-black border-zinc-300 font-semibold" :
                       doc.status === "OVERDUE" ? "bg-rose-50 border-rose-300 text-rose-700 font-semibold" :
                       "bg-zinc-50 text-zinc-400 border-zinc-200"
                     }`}>

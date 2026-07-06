@@ -46,7 +46,7 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
     const val = parseFloat(doc.grandTotal);
     if (doc.status === "PAID") {
       totalProcurementSpend += val;
-    } else if (doc.status === "SENT" || doc.status === "OVERDUE") {
+    } else if (doc.status === "ISSUED" || doc.status === "OVERDUE") {
       accountsPayableDebt += val;
     }
   });
@@ -172,7 +172,7 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
                   <td className="p-4 border-r border-zinc-200/80 text-center">
                     <span className={`border px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded ${
                       doc.status === "PAID" ? "bg-black text-white border-black" :
-                      doc.status === "SENT" ? "bg-white text-black border-zinc-300" :
+                      doc.status === "ISSUED" ? "bg-white text-black border-zinc-300" :
                       doc.status === "OVERDUE" ? "bg-rose-50 border-rose-300 text-rose-700" :
                       "bg-zinc-50 text-zinc-400 border-zinc-200"
                     }`}>

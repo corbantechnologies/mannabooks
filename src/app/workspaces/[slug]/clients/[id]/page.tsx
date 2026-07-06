@@ -50,7 +50,7 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
       } else if (doc.type === "INVOICE") {
         if (doc.status === "PAID") {
           acc.lifetimeValue += value;
-        } else if (doc.status === "SENT") {
+        } else if (doc.status === "ISSUED") {
           acc.outstandingLiability += value;
         } else if (doc.status === "OVERDUE") {
           acc.outstandingLiability += value;
@@ -196,7 +196,7 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
                   <td className="p-4 border-r border-zinc-200/80 text-center">
                     <span className={`border px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded ${
                       doc.status === "PAID" ? "bg-black text-white border-black" :
-                      doc.status === "SENT" ? "bg-white text-black border-zinc-300" :
+                      doc.status === "ISSUED" ? "bg-white text-black border-zinc-300" :
                       doc.status === "OVERDUE" ? "bg-rose-50 border-rose-300 text-rose-700" :
                       "bg-zinc-50 text-zinc-400 border-zinc-200"
                     }`}>

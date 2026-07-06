@@ -55,7 +55,28 @@ export async function inviteTeamMember(
                     from: process.env.RESEND_FROM_EMAIL,
                     to: normalizedEmail,
                     subject: `You've been added to ${shop.name} on Manna Books`,
-                    html: `<p>Hello!</p><p>You have been added to the workspace <b>${shop.name}</b> with the role of <b>${role}</b>.</p><p>Log in to your Manna Books account and use the workspace switcher to access it.</p>`
+                    html: `
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #18181b; background-color: #ffffff;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.05em;">MANNA BOOKS</h1>
+    </div>
+    
+    <div style="background-color: #fafafa; border: 1px solid #e4e4e7; border-radius: 12px; padding: 40px; text-align: center;">
+        <h2 style="font-size: 20px; font-weight: 600; margin-top: 0; margin-bottom: 16px;">Workspace Access Granted</h2>
+        <p style="font-size: 15px; line-height: 1.6; color: #52525b; margin-bottom: 24px;">
+            You have been added to the workspace <strong style="color: #18181b;">${shop.name}</strong> with the role of <strong style="color: #18181b;">${role}</strong>.
+        </p>
+        <p style="font-size: 15px; line-height: 1.6; color: #52525b; margin-bottom: 24px;">
+            Log in to your Manna Books account and use the workspace switcher to access it.
+        </p>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}" style="display: inline-block; background-color: #18181b; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 24px; border-radius: 6px;">Go to Dashboard</a>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #a1a1aa;">
+        <p>© ${new Date().getFullYear()} Manna Books. All rights reserved.</p>
+    </div>
+</div>
+`
                 });
             }
 
@@ -90,12 +111,31 @@ export async function inviteTeamMember(
             // Send invite email
             const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
             if (shop && process.env.RESEND_FROM_EMAIL) {
-                const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/register?invite=${token}`;
+                const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/signup?invite=${token}`;
                 await resend.emails.send({
                     from: process.env.RESEND_FROM_EMAIL,
                     to: normalizedEmail,
                     subject: `You've been invited to join ${shop.name} on Manna Books`,
-                    html: `<p>Hello!</p><p>You have been invited to join the workspace <b>${shop.name}</b> on Manna Books.</p><p><a href="${inviteUrl}">Click here to create your account and accept the invitation</a>.</p>`
+                    html: `
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #18181b; background-color: #ffffff;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.05em;">MANNA BOOKS</h1>
+    </div>
+    
+    <div style="background-color: #fafafa; border: 1px solid #e4e4e7; border-radius: 12px; padding: 40px; text-align: center;">
+        <h2 style="font-size: 20px; font-weight: 600; margin-top: 0; margin-bottom: 16px;">You've been invited!</h2>
+        <p style="font-size: 15px; line-height: 1.6; color: #52525b; margin-bottom: 24px;">
+            You have been invited to join the workspace <strong style="color: #18181b;">${shop.name}</strong> on Manna Books.
+        </p>
+        <a href="${inviteUrl}" style="display: inline-block; background-color: #18181b; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 24px; border-radius: 6px;">Accept Invitation</a>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #a1a1aa;">
+        <p>If you did not expect this invitation, you can safely ignore this email.</p>
+        <p>© ${new Date().getFullYear()} Manna Books. All rights reserved.</p>
+    </div>
+</div>
+`
                 });
             }
         }

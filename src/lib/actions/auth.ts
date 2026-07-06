@@ -91,6 +91,7 @@ interface RegisterOwnerInput {
     email: string;
     passwordHex: string;
     businessName: string;
+    inviteToken?: string;
 }
 
 export async function registerOwnerAccount(input: RegisterOwnerInput) {
@@ -149,11 +150,25 @@ export async function registerOwnerAccount(input: RegisterOwnerInput) {
             });
 
             // 6.5 Auto-accept pending invitations
-            const pendingInvites = await tx.query.shopInvitations.findMany({
+            let pendingInvites = await tx.query.shopInvitations.findMany({
                 where: eq(shopInvitations.email, input.email.toLowerCase().trim())
             });
 
-            const validInvites = pendingInvites.filter(inv => inv.status === 'PENDING');
+            // If an invite token was explicitly provided, also look for that specific invite
+            if (input.inviteToken) {
+                const tokenInvite = await tx.query.shopInvitations.findFirst({
+                    where: eq(shopInvitations.token, input.inviteToken)
+                });
+                
+                // If found and not already in the array, add it
+                if (tokenInvite && !pendingInvites.some(inv => inv.id === tokenInvite.id)) {
+                    pendingInvites.push(tokenInvite);
+                }
+            }
+
+            const validInvites = pendingInvites.filter(inv => 
+                inv.status === 'PENDING' && new Date(inv.expiresAt) > new Date()
+            );
 
             for (const invite of validInvites) {
                 // Add them to the invited workspace

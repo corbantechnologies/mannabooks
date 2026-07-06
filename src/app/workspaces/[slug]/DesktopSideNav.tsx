@@ -50,6 +50,15 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
           </Link>
         );
       })}
+      <div className="mt-8 pt-6 border-t border-zinc-200/80">
+        <Link
+          href="/workspaces"
+          className="px-3 py-2 border border-zinc-200 text-zinc-600 rounded transition-all block hover:border-black hover:bg-zinc-50 hover:text-black flex items-center gap-2"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"/></svg>
+          Switch Workspace
+        </Link>
+      </div>
     </nav>
   );
 }

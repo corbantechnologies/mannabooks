@@ -23,6 +23,7 @@ export const clientTypeEnum = pgEnum('client_type', ['WALK_IN', 'INDIVIDUAL', 'C
 export const userRoleEnum = pgEnum('user_role', ['OWNER', 'ADMIN', 'MANAGER', 'ACCOUNTANT', 'EMPLOYEE', 'VIEWER']);
 export const recurringIntervalEnum = pgEnum('recurring_interval', ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']);
 export const expenseCategoryEnum = pgEnum('expense_category', ['RENT', 'UTILITIES', 'FUEL', 'MARKETING', 'SALARIES', 'OFFICE_SUPPLIES', 'OTHER']);
+export const invitationStatusEnum = pgEnum('invitation_status', ['PENDING', 'ACCEPTED', 'REVOKED']);
 
 // ==========================================
 // 2. TABLES
@@ -211,6 +212,19 @@ export const expenses = pgTable('expenses', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// SHOP INVITATIONS TABLE (Pending Invites)
+export const shopInvitations = pgTable('shop_invitations', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    email: text('email').notNull(),
+    role: userRoleEnum('role').default('EMPLOYEE').notNull(),
+    customPermissions: text('custom_permissions').default('{}').notNull(),
+    token: varchar('token', { length: 64 }).notNull().unique(),
+    status: invitationStatusEnum('status').default('PENDING').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+});
+
 // ==========================================
 // 3. RELATIONS (For ORM Querying)
 // ==========================================
@@ -228,6 +242,7 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     suppliers: many(suppliers),
     documents: many(documents),
     expenses: many(expenses),
+    invitations: many(shopInvitations),
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
@@ -292,4 +307,8 @@ export const expensesRelations = relations(expenses, ({ one }) => ({
 
 export const employeesRelations = relations(employees, ({ one }) => ({
     shop: one(shops, { fields: [employees.shopId], references: [shops.id] }),
+}));
+
+export const shopInvitationsRelations = relations(shopInvitations, ({ one }) => ({
+    shop: one(shops, { fields: [shopInvitations.shopId], references: [shops.id] }),
 }));

@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { shopMembers, shops } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { shopMembers, shops, shopInvitations } from "@/db/schema";
+import { eq, desc, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { enforcePermission } from "@/lib/actions/rbac";
 import TeamManagementClient from "./TeamManagementClient";
@@ -34,6 +34,14 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
         orderBy: [desc(shopMembers.createdAt)]
     });
 
+    const pendingInvites = await db.query.shopInvitations.findMany({
+        where: and(
+            eq(shopInvitations.shopId, shop.id),
+            eq(shopInvitations.status, "PENDING")
+        ),
+        orderBy: [desc(shopInvitations.createdAt)]
+    });
+
     const members = membersRaw.map(m => ({
         id: m.id,
         userId: m.userId,
@@ -45,6 +53,13 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
         customPermissions: JSON.parse(m.customPermissions || "{}")
     }));
 
+    const safeInvites = pendingInvites.map(inv => ({
+        id: inv.id,
+        email: inv.email,
+        role: inv.role,
+        createdAt: inv.createdAt.toISOString(),
+    }));
+
     return (
         <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
@@ -54,7 +69,11 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
                 </div>
             </div>
 
-            <TeamManagementClient shopId={shop.id} initialMembers={members} />
+            <TeamManagementClient 
+                shopId={shop.id} 
+                initialMembers={members} 
+                initialInvites={safeInvites}
+            />
         </div>
     );
 }

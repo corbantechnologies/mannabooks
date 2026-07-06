@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { sessions, users, shops, shopMembers } from "@/db/schema";
+import { sessions, users, shops, shopMembers, shopInvitations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import crypto from "crypto";
@@ -147,6 +147,29 @@ export async function registerOwnerAccount(input: RegisterOwnerInput) {
                 role: "OWNER",
                 isActive: true,
             });
+
+            // 6.5 Auto-accept pending invitations
+            const pendingInvites = await tx.query.shopInvitations.findMany({
+                where: eq(shopInvitations.email, input.email.toLowerCase().trim())
+            });
+
+            const validInvites = pendingInvites.filter(inv => inv.status === 'PENDING');
+
+            for (const invite of validInvites) {
+                // Add them to the invited workspace
+                await tx.insert(shopMembers).values({
+                    shopId: invite.shopId,
+                    userId: newUser.id,
+                    role: invite.role,
+                    customPermissions: invite.customPermissions,
+                    isActive: true,
+                }).onConflictDoNothing();
+
+                // Update invite status
+                await tx.update(shopInvitations)
+                    .set({ status: 'ACCEPTED' })
+                    .where(eq(shopInvitations.id, invite.id));
+            }
 
             return {
                 success: true as const,

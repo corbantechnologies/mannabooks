@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { inviteTeamMember, removeTeamMember } from "@/lib/actions/team";
+import { inviteTeamMember, removeTeamMember, revokeInvitation } from "@/lib/actions/team";
 
 type Member = {
     id: string;
@@ -14,7 +14,14 @@ type Member = {
     customPermissions: Record<string, boolean>;
 };
 
-export default function TeamManagementClient({ shopId, initialMembers }: { shopId: string, initialMembers: Member[] }) {
+type Invite = {
+    id: string;
+    email: string;
+    role: string;
+    createdAt: string;
+};
+
+export default function TeamManagementClient({ shopId, initialMembers, initialInvites = [] }: { shopId: string, initialMembers: Member[], initialInvites?: Invite[] }) {
     const [isInviting, setIsInviting] = useState(false);
     const [email, setEmail] = useState("");
     const [role, setRole] = useState<"ADMIN" | "MANAGER" | "ACCOUNTANT" | "EMPLOYEE" | "VIEWER">("VIEWER");
@@ -55,6 +62,12 @@ export default function TeamManagementClient({ shopId, initialMembers }: { shopI
         if (!res.success) alert(res.error);
     }
 
+    async function handleRevoke(inviteId: string) {
+        if (!confirm("Are you sure you want to revoke this invitation?")) return;
+        const res = await revokeInvitation(shopId, inviteId);
+        if (!res.success) alert(res.error);
+    }
+
     return (
         <div>
             {isInviting ? (
@@ -81,7 +94,7 @@ export default function TeamManagementClient({ shopId, initialMembers }: { shopI
                                     required
                                     className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm"
                                 />
-                                <p className="text-[10px] text-zinc-500">User must already have a Manna Books account.</p>
+                                <p className="text-[10px] text-zinc-500">If they don't have an account, we'll email them an invite link.</p>
                             </div>
 
                             <div className="space-y-1.5">
@@ -179,6 +192,44 @@ export default function TeamManagementClient({ shopId, initialMembers }: { shopI
                     </tbody>
                 </table>
             </div>
+
+            {initialInvites.length > 0 && (
+                <div className="mt-8">
+                    <h3 className="font-bold text-black uppercase text-sm mb-4">Pending Invitations</h3>
+                    <div className="card-modern overflow-x-auto">
+                        <table className="w-full text-left font-mono text-xs border-collapse">
+                            <thead>
+                                <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+                                    <th className="p-4 border-r border-zinc-200">Email</th>
+                                    <th className="p-4 border-r border-zinc-200">Role</th>
+                                    <th className="p-4 border-r border-zinc-200">Sent On</th>
+                                    <th className="p-4 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-200/80 bg-white">
+                                {initialInvites.map(invite => (
+                                    <tr key={invite.id} className="hover:bg-zinc-50/80 transition-colors">
+                                        <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold text-black">{invite.email}</td>
+                                        <td className="p-4 border-r border-zinc-200/80">
+                                            <span className="inline-block px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider bg-zinc-100 text-zinc-800 uppercase">
+                                                {invite.role}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 border-r border-zinc-200/80 text-zinc-600">
+                                            {invite.createdAt.split('T')[0]}
+                                        </td>
+                                        <td className="p-4 text-center">
+                                            <button onClick={() => handleRevoke(invite.id)} className="text-amber-600 hover:text-amber-800 text-xs font-bold uppercase tracking-wider">
+                                                Revoke
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

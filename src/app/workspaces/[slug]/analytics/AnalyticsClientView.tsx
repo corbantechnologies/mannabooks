@@ -126,10 +126,10 @@ export function AnalyticsClientView({ shopId, shopSlug, initialData }: Analytics
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-emerald-200/60">
           <div>
             <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans flex items-center gap-2">
-              📈 COGS &amp; Gross Profit Intelligence
+              📈 COGS, Expenses &amp; Net Profit Intelligence
             </h2>
             <p className="font-sans text-xs text-zinc-500 mt-0.5">
-              Profitability analysis based on product cost prices vs. selling prices.
+              Comprehensive profitability analysis including cost of goods and operational expenses.
             </p>
           </div>
           <div className={`shrink-0 px-4 py-2 text-xs font-bold uppercase rounded-lg font-mono ${
@@ -141,7 +141,7 @@ export function AnalyticsClientView({ shopId, shopSlug, initialData }: Analytics
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-white border border-emerald-200 rounded-lg p-4 space-y-1">
             <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Total Sales Revenue</span>
             <span className="text-lg font-bold text-black block font-sans">{formatCurrency(data.totalSettledInflow, data.currency)}</span>
@@ -149,16 +149,30 @@ export function AnalyticsClientView({ shopId, shopSlug, initialData }: Analytics
           </div>
 
           <div className="bg-white border border-emerald-200 rounded-lg p-4 space-y-1">
-            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Total COGS (Cost of Goods)</span>
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Total COGS</span>
             <span className="text-lg font-bold text-rose-700 block font-sans">{formatCurrency(data.totalCostOfGoodsSold, data.currency)}</span>
-            <span className="text-[9px] text-zinc-500 block">Direct cost of production / purchase</span>
+            <span className="text-[9px] text-zinc-500 block">Cost of production/purchase</span>
           </div>
 
           <div className="bg-white border border-emerald-200 rounded-lg p-4 space-y-1">
-            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Net Gross Operating Profit</span>
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Gross Operating Profit</span>
             <span className={`text-lg font-bold block font-sans ${profitColor}`}>{formatCurrency(data.netGrossProfit, data.currency)}</span>
             <span className={`text-[9px] font-bold block ${profitColor}`}>
-              {data.grossProfitMargin >= 0 ? "Profit (Revenue − COGS)" : "Operating Loss"}
+              {data.grossProfitMargin >= 0 ? "Revenue − COGS" : "Operating Loss"}
+            </span>
+          </div>
+
+          <div className="bg-white border border-emerald-200 rounded-lg p-4 space-y-1">
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Operating Expenses</span>
+            <span className="text-lg font-bold text-rose-700 block font-sans">{formatCurrency(data.totalOperatingExpenses, data.currency)}</span>
+            <span className="text-[9px] text-zinc-500 block">Rent, salaries, utilities, etc.</span>
+          </div>
+
+          <div className="bg-black border border-black rounded-lg p-4 space-y-1 shadow-md">
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Net Operating Profit</span>
+            <span className={`text-xl font-black block font-sans ${data.netOperatingProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{formatCurrency(data.netOperatingProfit, data.currency)}</span>
+            <span className="text-[9px] font-bold text-zinc-300 block">
+              The absolute bottom line
             </span>
           </div>
         </div>

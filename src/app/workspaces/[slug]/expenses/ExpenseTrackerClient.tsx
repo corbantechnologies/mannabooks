@@ -238,56 +238,54 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                 </div>
             )}
 
-            <div className="bg-white border border-zinc-200/80 rounded-xl shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-zinc-50 border-b border-zinc-200/80 text-xs text-zinc-500 uppercase tracking-wider font-bold">
-                                <th className="p-4">Date</th>
-                                <th className="p-4">Description</th>
-                                <th className="p-4">Category</th>
-                                <th className="p-4">Receipt</th>
-                                <th className="p-4 text-right">Amount</th>
-                                <th className="p-4 text-right">Actions</th>
+            <div className="card-modern overflow-x-auto">
+                <table className="w-full text-left font-mono text-xs border-collapse">
+                    <thead>
+                        <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+                            <th className="p-4 border-r border-zinc-200">Date</th>
+                            <th className="p-4 border-r border-zinc-200">Description</th>
+                            <th className="p-4 border-r border-zinc-200">Category</th>
+                            <th className="p-4 border-r border-zinc-200">Receipt</th>
+                            <th className="p-4 border-r border-zinc-200 text-right">Amount</th>
+                            <th className="p-4 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-200/80 bg-white">
+                        {initialExpenses.map(expense => (
+                            <tr key={expense.id} className="hover:bg-zinc-50/80 transition-colors">
+                                <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-black">{new Date(expense.expenseDate).toLocaleDateString()}</td>
+                                <td className="p-4 border-r border-zinc-200/80 text-zinc-600">{expense.description}</td>
+                                <td className="p-4 border-r border-zinc-200/80">
+                                    <span className="inline-block px-2 py-1 bg-zinc-100 text-zinc-800 rounded text-[10px] font-bold tracking-wider uppercase">
+                                        {expense.category}
+                                    </span>
+                                </td>
+                                <td className="p-4 border-r border-zinc-200/80">
+                                    {expense.receiptUrl ? (
+                                        <a href={expense.receiptUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-semibold underline underline-offset-2">
+                                            View Receipt
+                                        </a>
+                                    ) : (
+                                        <span className="text-zinc-400 italic">No receipt</span>
+                                    )}
+                                </td>
+                                <td className="p-4 border-r border-zinc-200/80 text-right font-black text-sm text-black">
+                                    {formatCurrency(parseFloat(expense.amount), expense.currency)}
+                                </td>
+                                <td className="p-4 text-center">
+                                    <button onClick={() => handleDelete(expense.id)} className="text-rose-500 hover:text-rose-700 text-xs font-bold uppercase tracking-wider">
+                                        Delete
+                                    </button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody className="divide-y divide-zinc-100">
-                            {initialExpenses.map(expense => (
-                                <tr key={expense.id} className="hover:bg-zinc-50 transition-colors">
-                                    <td className="p-4 text-sm text-zinc-600 font-mono">{new Date(expense.expenseDate).toLocaleDateString()}</td>
-                                    <td className="p-4 font-bold text-sm text-black">{expense.description}</td>
-                                    <td className="p-4">
-                                        <span className="inline-block px-2 py-1 bg-zinc-100 text-zinc-800 rounded text-[10px] font-bold tracking-wider uppercase">
-                                            {expense.category}
-                                        </span>
-                                    </td>
-                                    <td className="p-4">
-                                        {expense.receiptUrl ? (
-                                            <a href={expense.receiptUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 text-xs font-semibold underline underline-offset-2">
-                                                View Receipt
-                                            </a>
-                                        ) : (
-                                            <span className="text-zinc-400 text-xs italic">No receipt</span>
-                                        )}
-                                    </td>
-                                    <td className="p-4 text-right font-black text-sm text-black">
-                                        {formatCurrency(parseFloat(expense.amount), expense.currency)}
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <button onClick={() => handleDelete(expense.id)} className="text-rose-500 hover:text-rose-700 text-xs font-bold uppercase tracking-wider">
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {initialExpenses.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} className="p-8 text-center text-sm text-zinc-500 font-mono">No expenses logged yet.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                        ))}
+                        {initialExpenses.length === 0 && (
+                            <tr>
+                                <td colSpan={6} className="p-8 text-center text-sm text-zinc-500 font-mono">No expenses logged yet.</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
         </div>
     );

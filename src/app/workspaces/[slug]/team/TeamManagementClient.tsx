@@ -138,48 +138,46 @@ export default function TeamManagementClient({ shopId, initialMembers }: { shopI
                 </div>
             )}
 
-            <div className="bg-white border border-zinc-200/80 rounded-xl shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-zinc-50 border-b border-zinc-200/80 text-xs text-zinc-500 uppercase tracking-wider font-bold">
-                                <th className="p-4">Name</th>
-                                <th className="p-4">Email</th>
-                                <th className="p-4">Role</th>
-                                <th className="p-4 text-right">Actions</th>
+            <div className="card-modern overflow-x-auto">
+                <table className="w-full text-left font-mono text-xs border-collapse">
+                    <thead>
+                        <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+                            <th className="p-4 border-r border-zinc-200">Name</th>
+                            <th className="p-4 border-r border-zinc-200">Email</th>
+                            <th className="p-4 border-r border-zinc-200">Role</th>
+                            <th className="p-4 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-200/80 bg-white">
+                        {initialMembers.map(member => (
+                            <tr key={member.id} className="hover:bg-zinc-50/80 transition-colors">
+                                <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-black">{member.name}</td>
+                                <td className="p-4 border-r border-zinc-200/80 text-zinc-600">{member.email}</td>
+                                <td className="p-4 border-r border-zinc-200/80">
+                                    <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider ${
+                                        member.role === 'OWNER' ? 'bg-black text-white' : 
+                                        member.role === 'EMPLOYEE' ? 'bg-blue-100 text-blue-800' :
+                                        'bg-zinc-100 text-zinc-800'
+                                    }`}>
+                                        {member.role}
+                                    </span>
+                                </td>
+                                <td className="p-4 text-center">
+                                    {member.role !== 'OWNER' && (
+                                        <button onClick={() => handleRemove(member.id)} className="text-rose-500 hover:text-rose-700 text-xs font-bold uppercase tracking-wider">
+                                            Remove
+                                        </button>
+                                    )}
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody className="divide-y divide-zinc-100">
-                            {initialMembers.map(member => (
-                                <tr key={member.id} className="hover:bg-zinc-50 transition-colors">
-                                    <td className="p-4 font-bold text-sm text-black">{member.name}</td>
-                                    <td className="p-4 text-sm text-zinc-600 font-mono">{member.email}</td>
-                                    <td className="p-4">
-                                        <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider ${
-                                            member.role === 'OWNER' ? 'bg-black text-white' : 
-                                            member.role === 'EMPLOYEE' ? 'bg-blue-100 text-blue-800' :
-                                            'bg-zinc-100 text-zinc-800'
-                                        }`}>
-                                            {member.role}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        {member.role !== 'OWNER' && (
-                                            <button onClick={() => handleRemove(member.id)} className="text-rose-500 hover:text-rose-700 text-xs font-bold uppercase tracking-wider">
-                                                Remove
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                            {initialMembers.length === 0 && (
-                                <tr>
-                                    <td colSpan={4} className="p-8 text-center text-sm text-zinc-500 font-mono">No team members found.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                        ))}
+                        {initialMembers.length === 0 && (
+                            <tr>
+                                <td colSpan={4} className="p-8 text-center text-sm text-zinc-500 font-mono">No team members found.</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
         </div>
     );

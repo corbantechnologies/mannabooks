@@ -5,9 +5,11 @@ import { redirect } from "next/navigation";
 import { enforcePermission } from "@/lib/actions/rbac";
 import TeamManagementClient from "./TeamManagementClient";
 
-export default async function TeamPage({ params }: { params: { slug: string } }) {
+export default async function TeamPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+
     const shop = await db.query.shops.findFirst({
-        where: eq(shops.slug, params.slug)
+        where: eq(shops.slug, slug)
     });
 
     if (!shop) {
@@ -19,9 +21,9 @@ export default async function TeamPage({ params }: { params: { slug: string } })
     try {
         await enforcePermission(shop.id, "manage_team");
         canManageTeam = true;
-    } catch {
-        // If they can't manage team, redirect them to dashboard (or show a permission denied UI)
-        redirect(`/workspaces/${params.slug}`);
+    } catch (error) {
+        console.error("Permission check failed:", error);
+        redirect(`/workspaces/${slug}`);
     }
 
     const membersRaw = await db.query.shopMembers.findMany({
@@ -44,11 +46,11 @@ export default async function TeamPage({ params }: { params: { slug: string } })
     }));
 
     return (
-        <div className="space-y-6 max-w-5xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
                 <div>
-                    <h1 className="text-2xl font-black tracking-tight text-black">Team Management</h1>
-                    <p className="text-sm text-zinc-500 font-mono mt-1">Manage workspace roles and granular permissions.</p>
+                    <span className="font-mono text-xs text-zinc-400 font-semibold">SYSTEM_SECURITY // ROLE_ACCESS_CONTROL</span>
+                    <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Team Management</h1>
                 </div>
             </div>
 

@@ -15,6 +15,8 @@ type Expense = {
     category: string;
     expenseDate: string;
     receiptUrl: string | null;
+    paymentChannel: string | null;
+    paymentReference: string | null;
 };
 
 export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpenses }: { shopId: string, shopCurrency: string, initialExpenses: Expense[] }) {
@@ -24,6 +26,8 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
     const [amount, setAmount] = useState("");
     const [category, setCategory] = useState<ExpenseCategory>("OTHER");
     const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
+    const [paymentChannel, setPaymentChannel] = useState("");
+    const [paymentReference, setPaymentReference] = useState("");
     const [receiptUrl, setReceiptUrl] = useState("");
 
     const [status, setStatus] = useState<"IDLE" | "LOADING" | "ERROR">("IDLE");
@@ -87,6 +91,8 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
             category,
             expenseDate: new Date(expenseDate),
             currency: shopCurrency,
+            paymentChannel: paymentChannel || undefined,
+            paymentReference: paymentReference || undefined,
             receiptUrl: receiptUrl || undefined
         });
 
@@ -95,6 +101,8 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
             setDescription("");
             setAmount("");
             setCategory("OTHER");
+            setPaymentChannel("");
+            setPaymentReference("");
             setReceiptUrl("");
             setIsAdding(false);
             setStatus("IDLE");
@@ -183,6 +191,34 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                                     className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm"
                                 />
                             </div>
+
+                            <div className="space-y-1.5">
+                                <label className="block text-xs font-bold text-black uppercase">Payment Mode</label>
+                                <select
+                                    value={paymentChannel}
+                                    onChange={(e) => setPaymentChannel(e.target.value)}
+                                    className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm"
+                                >
+                                    <option value="">-- Select Mode --</option>
+                                    <option value="BANK_TRANSFER">Bank Transfer</option>
+                                    <option value="MPESA">M-Pesa / Mobile Money</option>
+                                    <option value="CASH">Cash</option>
+                                    <option value="CHEQUE">Cheque</option>
+                                    <option value="CREDIT_CARD">Credit / Debit Card</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="block text-xs font-bold text-black uppercase">Transaction Reference (Optional)</label>
+                                <input
+                                    type="text"
+                                    value={paymentReference}
+                                    onChange={(e) => setPaymentReference(e.target.value)}
+                                    placeholder="e.g. QAB71239X"
+                                    className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm"
+                                />
+                            </div>
                         </div>
 
                         <div className="pt-2">
@@ -245,6 +281,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                             <th className="p-4 border-r border-zinc-200">Date</th>
                             <th className="p-4 border-r border-zinc-200">Description</th>
                             <th className="p-4 border-r border-zinc-200">Category</th>
+                            <th className="p-4 border-r border-zinc-200">Payment</th>
                             <th className="p-4 border-r border-zinc-200">Receipt</th>
                             <th className="p-4 border-r border-zinc-200 text-right">Amount</th>
                             <th className="p-4 text-center">Actions</th>
@@ -253,12 +290,22 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                     <tbody className="divide-y divide-zinc-200/80 bg-white">
                         {initialExpenses.map(expense => (
                             <tr key={expense.id} className="hover:bg-zinc-50/80 transition-colors">
-                                <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-black">{new Date(expense.expenseDate).toLocaleDateString()}</td>
+                                <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-black">{expense.expenseDate.split('T')[0]}</td>
                                 <td className="p-4 border-r border-zinc-200/80 text-zinc-600">{expense.description}</td>
                                 <td className="p-4 border-r border-zinc-200/80">
                                     <span className="inline-block px-2 py-1 bg-zinc-100 text-zinc-800 rounded text-[10px] font-bold tracking-wider uppercase">
                                         {expense.category}
                                     </span>
+                                </td>
+                                <td className="p-4 border-r border-zinc-200/80">
+                                    {expense.paymentChannel ? (
+                                        <div>
+                                            <span className="block text-xs font-bold text-black">{expense.paymentChannel.replace('_', ' ')}</span>
+                                            {expense.paymentReference && <span className="block text-[10px] font-mono text-zinc-500 mt-0.5">{expense.paymentReference}</span>}
+                                        </div>
+                                    ) : (
+                                        <span className="text-zinc-400 text-xs italic">—</span>
+                                    )}
                                 </td>
                                 <td className="p-4 border-r border-zinc-200/80">
                                     {expense.receiptUrl ? (
@@ -281,7 +328,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                         ))}
                         {initialExpenses.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="p-8 text-center text-sm text-zinc-500 font-mono">No expenses logged yet.</td>
+                                <td colSpan={7} className="p-8 text-center text-sm text-zinc-500 font-mono">No expenses logged yet.</td>
                             </tr>
                         )}
                     </tbody>

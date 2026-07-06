@@ -37,7 +37,9 @@ export default async function ExpensesPage({ params }: { params: Promise<{ slug:
         currency: e.currency,
         category: e.category,
         expenseDate: e.expenseDate.toISOString(),
-        receiptUrl: e.receiptUrl
+        receiptUrl: e.receiptUrl,
+        paymentChannel: e.paymentChannel,
+        paymentReference: e.paymentReference
     }));
 
     return (

@@ -205,6 +205,8 @@ export const expenses = pgTable('expenses', {
     currency: varchar('currency', { length: 3 }).default('KES').notNull(),
     category: expenseCategoryEnum('category').default('OTHER').notNull(),
     expenseDate: timestamp('expense_date').notNull(),
+    paymentChannel: varchar('payment_channel', { length: 50 }), // e.g. BANK, MPESA, CASH, CHEQUE, OTHER
+    paymentReference: varchar('payment_reference', { length: 100 }),
     receiptUrl: text('receipt_url'), // Cloudinary URL for attached receipt
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });

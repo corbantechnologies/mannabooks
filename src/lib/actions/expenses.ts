@@ -10,7 +10,7 @@ type ExpenseCategory = 'RENT' | 'UTILITIES' | 'FUEL' | 'MARKETING' | 'SALARIES' 
 
 export async function createExpense(
     shopId: string, 
-    data: { description: string, amount: number, category: ExpenseCategory, expenseDate: Date, receiptUrl?: string, currency?: string }
+    data: { description: string, amount: number, category: ExpenseCategory, expenseDate: Date, receiptUrl?: string, currency?: string, paymentChannel?: string, paymentReference?: string }
 ) {
     try {
         await enforcePermission(shopId, "manage_expenses");
@@ -22,7 +22,9 @@ export async function createExpense(
             category: data.category,
             expenseDate: data.expenseDate,
             receiptUrl: data.receiptUrl || null,
-            currency: data.currency || "KES"
+            currency: data.currency || "KES",
+            paymentChannel: data.paymentChannel || null,
+            paymentReference: data.paymentReference || null
         }).returning();
 
         revalidatePath(`/workspaces/${shopId}/expenses`);

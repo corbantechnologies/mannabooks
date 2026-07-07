@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { documents, documentItems, clients, suppliers, products, shops, expenses } from "@/db/schema";
 import { eq, and, desc, gte, lte } from "drizzle-orm";
 import { calculateDocumentTotals } from "@/lib/utils";
+import { getFiscalQuarterRange, getFiscalYearRange } from "@/lib/fiscalYear";
 
 export type TimeframeFilter = "THIS_MONTH" | "LAST_MONTH" | "THIS_QUARTER" | "THIS_YEAR" | "ALL_TIME";
 
@@ -88,6 +89,8 @@ export async function getWorkspaceAnalyticsData(
     let startDate: Date | undefined;
     let endDate: Date | undefined;
 
+    const fyStartMonth = shop.fiscalYearStartMonth || 1;
+
     if (timeframe === "THIS_MONTH") {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
       endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
@@ -95,12 +98,13 @@ export async function getWorkspaceAnalyticsData(
       startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
     } else if (timeframe === "THIS_QUARTER") {
-      const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
-      startDate = new Date(now.getFullYear(), quarterMonth, 1);
-      endDate = new Date(now.getFullYear(), quarterMonth + 3, 0, 23, 59, 59);
+      const { start, end } = getFiscalQuarterRange(fyStartMonth);
+      startDate = start;
+      endDate = end;
     } else if (timeframe === "THIS_YEAR") {
-      startDate = new Date(now.getFullYear(), 0, 1);
-      endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+      const { start, end } = getFiscalYearRange(fyStartMonth);
+      startDate = start;
+      endDate = end;
     }
 
     // 2. Query All Workspace Documents

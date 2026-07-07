@@ -45,6 +45,7 @@ export default async function WorkspaceAnalyticsPage({ params }: AnalyticsPagePr
       <AnalyticsClientView
         shopId={shop.id}
         shopSlug={slug}
+        fiscalYearStartMonth={shop.fiscalYearStartMonth}
         initialData={analyticsRes.data}
       />
     </div>

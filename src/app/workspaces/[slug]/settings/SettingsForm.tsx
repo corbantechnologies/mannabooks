@@ -26,6 +26,7 @@ interface SettingsFormProps {
   initialTaxPin: string;
   initialIsVatRegistered: boolean;
   initialCurrency: string;
+  initialFiscalYearStartMonth: number;
   paymentMethods: PaymentMethod[];
 }
 
@@ -51,6 +52,7 @@ export function SettingsForm({
   initialTaxPin,
   initialIsVatRegistered,
   initialCurrency,
+  initialFiscalYearStartMonth = 1,
   paymentMethods: initialMethods,
 }: SettingsFormProps) {
   const router = useRouter();
@@ -65,6 +67,7 @@ export function SettingsForm({
   const [taxPin, setTaxPin] = useState(initialTaxPin);
   const [isVatRegistered, setIsVatRegistered] = useState(initialIsVatRegistered);
   const [currency, setCurrency] = useState(initialCurrency);
+  const [fiscalYearStartMonth, setFiscalYearStartMonth] = useState(initialFiscalYearStartMonth);
   const [saving, setSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -117,6 +120,7 @@ export function SettingsForm({
       taxPin,
       isVatRegistered,
       currency,
+      fiscalYearStartMonth,
     });
     setSaving(false);
     if (res.success) {
@@ -424,6 +428,32 @@ export function SettingsForm({
               className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 uppercase rounded text-xs font-mono"
             />
           </div>
+        </div>
+
+        {/* FISCAL YEAR SETTING */}
+        <div className="border border-zinc-200 p-4 bg-zinc-50/50 rounded space-y-3">
+          <span className="font-semibold uppercase text-black text-xs block">Fiscal Year Start Month</span>
+          <span className="text-[10px] text-zinc-500 font-sans normal-case block">
+            Defines the start of your 12-month accounting cycle. Used for analytics and invoice serial numbering.
+          </span>
+          <select
+            value={fiscalYearStartMonth}
+            onChange={(e) => setFiscalYearStartMonth(parseInt(e.target.value))}
+            className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
+          >
+            <option value={1}>January (Calendar Year default)</option>
+            <option value={2}>February</option>
+            <option value={3}>March</option>
+            <option value={4}>April</option>
+            <option value={5}>May</option>
+            <option value={6}>June</option>
+            <option value={7}>July (Government of Kenya standard)</option>
+            <option value={8}>August</option>
+            <option value={9}>September</option>
+            <option value={10}>October</option>
+            <option value={11}>November</option>
+            <option value={12}>December</option>
+          </select>
         </div>
 
         <div className="border-t border-dashed border-zinc-200 pt-4 flex items-start gap-3">

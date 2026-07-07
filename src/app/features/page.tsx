@@ -66,10 +66,13 @@ export default function FeaturesPage() {
               { href: "#invoicing", label: "Invoicing & eTIMS" },
               { href: "#inventory", label: "Smart Inventory" },
               { href: "#payroll", label: "Statutory Payroll" },
+              { href: "#expenses", label: "Expenses" },
+              { href: "#crm", label: "CRM" },
               { href: "#vat", label: "20th VAT Tracker" },
               { href: "#pdf-engine", label: "Vector PDF" },
               { href: "#portals", label: "Passwordless Portals" },
               { href: "#analytics", label: "A/R & Analytics" },
+              { href: "#team", label: "Team Management" },
             ].map((link) => (
               <a key={link.href} href={link.href} className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase">
                 {link.label}
@@ -307,24 +310,117 @@ export default function FeaturesPage() {
             </div>
           </div>
 
+          {/* MODULE 8: CRM — CLIENT & SUPPLIER NETWORK */}
+          <div id="crm" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 08</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                CRM — Client &amp; Supplier Relationship Hub
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Maintain a structured directory of all clients and suppliers. Track corporate and individual profiles, KRA PINs, and payment references for seamless billing and procurement.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Client Profiles", body: "Maintain individual and corporate client profiles with KRA PINs, contact details, and billing address. Tag clients as Walk-in, Individual, or Corporate for document context." },
+                { title: "Supplier Network", body: "Build a structured supplier directory. Reference suppliers on Purchase Orders, LPOs, and GRNs. Track outstanding procurement obligations against each vendor." },
+                { title: "Client Lifetime Value", body: "The analytics engine automatically computes each client's lifetime revenue contribution and ranks them by LTV — so you always know your most valuable relationships." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 9: OPERATING EXPENSES */}
+          <div id="expenses" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 09</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Operating Expenses Tracker
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Log and categorize all business operating expenses. Track spend across Rent, Utilities, Fuel, Marketing, Salaries, and custom categories — with full payment audit trails.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Categorized Spend Tracking", body: "Log expenses under predefined categories: Rent, Utilities, Fuel, Marketing, Salaries, Office Supplies, and a custom Other bucket — keeping your P&L organized." },
+                { title: "Payment Method & Reference", body: "Record the payment mode (M-Pesa, Cash, Bank Transfer, Card) and transaction reference number for every expense — creating a complete audit trail for accountants." },
+                { title: "Expense Analytics", body: "Expenses feed directly into the analytics dashboard, showing total operating costs alongside gross revenue and profit — giving you a true picture of net operating income." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 10: TEAM MANAGEMENT */}
+          <div id="team" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-emerald-700 text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 10</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Team Management &amp; RBAC
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Invite your accountants, managers, and staff into your workspace with role-based access control. Each role has granular permission scopes so team members only see what they need to.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Role-Based Access (RBAC)", body: "Assign roles: Owner, Admin, Manager, Accountant, Employee, or Viewer. Each role carries pre-defined permission scopes enforced server-side on every action." },
+                { title: "Email Invitation System", body: "Invite team members by email. New users receive a branded onboarding email with a secure invite link. Existing Manna Books users are added instantly to your workspace." },
+                { title: "Invitation History & Audit", body: "Track the full invitation lifecycle: Pending, Accepted, and Revoked. Revoke access at any time. A complete audit trail is maintained for compliance." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </section>
 
         {/* CTA BANNER */}
-        <section className="border-t border-zinc-200/80 bg-zinc-950 text-white py-20 px-6 text-center space-y-6">
-          <div className="max-w-2xl mx-auto space-y-5">
-            <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest font-semibold block">Get Started</span>
-            <h2 className="text-2xl sm:text-4xl font-bold uppercase tracking-tight font-sans">
-              Every module. One workspace.
+        <section className="relative border-t border-zinc-200/80 bg-zinc-950 text-white py-24 px-6 overflow-hidden">
+          {/* Subtle background glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+
+          <div className="relative max-w-3xl mx-auto text-center space-y-6">
+            <span className="font-mono text-[10px] text-emerald-400 uppercase tracking-widest font-semibold bg-emerald-950/80 border border-emerald-800/50 px-3.5 py-1 rounded-full inline-block">
+              GET STARTED NOW
+            </span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold uppercase tracking-tight font-sans max-w-2xl mx-auto leading-tight">
+              Every module. <br className="sm:hidden" />
+              <span className="text-zinc-400">One workspace.</span>
             </h2>
-            <p className="text-sm text-zinc-400 font-sans leading-relaxed">
+            <p className="text-sm text-zinc-400 font-sans leading-relaxed max-w-xl mx-auto">
               Initialize your Manna Books workspace in under 3 minutes. POS, eTIMS invoicing, statutory payroll, inventory tracking, and analytics — all ready out of the box.
             </p>
-            <div className="pt-2 flex flex-col sm:flex-row gap-4 justify-center font-mono text-xs">
-              <Link href="/signup" className="btn-primary-modern bg-white text-black hover:bg-zinc-100 px-10 py-4 text-xs font-bold uppercase tracking-wider inline-block">
-                Initialize Your Workspace →
+            <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center items-center font-mono text-xs">
+              <Link 
+                href="/signup" 
+                className="w-full sm:w-auto bg-white text-zinc-950 hover:bg-zinc-100 px-8 py-3.5 text-xs font-bold uppercase tracking-wider rounded-md transition-all shadow-md text-center hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Initialize Your Workspace &rarr;
               </Link>
-              <Link href="/guide" className="border border-zinc-700 text-zinc-300 hover:border-white hover:text-white px-10 py-4 text-xs font-semibold uppercase tracking-wider inline-block rounded transition-all">
-                Read the Operator Guide
+              <Link 
+                href="/pricing" 
+                className="w-full sm:w-auto border border-zinc-800 bg-zinc-900/50 text-zinc-300 hover:border-zinc-500 hover:text-white px-8 py-3.5 text-xs font-semibold uppercase tracking-wider rounded-md transition-all text-center hover:scale-[1.02] active:scale-[0.98]"
+              >
+                View Pricing
+              </Link>
+              <Link 
+                href="/contact" 
+                className="w-full sm:w-auto border border-zinc-800 bg-zinc-900/50 text-zinc-300 hover:border-zinc-500 hover:text-white px-8 py-3.5 text-xs font-semibold uppercase tracking-wider rounded-md transition-all text-center hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Contact Sales
               </Link>
             </div>
           </div>

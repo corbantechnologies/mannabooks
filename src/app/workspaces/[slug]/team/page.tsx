@@ -34,11 +34,8 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
         orderBy: [desc(shopMembers.createdAt)]
     });
 
-    const pendingInvites = await db.query.shopInvitations.findMany({
-        where: and(
-            eq(shopInvitations.shopId, shop.id),
-            eq(shopInvitations.status, "PENDING")
-        ),
+    const allInvites = await db.query.shopInvitations.findMany({
+        where: eq(shopInvitations.shopId, shop.id),
         orderBy: [desc(shopInvitations.createdAt)]
     });
 
@@ -53,10 +50,11 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
         customPermissions: JSON.parse(m.customPermissions || "{}")
     }));
 
-    const safeInvites = pendingInvites.map(inv => ({
+    const safeInvites = allInvites.map(inv => ({
         id: inv.id,
         email: inv.email,
         role: inv.role,
+        status: inv.status,
         createdAt: inv.createdAt.toISOString(),
     }));
 

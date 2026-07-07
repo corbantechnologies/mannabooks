@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { inviteTeamMember, removeTeamMember, revokeInvitation } from "@/lib/actions/team";
+import { toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 type Member = {
     id: string;
@@ -18,10 +20,12 @@ type Invite = {
     id: string;
     email: string;
     role: string;
+    status: string;
     createdAt: string;
 };
 
 export default function TeamManagementClient({ shopId, initialMembers, initialInvites = [] }: { shopId: string, initialMembers: Member[], initialInvites?: Invite[] }) {
+    const router = useRouter();
     const [isInviting, setIsInviting] = useState(false);
     const [email, setEmail] = useState("");
     const [role, setRole] = useState<"ADMIN" | "MANAGER" | "ACCOUNTANT" | "EMPLOYEE" | "VIEWER">("VIEWER");
@@ -56,16 +60,68 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
         }
     }
 
-    async function handleRemove(memberId: string) {
-        if (!confirm("Are you sure you want to remove this user from the workspace?")) return;
-        const res = await removeTeamMember(shopId, memberId);
-        if (!res.success) alert(res.error);
+    function handleRemove(memberId: string) {
+        toast((t) => (
+            <div className="flex flex-col gap-3 font-mono text-xs">
+                <span className="font-semibold uppercase tracking-tight text-black">Remove this member?</span>
+                <div className="flex gap-2">
+                    <button 
+                        className="bg-black text-white px-3 py-1.5 rounded font-bold uppercase tracking-wider"
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            const toastId = toast.loading("Removing member...");
+                            const res = await removeTeamMember(shopId, memberId);
+                            if (!res.success) {
+                                toast.error(res.error || "Failed to remove member.", { id: toastId });
+                            } else {
+                                toast.success("Member removed successfully.", { id: toastId });
+                                router.refresh();
+                            }
+                        }}
+                    >
+                        Confirm
+                    </button>
+                    <button 
+                        className="bg-zinc-200 text-zinc-800 px-3 py-1.5 rounded font-bold uppercase tracking-wider"
+                        onClick={() => toast.dismiss(t.id)}
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000, position: 'top-center' });
     }
 
-    async function handleRevoke(inviteId: string) {
-        if (!confirm("Are you sure you want to revoke this invitation?")) return;
-        const res = await revokeInvitation(shopId, inviteId);
-        if (!res.success) alert(res.error);
+    function handleRevoke(inviteId: string) {
+        toast((t) => (
+            <div className="flex flex-col gap-3 font-mono text-xs">
+                <span className="font-semibold uppercase tracking-tight text-black">Revoke this invitation?</span>
+                <div className="flex gap-2">
+                    <button 
+                        className="bg-amber-600 text-white px-3 py-1.5 rounded font-bold uppercase tracking-wider"
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            const toastId = toast.loading("Revoking invitation...");
+                            const res = await revokeInvitation(shopId, inviteId);
+                            if (!res.success) {
+                                toast.error(res.error || "Failed to revoke invitation.", { id: toastId });
+                            } else {
+                                toast.success("Invitation revoked successfully.", { id: toastId });
+                                router.refresh();
+                            }
+                        }}
+                    >
+                        Revoke
+                    </button>
+                    <button 
+                        className="bg-zinc-200 text-zinc-800 px-3 py-1.5 rounded font-bold uppercase tracking-wider"
+                        onClick={() => toast.dismiss(t.id)}
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000, position: 'top-center' });
     }
 
     return (
@@ -195,13 +251,14 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
 
             {initialInvites.length > 0 && (
                 <div className="mt-8">
-                    <h3 className="font-bold text-black uppercase text-sm mb-4">Pending Invitations</h3>
+                    <h3 className="font-bold text-black uppercase text-sm mb-4">Invitation History</h3>
                     <div className="card-modern overflow-x-auto">
                         <table className="w-full text-left font-mono text-xs border-collapse">
                             <thead>
                                 <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
                                     <th className="p-4 border-r border-zinc-200">Email</th>
                                     <th className="p-4 border-r border-zinc-200">Role</th>
+                                    <th className="p-4 border-r border-zinc-200">Status</th>
                                     <th className="p-4 border-r border-zinc-200">Sent On</th>
                                     <th className="p-4 text-center">Actions</th>
                                 </tr>
@@ -215,13 +272,26 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
                                                 {invite.role}
                                             </span>
                                         </td>
+                                        <td className="p-4 border-r border-zinc-200/80">
+                                            <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${
+                                                invite.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-800' :
+                                                invite.status === 'REVOKED' ? 'bg-rose-100 text-rose-800' :
+                                                'bg-amber-100 text-amber-800'
+                                            }`}>
+                                                {invite.status}
+                                            </span>
+                                        </td>
                                         <td className="p-4 border-r border-zinc-200/80 text-zinc-600">
                                             {invite.createdAt.split('T')[0]}
                                         </td>
                                         <td className="p-4 text-center">
-                                            <button onClick={() => handleRevoke(invite.id)} className="text-amber-600 hover:text-amber-800 text-xs font-bold uppercase tracking-wider">
-                                                Revoke
-                                            </button>
+                                            {invite.status === 'PENDING' ? (
+                                                <button onClick={() => handleRevoke(invite.id)} className="text-amber-600 hover:text-amber-800 text-xs font-bold uppercase tracking-wider">
+                                                    Revoke
+                                                </button>
+                                            ) : (
+                                                <span className="text-zinc-400 text-xs font-bold uppercase tracking-wider">-</span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

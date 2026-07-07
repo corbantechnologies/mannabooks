@@ -18,6 +18,7 @@ interface BuilderProps {
 interface UiRowItem {
   productId?: string;
   description: string;
+  notes?: string;
   quantity: number | "";
   unitPrice: number | "";
   taxType: "V_16" | "V_0" | "EXEMPT";
@@ -72,7 +73,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
 
   // Dynamic Ledger Item Rows
   const [rows, setRows] = useState<UiRowItem[]>([
-    { description: "", quantity: 1, unitPrice: 0, taxType: "V_16" }
+    { description: "", notes: "", quantity: 1, unitPrice: 0, taxType: "V_16" }
   ]);
 
   // Document Summary Calculations computed reactively
@@ -88,7 +89,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
   });
 
   function addBlankRow() {
-    setRows([...rows, { description: "", quantity: 1, unitPrice: 0, taxType: "V_16" }]);
+    setRows([...rows, { description: "", notes: "", quantity: 1, unitPrice: 0, taxType: "V_16" }]);
   }
 
   function removeRow(index: number) {
@@ -110,6 +111,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
     updated[index] = {
       productId: matchedProduct.id,
       description: matchedProduct.name,
+      notes: updated[index].notes || "",
       quantity: 1,
       unitPrice: parseFloat(matchedProduct.unitPrice),
       taxType: matchedProduct.defaultTaxType,
@@ -160,6 +162,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
       items: rows.map(r => ({
         productId: r.productId,
         description: r.description,
+        notes: r.notes || undefined,
         quantity: typeof r.quantity === "number" ? r.quantity : 1,
         unitPrice: typeof r.unitPrice === "number" ? r.unitPrice : 0,
         taxType: r.taxType,
@@ -376,6 +379,14 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                       onChange={(e) => updateRowField(index, "description", e.target.value)}
                       className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-md font-sans text-xs focus:outline-none focus:ring-1 focus:ring-black"
                       required
+                    />
+
+                    <input
+                      type="text"
+                      value={row.notes || ""}
+                      placeholder="Add optional specific details (e.g. harddisk repair)..."
+                      onChange={(e) => updateRowField(index, "notes", e.target.value)}
+                      className="w-full px-3 py-2 border border-zinc-200 bg-zinc-50 placeholder:text-zinc-400 rounded-md font-sans text-xs focus:outline-none focus:ring-1 focus:ring-black italic"
                     />
 
                     {isOverstock && (

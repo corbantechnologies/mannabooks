@@ -258,6 +258,7 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
                         null,
                         React.createElement(ReactPDF.Text, { style: styles.shopName }, shop.shortName || shop.name),
                         shop.taxPin && React.createElement(ReactPDF.Text, { style: { fontSize: 8, color: "#52525b", marginTop: 1 } }, "Tax PIN: " + shop.taxPin),
+                        shop.vatNumber && React.createElement(ReactPDF.Text, { style: { fontSize: 8, color: "#52525b" } }, "VAT #: " + shop.vatNumber),
                         shop.phone && React.createElement(ReactPDF.Text, { style: { fontSize: 8, color: "#52525b" } }, "Tel: " + shop.phone),
                         shop.website && React.createElement(ReactPDF.Text, { style: { fontSize: 8, color: primaryColor } }, shop.website)
                     )
@@ -307,7 +308,12 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
                 React.createElement(
                     ReactPDF.View,
                     { key: item.id, style: styles.tableRow },
-                    React.createElement(ReactPDF.Text, { style: styles.colMain }, item.description),
+                    React.createElement(
+                        ReactPDF.View,
+                        { style: styles.colMain },
+                        React.createElement(ReactPDF.Text, null, item.description),
+                        item.notes && React.createElement(ReactPDF.Text, { style: { fontSize: 7, color: "#71717a", marginTop: 2, fontStyle: "italic" } }, `(${item.notes})`)
+                    ),
                     React.createElement(ReactPDF.Text, { style: styles.colQty }, item.quantity),
                     React.createElement(ReactPDF.Text, { style: styles.colRate }, formatCurrency(item.unitPrice, shop.currency)),
                     React.createElement(ReactPDF.Text, { style: styles.colTotal }, formatCurrency(item.itemTotal, shop.currency))

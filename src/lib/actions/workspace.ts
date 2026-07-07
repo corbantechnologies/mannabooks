@@ -58,6 +58,7 @@ interface UpdateShopSettingsInput {
     primaryColor?: string;
     taxPin?: string;
     isVatRegistered: boolean;
+    vatNumber?: string;
     currency: string;
     fiscalYearStartMonth: number;
 }
@@ -86,6 +87,7 @@ export async function updateShopSettings(input: UpdateShopSettingsInput) {
                 primaryColor,
                 taxPin: input.taxPin?.trim() || null,
                 isVatRegistered: input.isVatRegistered,
+                vatNumber: input.isVatRegistered ? (input.vatNumber?.trim() || null) : null, // Set to null if not VAT registered
                 currency: input.currency.toUpperCase().trim(),
                 fiscalYearStartMonth: input.fiscalYearStartMonth,
             })

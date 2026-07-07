@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUpdateProduct, useDeleteProduct } from "@/hooks/useProducts";
 import { toast } from "react-hot-toast";
+import { Spinner } from "@/components/Spinner";
 
 interface EditProductModalProps {
   product: {
@@ -221,6 +222,7 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
                     <span className="text-[10px] text-rose-600 font-bold uppercase">Confirm?</span>
                     <button
                       type="button"
+                      disabled={deleteProductMutation.isPending}
                       onClick={() => {
                         deleteProductMutation.mutate(product.id, {
                           onSuccess: () => {
@@ -230,9 +232,16 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
                           },
                         });
                       }}
-                      className="bg-rose-600 text-white px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-rose-700 transition-colors"
+                      className="bg-rose-600 text-white px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
                     >
-                      Yes, Delete
+                      {deleteProductMutation.isPending ? (
+                        <>
+                          <Spinner size={10} color="white" />
+                          <span>Deleting...</span>
+                        </>
+                      ) : (
+                        "Yes, Delete"
+                      )}
                     </button>
                     <button
                       type="button"
@@ -265,7 +274,14 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
                     disabled={loading}
                     className="btn-primary-modern px-5 py-2 text-xs font-semibold uppercase disabled:bg-zinc-300"
                   >
-                    {loading ? "SAVING..." : "SAVE CHANGES"}
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-1.5">
+                        <Spinner size={10} color="white" />
+                        <span>SAVING...</span>
+                      </span>
+                    ) : (
+                      "SAVE CHANGES"
+                    )}
                   </button>
                 </div>
               </div>

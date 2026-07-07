@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useUpdateDocumentStatus, useDuplicateDocument, useDeleteDocument } from "@/hooks/useDocuments";
 import { dispatchDocumentEmail } from "@/lib/actions/email";
 import { toast } from "react-hot-toast";
+import { Spinner } from "@/components/Spinner";
 
 import { DocumentActionsPopover } from "./DocumentActionsPopover";
 import { updateDocumentKraCuNumberAction, DocumentType } from "@/lib/actions/documents";
@@ -199,19 +200,27 @@ export function DocumentStatusPanel({
         <div className="flex flex-wrap gap-2">
           {STATUS_OPTIONS.map((opt) => {
             const isBlocked = status === "PAID" && opt.value !== "PAID";
+            const isCurrentPending = updateStatusMutation.isPending && updateStatusMutation.variables?.status === opt.value;
             return (
               <button
                 key={opt.value}
                 type="button"
-                disabled={saving || isBlocked}
+                disabled={updateStatusMutation.isPending || isBlocked}
                 onClick={() => handleStatusUpdate(opt.value)}
-                className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider border transition-colors rounded-none disabled:opacity-40 ${
+                className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider border transition-colors rounded-none disabled:opacity-40 flex items-center justify-center gap-1.5 ${
                   status === opt.value
                     ? "bg-black text-white border-black"
                     : "bg-white text-zinc-600 border-zinc-300 hover:border-black hover:text-black"
                 }`}
               >
-                {saving && status !== opt.value ? "..." : opt.label}
+                {isCurrentPending ? (
+                  <>
+                    <Spinner size={10} color={status === opt.value ? "white" : "currentColor"} />
+                    <span>{opt.label}</span>
+                  </>
+                ) : (
+                  opt.label
+                )}
               </button>
             );
           })}
@@ -257,7 +266,14 @@ export function DocumentStatusPanel({
             onClick={handleSendEmail}
             className="border border-black bg-black text-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors rounded-none disabled:bg-zinc-400"
           >
-            {sending ? "Dispatching..." : `Email to ${clientEmail}`}
+            {sending ? (
+              <span className="flex items-center justify-center gap-1.5">
+                <Spinner size={10} color="white" />
+                <span>Dispatching...</span>
+              </span>
+            ) : (
+              `Email to ${clientEmail}`
+            )}
           </button>
 
           {portalLink && (
@@ -273,6 +289,7 @@ export function DocumentStatusPanel({
 
           <button
             type="button"
+            disabled={duplicateDocMutation.isPending}
             onClick={() => {
               duplicateDocMutation.mutate(documentId, {
                 onSuccess: (data) => {
@@ -282,9 +299,16 @@ export function DocumentStatusPanel({
                 },
               });
             }}
-            className="border border-zinc-400 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:border-black transition-colors rounded-none"
+            className="border border-zinc-400 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:border-black transition-colors rounded-none disabled:opacity-50"
           >
-            Duplicate
+            {duplicateDocMutation.isPending ? (
+              <span className="flex items-center justify-center gap-1.5">
+                <Spinner size={10} />
+                <span>Duplicating...</span>
+              </span>
+            ) : (
+              "Duplicate"
+            )}
           </button>
 
           {status === "DRAFT" && (
@@ -298,10 +322,11 @@ export function DocumentStatusPanel({
 
           {status === "DRAFT" ? (
             showDeleteConfirm ? (
-              <div className="flex gap-2 items-center">
+              <div className="flex gap-2 items-center animate-in fade-in zoom-in-95">
                 <span className="text-[10px] text-rose-600 font-bold uppercase">Purge?</span>
                 <button
                   type="button"
+                  disabled={deleteDocMutation.isPending}
                   onClick={() => {
                     deleteDocMutation.mutate(documentId, {
                       onSuccess: () => {
@@ -309,9 +334,16 @@ export function DocumentStatusPanel({
                       },
                     });
                   }}
-                  className="bg-rose-600 text-white px-3 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-700 transition-colors"
+                  className="bg-rose-600 text-white px-3 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-700 transition-colors disabled:opacity-50"
                 >
-                  Yes, Delete
+                  {deleteDocMutation.isPending ? (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Spinner size={10} color="white" />
+                      <span>Deleting...</span>
+                    </span>
+                  ) : (
+                    "Yes, Delete"
+                  )}
                 </button>
                 <button
                   type="button"
@@ -367,7 +399,14 @@ export function DocumentStatusPanel({
             disabled={savingCu}
             className="btn-primary-modern px-4 py-1.5 font-semibold uppercase text-[10px] disabled:bg-zinc-400"
           >
-            {savingCu ? "Saving..." : "Save CU #"}
+            {savingCu ? (
+              <span className="flex items-center justify-center gap-1.5">
+                <Spinner size={10} color="white" />
+                <span>Saving...</span>
+              </span>
+            ) : (
+              "Save CU #"
+            )}
           </button>
         </div>
       </div>
@@ -377,18 +416,34 @@ export function DocumentStatusPanel({
         <button
           onClick={handleSendEmail}
           disabled={sending || !clientEmail}
-          className="flex-1 border border-zinc-200 bg-white hover:bg-zinc-50 px-4 py-2 font-mono text-[10px] font-bold uppercase transition-colors"
+          className="flex-1 border border-zinc-200 bg-white hover:bg-zinc-50 px-4 py-2 font-mono text-[10px] font-bold uppercase transition-colors disabled:opacity-50"
         >
-          {sending ? "Dispatching..." : clientEmail ? "✉ Email Secure Portal Link" : "✉ Missing Client Email"}
+          {sending ? (
+            <span className="flex items-center justify-center gap-1.5">
+              <Spinner size={10} />
+              <span>Dispatching...</span>
+            </span>
+          ) : clientEmail ? (
+            "✉ Email Secure Portal Link"
+          ) : (
+            "✉ Missing Client Email"
+          )}
         </button>
         
         {(docType === "INVOICE" && currentStatus === "OVERDUE") && (
           <button
             onClick={handleSendReminder}
             disabled={sending || !clientEmail}
-            className="flex-1 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 px-4 py-2 font-mono text-[10px] font-bold uppercase transition-colors"
+            className="flex-1 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 px-4 py-2 font-mono text-[10px] font-bold uppercase transition-colors disabled:opacity-50"
           >
-            {sending ? "Dispatching..." : "🔔 Send Aging Reminder"}
+            {sending ? (
+              <span className="flex items-center justify-center gap-1.5">
+                <Spinner size={10} color="currentColor" />
+                <span>Dispatching...</span>
+              </span>
+            ) : (
+              "🔔 Send Aging Reminder"
+            )}
           </button>
         )}
       </div>

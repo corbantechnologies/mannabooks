@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { updateShopSettings } from "@/lib/actions/workspace";
 import { useAddPaymentMethod, useDeletePaymentMethod, useSetDefaultPaymentMethod } from "@/hooks/usePayments";
 import { toast } from "react-hot-toast";
+import { Spinner } from "@/components/Spinner";
 
 interface PaymentMethod {
   id: string;
@@ -394,8 +395,15 @@ export function SettingsForm({
           )}
 
           <div className="flex flex-col sm:flex-row gap-2">
-            <label className="btn-primary-modern px-3 py-2 text-[11px] font-semibold uppercase tracking-wider cursor-pointer text-center shrink-0">
-              {uploadingLogo ? "UPLOADING..." : "📷 Upload Logo File"}
+            <label className="btn-primary-modern px-3 py-2 text-[11px] font-semibold uppercase tracking-wider cursor-pointer text-center shrink-0 flex items-center justify-center gap-1.5">
+              {uploadingLogo ? (
+                <>
+                  <Spinner size={10} color="white" />
+                  <span>UPLOADING...</span>
+                </>
+              ) : (
+                "📷 Upload Logo File"
+              )}
               <input
                 type="file"
                 accept="image/*"
@@ -513,7 +521,14 @@ export function SettingsForm({
             disabled={saving}
             className="btn-primary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs disabled:bg-zinc-300"
           >
-            {saving ? "SAVING..." : "COMMIT CHANGES"}
+            {saving ? (
+              <span className="flex items-center justify-center gap-1.5">
+                <Spinner size={12} color="white" />
+                <span>SAVING...</span>
+              </span>
+            ) : (
+              "COMMIT CHANGES"
+            )}
           </button>
         </div>
       </form>
@@ -546,14 +561,22 @@ export function SettingsForm({
                   {!pm.isDefault && (
                     <button
                       type="button"
+                      disabled={setDefaultPaymentMutation.isPending}
                       onClick={() => {
                         setDefaultPaymentMutation.mutate(pm.id, {
                           onSuccess: () => router.refresh(),
                         });
                       }}
-                      className="btn-secondary-modern px-2 py-1 text-[10px] font-semibold uppercase"
+                      className="btn-secondary-modern px-2 py-1 text-[10px] font-semibold uppercase flex items-center justify-center gap-1"
                     >
-                      Make Default
+                      {setDefaultPaymentMutation.isPending && setDefaultPaymentMutation.variables === pm.id ? (
+                        <>
+                          <Spinner size={8} />
+                          <span>Setting...</span>
+                        </>
+                      ) : (
+                        "Make Default"
+                      )}
                     </button>
                   )}
                   {deletingPmId === pm.id ? (
@@ -561,6 +584,7 @@ export function SettingsForm({
                       <span className="text-[9px] text-rose-600 font-bold uppercase">Confirm?</span>
                       <button
                         type="button"
+                        disabled={deletePaymentMutation.isPending}
                         onClick={() => {
                           deletePaymentMutation.mutate(pm.id, {
                             onSuccess: () => {
@@ -569,9 +593,16 @@ export function SettingsForm({
                             },
                           });
                         }}
-                        className="bg-rose-600 text-white px-2 py-1 text-[10px] font-semibold uppercase hover:bg-rose-700 rounded transition-colors"
+                        className="bg-rose-600 text-white px-2 py-1 text-[10px] font-semibold uppercase hover:bg-rose-700 rounded transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
                       >
-                        Yes
+                        {deletePaymentMutation.isPending && deletePaymentMutation.variables === pm.id ? (
+                          <>
+                            <Spinner size={8} color="white" />
+                            <span>...</span>
+                          </>
+                        ) : (
+                          "Yes"
+                        )}
                       </button>
                       <button
                         type="button"
@@ -800,7 +831,14 @@ export function SettingsForm({
             disabled={addPaymentMutation.isPending}
             className="btn-primary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs disabled:bg-zinc-300 w-full sm:w-auto"
           >
-            {addPaymentMutation.isPending ? "SAVING..." : "+ SAVE PAYMENT METHOD"}
+            {addPaymentMutation.isPending ? (
+              <span className="flex items-center justify-center gap-1.5">
+                <Spinner size={12} color="white" />
+                <span>SAVING...</span>
+              </span>
+            ) : (
+              "+ SAVE PAYMENT METHOD"
+            )}
           </button>
         </form>
       </div>

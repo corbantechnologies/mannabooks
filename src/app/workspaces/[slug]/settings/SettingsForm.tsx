@@ -160,21 +160,21 @@ export function SettingsForm({
         return;
       }
       name = `${bankName.trim()} Account`;
-      details = `Bank: ${bankName.trim()} | Acc Name: ${accountName.trim()} | Acc No: ${accountNumber.trim()}${branchName.trim() ? ` | Branch: ${branchName.trim()}` : ''}${swiftCode.trim() ? ` | SWIFT: ${swiftCode.trim().toUpperCase()}` : ''}`;
+      details = `Bank: ${bankName.trim()}\nAcc Name: ${accountName.trim()}\nAcc No: ${accountNumber.trim()}${branchName.trim() ? `\nBranch: ${branchName.trim()}` : ''}${swiftCode.trim() ? `\nSWIFT: ${swiftCode.trim().toUpperCase()}` : ''}`;
     } else if (pmCategory === "TILL") {
       if (!tillNumber) {
         toast.error("Till Number is required.");
         return;
       }
       name = `M-Pesa Buy Goods (Till ${tillNumber.trim()})`;
-      details = `Till Number: ${tillNumber.trim()}${storeName.trim() ? ` | Store Name: ${storeName.trim()}` : ''}`;
+      details = `Till Number: ${tillNumber.trim()}${storeName.trim() ? `\nStore Name: ${storeName.trim()}` : ''}`;
     } else if (pmCategory === "PAYBILL") {
       if (!paybillNumber) {
         toast.error("Paybill Business Number is required.");
         return;
       }
       name = `M-Pesa Paybill (${paybillNumber.trim()})`;
-      details = `Paybill / Business No: ${paybillNumber.trim()}${accountRef.trim() ? ` | Account Ref: ${accountRef.trim()}` : ''}`;
+      details = `Paybill / Business No: ${paybillNumber.trim()}${accountRef.trim() ? `\nAccount Ref: ${accountRef.trim()}` : ''}`;
     } else {
       if (!customName || !customInstructions) {
         toast.error("Custom Method Name and Instructions are required.");
@@ -538,7 +538,7 @@ export function SettingsForm({
                       <span className="bg-black text-white px-1.5 py-0.5 text-[9px] font-semibold uppercase rounded">DEFAULT</span>
                     )}
                   </div>
-                  <p className="text-zinc-500 mt-1 text-[11px] font-mono leading-relaxed">{pm.details}</p>
+                  <p className="text-zinc-500 mt-1 text-[11px] font-mono leading-relaxed whitespace-pre-wrap">{pm.details}</p>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">

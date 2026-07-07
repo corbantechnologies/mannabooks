@@ -228,12 +228,34 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
               Official Remittance & Payment Pathways
             </span>
             <div className="space-y-3">
-              {activeSettlements.map((pay) => (
-                <div key={pay.id} className="space-y-0.5">
-                  <p className="font-bold text-black uppercase text-[11px]">{pay.name}</p>
-                  <p className="text-zinc-600 text-xs font-sans whitespace-pre-line leading-tight">{pay.details}</p>
-                </div>
-              ))}
+              {activeSettlements.map((pay) => {
+                const parts = pay.details.includes("|")
+                  ? pay.details.split("|").map((p) => p.trim())
+                  : [pay.details];
+                return (
+                  <div key={pay.id} className="space-y-1.5 border-b border-zinc-200/50 pb-2 last:border-0 last:pb-0">
+                    <p className="font-bold text-black uppercase text-[10px] tracking-tight">{pay.name}</p>
+                    <div className="pl-2.5 space-y-1 border-l-2 border-zinc-200">
+                      {parts.map((part, idx) => {
+                        const colonIndex = part.indexOf(":");
+                        if (colonIndex > -1) {
+                          const key = part.slice(0, colonIndex).trim();
+                          const val = part.slice(colonIndex + 1).trim();
+                          return (
+                            <div key={idx} className="flex text-[11px] font-sans">
+                              <span className="text-zinc-400 font-semibold w-24 shrink-0 uppercase text-[9px] mt-[1.5px]">{key}:</span>
+                              <span className="text-zinc-700 font-medium">{val}</span>
+                            </div>
+                          );
+                        }
+                        return (
+                          <p key={idx} className="text-zinc-700 text-[11px] font-sans leading-tight">{part}</p>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
               {activeSettlements.length === 0 && (
                 <p className="text-zinc-400 italic font-sans">Contact supplier directly to coordinate payment execution routes.</p>
               )}

@@ -25,6 +25,7 @@ interface SettingsFormProps {
   initialLogoUrl?: string;
   initialTaxPin: string;
   initialIsVatRegistered: boolean;
+  initialVatNumber?: string;
   initialCurrency: string;
   initialFiscalYearStartMonth: number;
   paymentMethods: PaymentMethod[];
@@ -51,6 +52,7 @@ export function SettingsForm({
   initialLogoUrl = "",
   initialTaxPin,
   initialIsVatRegistered,
+  initialVatNumber = "",
   initialCurrency,
   initialFiscalYearStartMonth = 1,
   paymentMethods: initialMethods,
@@ -66,6 +68,7 @@ export function SettingsForm({
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
   const [taxPin, setTaxPin] = useState(initialTaxPin);
   const [isVatRegistered, setIsVatRegistered] = useState(initialIsVatRegistered);
+  const [vatNumber, setVatNumber] = useState(initialVatNumber);
   const [currency, setCurrency] = useState(initialCurrency);
   const [fiscalYearStartMonth, setFiscalYearStartMonth] = useState(initialFiscalYearStartMonth);
   const [saving, setSaving] = useState(false);
@@ -109,6 +112,14 @@ export function SettingsForm({
       return;
     }
 
+    if (isVatRegistered && !vatNumber.trim()) {
+      const text = "A VAT Registration Number is required when VAT is active.";
+      setProfileMsg({ type: "error", text });
+      toast.error(text, { id: toastId });
+      setSaving(false);
+      return;
+    }
+
     const res = await updateShopSettings({
       shopId,
       name: businessName,
@@ -119,6 +130,7 @@ export function SettingsForm({
       logoUrl,
       taxPin,
       isVatRegistered,
+      vatNumber: vatNumber.trim() || undefined,
       currency,
       fiscalYearStartMonth,
     });
@@ -456,23 +468,42 @@ export function SettingsForm({
           </select>
         </div>
 
-        <div className="border-t border-dashed border-zinc-200 pt-4 flex items-start gap-3">
-          <input
-            type="checkbox"
-            id="vatActive"
-            checked={isVatRegistered}
-            onChange={(e) => setIsVatRegistered(e.target.checked)}
-            className="w-4 h-4 border border-zinc-300 accent-black rounded-sm mt-0.5 cursor-pointer"
-          />
-          <div className="space-y-1">
-            <label htmlFor="vatActive" className="font-semibold uppercase tracking-tight block cursor-pointer select-none">
-              This entity is officially VAT registered
-            </label>
-            <p className="font-sans text-[11px] text-zinc-500 normal-case leading-tight">
-              When checked, the document compiler automatically applies the statutory 16% VAT layer on all billing items
-              not explicitly marked as Exempt or Zero-Rated.
-            </p>
+        <div className="border-t border-dashed border-zinc-200 pt-4 space-y-4">
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="vatActive"
+              checked={isVatRegistered}
+              onChange={(e) => setIsVatRegistered(e.target.checked)}
+              className="w-4 h-4 border border-zinc-300 accent-black rounded-sm mt-0.5 cursor-pointer"
+            />
+            <div className="space-y-1">
+              <label htmlFor="vatActive" className="font-semibold uppercase tracking-tight block cursor-pointer select-none">
+                This entity is officially VAT registered
+              </label>
+              <p className="font-sans text-[11px] text-zinc-500 normal-case leading-tight">
+                When checked, the document compiler automatically applies the statutory 16% VAT layer on all billing items
+                not explicitly marked as Exempt or Zero-Rated.
+              </p>
+            </div>
           </div>
+
+          {isVatRegistered && (
+            <div className="pl-7 space-y-1.5">
+              <label className="text-[10px] text-zinc-400 uppercase block font-semibold">VAT Registration Number *</label>
+              <input
+                type="text"
+                value={vatNumber}
+                onChange={(e) => setVatNumber(e.target.value)}
+                placeholder="e.g. VAT-01234567-X"
+                className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 uppercase rounded text-xs font-mono"
+                required={isVatRegistered}
+              />
+              <p className="text-[10px] text-zinc-400 font-sans mt-1 leading-normal normal-case">
+                Provide your KRA-issued VAT registration number to display alongside PIN in document header templates.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="border-t border-zinc-200/80 pt-4 flex justify-end">

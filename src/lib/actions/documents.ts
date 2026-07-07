@@ -26,6 +26,7 @@ export type DocumentType =
 interface CreateDocumentItemInput {
     productId?: string;
     description: string;
+    notes?: string;
     quantity: number;
     unitPrice: number;
     taxType: "V_16" | "V_0" | "EXEMPT";
@@ -190,6 +191,7 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                     documentId: newDoc.id,
                     productId: rowItem.productId || null,
                     description: rowItem.description.trim(),
+                    notes: rowItem.notes?.trim() || null,
                     quantity: rowItem.quantity.toString(),
                     unitPrice: rowItem.unitPrice.toString(),
                     taxType: rowItem.taxType,

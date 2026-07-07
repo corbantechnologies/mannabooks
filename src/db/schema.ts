@@ -53,6 +53,7 @@ export const shops = pgTable('shops', {
     primaryColor: varchar('primary_color', { length: 20 }).default('#000000').notNull(), // Sleek Black default, custom hex, or palette
     taxPin: varchar('tax_pin', { length: 30 }), // e.g., KRA PIN (A... for personal/sole prop, P... for company)
     isVatRegistered: boolean('is_vat_registered').default(false).notNull(),
+    vatNumber: varchar('vat_number', { length: 50 }), // Optional/Required VAT Registration Number
     fiscalYearStartMonth: integer('fiscal_year_start_month').default(1).notNull(), // 1 = January, 7 = July etc.
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -167,7 +168,8 @@ export const documentItems = pgTable('document_items', {
     id: uuid('id').defaultRandom().primaryKey(),
     documentId: uuid('document_id').references(() => documents.id, { onDelete: 'cascade' }).notNull(),
     productId: uuid('product_id').references(() => products.id, { onDelete: 'set null' }),
-    description: text('description').notNull(),
+    description: text('description').notNull(), // The main product/service catalog name
+    notes: text('notes'),                        // Optional sub-description/specification
     quantity: numeric('quantity', { precision: 10, scale: 2 }).notNull(),
     unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
     taxType: taxTypeEnum('tax_type').default('V_16').notNull(),

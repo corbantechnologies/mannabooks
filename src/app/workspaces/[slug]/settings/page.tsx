@@ -32,6 +32,7 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
         initialLogoUrl={shop.logoUrl || ""}
         initialTaxPin={shop.taxPin || ""}
         initialIsVatRegistered={shop.isVatRegistered}
+        initialVatNumber={shop.vatNumber || ""}
         initialCurrency={shop.currency}
         initialFiscalYearStartMonth={shop.fiscalYearStartMonth}
         paymentMethods={paymentMethods}

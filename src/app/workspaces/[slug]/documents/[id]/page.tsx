@@ -147,7 +147,14 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
             <tbody className="divide-y divide-black">
               {doc.items.map((item) => (
                 <tr key={item.id} className="hover:bg-zinc-50">
-                  <td className="p-4 border-r border-black font-sans text-sm">{item.description}</td>
+                  <td className="p-4 border-r border-black font-sans text-sm">
+                    <div className="font-semibold text-black">{item.description}</div>
+                    {item.notes && (
+                      <div className="text-[10px] text-zinc-500 italic mt-0.5 font-mono">
+                        ({item.notes})
+                      </div>
+                    )}
+                  </td>
                   <td className="p-4 border-r border-black text-center">{item.quantity}</td>
                   <td className="p-4 border-r border-black text-right font-bold">{formatCurrency(item.unitPrice, shop.currency)}</td>
                   <td className="p-4 border-r border-black text-center">

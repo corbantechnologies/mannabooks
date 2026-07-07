@@ -24,20 +24,42 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
-    const navLinks = [
-    { href: `/workspaces/${slug}`, label: "[00] Overview Log", exact: true },
+  type NavItem = {
+    label: string;
+    href?: string;
+    exact?: boolean;
+    children?: { href: string; label: string; exact?: boolean }[];
+  };
+
+  const navItems: NavItem[] = [
+    { href: `/workspaces/${slug}`, label: "[00] Overview", exact: true },
     { href: `/workspaces/${slug}/documents`, label: "[01] Fiscal Ledgers" },
     { href: `/workspaces/${slug}/pos`, label: "[02] Walk-in Sales" },
-    { href: `/workspaces/${slug}/clients`, label: "[03] Client Flow" },
+    { 
+      label: "[03] CRM", 
+      children: [
+        { href: `/workspaces/${slug}/clients`, label: "Client Flow" },
+        { href: `/workspaces/${slug}/suppliers`, label: "Supplier Network" },
+      ]
+    },
     { href: `/workspaces/${slug}/products`, label: "[04] Product Catalog" },
-    { href: `/workspaces/${slug}/suppliers`, label: "[05] Supplier Network" },
-    { href: `/workspaces/${slug}/employees`, label: "[06] Employee Directory" },
-    { href: `/workspaces/${slug}/payroll`, label: "[07] Payroll Vouchers" },
-    { href: `/workspaces/${slug}/expenses`, label: "[08] Operating Expenses" },
-    { href: `/workspaces/${slug}/analytics`, label: "[09] Analytics" },
-    { href: `/workspaces/${slug}/team`, label: "[10] Team Management" },
-    { href: `/workspaces/${slug}/settings`, label: "[11] System Settings" },
-    { href: `/workspaces/${slug}/guide`, label: "[12] Operator Guide" },
+    { href: `/workspaces/${slug}/expenses`, label: "[05] Operating Expenses" },
+    {
+      label: "[06] Payroll",
+      children: [
+        { href: `/workspaces/${slug}/payroll`, label: "Payroll Vouchers" },
+        { href: `/workspaces/${slug}/employees`, label: "Employee Directory" },
+      ]
+    },
+    { href: `/workspaces/${slug}/analytics`, label: "[07] Analytics" },
+    {
+      label: "[08] Settings",
+      children: [
+        { href: `/workspaces/${slug}/team`, label: "Team Management" },
+        { href: `/workspaces/${slug}/settings`, label: "System Settings" },
+        { href: `/workspaces/${slug}/guide`, label: "Operator Guide" },
+      ]
+    }
   ];
 
   function isActive(href: string, exact?: boolean) {
@@ -107,12 +129,43 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
           <div className="space-y-2">
             <span className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-2 font-semibold">LEDGER DIRECTORIES</span>
             <nav className="flex flex-col gap-1.5 font-semibold uppercase text-xs tracking-wider">
-              {navLinks.map((link) => {
-                const active = isActive(link.href, link.exact);
+              {navItems.map((item, idx) => {
+                if (item.children) {
+                  const isChildActive = item.children.some(child => isActive(child.href, child.exact));
+                  return (
+                    <details key={idx} className="group" open={isChildActive}>
+                      <summary className="px-3 py-2 border border-transparent rounded cursor-pointer transition-all hover:bg-zinc-50 hover:border-zinc-300 list-none flex justify-between items-center select-none text-left">
+                        <span>{item.label}</span>
+                        <svg className="w-3 h-3 text-zinc-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                      </summary>
+                      <div className="pl-6 pr-2 py-1 flex flex-col gap-1 mt-1 border-l border-zinc-200 ml-4">
+                        {item.children.map(child => {
+                          const active = isActive(child.href, child.exact);
+                          return (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              onClick={() => setIsOpen(false)}
+                              className={`px-3 py-2 border rounded transition-all block text-left ${
+                                active
+                                  ? "border-black bg-black text-white"
+                                  : "border-zinc-200 text-zinc-500 hover:border-black hover:bg-zinc-50 hover:text-black"
+                              }`}
+                            >
+                              {child.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  );
+                }
+
+                const active = item.href ? isActive(item.href, item.exact) : false;
                 return (
                   <Link
-                    key={link.href}
-                    href={link.href}
+                    key={item.href}
+                    href={item.href!}
                     onClick={() => setIsOpen(false)}
                     className={`px-3 py-2.5 border rounded transition-all block text-left ${
                       active
@@ -120,7 +173,7 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
                         : "border-zinc-200 hover:border-black hover:bg-zinc-50"
                     }`}
                   >
-                    {link.label}
+                    {item.label}
                   </Link>
                 );
               })}

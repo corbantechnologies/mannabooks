@@ -2,6 +2,8 @@
 import Link from "next/link";
 
 interface OnboardingTrackerProps {
+  hasSettings: boolean;
+  hasPayment: boolean;
   hasProducts: boolean;
   hasClients: boolean;
   hasDocuments: boolean;
@@ -9,17 +11,31 @@ interface OnboardingTrackerProps {
 }
 
 export function OnboardingTracker({
+  hasSettings,
+  hasPayment,
   hasProducts,
   hasClients,
   hasDocuments,
   shopSlug,
 }: OnboardingTrackerProps) {
   // If all core setup steps are complete, hide the tracker
-  if (hasProducts && hasClients && hasDocuments) {
+  if (hasSettings && hasPayment && hasProducts && hasClients && hasDocuments) {
     return null;
   }
 
   const steps = [
+    {
+      label: "Configure Workspace Settings",
+      isComplete: hasSettings,
+      href: `/workspaces/${shopSlug}/settings`,
+      actionText: "Settings",
+    },
+    {
+      label: "Add Payment Account",
+      isComplete: hasPayment,
+      href: `/workspaces/${shopSlug}/settings`, // Assuming payment methods are in settings
+      actionText: "Add Account",
+    },
     {
       label: "Register a Product or Service",
       isComplete: hasProducts,
@@ -33,7 +49,7 @@ export function OnboardingTracker({
       actionText: "Add Client",
     },
     {
-      label: "Generate a Document (Invoice/Quote)",
+      label: "Generate a Document",
       isComplete: hasDocuments,
       href: `/workspaces/${shopSlug}/documents/new`,
       actionText: "Create Doc",

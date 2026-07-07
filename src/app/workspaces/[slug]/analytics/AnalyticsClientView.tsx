@@ -3,14 +3,16 @@
 import { useState } from "react";
 import { AnalyticsData, TimeframeFilter, getWorkspaceAnalyticsData } from "@/lib/actions/analytics";
 import { formatCurrency } from "@/lib/utils";
+import { getFiscalYearRange } from "@/lib/fiscalYear";
 
 interface AnalyticsClientViewProps {
   shopId: string;
   shopSlug: string;
+  fiscalYearStartMonth: number;
   initialData: AnalyticsData;
 }
 
-export function AnalyticsClientView({ shopId, shopSlug, initialData }: AnalyticsClientViewProps) {
+export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, initialData }: AnalyticsClientViewProps) {
   const [timeframe, setTimeframe] = useState<TimeframeFilter>(initialData.timeframe);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<AnalyticsData>(initialData);
@@ -31,11 +33,13 @@ export function AnalyticsClientView({ shopId, shopSlug, initialData }: Analytics
     1
   );
 
+  const fyLabel = getFiscalYearRange(fiscalYearStartMonth).label;
+
   const timeframes: { id: TimeframeFilter; label: string }[] = [
     { id: "THIS_MONTH", label: "This Month" },
     { id: "LAST_MONTH", label: "Last Month" },
     { id: "THIS_QUARTER", label: "This Quarter" },
-    { id: "THIS_YEAR", label: "This Year" },
+    { id: "THIS_YEAR", label: fyLabel },
     { id: "ALL_TIME", label: "All Time" },
   ];
 

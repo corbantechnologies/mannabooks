@@ -59,6 +59,7 @@ interface UpdateShopSettingsInput {
     taxPin?: string;
     isVatRegistered: boolean;
     currency: string;
+    fiscalYearStartMonth: number;
 }
 
 /**
@@ -86,6 +87,7 @@ export async function updateShopSettings(input: UpdateShopSettingsInput) {
                 taxPin: input.taxPin?.trim() || null,
                 isVatRegistered: input.isVatRegistered,
                 currency: input.currency.toUpperCase().trim(),
+                fiscalYearStartMonth: input.fiscalYearStartMonth,
             })
             .where(eq(shops.id, input.shopId));
 

@@ -3,11 +3,12 @@
 import { db } from "@/db";
 import { documents, documentItems, documentTokens, shops, clients } from "@/db/schema";
 import { calculateLineItem, calculateDocumentTotals } from "@/lib/utils";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gte, lte } from "drizzle-orm";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 
 import { applyDocumentStockMovements } from "@/lib/actions/stock";
+import { getFiscalYearRange, getFyDocSuffix } from "@/lib/fiscalYear";
 
 export type DocumentType = 
   | "QUOTATION" 
@@ -97,11 +98,17 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
 
             const isVatActive = shopProfile.isVatRegistered;
 
-            // 2. Map serial numbers chronologically based on target document type
+            const fyStartMonth = shopProfile.fiscalYearStartMonth || 1;
+            const { start: fyStart, end: fyEnd } = getFiscalYearRange(fyStartMonth);
+            const fySuffix = getFyDocSuffix(fyStartMonth);
+
+            // 2. Map serial numbers chronologically based on target document type in the current fiscal year
             const activeTypeRecords = await tx.query.documents.findMany({
                 where: and(
                     eq(documents.shopId, input.shopId),
-                    eq(documents.type, input.type)
+                    eq(documents.type, input.type),
+                    gte(documents.createdAt, fyStart),
+                    lte(documents.createdAt, fyEnd)
                 ),
             });
 
@@ -120,7 +127,7 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 PAYROLL_VOUCHER: "PAY",
             };
             const prefix = prefixMap[input.type] || "DOC";
-            const formattedSerial = `${prefix}-${String(nextSequence).padStart(4, "0")}`;
+            const formattedSerial = `${prefix}-${fySuffix}-${String(nextSequence).padStart(4, "0")}`;
 
             // 3. Process walk-in customer email dynamically
             let finalClientId = input.clientId;

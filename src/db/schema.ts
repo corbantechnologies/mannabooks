@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, varchar, timestamp, numeric, pgEnum, unique, boolean, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, varchar, timestamp, numeric, pgEnum, unique, boolean, index, integer } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // ==========================================
@@ -53,6 +53,7 @@ export const shops = pgTable('shops', {
     primaryColor: varchar('primary_color', { length: 20 }).default('#000000').notNull(), // Sleek Black default, custom hex, or palette
     taxPin: varchar('tax_pin', { length: 30 }), // e.g., KRA PIN (A... for personal/sole prop, P... for company)
     isVatRegistered: boolean('is_vat_registered').default(false).notNull(),
+    fiscalYearStartMonth: integer('fiscal_year_start_month').default(1).notNull(), // 1 = January, 7 = July etc.
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

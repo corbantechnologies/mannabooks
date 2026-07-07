@@ -89,48 +89,48 @@ export function OnboardingTracker({
       </div>
 
       {/* Checklist */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-        {steps.map((step, idx) => (
-          <div
-            key={idx}
-            className={`flex flex-col gap-3 p-4 border rounded-xl transition-colors ${
-              step.isComplete
-                ? "bg-amber-100/50 border-amber-200/50 opacity-60"
-                : "bg-white border-amber-300 shadow-sm"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <div
-                className={`mt-0.5 flex items-center justify-center w-5 h-5 rounded-full border-2 text-[10px] font-bold ${
-                  step.isComplete
-                    ? "bg-amber-500 border-amber-500 text-white"
-                    : "border-amber-300 text-amber-300 bg-white"
-                }`}
-              >
-                {step.isComplete ? "✓" : idx + 1}
-              </div>
-              <span
-                className={`text-xs font-bold leading-tight ${
-                  step.isComplete
-                    ? "text-amber-800 line-through decoration-amber-300"
-                    : "text-amber-950"
-                }`}
-              >
-                {step.label}
-              </span>
-            </div>
-            {!step.isComplete && (
-              <div className="mt-auto pl-8">
-                <Link
-                  href={step.href}
-                  className="inline-block border border-amber-400 bg-amber-100 hover:bg-amber-200 text-amber-900 px-3 py-1.5 rounded font-mono text-[10px] font-bold uppercase transition-colors"
+      <div className="flex flex-col gap-2 pt-2">
+        {steps.map((step, idx) => {
+          // If complete, we can just render a div. If not, a Link.
+          const Wrapper = step.isComplete ? "div" : Link;
+          return (
+            <Wrapper
+              key={idx}
+              href={step.href}
+              className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
+                step.isComplete
+                  ? "bg-amber-100/30 border-amber-200/50 opacity-60"
+                  : "bg-white border-amber-300 shadow-sm hover:bg-amber-50 cursor-pointer"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`flex items-center justify-center w-5 h-5 rounded-full border-2 text-[10px] font-bold shrink-0 ${
+                    step.isComplete
+                      ? "bg-amber-500 border-amber-500 text-white"
+                      : "border-amber-400 text-amber-500 bg-white"
+                  }`}
                 >
-                  ➔ {step.actionText}
-                </Link>
+                  {step.isComplete ? "✓" : idx + 1}
+                </div>
+                <span
+                  className={`text-xs font-bold ${
+                    step.isComplete
+                      ? "text-amber-800 line-through decoration-amber-300"
+                      : "text-amber-950"
+                  }`}
+                >
+                  {step.label}
+                </span>
               </div>
-            )}
-          </div>
-        ))}
+              {!step.isComplete && (
+                <span className="hidden sm:inline-block text-amber-600 font-mono text-[10px] font-bold uppercase tracking-wider bg-amber-100 px-2.5 py-1 rounded">
+                  {step.actionText} ➔
+                </span>
+              )}
+            </Wrapper>
+          );
+        })}
       </div>
     </div>
   );

@@ -59,10 +59,15 @@ function SignupContent() {
         setLoading(false);
       } else {
         toast.success("Account & workspace created successfully!", { id: toastId });
-        if ("shopSlug" in response && response.shopSlug) {
-          window.location.href = `/workspaces/${response.shopSlug}`;
+        
+        // If they joined via invite, push them to the global dashboard router 
+        // so it natively redirects them to the workspace selector (since they now have multiple)
+        if (inviteToken) {
+            window.location.href = "/dashboard";
+        } else if ("shopSlug" in response && response.shopSlug) {
+            window.location.href = `/workspaces/${response.shopSlug}`;
         } else {
-          window.location.href = "/dashboard";
+            window.location.href = "/dashboard";
         }
       }
     } catch (err: any) {

@@ -24,6 +24,7 @@ interface EditClientModalProps {
 export function EditClientModal({ client, shopId, shopSlug, redirectToDirectoryAfterDelete }: EditClientModalProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [name, setName] = useState(client.name);
   const [email, setEmail] = useState(client.email);
   const [phone, setPhone] = useState(client.phone || "");
@@ -56,19 +57,7 @@ export function EditClientModal({ client, shopId, shopSlug, redirectToDirectoryA
     );
   }
 
-  async function handleDelete() {
-    if (!confirm(`Are you sure you want to delete client "${client.name}"?`)) return;
-    deleteClientMutation.mutate(client.id, {
-      onSuccess: () => {
-        setIsOpen(false);
-        if (redirectToDirectoryAfterDelete) {
-          router.push(`/workspaces/${shopSlug}/clients`);
-        } else {
-          router.refresh();
-        }
-      },
-    });
-  }
+
 
   return (
     <>
@@ -161,13 +150,45 @@ export function EditClientModal({ client, shopId, shopSlug, redirectToDirectoryA
               </div>
 
               <div className="border-t border-zinc-200/80 pt-4 flex justify-between items-center">
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  className="border border-rose-200 bg-rose-50 text-rose-600 px-3 py-1.5 font-semibold uppercase hover:bg-rose-600 hover:text-white rounded transition-colors text-xs"
-                >
-                  DELETE
-                </button>
+                {showDeleteConfirm ? (
+                  <div className="flex items-center gap-2 animate-in fade-in zoom-in-95">
+                    <span className="text-[10px] text-rose-600 font-bold uppercase">Confirm?</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        deleteClientMutation.mutate(client.id, {
+                          onSuccess: () => {
+                            setIsOpen(false);
+                            setShowDeleteConfirm(false);
+                            if (redirectToDirectoryAfterDelete) {
+                              router.push(`/workspaces/${shopSlug}/clients`);
+                            } else {
+                              router.refresh();
+                            }
+                          },
+                        });
+                      }}
+                      className="bg-rose-600 text-white px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-rose-700 transition-colors"
+                    >
+                      Yes, Delete
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="bg-zinc-100 text-zinc-500 px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-zinc-200 transition-colors"
+                    >
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="border border-rose-200 bg-rose-50 text-rose-600 px-3 py-1.5 font-semibold uppercase hover:bg-rose-600 hover:text-white rounded transition-colors text-xs"
+                  >
+                    DELETE
+                  </button>
+                )}
 
                 <div className="flex gap-2">
                   <button

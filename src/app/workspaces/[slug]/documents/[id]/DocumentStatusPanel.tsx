@@ -69,6 +69,7 @@ export function DocumentStatusPanel({
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const updateStatusMutation = useUpdateDocumentStatus(shopId, shopSlug);
   const duplicateDocMutation = useDuplicateDocument(shopId, shopSlug);
@@ -296,20 +297,39 @@ export function DocumentStatusPanel({
           )}
 
           {status === "DRAFT" ? (
-            <button
-              type="button"
-              onClick={() => {
-                if (!confirm("Are you sure you want to delete this DRAFT document? This action cannot be undone.")) return;
-                deleteDocMutation.mutate(documentId, {
-                  onSuccess: () => {
-                    router.push(`/workspaces/${shopSlug}/documents`);
-                  },
-                });
-              }}
-              className="border border-rose-600 text-rose-600 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-600 hover:text-white transition-colors rounded-none"
-            >
-              Delete Draft
-            </button>
+            showDeleteConfirm ? (
+              <div className="flex gap-2 items-center">
+                <span className="text-[10px] text-rose-600 font-bold uppercase">Purge?</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    deleteDocMutation.mutate(documentId, {
+                      onSuccess: () => {
+                        router.push(`/workspaces/${shopSlug}/documents`);
+                      },
+                    });
+                  }}
+                  className="bg-rose-600 text-white px-3 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-700 transition-colors"
+                >
+                  Yes, Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="border border-zinc-300 bg-white text-zinc-500 px-3 py-2 text-[11px] font-bold uppercase tracking-wider hover:border-black hover:text-black transition-colors"
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="border border-rose-600 text-rose-600 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-600 hover:text-white transition-colors"
+              >
+                Delete Draft
+              </button>
+            )
           ) : (
             <span
               title="Issued or Paid documents cannot be deleted. Raise a Credit Note to reverse financial value."

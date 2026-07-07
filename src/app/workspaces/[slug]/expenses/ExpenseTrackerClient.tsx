@@ -32,6 +32,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
 
     const [status, setStatus] = useState<"IDLE" | "LOADING" | "ERROR">("IDLE");
     const [isUploading, setIsUploading] = useState(false);
+    const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null);
 
     async function handleCloudinaryUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
@@ -112,18 +113,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
         }
     }
 
-    async function handleDelete(expenseId: string) {
-        if (!confirm("Are you sure you want to delete this expense record? This will affect Analytics.")) return;
-        
-        const toastId = toast.loading("Deleting expense...");
-        const res = await deleteExpense(shopId, expenseId);
-        
-        if (res.success) {
-            toast.success("Expense deleted.", { id: toastId });
-        } else {
-            toast.error(res.error || "Failed to delete expense.", { id: toastId });
-        }
-    }
+
 
     return (
         <div>
@@ -320,9 +310,35 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                                     {formatCurrency(parseFloat(expense.amount), expense.currency)}
                                 </td>
                                 <td className="p-4 text-center">
-                                    <button onClick={() => handleDelete(expense.id)} className="text-rose-500 hover:text-rose-700 text-xs font-bold uppercase tracking-wider">
-                                        Delete
-                                    </button>
+                                    {deletingExpenseId === expense.id ? (
+                                        <div className="flex justify-center items-center gap-1.5 animate-in fade-in zoom-in-95">
+                                            <button 
+                                                onClick={async () => {
+                                                    const toastId = toast.loading("Deleting expense...");
+                                                    const res = await deleteExpense(shopId, expense.id);
+                                                    if (res.success) {
+                                                        toast.success("Expense deleted.", { id: toastId });
+                                                    } else {
+                                                        toast.error(res.error || "Failed to delete expense.", { id: toastId });
+                                                    }
+                                                    setDeletingExpenseId(null);
+                                                }} 
+                                                className="bg-rose-600 text-white px-2 py-0.5 rounded font-sans text-[10px] font-bold hover:bg-rose-700 uppercase"
+                                            >
+                                                Confirm
+                                            </button>
+                                            <button 
+                                                onClick={() => setDeletingExpenseId(null)} 
+                                                className="bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded font-sans text-[10px] font-bold hover:bg-zinc-200 uppercase"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button onClick={() => setDeletingExpenseId(expense.id)} className="text-rose-500 hover:text-rose-700 text-xs font-bold uppercase tracking-wider">
+                                            Delete
+                                        </button>
+                                    )}
                                 </td>
                             </tr>
                         ))}

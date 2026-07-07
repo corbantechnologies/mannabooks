@@ -73,6 +73,7 @@ export function SettingsForm({
   const [fiscalYearStartMonth, setFiscalYearStartMonth] = useState(initialFiscalYearStartMonth);
   const [saving, setSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [deletingPmId, setDeletingPmId] = useState<string | null>(null);
 
   // Payment method form state
   const [pmCategory, setPmCategory] = useState<"BANK" | "TILL" | "PAYBILL" | "CUSTOM">("BANK");
@@ -555,18 +556,40 @@ export function SettingsForm({
                       Make Default
                     </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!confirm(`Are you sure you want to delete "${pm.name}"?`)) return;
-                      deletePaymentMutation.mutate(pm.id, {
-                        onSuccess: () => router.refresh(),
-                      });
-                    }}
-                    className="border border-rose-200 bg-rose-50 text-rose-600 px-2 py-1 text-[10px] font-semibold uppercase hover:bg-rose-600 hover:text-white rounded transition-colors"
-                  >
-                    Delete
-                  </button>
+                  {deletingPmId === pm.id ? (
+                    <div className="flex items-center gap-1.5 animate-in fade-in zoom-in-95">
+                      <span className="text-[9px] text-rose-600 font-bold uppercase">Confirm?</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          deletePaymentMutation.mutate(pm.id, {
+                            onSuccess: () => {
+                              setDeletingPmId(null);
+                              router.refresh();
+                            },
+                          });
+                        }}
+                        className="bg-rose-600 text-white px-2 py-1 text-[10px] font-semibold uppercase hover:bg-rose-700 rounded transition-colors"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeletingPmId(null)}
+                        className="bg-zinc-100 text-zinc-500 px-2 py-1 text-[10px] font-semibold uppercase hover:bg-zinc-200 rounded transition-colors"
+                      >
+                        No
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setDeletingPmId(pm.id)}
+                      className="border border-rose-200 bg-rose-50 text-rose-600 px-2 py-1 text-[10px] font-semibold uppercase hover:bg-rose-600 hover:text-white rounded transition-colors"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

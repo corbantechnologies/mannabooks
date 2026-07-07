@@ -26,6 +26,7 @@ interface EditProductModalProps {
 export function EditProductModal({ product, shopId, shopSlug }: EditProductModalProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [name, setName] = useState(product.name);
   const [sku, setSku] = useState(product.sku || "");
   const [itemType, setItemType] = useState<"PRODUCT" | "SERVICE">((product.itemType as any) || "PRODUCT");
@@ -64,15 +65,7 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
     );
   }
 
-  async function handleDelete() {
-    if (!confirm(`Are you sure you want to delete "${product.name}"?`)) return;
-    deleteProductMutation.mutate(product.id, {
-      onSuccess: () => {
-        setIsOpen(false);
-        router.refresh();
-      },
-    });
-  }
+
 
   return (
     <>
@@ -223,13 +216,41 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
 
               {/* FOOTER ACTIONS */}
               <div className="border-t border-zinc-200/80 pt-5 flex justify-between items-center">
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  className="border border-rose-200 bg-rose-50 text-rose-700 px-4 py-2 font-semibold uppercase hover:bg-rose-600 hover:text-white rounded transition-colors text-xs"
-                >
-                  DELETE
-                </button>
+                {showDeleteConfirm ? (
+                  <div className="flex items-center gap-2 animate-in fade-in zoom-in-95">
+                    <span className="text-[10px] text-rose-600 font-bold uppercase">Confirm?</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        deleteProductMutation.mutate(product.id, {
+                          onSuccess: () => {
+                            setIsOpen(false);
+                            setShowDeleteConfirm(false);
+                            router.refresh();
+                          },
+                        });
+                      }}
+                      className="bg-rose-600 text-white px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-rose-700 transition-colors"
+                    >
+                      Yes, Delete
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="bg-zinc-100 text-zinc-500 px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-zinc-200 transition-colors"
+                    >
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="border border-rose-200 bg-rose-50 text-rose-700 px-4 py-2 font-semibold uppercase hover:bg-rose-600 hover:text-white rounded transition-colors text-xs"
+                  >
+                    DELETE
+                  </button>
+                )}
 
                 <div className="flex gap-3">
                   <button

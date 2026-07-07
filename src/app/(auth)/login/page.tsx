@@ -90,7 +90,15 @@ function LoginFormContent() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-500 uppercase block font-semibold">Account Password</label>
+            <div className="flex justify-between items-center">
+              <label className="text-zinc-500 uppercase block font-semibold">Account Password</label>
+              <Link
+                href="/forgot-password"
+                className="text-[10px] text-zinc-400 hover:text-black hover:underline uppercase font-semibold"
+              >
+                Forgot Password?
+              </Link>
+            </div>
             <input
               type="password"
               name="password"

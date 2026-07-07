@@ -38,7 +38,7 @@ export async function dispatchDocumentEmail({ documentId, isReminder = false }: 
             return { success: false, error: "No recipient email address available for this document." };
         }
 
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://mannabooks.vercel.app";
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://mannabooks.co.ke";
         const publicSecureLink = `${appUrl}/portal/invoice/${matchToken.token}`;
 
         // Use verified corbantechnologies.org domain address

@@ -392,41 +392,49 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
                   
                   {/* CATALOG LOOKUP & DESCRIPTION */}
-                  <div className="lg:col-span-5 space-y-2">
-                    <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Catalog Lookup / Description</label>
-                    <select
-                      onChange={(e) => handleProductLookup(index, e.target.value)}
-                      value={row.productId || ""}
-                      className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-md font-sans text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-black"
-                    >
-                      <option value="">-- Select item from catalog index --</option>
-                      {products.map((p) => {
-                        const stockVal = parseFloat(p.stockQuantity || "0");
-                        const stockLabel = p.trackStock ? ` (${stockVal > 0 ? `${stockVal} in stock` : "OUT OF STOCK"})` : "";
-                        return (
-                          <option key={p.id} value={p.id}>
-                            {p.name} — {formatCurrency(parseFloat(p.unitPrice), shop.currency)}{stockLabel}
-                          </option>
-                        );
-                      })}
-                    </select>
+                  <div className="lg:col-span-5 space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Catalog Product / Service Lookup</label>
+                      <select
+                        onChange={(e) => handleProductLookup(index, e.target.value)}
+                        value={row.productId || ""}
+                        className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-md font-sans text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-black"
+                      >
+                        <option value="">-- SELECT FROM CATALOG REGISTER (OPTIONAL) --</option>
+                        {products.map((p) => {
+                          const stockVal = parseFloat(p.stockQuantity || "0");
+                          const stockLabel = p.trackStock ? ` (${stockVal > 0 ? `${stockVal} in stock` : "OUT OF STOCK"})` : "";
+                          return (
+                            <option key={p.id} value={p.id}>
+                              {p.name} — {formatCurrency(parseFloat(p.unitPrice), shop.currency)}{stockLabel}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
                     
-                    <input
-                      type="text"
-                      value={row.description}
-                      placeholder="Item description or billing specification..."
-                      onChange={(e) => updateRowField(index, "description", e.target.value)}
-                      className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-md font-sans text-xs focus:outline-none focus:ring-1 focus:ring-black"
-                      required
-                    />
+                    <div className="space-y-1">
+                      <label className="text-[9px] text-zinc-400 font-semibold uppercase block">Billing Description / Core Deliverable *</label>
+                      <input
+                        type="text"
+                        value={row.description}
+                        placeholder="Item description or billing specification..."
+                        onChange={(e) => updateRowField(index, "description", e.target.value)}
+                        className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-md font-sans text-xs focus:outline-none focus:ring-1 focus:ring-black font-semibold"
+                        required
+                      />
+                    </div>
 
-                    <input
-                      type="text"
-                      value={row.notes || ""}
-                      placeholder="Add optional specific details (e.g. harddisk repair)..."
-                      onChange={(e) => updateRowField(index, "notes", e.target.value)}
-                      className="w-full px-3 py-2 border border-zinc-200 bg-zinc-50 placeholder:text-zinc-400 rounded-md font-sans text-xs focus:outline-none focus:ring-1 focus:ring-black italic"
-                    />
+                    <div className="space-y-1">
+                      <label className="text-[9px] text-zinc-400 font-semibold uppercase block">Specific Details / Sub-Notes (Optional)</label>
+                      <input
+                        type="text"
+                        value={row.notes || ""}
+                        placeholder="e.g., harddisk repair, specific serial number..."
+                        onChange={(e) => updateRowField(index, "notes", e.target.value)}
+                        className="w-full px-3 py-2 border border-zinc-200 bg-zinc-50 placeholder:text-zinc-400 rounded-md font-sans text-xs focus:outline-none focus:ring-1 focus:ring-black italic text-zinc-600"
+                      />
+                    </div>
 
                     {isOverstock && (
                       <div className="text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded">

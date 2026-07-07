@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { calculateLineItem, calculateDocumentTotals, formatCurrency } from "@/lib/utils";
 import { createBillingDocument, updateBillingDocument, DocumentType } from "@/lib/actions/documents";
 import { toast } from "react-hot-toast";
+import { Spinner } from "@/components/Spinner";
 
 interface BuilderProps {
   shop: any;
@@ -629,7 +630,14 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
               disabled={loading}
               className="btn-primary-modern w-full py-3.5 font-bold uppercase tracking-wider text-xs shadow-md disabled:bg-zinc-300"
             >
-              {loading ? "COMMITTING TRANSACTION..." : `✓ ISSUE ${docType} NOW`}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Spinner size={14} />
+                  <span>COMMITTING TRANSACTION...</span>
+                </span>
+              ) : (
+                `✓ ISSUE ${docType} NOW`
+              )}
             </button>
           </div>
         </div>

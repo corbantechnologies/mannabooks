@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { registerOwnerAccount } from "@/lib/actions/auth";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
+import { Spinner } from "@/components/Spinner";
 
 export default function SignupPage() {
   return (
@@ -158,7 +159,14 @@ function SignupContent() {
             disabled={loading}
             className="btn-primary-modern w-full py-2.5 font-semibold uppercase tracking-wider disabled:bg-zinc-300 text-xs mt-2"
           >
-            {loading ? "COMPILING REGISTRY..." : "CREATE MASTER PROFILE"}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Spinner size={14} />
+                <span>COMPILING REGISTRY...</span>
+              </span>
+            ) : (
+              "CREATE MASTER PROFILE"
+            )}
           </button>
         </form>
 

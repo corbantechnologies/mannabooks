@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createExpense, deleteExpense } from "@/lib/actions/expenses";
 import { formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { Spinner } from "@/components/Spinner";
 
 type ExpenseCategory = 'RENT' | 'UTILITIES' | 'FUEL' | 'MARKETING' | 'SALARIES' | 'OFFICE_SUPPLIES' | 'OTHER';
 
@@ -235,9 +236,13 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                                     />
                                     <div className={`border-2 border-dashed border-zinc-300 rounded-lg p-6 text-center transition-colors ${isUploading ? 'bg-zinc-100 border-zinc-400' : 'hover:border-black hover:bg-zinc-50'}`}>
-                                        <svg className="mx-auto h-8 w-8 text-zinc-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                        </svg>
+                                        {isUploading ? (
+                                            <Spinner size={32} className="mx-auto mb-2 text-zinc-500" />
+                                        ) : (
+                                            <svg className="mx-auto h-8 w-8 text-zinc-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                            </svg>
+                                        )}
                                         <p className="text-sm font-bold text-black">{isUploading ? "Uploading to secure vault..." : "Click or drag to upload receipt"}</p>
                                         <p className="text-[10px] text-zinc-500 font-mono mt-1">JPEG, PNG up to 5MB</p>
                                     </div>
@@ -249,9 +254,16 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                             <button
                                 type="submit"
                                 disabled={status === "LOADING" || isUploading}
-                                className="bg-black hover:bg-zinc-800 text-white font-bold py-2.5 px-6 rounded-lg text-sm transition-colors disabled:opacity-50"
+                                className="bg-black hover:bg-zinc-800 text-white font-bold py-2.5 px-6 rounded-lg text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
                             >
-                                {status === "LOADING" ? "Logging..." : "Log Expense"}
+                                {status === "LOADING" ? (
+                                    <>
+                                        <Spinner size={14} color="white" />
+                                        <span>Logging...</span>
+                                    </>
+                                ) : (
+                                    "Log Expense"
+                                )}
                             </button>
                         </div>
                     </form>

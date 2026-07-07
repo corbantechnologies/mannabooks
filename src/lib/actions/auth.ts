@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { sessions, users, shops, shopMembers } from "@/db/schema";
+import { sessions, users, shops, shopMembers, shopInvitations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import crypto from "crypto";
@@ -91,6 +91,7 @@ interface RegisterOwnerInput {
     email: string;
     passwordHex: string;
     businessName: string;
+    inviteToken?: string;
 }
 
 export async function registerOwnerAccount(input: RegisterOwnerInput) {
@@ -147,6 +148,43 @@ export async function registerOwnerAccount(input: RegisterOwnerInput) {
                 role: "OWNER",
                 isActive: true,
             });
+
+            // 6.5 Auto-accept pending invitations
+            let pendingInvites = await tx.query.shopInvitations.findMany({
+                where: eq(shopInvitations.email, input.email.toLowerCase().trim())
+            });
+
+            // If an invite token was explicitly provided, also look for that specific invite
+            if (input.inviteToken) {
+                const tokenInvite = await tx.query.shopInvitations.findFirst({
+                    where: eq(shopInvitations.token, input.inviteToken)
+                });
+                
+                // If found and not already in the array, add it
+                if (tokenInvite && !pendingInvites.some(inv => inv.id === tokenInvite.id)) {
+                    pendingInvites.push(tokenInvite);
+                }
+            }
+
+            const validInvites = pendingInvites.filter(inv => 
+                inv.status === 'PENDING' && new Date(inv.expiresAt) > new Date()
+            );
+
+            for (const invite of validInvites) {
+                // Add them to the invited workspace
+                await tx.insert(shopMembers).values({
+                    shopId: invite.shopId,
+                    userId: newUser.id,
+                    role: invite.role,
+                    customPermissions: invite.customPermissions,
+                    isActive: true,
+                }).onConflictDoNothing();
+
+                // Update invite status
+                await tx.update(shopInvitations)
+                    .set({ status: 'ACCEPTED' })
+                    .where(eq(shopInvitations.id, invite.id));
+            }
 
             return {
                 success: true as const,

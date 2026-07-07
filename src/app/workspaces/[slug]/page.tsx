@@ -1,6 +1,6 @@
 // src/app/workspaces/[slug]/page.tsx
 import { db } from "@/db";
-import { shops, documents, clients, products } from "@/db/schema";
+import { shops, documents, clients, products, paymentMethods } from "@/db/schema";
 import { eq, count, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
@@ -24,7 +24,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
   }
 
   // 2. Fetch documents, clients, and products metrics concurrently in parallel
-  const [shopDocs, clientCountRes, productCountRes, allDocs] = await Promise.all([
+  const [shopDocs, clientCountRes, productCountRes, allDocs, paymentCountRes] = await Promise.all([
     db.query.documents.findMany({
       where: eq(documents.shopId, shop.id),
       with: {
@@ -39,6 +39,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
     db.query.documents.findMany({
       where: eq(documents.shopId, shop.id),
     }),
+    db.select({ value: count() }).from(paymentMethods).where(eq(paymentMethods.shopId, shop.id)),
   ]);
 
   // Compute metrics
@@ -79,6 +80,8 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
 
       <OnboardingTracker 
         shopSlug={slug}
+        hasSettings={!!shop.taxPin}
+        hasPayment={(paymentCountRes[0]?.value || 0) > 0}
         hasProducts={(productCountRes[0]?.value || 0) > 0}
         hasClients={(clientCountRes[0]?.value || 0) > 0}
         hasDocuments={allDocs.length > 0}

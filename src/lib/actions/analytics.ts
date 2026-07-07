@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { documents, documentItems, clients, suppliers, products, shops } from "@/db/schema";
+import { documents, documentItems, clients, suppliers, products, shops, expenses } from "@/db/schema";
 import { eq, and, desc, gte, lte } from "drizzle-orm";
 import { calculateDocumentTotals } from "@/lib/utils";
 
@@ -16,7 +16,9 @@ export interface AnalyticsData {
   totalSettledOutflow: number; // Paid LPOs + POs + Payment Vouchers
   netOperatingCashFlow: number; // Inflow - Outflow
   totalCostOfGoodsSold: number; // COGS
+  totalOperatingExpenses: number; // Operating Expenses (Feature 8)
   netGrossProfit: number; // Inflow - COGS
+  netOperatingProfit: number; // Gross Profit - Operating Expenses
   grossProfitMargin: number; // Profit Margin %
   pendingReceivables: number; // Sent + Overdue Invoices
   accountsPayableDebt: number; // Sent + Overdue LPOs/POs
@@ -102,7 +104,7 @@ export async function getWorkspaceAnalyticsData(
     }
 
     // 2. Query All Workspace Documents
-    const allDocs = await db.query.documents.findMany({
+    const docsQuery = db.query.documents.findMany({
       where: eq(documents.shopId, shopId),
       with: {
         items: {
@@ -114,6 +116,16 @@ export async function getWorkspaceAnalyticsData(
         supplier: true,
       },
     });
+
+    const expensesQuery = db.query.expenses.findMany({
+      where: startDate && endDate ? and(
+        eq(expenses.shopId, shopId),
+        gte(expenses.expenseDate, startDate),
+        lte(expenses.expenseDate, endDate)
+      ) : eq(expenses.shopId, shopId)
+    });
+
+    const [allDocs, allExpenses] = await Promise.all([docsQuery, expensesQuery]);
 
     // 3. Filter Documents for selected Timeframe
     const filteredDocs = allDocs.filter((d) => {
@@ -152,8 +164,14 @@ export async function getWorkspaceAnalyticsData(
       }
     });
 
-    const netOperatingCashFlow = totalSettledInflow - totalSettledOutflow;
+    let totalOperatingExpenses = 0;
+    allExpenses.forEach(exp => {
+      totalOperatingExpenses += parseFloat(exp.amount || "0");
+    });
+
+    const netOperatingCashFlow = totalSettledInflow - (totalSettledOutflow + totalOperatingExpenses);
     const netGrossProfit = totalSettledInflow - totalCostOfGoodsSold;
+    const netOperatingProfit = netGrossProfit - totalOperatingExpenses;
     const grossProfitMargin = totalSettledInflow > 0 ? (netGrossProfit / totalSettledInflow) * 100 : 0;
 
     // 5. Compute Monthly Timeline Stream (Last 6 Months)
@@ -176,6 +194,14 @@ export async function getWorkspaceAnalyticsData(
           if (isSales) monthlyTimelineMap[label].inflow += val;
           else if (isOutflow) monthlyTimelineMap[label].outflow += val;
         }
+      }
+    });
+
+    allExpenses.forEach(exp => {
+      const d = new Date(exp.expenseDate);
+      const label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }).toUpperCase();
+      if (monthlyTimelineMap[label]) {
+        monthlyTimelineMap[label].outflow += parseFloat(exp.amount || "0");
       }
     });
 
@@ -322,7 +348,9 @@ export async function getWorkspaceAnalyticsData(
         totalSettledOutflow,
         netOperatingCashFlow,
         totalCostOfGoodsSold,
+        totalOperatingExpenses,
         netGrossProfit,
+        netOperatingProfit,
         grossProfitMargin,
         pendingReceivables,
         accountsPayableDebt,

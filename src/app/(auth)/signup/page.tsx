@@ -1,14 +1,24 @@
 // src/app/signup/page.tsx
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { registerOwnerAccount } from "@/lib/actions/auth";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center font-mono text-xs text-zinc-500">Loading...</div>}>
+      <SignupContent />
+    </Suspense>
+  );
+}
+
+function SignupContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get("invite");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -38,7 +48,8 @@ export default function SignupPage() {
         name,
         email,
         passwordHex: password,
-        businessName,
+        businessName: businessName || "My Profile",
+        inviteToken: inviteToken || undefined,
       });
 
       if (!response.success) {
@@ -48,10 +59,15 @@ export default function SignupPage() {
         setLoading(false);
       } else {
         toast.success("Account & workspace created successfully!", { id: toastId });
-        if ("shopSlug" in response && response.shopSlug) {
-          window.location.href = `/workspaces/${response.shopSlug}`;
+        
+        // If they joined via invite, push them to the global dashboard router 
+        // so it natively redirects them to the workspace selector (since they now have multiple)
+        if (inviteToken) {
+            window.location.href = "/dashboard";
+        } else if ("shopSlug" in response && response.shopSlug) {
+            window.location.href = `/workspaces/${response.shopSlug}`;
         } else {
-          window.location.href = "/dashboard";
+            window.location.href = "/dashboard";
         }
       }
     } catch (err: any) {
@@ -113,14 +129,17 @@ export default function SignupPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-500 uppercase block font-semibold">Business / Store Entity Name</label>
+            <label className="text-zinc-500 uppercase block font-semibold">
+              {inviteToken ? "Optional: Business Name" : "Business / Store Entity Name"}
+            </label>
             <input
               type="text"
               name="businessName"
               placeholder="e.g., Manna Hardware"
               className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
-              required
+              required={!inviteToken}
             />
+            {inviteToken && <p className="text-[10px] text-zinc-400 mt-1">Leave blank to skip creating your own workspace.</p>}
           </div>
 
           <div className="space-y-1">

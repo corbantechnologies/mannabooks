@@ -187,91 +187,10 @@ export function DocumentStatusPanel({
         </div>
       )}
 
-      {/* KRA eTIMS / CONTROL UNIT SERIAL NUMBER (OPTIONAL STATUTORY FIELD) */}
-      <div className="border border-zinc-200/80 p-4 bg-zinc-50/50 rounded space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-[10px] font-semibold uppercase text-black">Statutory KRA eTIMS CU Serial Number</span>
-          {requiresEtims && !cuNumber ? (
-            <span className="border border-amber-300 bg-amber-100 text-amber-900 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-tight rounded">
-              ⚠️ eTIMS CU Serial Pending
-            </span>
-          ) : (
-            <span className="text-[9px] text-zinc-400 italic">Optional Tax Control Number</span>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={cuNumber}
-            onChange={(e) => setCuNumber(e.target.value)}
-            placeholder="e.g. CU0123456789/2026"
-            className="flex-1 px-3 py-1.5 border border-zinc-300 rounded bg-white focus:outline-none focus:border-black text-xs uppercase font-mono"
-          />
-          <button
-            type="button"
-            onClick={handleSaveCuNumber}
-            disabled={savingCu}
-            className="btn-primary-modern px-4 py-1.5 font-semibold uppercase text-[10px] disabled:bg-zinc-400"
-          >
-            {savingCu ? "Saving..." : "Save CU #"}
-          </button>
-        </div>
-      </div>
-
-      {/* MAIN EMAIL DISPATCH & REMINDER */}
-      <div className="flex gap-4">
-        <button
-          onClick={handleSendEmail}
-          disabled={sending || !clientEmail}
-          className="flex-1 border border-zinc-200 bg-white hover:bg-zinc-50 px-4 py-2 font-mono text-[10px] font-bold uppercase transition-colors"
-        >
-          {sending ? "Dispatching..." : clientEmail ? "✉ Email Secure Portal Link" : "✉ Missing Client Email"}
-        </button>
-        
-        {(docType === "INVOICE" && currentStatus === "OVERDUE") && (
-          <button
-            onClick={handleSendReminder}
-            disabled={sending || !clientEmail}
-            className="flex-1 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 px-4 py-2 font-mono text-[10px] font-bold uppercase transition-colors"
-          >
-            {sending ? "Dispatching..." : "🔔 Send Aging Reminder"}
-          </button>
-        )}
-      </div>
-
-      {/* PAYMENT CONFIRMATION DETAILS (OPTIONAL) */}
-      <div className="border border-zinc-200/80 p-4 bg-zinc-50/50 rounded space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-[10px] font-semibold uppercase text-black">Payment Confirmation &amp; Remittance Ref</span>
-          <span className="text-[9px] text-zinc-400 italic">Optional Settlement Details</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <select
-            value={paymentChannel}
-            onChange={(e) => setPaymentChannel(e.target.value)}
-            className="w-full px-3 py-1.5 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase"
-          >
-            <option value="">-- PAYMENT CHANNEL / METHOD --</option>
-            <option value="BANK">Bank Account / Transfer</option>
-            <option value="MPESA">M-Pesa (Till / Paybill)</option>
-            <option value="CASH">Cash Settlement</option>
-            <option value="CHEQUE">Bank Cheque</option>
-            <option value="OTHER">Other Custom Method</option>
-          </select>
-          <input
-            type="text"
-            value={paymentReference}
-            onChange={(e) => setPaymentReference(e.target.value)}
-            placeholder="e.g. M-Pesa Code QAB71239X or Bank Ref"
-            className="w-full px-3 py-1.5 border border-black bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase"
-          />
-        </div>
-      </div>
-
       {/* STATUS TOGGLE */}
       <div className="space-y-2">
         <div className="flex justify-between items-center">
-          <p className="text-[10px] text-zinc-400 uppercase">Update Document Status</p>
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Update Document Status</p>
           {status === "PAID" && (
             <span className="text-[9px] text-zinc-400 italic">PAID status is final. Use Credit Note to reverse.</span>
           )}
@@ -300,7 +219,7 @@ export function DocumentStatusPanel({
 
       {/* PORTAL LINK + EMAIL */}
       <div className="border-t border-zinc-200 pt-4 space-y-3">
-        <p className="text-[10px] text-zinc-400 uppercase">Client Delivery Actions</p>
+        <p className="text-[10px] text-zinc-400 uppercase font-semibold">Client Delivery Actions</p>
 
         {portalLink && (
           <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
@@ -367,6 +286,15 @@ export function DocumentStatusPanel({
             Duplicate
           </button>
 
+          {status === "DRAFT" && (
+            <Link
+              href={`/workspaces/${shopSlug}/documents/${documentId}/edit`}
+              className="border border-black bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-50 transition-colors rounded-none no-underline text-black inline-block"
+            >
+              Edit Draft
+            </Link>
+          )}
+
           {status === "DRAFT" ? (
             <button
               type="button"
@@ -390,6 +318,87 @@ export function DocumentStatusPanel({
               🔒 Deletion Blocked (Audit Protected)
             </span>
           )}
+        </div>
+      </div>
+
+      {/* KRA eTIMS / CONTROL UNIT SERIAL NUMBER (OPTIONAL STATUTORY FIELD) */}
+      <div className="border border-zinc-200/80 p-4 bg-zinc-50/50 rounded space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] font-semibold uppercase text-black">Statutory KRA eTIMS CU Serial Number</span>
+          {requiresEtims && !cuNumber ? (
+            <span className="border border-amber-300 bg-amber-100 text-amber-900 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-tight rounded">
+              ⚠️ eTIMS CU Serial Pending
+            </span>
+          ) : (
+            <span className="text-[9px] text-zinc-400 italic">Optional Tax Control Number</span>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={cuNumber}
+            onChange={(e) => setCuNumber(e.target.value)}
+            placeholder="e.g. CU0123456789/2026"
+            className="flex-1 px-3 py-1.5 border border-zinc-300 rounded bg-white focus:outline-none focus:border-black text-xs uppercase font-mono"
+          />
+          <button
+            type="button"
+            onClick={handleSaveCuNumber}
+            disabled={savingCu}
+            className="btn-primary-modern px-4 py-1.5 font-semibold uppercase text-[10px] disabled:bg-zinc-400"
+          >
+            {savingCu ? "Saving..." : "Save CU #"}
+          </button>
+        </div>
+      </div>
+
+      {/* MAIN EMAIL DISPATCH & REMINDER */}
+      <div className="flex gap-4">
+        <button
+          onClick={handleSendEmail}
+          disabled={sending || !clientEmail}
+          className="flex-1 border border-zinc-200 bg-white hover:bg-zinc-50 px-4 py-2 font-mono text-[10px] font-bold uppercase transition-colors"
+        >
+          {sending ? "Dispatching..." : clientEmail ? "✉ Email Secure Portal Link" : "✉ Missing Client Email"}
+        </button>
+        
+        {(docType === "INVOICE" && currentStatus === "OVERDUE") && (
+          <button
+            onClick={handleSendReminder}
+            disabled={sending || !clientEmail}
+            className="flex-1 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 px-4 py-2 font-mono text-[10px] font-bold uppercase transition-colors"
+          >
+            {sending ? "Dispatching..." : "🔔 Send Aging Reminder"}
+          </button>
+        )}
+      </div>
+
+      {/* PAYMENT CONFIRMATION DETAILS (OPTIONAL) */}
+      <div className="border border-zinc-200/80 p-4 bg-zinc-50/50 rounded space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] font-semibold uppercase text-black">Payment Confirmation &amp; Remittance Ref</span>
+          <span className="text-[9px] text-zinc-400 italic">Optional Settlement Details</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <select
+            value={paymentChannel}
+            onChange={(e) => setPaymentChannel(e.target.value)}
+            className="w-full px-3 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase"
+          >
+            <option value="">-- PAYMENT CHANNEL / METHOD --</option>
+            <option value="BANK">Bank Account / Transfer</option>
+            <option value="MPESA">M-Pesa (Till / Paybill)</option>
+            <option value="CASH">Cash Settlement</option>
+            <option value="CHEQUE">Bank Cheque</option>
+            <option value="OTHER">Other Custom Method</option>
+          </select>
+          <input
+            type="text"
+            value={paymentReference}
+            onChange={(e) => setPaymentReference(e.target.value)}
+            placeholder="e.g. M-Pesa Code QAB71239X or Bank Ref"
+            className="w-full px-3 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase"
+          />
         </div>
       </div>
     </div>

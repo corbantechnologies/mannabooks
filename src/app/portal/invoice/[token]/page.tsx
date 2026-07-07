@@ -200,23 +200,32 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
         {/* EXPLICIT TRANSACTION LINE ITEM MATRIX */}
         <div className="space-y-2">
           <span className="text-zinc-400 uppercase text-[10px] block">Itemization Sub-Ledger:</span>
-          <div className="border border-black overflow-hidden">
-            <div className="grid grid-cols-12 bg-zinc-50 border-b border-black p-3 font-bold uppercase text-[10px] tracking-tight">
-              <div className="col-span-6">Description / Core Deliverable</div>
-              <div className="col-span-2 text-center">Qty</div>
-              <div className="col-span-2 text-right">Unit Rate</div>
-              <div className="col-span-2 text-right">Line Total</div>
-            </div>
-            
-            <div className="divide-y divide-zinc-200 bg-white">
-              {doc.items.map((item) => (
-                <div key={item.id} className="grid grid-cols-12 p-3 items-center font-sans text-xs">
-                  <div className="col-span-6 font-bold text-black uppercase tracking-tight">{item.description}</div>
-                  <div className="col-span-2 text-center font-mono text-xs">{item.quantity}</div>
-                  <div className="col-span-2 text-right font-mono text-xs">{formatCurrency(item.unitPrice, shop.currency)}</div>
-                  <div className="col-span-2 text-right font-mono text-xs font-bold text-black">{formatCurrency(item.itemTotal, shop.currency)}</div>
-                </div>
-              ))}
+          <div className="border border-black overflow-x-auto">
+            <div className="min-w-[600px]">
+              <div className="grid grid-cols-12 bg-zinc-50 border-b border-black p-3 font-bold uppercase text-[10px] tracking-tight">
+                <div className="col-span-6">Description / Core Deliverable</div>
+                <div className="col-span-2 text-center">Qty</div>
+                <div className="col-span-2 text-right">Unit Rate</div>
+                <div className="col-span-2 text-right">Line Total</div>
+              </div>
+              
+              <div className="divide-y divide-zinc-200 bg-white">
+                {doc.items.map((item) => (
+                  <div key={item.id} className="grid grid-cols-12 p-3 items-center font-sans text-xs">
+                    <div className="col-span-6 font-bold text-black uppercase tracking-tight">
+                      <div>{item.description}</div>
+                      {item.notes && (
+                        <div className="text-[10px] text-zinc-500 italic mt-0.5 font-mono lowercase">
+                          ({item.notes})
+                        </div>
+                      )}
+                    </div>
+                    <div className="col-span-2 text-center font-mono text-xs">{item.quantity}</div>
+                    <div className="col-span-2 text-right font-mono text-xs">{formatCurrency(item.unitPrice, shop.currency)}</div>
+                    <div className="col-span-2 text-right font-mono text-xs font-bold text-black">{formatCurrency(item.itemTotal, shop.currency)}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

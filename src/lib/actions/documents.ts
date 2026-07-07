@@ -6,6 +6,7 @@ import { calculateLineItem, calculateDocumentTotals } from "@/lib/utils";
 import { eq, and, gte, lte } from "drizzle-orm";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
+import { verifyAndGetSession } from "./auth";
 
 import { applyDocumentStockMovements } from "@/lib/actions/stock";
 import { getFiscalYearRange, getFyDocSuffix } from "@/lib/fiscalYear";
@@ -552,5 +553,123 @@ export async function updateDocumentPaymentDetailsAction(
     } catch (error) {
         console.error("Failed to update payment confirmation details:", error);
         return { success: false, error: "Failed to update payment details." };
+    }
+}
+
+interface UpdateDocumentItemInput {
+    productId?: string;
+    description: string;
+    notes?: string;
+    quantity: number;
+    unitPrice: number;
+    taxType: "V_16" | "V_0" | "EXEMPT";
+}
+
+interface UpdateDocumentInput {
+    documentId: string;
+    shopId: string;
+    shopSlug: string;
+    clientId?: string;
+    supplierId?: string;
+    type: DocumentType;
+    dueDate?: Date;
+    kraCuInvoiceNumber?: string;
+    requiresEtims?: boolean;
+    notes?: string;
+    currency?: string;
+    items: UpdateDocumentItemInput[];
+}
+
+/**
+ * Updates an existing draft document and overwrites its line items.
+ */
+export async function updateBillingDocument(input: UpdateDocumentInput) {
+    try {
+        const sessionRecord = await verifyAndGetSession();
+        if (!sessionRecord) return { success: false, error: "Authentication expired." };
+
+        // 1. Resolve compliance conditions and context
+        const doc = await db.query.documents.findFirst({
+            where: and(eq(documents.id, input.documentId), eq(documents.shopId, input.shopId)),
+        });
+
+        if (!doc) {
+            return { success: false, error: "Document not found or access denied." };
+        }
+
+        if (doc.status !== "DRAFT") {
+            return { success: false, error: "Statutory Audit Protection: Only DRAFT documents can be modified." };
+        }
+
+        const shopProfile = await db.query.shops.findFirst({
+            where: eq(shops.id, input.shopId),
+        });
+
+        if (!shopProfile) {
+            return { success: false, error: "Merchant identity context missing." };
+        }
+
+        const isVatActive = shopProfile.isVatRegistered;
+
+        // 2. Perform database edits in a secure transaction
+        await db.transaction(async (tx) => {
+            // Process totals
+            const calculatedTotals = calculateDocumentTotals({
+                items: input.items,
+                isShopVatRegistered: isVatActive,
+            });
+
+            // Update master header
+            await tx.update(documents)
+                .set({
+                    clientId: input.clientId || null,
+                    supplierId: input.supplierId || null,
+                    type: input.type,
+                    dueDate: input.dueDate || null,
+                    kraCuInvoiceNumber: input.kraCuInvoiceNumber || null,
+                    requiresEtims: input.requiresEtims || false,
+                    notes: input.notes || null,
+                    currency: input.currency || shopProfile.currency,
+                    subTotal: calculatedTotals.subTotal.toString(),
+                    taxAmount: calculatedTotals.taxAmount.toString(),
+                    grandTotal: calculatedTotals.grandTotal.toString(),
+                })
+                .where(eq(documents.id, input.documentId));
+
+            // Purge old line items
+            await tx.delete(documentItems).where(eq(documentItems.documentId, input.documentId));
+
+            // Write new line items
+            const compiledRowsPayload = input.items.map((rowItem) => {
+                const lineMath = calculateLineItem({
+                    quantity: rowItem.quantity,
+                    unitPrice: rowItem.unitPrice,
+                    taxType: rowItem.taxType,
+                    isShopVatRegistered: isVatActive,
+                });
+
+                return {
+                    documentId: doc.id,
+                    productId: rowItem.productId || null,
+                    description: rowItem.description.trim(),
+                    notes: rowItem.notes?.trim() || null,
+                    quantity: rowItem.quantity.toString(),
+                    unitPrice: rowItem.unitPrice.toString(),
+                    taxType: rowItem.taxType,
+                    taxAmount: lineMath.taxAmount.toString(),
+                    itemTotal: lineMath.itemTotal.toString(),
+                };
+            });
+
+            await tx.insert(documentItems).values(compiledRowsPayload);
+        });
+
+        revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+        revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.documentId}`);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Critical failure during document update transaction:", error);
+        return { success: false, error: "Failed to persist document updates." };
     }
 }

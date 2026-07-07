@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { calculateLineItem, calculateDocumentTotals, formatCurrency } from "@/lib/utils";
-import { createBillingDocument, DocumentType } from "@/lib/actions/documents";
+import { createBillingDocument, updateBillingDocument, DocumentType } from "@/lib/actions/documents";
 import { toast } from "react-hot-toast";
 
 interface BuilderProps {
@@ -13,6 +13,7 @@ interface BuilderProps {
   clients: any[];
   suppliers?: any[];
   products: any[];
+  initialDocument?: any;
 }
 
 interface UiRowItem {
@@ -24,11 +25,11 @@ interface UiRowItem {
   taxType: "V_16" | "V_0" | "EXEMPT";
 }
 
-export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers = [], products }: BuilderProps) {
+export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers = [], products, initialDocument }: BuilderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialClientId = searchParams.get("clientId") || "";
-  const initialSupplierId = searchParams.get("supplierId") || "";
+  const initialClientId = searchParams.get("clientId") || (initialDocument?.clientId) || "";
+  const initialSupplierId = searchParams.get("supplierId") || (initialDocument?.supplierId) || "";
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,14 +42,18 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
     initialSupplierId || initialClientId || ""
   );
   const [docType, setDocType] = useState<DocumentType>(
-    initialSupplierId ? "LPO" : "INVOICE"
+    initialDocument?.type || (initialSupplierId ? "LPO" : "INVOICE")
   );
-  const [dueDate, setDueDate] = useState("");
-  const [kraCuInvoiceNumber, setKraCuInvoiceNumber] = useState("");
-  const [requiresEtims, setRequiresEtims] = useState(false);
-  const [currency, setCurrency] = useState(shop.currency || "KES");
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [recurringInterval, setRecurringInterval] = useState<"WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY">("MONTHLY");
+  const [dueDate, setDueDate] = useState(
+    initialDocument?.dueDate ? new Date(initialDocument.dueDate).toISOString().split('T')[0] : ""
+  );
+  const [kraCuInvoiceNumber, setKraCuInvoiceNumber] = useState(initialDocument?.kraCuInvoiceNumber || "");
+  const [requiresEtims, setRequiresEtims] = useState(initialDocument?.requiresEtims || false);
+  const [currency, setCurrency] = useState(initialDocument?.currency || shop.currency || "KES");
+  const [isRecurring, setIsRecurring] = useState(initialDocument?.isRecurring || false);
+  const [recurringInterval, setRecurringInterval] = useState<"WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY">(
+    initialDocument?.recurringInterval || "MONTHLY"
+  );
 
   // Automatically switch partyType when selecting Procurement documents (LPO, PO, GRN, PV)
   useEffect(() => {
@@ -72,9 +77,18 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
   }, [targetId, partyType, clients, suppliers]);
 
   // Dynamic Ledger Item Rows
-  const [rows, setRows] = useState<UiRowItem[]>([
-    { description: "", notes: "", quantity: 1, unitPrice: 0, taxType: "V_16" }
-  ]);
+  const [rows, setRows] = useState<UiRowItem[]>(
+    initialDocument?.items
+      ? initialDocument.items.map((item: any) => ({
+          productId: item.productId || undefined,
+          description: item.description,
+          notes: item.notes || "",
+          quantity: parseFloat(item.quantity),
+          unitPrice: parseFloat(item.unitPrice),
+          taxType: item.taxType,
+        }))
+      : [{ description: "", notes: "", quantity: 1, unitPrice: 0, taxType: "V_16" }]
+  );
 
   // Document Summary Calculations computed reactively
   const normalizedRows = rows.map(r => ({
@@ -145,29 +159,49 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
     }
 
     setLoading(true);
-    const toastId = toast.loading(`Generating ${docType.toLowerCase()}...`);
+    const toastId = toast.loading(
+      initialDocument
+        ? `Updating ${docType.toLowerCase()}...`
+        : `Generating ${docType.toLowerCase()}...`
+    );
 
-    const res = await createBillingDocument({
-      shopId: shop.id,
-      shopSlug,
-      clientId: partyType === "CLIENT" ? targetId : undefined,
-      supplierId: partyType === "SUPPLIER" ? targetId : undefined,
-      type: docType,
-      dueDate: dueDate ? new Date(dueDate) : undefined,
-      kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
-      requiresEtims,
-      currency,
-      isRecurring,
-      recurringInterval: isRecurring ? recurringInterval : undefined,
-      items: rows.map(r => ({
-        productId: r.productId,
-        description: r.description,
-        notes: r.notes || undefined,
-        quantity: typeof r.quantity === "number" ? r.quantity : 1,
-        unitPrice: typeof r.unitPrice === "number" ? r.unitPrice : 0,
-        taxType: r.taxType,
-      })),
-    });
+    const itemsPayload = rows.map(r => ({
+      productId: r.productId,
+      description: r.description,
+      notes: r.notes || undefined,
+      quantity: typeof r.quantity === "number" ? r.quantity : 1,
+      unitPrice: typeof r.unitPrice === "number" ? r.unitPrice : 0,
+      taxType: r.taxType,
+    }));
+
+    const res = initialDocument
+      ? await updateBillingDocument({
+          documentId: initialDocument.id,
+          shopId: shop.id,
+          shopSlug,
+          clientId: partyType === "CLIENT" ? targetId : undefined,
+          supplierId: partyType === "SUPPLIER" ? targetId : undefined,
+          type: docType,
+          dueDate: dueDate ? new Date(dueDate) : undefined,
+          kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
+          requiresEtims,
+          currency,
+          items: itemsPayload,
+        })
+      : await createBillingDocument({
+          shopId: shop.id,
+          shopSlug,
+          clientId: partyType === "CLIENT" ? targetId : undefined,
+          supplierId: partyType === "SUPPLIER" ? targetId : undefined,
+          type: docType,
+          dueDate: dueDate ? new Date(dueDate) : undefined,
+          kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
+          requiresEtims,
+          currency,
+          isRecurring,
+          recurringInterval: isRecurring ? recurringInterval : undefined,
+          items: itemsPayload,
+        });
 
     setLoading(false);
     if (!res.success) {
@@ -175,8 +209,13 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
       setError(msg);
       toast.error(msg, { id: toastId });
     } else {
-      toast.success(`${docType} created successfully!`, { id: toastId });
-      router.push(`/workspaces/${shop.slug}/documents`);
+      toast.success(
+        initialDocument
+          ? `${docType} updated successfully!`
+          : `${docType} created successfully!`,
+        { id: toastId }
+      );
+      router.push(`/workspaces/${shop.slug}/documents/${initialDocument ? initialDocument.id : (res as any).documentId}`);
     }
   }
 

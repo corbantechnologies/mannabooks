@@ -388,23 +388,38 @@ export default function FeaturesPage() {
         </section>
 
         {/* CTA BANNER */}
-        <section className="border-t border-zinc-200/80 bg-zinc-950 text-white py-20 px-6 text-center space-y-6">
-          <div className="max-w-2xl mx-auto space-y-5">
-            <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest font-semibold block">Get Started</span>
-            <h2 className="text-2xl sm:text-4xl font-bold uppercase tracking-tight font-sans">
-              Every module. One workspace.
+        <section className="relative border-t border-zinc-200/80 bg-zinc-950 text-white py-24 px-6 overflow-hidden">
+          {/* Subtle background glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+
+          <div className="relative max-w-3xl mx-auto text-center space-y-6">
+            <span className="font-mono text-[10px] text-emerald-400 uppercase tracking-widest font-semibold bg-emerald-950/80 border border-emerald-800/50 px-3.5 py-1 rounded-full inline-block">
+              GET STARTED NOW
+            </span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold uppercase tracking-tight font-sans max-w-2xl mx-auto leading-tight">
+              Every module. <br className="sm:hidden" />
+              <span className="text-zinc-400">One workspace.</span>
             </h2>
-            <p className="text-sm text-zinc-400 font-sans leading-relaxed">
+            <p className="text-sm text-zinc-400 font-sans leading-relaxed max-w-xl mx-auto">
               Initialize your Manna Books workspace in under 3 minutes. POS, eTIMS invoicing, statutory payroll, inventory tracking, and analytics — all ready out of the box.
             </p>
-            <div className="pt-2 flex flex-col sm:flex-row gap-4 justify-center font-mono text-xs">
-              <Link href="/signup" className="btn-primary-modern bg-white text-black hover:bg-zinc-100 px-10 py-4 text-xs font-bold uppercase tracking-wider inline-block">
-                Initialize Your Workspace →
+            <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center items-center font-mono text-xs">
+              <Link 
+                href="/signup" 
+                className="w-full sm:w-auto bg-white text-zinc-950 hover:bg-zinc-100 px-8 py-3.5 text-xs font-bold uppercase tracking-wider rounded-md transition-all shadow-md text-center hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Initialize Your Workspace &rarr;
               </Link>
-              <Link href="/pricing" className="border border-zinc-700 text-zinc-300 hover:border-white hover:text-white px-10 py-4 text-xs font-semibold uppercase tracking-wider inline-block rounded transition-all">
+              <Link 
+                href="/pricing" 
+                className="w-full sm:w-auto border border-zinc-800 bg-zinc-900/50 text-zinc-300 hover:border-zinc-500 hover:text-white px-8 py-3.5 text-xs font-semibold uppercase tracking-wider rounded-md transition-all text-center hover:scale-[1.02] active:scale-[0.98]"
+              >
                 View Pricing
               </Link>
-              <Link href="/contact" className="border border-zinc-700 text-zinc-300 hover:border-white hover:text-white px-10 py-4 text-xs font-semibold uppercase tracking-wider inline-block rounded transition-all">
+              <Link 
+                href="/contact" 
+                className="w-full sm:w-auto border border-zinc-800 bg-zinc-900/50 text-zinc-300 hover:border-zinc-500 hover:text-white px-8 py-3.5 text-xs font-semibold uppercase tracking-wider rounded-md transition-all text-center hover:scale-[1.02] active:scale-[0.98]"
+              >
                 Contact Sales
               </Link>
             </div>

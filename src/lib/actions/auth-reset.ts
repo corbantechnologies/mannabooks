@@ -51,7 +51,7 @@ export async function requestPasswordReset(email: string) {
 
         await resend.emails.send({
             from: fromAddress,
-            to: normalizedEmail,
+            to: email,
             subject: "Manna Books - Password Reset Request",
             html: `
                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #18181b;">

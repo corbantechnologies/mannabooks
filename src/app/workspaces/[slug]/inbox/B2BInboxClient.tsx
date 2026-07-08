@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { importB2BInvoiceAsExpenseAction } from "@/lib/actions/b2b";
+import { importB2BInvoiceAsExpenseAction, markB2BDocumentAsReadAction } from "@/lib/actions/b2b";
 import { formatCurrency } from "@/lib/utils";
 import { Spinner } from "@/components/Spinner";
 import { toast } from "react-hot-toast";
@@ -16,6 +16,7 @@ interface B2BDocument {
   currency: string | null;
   issueDate: Date;
   portalToken: string | null;
+  isReadByRecipient: boolean;
   shop: {
     name: string;
     currency: string;
@@ -40,8 +41,10 @@ export function B2BInboxClient({
   initialOrders,
 }: B2BInboxClientProps) {
   const [activeTab, setActiveTab] = useState<"BILLS" | "ORDERS">("BILLS");
+  const [showArchived, setShowArchived] = useState<boolean>(false);
   const [isPending, startTransition] = useTransition();
   const [loggedExpenseIds, setLoggedExpenseIds] = useState<string[]>([]);
+  const [localReadDocIds, setLocalReadDocIds] = useState<Record<string, boolean>>({});
 
   const handleLogAsExpense = (doc: B2BDocument) => {
     startTransition(async () => {
@@ -49,13 +52,43 @@ export function B2BInboxClient({
       if (res.success) {
         toast.success(`Invoice ${doc.docNumber} imported successfully as expense!`);
         setLoggedExpenseIds((prev) => [...prev, doc.id]);
+        setLocalReadDocIds((prev) => ({ ...prev, [doc.id]: true }));
       } else {
         toast.error(res.error || "Failed to import invoice.");
       }
     });
   };
 
-  const currentList = activeTab === "BILLS" ? initialBills : initialOrders;
+  const handleToggleReadStatus = (docId: string, targetReadState: boolean) => {
+    startTransition(async () => {
+      const res = await markB2BDocumentAsReadAction(docId, targetReadState, shopSlug);
+      if (res.success) {
+        toast.success(targetReadState ? "Document archived." : "Document restored to active inbox.");
+        setLocalReadDocIds((prev) => ({ ...prev, [docId]: targetReadState }));
+      } else {
+        toast.error(res.error || "Failed to update document status.");
+      }
+    });
+  };
+
+  // Determine actual read status combining DB state and optimistic state updates
+  const isDocRead = (doc: B2BDocument) => {
+    if (localReadDocIds[doc.id] !== undefined) {
+      return localReadDocIds[doc.id];
+    }
+    return doc.isReadByRecipient;
+  };
+
+  const masterList = activeTab === "BILLS" ? initialBills : initialOrders;
+
+  // Filter based on read/archived status toggle
+  const currentList = masterList.filter((doc) => {
+    const read = isDocRead(doc);
+    return showArchived ? read : !read;
+  });
+
+  const unreadBillsCount = initialBills.filter((d) => !isDocRead(d)).length;
+  const unreadOrdersCount = initialOrders.filter((d) => !isDocRead(d)).length;
 
   return (
     <div className="space-y-8 font-mono text-xs text-left">
@@ -81,7 +114,7 @@ export function B2BInboxClient({
         <div className="p-6 space-y-1">
           <p className="text-[10px] text-zinc-400 uppercase font-semibold">Incoming Bills &amp; Quotes</p>
           <p className="text-xl font-semibold text-black tracking-tight font-sans">
-            {initialBills.length} Documents Received
+            {unreadBillsCount} Active / {initialBills.length} Total
           </p>
           <p className="text-[10px] text-zinc-500">Invoices, quotes, and receipts sent to your PIN/Email.</p>
         </div>
@@ -89,7 +122,7 @@ export function B2BInboxClient({
         <div className="p-6 space-y-1">
           <p className="text-[10px] text-zinc-400 uppercase font-semibold">Incoming Purchase Orders</p>
           <p className="text-xl font-semibold text-black tracking-tight font-sans">
-            {initialOrders.length} Orders Received
+            {unreadOrdersCount} Active / {initialOrders.length} Total
           </p>
           <p className="text-[10px] text-zinc-500">Local Purchase Orders (LPOs) matching your supplier credentials.</p>
         </div>
@@ -97,51 +130,90 @@ export function B2BInboxClient({
 
       {/* TAB SELECTOR HEADER */}
       <div className="card-modern bg-white overflow-hidden">
-        <div className="flex border-b border-zinc-200/80 bg-zinc-50">
-          <button
-            type="button"
-            onClick={() => setActiveTab("BILLS")}
-            className={`flex-1 py-4 text-center font-sans text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
-              activeTab === "BILLS"
-                ? "border-black text-black bg-white"
-                : "border-transparent text-zinc-400 hover:text-zinc-600"
-            }`}
-          >
-            Incoming Bills &amp; Quotes ({initialBills.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("ORDERS")}
-            className={`flex-1 py-4 text-center font-sans text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
-              activeTab === "ORDERS"
-                ? "border-black text-black bg-white"
-                : "border-transparent text-zinc-400 hover:text-zinc-600"
-            }`}
-          >
-            Incoming Purchase Orders ({initialOrders.length})
-          </button>
+        
+        {/* UPPER TABS & ARCHIVE SELECTOR */}
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center border-b border-zinc-200/80 bg-zinc-50">
+          <div className="flex flex-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab("BILLS")}
+              className={`flex-1 py-4 text-center font-sans text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
+                activeTab === "BILLS"
+                  ? "border-black text-black bg-white"
+                  : "border-transparent text-zinc-400 hover:text-zinc-600"
+              }`}
+            >
+              Incoming Bills ({showArchived ? initialBills.length - unreadBillsCount : unreadBillsCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("ORDERS")}
+              className={`flex-1 py-4 text-center font-sans text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
+                activeTab === "ORDERS"
+                  ? "border-black text-black bg-white"
+                  : "border-transparent text-zinc-400 hover:text-zinc-600"
+              }`}
+            >
+              Purchase Orders ({showArchived ? initialOrders.length - unreadOrdersCount : unreadOrdersCount})
+            </button>
+          </div>
+
+          <div className="p-3 sm:pr-6 flex justify-end items-center gap-2 border-t sm:border-t-0 border-zinc-200">
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold">Inbox Filter:</span>
+            <div className="grid grid-cols-2 border border-zinc-300 divide-x divide-zinc-300 bg-white rounded overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowArchived(false)}
+                className={`px-3 py-1.5 text-[9px] font-bold uppercase transition-colors ${
+                  !showArchived ? "bg-black text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"
+                }`}
+              >
+                Active
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowArchived(true)}
+                className={`px-3 py-1.5 text-[9px] font-bold uppercase transition-colors ${
+                  showArchived ? "bg-black text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"
+                }`}
+              >
+                Archived ({masterList.length - (activeTab === "BILLS" ? unreadBillsCount : unreadOrdersCount)})
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* DOCUMENTS LIST */}
         <div className="p-6">
           {currentList.length === 0 ? (
             <div className="text-center py-12 text-zinc-400">
-              <p className="font-semibold uppercase tracking-wider">&gt; No incoming documents found</p>
-              <p className="text-[10px] font-sans mt-1">Automatic B2B routing will list documents here once matched.</p>
+              <p className="font-semibold uppercase tracking-wider">
+                &gt; No {showArchived ? "archived" : "active"} documents located
+              </p>
+              <p className="text-[10px] font-sans mt-1">
+                {showArchived 
+                  ? "Archived documents will be retained here for historical audit logs."
+                  : "Enjoy Inbox Zero! New incoming documents will show up here dynamically."}
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-zinc-200/80">
               {currentList.map((doc) => {
                 const isLogged = loggedExpenseIds.includes(doc.id);
                 const hasPortal = !!doc.portalToken;
+                const read = isDocRead(doc);
 
                 return (
                   <div
                     key={doc.id}
                     className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-zinc-50/50 px-2 transition-colors rounded"
                   >
-                    <div className="space-y-1 min-w-0">
+                    <div className="space-y-1 min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
+                        {/* UNREAD BLUE DOT indicator badge */}
+                        {!read && (
+                          <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0 block" title="New Unread Document" />
+                        )}
                         <span className="font-bold text-black text-sm uppercase font-sans">
                           {doc.docNumber}
                         </span>
@@ -200,7 +272,7 @@ export function B2BInboxClient({
                           </button>
                         )}
 
-                        {activeTab === "ORDERS" && (
+                        {activeTab === "ORDERS" && !read && (
                           <Link
                             href={`/workspaces/${shopSlug}/documents/new?sourceDocId=${doc.id}`}
                             className="btn-primary-modern bg-emerald-600 hover:bg-emerald-500 text-white border-none px-3 py-1.5 font-semibold uppercase rounded"
@@ -208,6 +280,16 @@ export function B2BInboxClient({
                             Process Order ➔
                           </Link>
                         )}
+
+                        {/* Archive / Unarchive Trigger button */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleReadStatus(doc.id, !read)}
+                          disabled={isPending}
+                          className="border border-zinc-300 text-zinc-600 hover:text-black px-2 py-1.5 font-semibold uppercase rounded hover:bg-zinc-50 text-[10px] transition-colors"
+                        >
+                          {read ? "Unarchive" : "Archive"}
+                        </button>
                       </div>
                     </div>
                   </div>

@@ -175,11 +175,32 @@ export async function importB2BInvoiceAsExpenseAction(documentId: string, target
             receiptUrl: portalUrl,
         });
 
+        // 3. Mark as read automatically
+        await db.update(documents)
+            .set({ isReadByRecipient: true })
+            .where(eq(documents.id, documentId));
+
         revalidatePath(`/workspaces/${shopSlug}/expenses`);
         revalidatePath(`/workspaces/${shopSlug}/inbox`);
 
         return { success: true };
     } catch (err: any) {
         return { success: false, error: err.message || "Failed to import document as expense." };
+    }
+}
+
+export async function markB2BDocumentAsReadAction(documentId: string, isRead: boolean, shopSlug: string) {
+    const session = await verifyAndGetSession();
+    if (!session) return { success: false, error: "Unauthorized session context." };
+
+    try {
+        await db.update(documents)
+            .set({ isReadByRecipient: isRead })
+            .where(eq(documents.id, documentId));
+
+        revalidatePath(`/workspaces/${shopSlug}/inbox`);
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message || "Failed to toggle document read status." };
     }
 }

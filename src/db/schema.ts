@@ -160,6 +160,7 @@ export const documents = pgTable('documents', {
 
     issueDate: timestamp('issue_date').defaultNow().notNull(),
     dueDate: timestamp('due_date'),
+    isReadByRecipient: boolean('is_read_by_recipient').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
     unique('unique_shop_doc_number').on(table.shopId, table.docNumber, table.type),

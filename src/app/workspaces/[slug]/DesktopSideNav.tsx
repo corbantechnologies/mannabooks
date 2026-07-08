@@ -22,6 +22,7 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
   const navItems: NavItem[] = [
     { href: `/workspaces/${slug}`, label: "[00] Overview", exact: true },
     { href: `/workspaces/${slug}/documents`, label: "[01] Fiscal Ledgers" },
+    { href: `/workspaces/${slug}/inbox`, label: "[01.5] B2B Shared Inbox" },
     { href: `/workspaces/${slug}/pos`, label: "[02] Walk-in Sales" },
     { 
       label: "[03] CRM", 
@@ -36,7 +37,7 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
       label: "[06] Payroll",
       children: [
         { href: `/workspaces/${slug}/payroll`, label: "Payroll Vouchers" },
-        { href: `/workspaces/${slug}/employees`, label: "Employee Directory" },
+        { href: `/workspaces/${slug}/employees`, label: "Employees" },
       ]
     },
     { href: `/workspaces/${slug}/analytics`, label: "[07] Analytics" },

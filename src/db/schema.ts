@@ -49,6 +49,7 @@ export const shops = pgTable('shops', {
     currency: varchar('currency', { length: 3 }).default('KES').notNull(),
     phone: varchar('phone', { length: 30 }), // Business phone contact e.g. +254 712 345 678
     website: varchar('website', { length: 255 }), // Business website URL e.g. https://corbantechnologies.org
+    email: varchar('email', { length: 255 }), // Business email contact e.g. billing@corbantechnologies.org
     logoUrl: text('logo_url'),
     primaryColor: varchar('primary_color', { length: 20 }).default('#000000').notNull(), // Sleek Black default, custom hex, or palette
     taxPin: varchar('tax_pin', { length: 30 }), // e.g., KRA PIN (A... for personal/sole prop, P... for company)

@@ -1,11 +1,12 @@
 // src/app/workspaces/[slug]/suppliers/[id]/page.tsx
 import { db } from "@/db";
-import { suppliers, documents, shops } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { suppliers, documents, shops, clients } from "@/db/schema";
+import { eq, and, desc, or } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { EditSupplierModal } from "../EditSupplierModal";
+import { SyncSupplierToClientButton } from "./SyncSupplierToClientButton";
 
 interface SupplierDetailPageProps {
   params: Promise<{ slug: string; id: string }>;
@@ -31,6 +32,16 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
   if (!supplierRecord) {
     notFound();
   }
+
+  // 2.5 Check if a corresponding client profile already exists
+  const matchedClient = await db.query.clients.findFirst({
+    where: and(
+      eq(clients.shopId, shop.id),
+      supplierRecord.taxPin
+        ? or(eq(clients.taxPin, supplierRecord.taxPin), eq(clients.email, supplierRecord.email))
+        : eq(clients.email, supplierRecord.email)
+    ),
+  });
 
   // 3. Fetch all historical procurement documents linked to this supplier
   const supplierDocuments = await db.query.documents.findMany({
@@ -95,6 +106,21 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
               shopSlug={slug}
               redirectToDirectoryAfterDelete={true}
             />
+
+            {matchedClient ? (
+              <Link
+                href={`/workspaces/${slug}/clients/${matchedClient.id}`}
+                className="border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 px-2.5 py-1 font-semibold uppercase rounded tracking-wide text-[10px]"
+              >
+                Linked Client Profile ➔
+              </Link>
+            ) : (
+              <SyncSupplierToClientButton
+                supplierId={supplierRecord.id}
+                shopId={shop.id}
+                shopSlug={slug}
+              />
+            )}
           </div>
         </div>
       </div>

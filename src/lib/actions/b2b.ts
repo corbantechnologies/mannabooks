@@ -21,26 +21,35 @@ export async function getB2BInboxDocuments(shopId: string) {
         }
 
         const taxPin = shop.taxPin?.trim().toUpperCase();
-        const userEmail = session.user.email.toLowerCase().trim();
+        const shopEmail = shop.email?.trim().toLowerCase();
 
-        // 2. Fetch clients associated with this shop (matched via taxPin or owner email)
+        // 2. Fetch clients associated with this shop (matched via taxPin or shop email)
         const clientConditions = [];
         if (taxPin) {
             clientConditions.push(eq(clients.taxPin, taxPin));
         }
-        clientConditions.push(eq(clients.email, userEmail));
+        if (shopEmail) {
+            clientConditions.push(eq(clients.email, shopEmail));
+        }
+
+        if (clientConditions.length === 0) {
+            // Cannot query without PIN or email
+            return { success: true, incomingBills: [], incomingOrders: [] };
+        }
 
         const matchedClients = await db.query.clients.findMany({
             where: or(...clientConditions),
         });
         const clientIds = matchedClients.map((c) => c.id);
 
-        // 3. Fetch suppliers associated with this shop (matched via taxPin or owner email)
+        // 3. Fetch suppliers associated with this shop (matched via taxPin or shop email)
         const supplierConditions = [];
         if (taxPin) {
             supplierConditions.push(eq(suppliers.taxPin, taxPin));
         }
-        supplierConditions.push(eq(suppliers.email, userEmail));
+        if (shopEmail) {
+            supplierConditions.push(eq(suppliers.email, shopEmail));
+        }
 
         const matchedSuppliers = await db.query.suppliers.findMany({
             where: or(...supplierConditions),

@@ -25,6 +25,7 @@ interface SettingsFormProps {
   initialPrimaryColor?: string;
   initialLogoUrl?: string;
   initialTaxPin: string;
+  initialEmail?: string;
   initialIsVatRegistered: boolean;
   initialVatNumber?: string;
   initialCurrency: string;
@@ -52,6 +53,7 @@ export function SettingsForm({
   initialPrimaryColor = "#000000",
   initialLogoUrl = "",
   initialTaxPin,
+  initialEmail = "",
   initialIsVatRegistered,
   initialVatNumber = "",
   initialCurrency,
@@ -64,6 +66,7 @@ export function SettingsForm({
   const [businessName, setBusinessName] = useState(initialName);
   const [shortName, setShortName] = useState(initialShortName);
   const [phone, setPhone] = useState(initialPhone);
+  const [email, setEmail] = useState(initialEmail);
   const [website, setWebsite] = useState(initialWebsite);
   const [primaryColor, setPrimaryColor] = useState(initialPrimaryColor);
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
@@ -131,6 +134,7 @@ export function SettingsForm({
       primaryColor,
       logoUrl,
       taxPin,
+      email,
       isVatRegistered,
       vatNumber: vatNumber.trim() || undefined,
       currency,
@@ -291,25 +295,36 @@ export function SettingsForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1">
-            <label className="text-zinc-400 uppercase block font-semibold">Business Phone Contact</label>
+            <label className="text-zinc-400 uppercase block font-semibold">Business Phone</label>
             <input
               type="text"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="e.g. +254 712 345 678"
+              placeholder="e.g. +254 712 345"
               className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-400 uppercase block font-semibold">Official Website URL</label>
+            <label className="text-zinc-400 uppercase block font-semibold">Business Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="billing@company.com"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-mono"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-zinc-400 uppercase block font-semibold">Website URL</label>
             <input
               type="url"
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
-              placeholder="https://corbantechnologies.org"
+              placeholder="https://company.org"
               className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded font-mono text-[11px]"
             />
           </div>

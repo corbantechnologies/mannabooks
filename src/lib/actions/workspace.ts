@@ -58,6 +58,7 @@ interface UpdateShopSettingsInput {
     logoUrl?: string;
     primaryColor?: string;
     taxPin?: string;
+    email?: string;
     isVatRegistered: boolean;
     vatNumber?: string;
     currency: string;
@@ -87,6 +88,7 @@ export async function updateShopSettings(input: UpdateShopSettingsInput) {
                 logoUrl: input.logoUrl?.trim() || null,
                 primaryColor,
                 taxPin: input.taxPin?.trim() || null,
+                email: input.email?.trim() || null,
                 isVatRegistered: input.isVatRegistered,
                 vatNumber: input.isVatRegistered ? (input.vatNumber?.trim() || null) : null, // Set to null if not VAT registered
                 currency: input.currency.toUpperCase().trim(),

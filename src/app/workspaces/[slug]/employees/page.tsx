@@ -117,10 +117,15 @@ export default async function WorkspaceEmployeesPage({ params }: WorkspaceEmploy
                   <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider font-sans text-sm">
                     <Link
                       href={`/workspaces/${slug}/payroll/employees/${emp.id}`}
-                      className="hover:underline underline-offset-2"
+                      className="hover:underline underline-offset-2 block"
                     >
                       {emp.fullName}
                     </Link>
+                    {emp.email && (
+                      <span className="block text-[10px] text-zinc-400 font-mono mt-0.5 normal-case font-normal">
+                        {emp.email}
+                      </span>
+                    )}
                   </td>
                   <td className="p-4 border-r border-zinc-200/80 text-zinc-600">
                     {emp.nationalId || "N/A"}

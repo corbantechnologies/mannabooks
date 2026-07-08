@@ -7,6 +7,7 @@ import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { PrintPayrollVoucherButton } from "./PrintPayrollVoucherButton";
 import { FinalizePayrollRunButton } from "./FinalizePayrollRunButton";
+import { EmailPayslipsButton } from "./EmailPayslipsButton";
 
 interface PayrollRunDetailPageProps {
   params: Promise<{ slug: string; id: string }>;
@@ -73,6 +74,7 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
               <FinalizePayrollRunButton voucherId={voucherRecord.id} shopId={shop.id} />
             )}
 
+            <EmailPayslipsButton voucherId={voucherRecord.id} shopId={shop.id} shopSlug={slug} />
             <PrintPayrollVoucherButton voucherId={voucherRecord.id} />
           </div>
         </div>

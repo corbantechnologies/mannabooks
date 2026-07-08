@@ -55,6 +55,7 @@ export const shops = pgTable('shops', {
     isVatRegistered: boolean('is_vat_registered').default(false).notNull(),
     vatNumber: varchar('vat_number', { length: 50 }), // Optional/Required VAT Registration Number
     fiscalYearStartMonth: integer('fiscal_year_start_month').default(1).notNull(), // 1 = January, 7 = July etc.
+    hideOnboarding: boolean('hide_onboarding').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -192,6 +193,7 @@ export const employees = pgTable('employees', {
     id: uuid('id').defaultRandom().primaryKey(),
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
     fullName: varchar('full_name', { length: 255 }).notNull(),
+    email: varchar('email', { length: 255 }),
     nationalId: varchar('national_id', { length: 50 }),
     kraPin: varchar('kra_pin', { length: 13 }),
     baseSalary: numeric('base_salary', { precision: 12, scale: 2 }).default('0.00').notNull(),

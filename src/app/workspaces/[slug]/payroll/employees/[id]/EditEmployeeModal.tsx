@@ -1,24 +1,36 @@
-// src/app/workspaces/[slug]/payroll/RegisterEmployeeModal.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { registerNewEmployee } from "@/lib/actions/payroll";
+import { updateEmployee } from "@/lib/actions/payroll";
+import { Spinner } from "@/components/Spinner";
+import { toast } from "react-hot-toast";
 
-interface RegisterEmployeeModalProps {
+interface EditEmployeeModalProps {
+  employee: {
+    id: string;
+    fullName: string;
+    email: string | null;
+    nationalId: string | null;
+    kraPin: string | null;
+    baseSalary: string;
+    commissionRate: string;
+    isActive: boolean;
+  };
   shopId: string;
   shopSlug: string;
 }
 
-export function RegisterEmployeeModal({ shopId, shopSlug }: RegisterEmployeeModalProps) {
+export function EditEmployeeModal({ employee, shopId, shopSlug }: EditEmployeeModalProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [nationalId, setNationalId] = useState("");
-  const [kraPin, setKraPin] = useState("");
-  const [baseSalary, setBaseSalary] = useState("0");
-  const [commissionRate, setCommissionRate] = useState("0");
+  const [fullName, setFullName] = useState(employee.fullName);
+  const [email, setEmail] = useState(employee.email || "");
+  const [nationalId, setNationalId] = useState(employee.nationalId || "");
+  const [kraPin, setKraPin] = useState(employee.kraPin || "");
+  const [baseSalary, setBaseSalary] = useState(employee.baseSalary);
+  const [commissionRate, setCommissionRate] = useState(employee.commissionRate);
+  const [isActive, setIsActive] = useState(employee.isActive);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,35 +39,32 @@ export function RegisterEmployeeModal({ shopId, shopSlug }: RegisterEmployeeModa
     setError(null);
 
     if (!fullName.trim()) {
-      setError("Employee full name is required.");
+      setError("Employee name is required.");
       return;
     }
 
     setLoading(true);
 
-    const res = await registerNewEmployee({
+    const res = await updateEmployee({
+      id: employee.id,
       shopId,
-      fullName,
-      email: email || undefined,
-      nationalId: nationalId || undefined,
-      kraPin: kraPin || undefined,
+      fullName: fullName.trim(),
+      email: email.trim() || undefined,
+      nationalId: nationalId.trim() || undefined,
+      kraPin: kraPin.trim().toUpperCase() || undefined,
       baseSalary: parseFloat(baseSalary) || 0,
       commissionRate: parseFloat(commissionRate) || 0,
+      isActive,
     });
 
     setLoading(false);
 
     if (res.success) {
       setIsOpen(false);
-      setFullName("");
-      setEmail("");
-      setNationalId("");
-      setKraPin("");
-      setBaseSalary("0");
-      setCommissionRate("0");
+      toast.success("Employee profile updated.");
       router.refresh();
     } else {
-      setError(res.error || "Failed to register staff.");
+      setError(res.error || "Failed to update employee.");
     }
   }
 
@@ -63,9 +72,9 @@ export function RegisterEmployeeModal({ shopId, shopSlug }: RegisterEmployeeModa
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="btn-secondary-modern px-3 py-2 text-xs font-semibold uppercase tracking-wider"
+        className="btn-secondary-modern px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider"
       >
-        + Register Employee
+        Edit Profile
       </button>
 
       {isOpen && (
@@ -74,8 +83,8 @@ export function RegisterEmployeeModal({ shopId, shopSlug }: RegisterEmployeeModa
             
             <div className="flex justify-between items-start border-b border-zinc-200/80 pb-4">
               <div>
-                <h3 className="font-semibold uppercase tracking-tight text-base font-sans text-black">Register Employee</h3>
-                <p className="text-[10px] text-zinc-400 uppercase font-semibold">Human Capital Payroll Ledger Entry</p>
+                <h3 className="font-semibold uppercase tracking-tight text-base font-sans text-black">Edit Employee Profile</h3>
+                <p className="text-[10px] text-zinc-400 uppercase font-semibold">Human Capital Database Node Modifier</p>
               </div>
               <button
                 type="button"
@@ -100,7 +109,7 @@ export function RegisterEmployeeModal({ shopId, shopSlug }: RegisterEmployeeModa
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. John Kiprono"
-                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold text-black"
                   required
                 />
               </div>
@@ -135,7 +144,7 @@ export function RegisterEmployeeModal({ shopId, shopSlug }: RegisterEmployeeModa
                     value={kraPin}
                     onChange={(e) => setKraPin(e.target.value)}
                     placeholder="e.g. A012345678B"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 uppercase rounded text-xs"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 uppercase rounded text-xs font-semibold font-mono"
                   />
                 </div>
               </div>
@@ -154,7 +163,7 @@ export function RegisterEmployeeModal({ shopId, shopSlug }: RegisterEmployeeModa
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Default Commission Rate (%)</label>
+                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Commissions Rate (%)</label>
                   <input
                     type="number"
                     step="0.1"
@@ -162,29 +171,48 @@ export function RegisterEmployeeModal({ shopId, shopSlug }: RegisterEmployeeModa
                     max="100"
                     value={commissionRate}
                     onChange={(e) => setCommissionRate(e.target.value)}
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black font-semibold rounded text-xs"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
                   />
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded">
+                <input
+                  type="checkbox"
+                  id="editIsActive"
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                  className="accent-black w-4 h-4 cursor-pointer rounded-sm"
+                />
+                <label htmlFor="editIsActive" className="font-semibold uppercase text-[10px] cursor-pointer">
+                  Employee is Active / Logged in Contract
+                </label>
               </div>
 
               <div className="border-t border-zinc-200/80 pt-4 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="btn-secondary-modern px-4 py-2 text-xs uppercase"
+                  className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase"
                 >
                   CANCEL
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary-modern px-4 py-2 text-xs uppercase disabled:bg-zinc-300"
+                  className="btn-primary-modern px-4 py-1.5 text-xs font-semibold uppercase disabled:bg-zinc-300 flex items-center justify-center gap-1.5"
                 >
-                  {loading ? "REGISTERING..." : "SAVE EMPLOYEE NODE"}
+                  {loading ? (
+                    <>
+                      <Spinner size={10} color="white" />
+                      <span>SAVING...</span>
+                    </>
+                  ) : (
+                    "SAVE CHANGES"
+                  )}
                 </button>
               </div>
             </form>
-
           </div>
         </div>
       )}

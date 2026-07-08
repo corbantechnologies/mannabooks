@@ -31,6 +31,7 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
         initialPrimaryColor={shop.primaryColor || "#000000"}
         initialLogoUrl={shop.logoUrl || ""}
         initialTaxPin={shop.taxPin || ""}
+        initialEmail={shop.email || ""}
         initialIsVatRegistered={shop.isVatRegistered}
         initialVatNumber={shop.vatNumber || ""}
         initialCurrency={shop.currency}

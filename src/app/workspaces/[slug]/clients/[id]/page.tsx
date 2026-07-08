@@ -1,10 +1,11 @@
 // src/app/workspaces/[slug]/clients/[id]/page.tsx
 import { db } from "@/db";
-import { clients, documents, shops } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { clients, documents, shops, suppliers } from "@/db/schema";
+import { eq, and, desc, or } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { EditClientModal } from "../EditClientModal";
+import { SyncClientToSupplierButton } from "./SyncClientToSupplierButton";
 import Link from "next/link";
 
 interface ClientProfilePageProps {
@@ -40,6 +41,16 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
   if (!clientRecord) {
     notFound();
   }
+
+  // 3.5 Check if a corresponding supplier profile already exists
+  const matchedSupplier = await db.query.suppliers.findFirst({
+    where: and(
+      eq(suppliers.shopId, shop.id),
+      clientRecord.taxPin
+        ? or(eq(suppliers.taxPin, clientRecord.taxPin), eq(suppliers.email, clientRecord.email))
+        : eq(suppliers.email, clientRecord.email)
+    ),
+  });
 
   // 3. Compute structural customer performance aggregations with absolute precision
   const performanceMetrics = clientRecord.documents.reduce(
@@ -106,6 +117,21 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
               shopSlug={slug}
               redirectToDirectoryAfterDelete={true}
             />
+
+            {matchedSupplier ? (
+              <Link
+                href={`/workspaces/${slug}/suppliers/${matchedSupplier.id}`}
+                className="border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 px-2.5 py-1 font-semibold uppercase rounded tracking-wide text-[10px]"
+              >
+                Linked Supplier Profile ➔
+              </Link>
+            ) : (
+              <SyncClientToSupplierButton
+                clientId={clientRecord.id}
+                shopId={shop.id}
+                shopSlug={slug}
+              />
+            )}
           </div>
         </div>
       </div>

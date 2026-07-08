@@ -71,6 +71,7 @@ export default function FeaturesPage() {
               { href: "#vat", label: "20th VAT Tracker" },
               { href: "#pdf-engine", label: "Vector PDF" },
               { href: "#portals", label: "Passwordless Portals" },
+              { href: "#b2b-inbox", label: "B2B Inbox" },
               { href: "#analytics", label: "A/R & Analytics" },
               { href: "#team", label: "Team Management" },
             ].map((link) => (
@@ -176,7 +177,7 @@ export default function FeaturesPage() {
               {[
                 { title: "Kenyan Statutory Tax Bands", body: "Automatic progressive PAYE computation (10%, 25%, 30%, 32.5%, 35% bands) with KES 2,400 monthly Personal Relief offsets and gross-to-net reconciliation." },
                 { title: "SHIF, AHL & NSSF Reserves", body: "Calculates Social Health Insurance Fund (SHIF 2.75%), Affordable Housing Levy (AHL 1.5%), and NSSF Tier I & II deductions automatically per employee." },
-                { title: "Custom Advances & Draft States", body: "Log salary advances, transport allowances, commissions, and custom deductions. Save payroll runs as DRAFT to review before locking and paying." },
+                { title: "Custom Schedules & Dispatch", body: "Run weekly or monthly payrolls with custom payout dates. Save as DRAFT, lock when ready, and dispatch email payslips to staff instantly." },
               ].map((item) => (
                 <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
                   <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
@@ -324,7 +325,7 @@ export default function FeaturesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
                 { title: "Client Profiles", body: "Maintain individual and corporate client profiles with KRA PINs, contact details, and billing address. Tag clients as Walk-in, Individual, or Corporate for document context." },
-                { title: "Supplier Network", body: "Build a structured supplier directory. Reference suppliers on Purchase Orders, LPOs, and GRNs. Track outstanding procurement obligations against each vendor." },
+                { title: "Supplier Network & Cross-Sync", body: "Build a structured supplier directory. If a business acts as both a client and supplier, 1-click clone their profile with smart badges linking the dual profiles together." },
                 { title: "Client Lifetime Value", body: "The analytics engine automatically computes each client's lifetime revenue contribution and ranks them by LTV — so you always know your most valuable relationships." },
               ].map((item) => (
                 <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
@@ -376,6 +377,31 @@ export default function FeaturesPage() {
                 { title: "Role-Based Access (RBAC)", body: "Assign roles: Owner, Admin, Manager, Accountant, Employee, or Viewer. Each role carries pre-defined permission scopes enforced server-side on every action." },
                 { title: "Email Invitation System", body: "Invite team members by email. New users receive a branded onboarding email with a secure invite link. Existing Manna Books users are added instantly to your workspace." },
                 { title: "Invitation History & Audit", body: "Track the full invitation lifecycle: Pending, Accepted, and Revoked. Revoke access at any time. A complete audit trail is maintained for compliance." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 11: B2B NETWORK INBOX */}
+          <div id="b2b-inbox" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 11</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                B2B Network Inbox &amp; Read Receipts
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Manna Books workspaces can securely communicate with each other. Send invoices, POs, and receipts directly to another business&apos;s inbox within the platform using strict PIN and Email matching.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Secure Document Routing", body: "Documents are routed across workspaces matching strictly by KRA PIN and Business Email, ensuring no collisions or unauthorized access." },
+                { title: "Inbox Zero Architecture", body: "A dedicated B2B Inbox for incoming documents. Read documents, archive completed ones, or restore them. Keep your workflow clean." },
+                { title: "Live Read Receipts", body: "When you send a document via the network, know exactly when the recipient opens it with automatic '👁️ Viewed' read receipts." },
               ].map((item) => (
                 <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
                   <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>

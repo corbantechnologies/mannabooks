@@ -79,6 +79,11 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
             }`}>
               {doc.status}
             </span>
+            {doc.isReadByRecipient && (
+              <span className="border border-emerald-500 bg-emerald-50 text-emerald-800 px-2 py-1 font-bold uppercase" title="Viewed by recipient">
+                👁️ Viewed
+              </span>
+            )}
           </div>
         </div>
       </div>

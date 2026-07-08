@@ -204,6 +204,33 @@ export const employees = pgTable('employees', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// INCOME CATEGORIES
+export const incomeCategoryEnum = pgEnum('income_category', [
+    'INTEREST',
+    'DIVIDENDS',
+    'ASSET_SALE',
+    'REFUNDS',
+    'COMMISSION',
+    'RENTAL_INCOME',
+    'GRANTS_SUBSIDIES',
+    'OTHER'
+]);
+
+// INCOMES TABLE
+export const incomes = pgTable('incomes', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    description: text('description').notNull(),
+    amount: numeric('amount', { precision: 15, scale: 2 }).notNull(),
+    currency: varchar('currency', { length: 3 }).default('KES').notNull(),
+    category: incomeCategoryEnum('category').default('OTHER').notNull(),
+    incomeDate: timestamp('income_date').notNull(),
+    paymentChannel: varchar('payment_channel', { length: 50 }), // BANK, MPESA, CASH, CHEQUE, OTHER
+    paymentReference: varchar('payment_reference', { length: 100 }),
+    attachmentUrl: text('attachment_url'), 
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // EXPENSES TABLE (Feature 8)
 export const expenses = pgTable('expenses', {
     id: uuid('id').defaultRandom().primaryKey(),
@@ -249,6 +276,7 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     suppliers: many(suppliers),
     documents: many(documents),
     expenses: many(expenses),
+    incomes: many(incomes),
     invitations: many(shopInvitations),
 }));
 

@@ -32,7 +32,13 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
       ]
     },
     { href: `/workspaces/${slug}/products`, label: "Product Catalog" },
-    { href: `/workspaces/${slug}/expenses`, label: "Operating Expenses" },
+    {
+      label: "Cash Flow",
+      children: [
+        { href: `/workspaces/${slug}/incomes`, label: "Other Income" },
+        { href: `/workspaces/${slug}/expenses`, label: "Operating Expenses" },
+      ]
+    },
     {
       label: "Payroll",
       children: [

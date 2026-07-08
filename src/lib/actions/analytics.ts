@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { documents, documentItems, clients, suppliers, products, shops, expenses } from "@/db/schema";
+import { documents, documentItems, clients, suppliers, products, shops, expenses, incomes } from "@/db/schema";
 import { eq, and, desc, gte, lte } from "drizzle-orm";
 import { calculateDocumentTotals } from "@/lib/utils";
 import { getFiscalQuarterRange, getFiscalYearRange } from "@/lib/fiscalYear";
@@ -18,8 +18,10 @@ export interface AnalyticsData {
   netOperatingCashFlow: number; // Inflow - Outflow
   totalCostOfGoodsSold: number; // COGS
   totalOperatingExpenses: number; // Operating Expenses (Feature 8)
+  totalOtherIncome: number; // Non-Operating Income
   netGrossProfit: number; // Inflow - COGS
   netOperatingProfit: number; // Gross Profit - Operating Expenses
+  netIncome: number; // Net Operating Profit + Other Income
   grossProfitMargin: number; // Profit Margin %
   pendingReceivables: number; // Sent + Overdue Invoices
   accountsPayableDebt: number; // Sent + Overdue LPOs/POs
@@ -129,7 +131,15 @@ export async function getWorkspaceAnalyticsData(
       ) : eq(expenses.shopId, shopId)
     });
 
-    const [allDocs, allExpenses] = await Promise.all([docsQuery, expensesQuery]);
+    const incomesQuery = db.query.incomes.findMany({
+      where: startDate && endDate ? and(
+        eq(incomes.shopId, shopId),
+        gte(incomes.incomeDate, startDate),
+        lte(incomes.incomeDate, endDate)
+      ) : eq(incomes.shopId, shopId)
+    });
+
+    const [allDocs, allExpenses, allIncomes] = await Promise.all([docsQuery, expensesQuery, incomesQuery]);
 
     // 3. Filter Documents for selected Timeframe
     const filteredDocs = allDocs.filter((d) => {
@@ -173,9 +183,18 @@ export async function getWorkspaceAnalyticsData(
       totalOperatingExpenses += parseFloat(exp.amount || "0");
     });
 
+    let totalOtherIncome = 0;
+    allIncomes.forEach(inc => {
+      totalOtherIncome += parseFloat(inc.amount || "0");
+    });
+
+    // We add other income to settled inflow so the overall cash flow is accurate,
+    // but we might want to keep it separate from operating profit in the future.
+    // For now, let's keep netOperatingCashFlow strictly operational, and let Other Income just be tracked.
     const netOperatingCashFlow = totalSettledInflow - (totalSettledOutflow + totalOperatingExpenses);
     const netGrossProfit = totalSettledInflow - totalCostOfGoodsSold;
     const netOperatingProfit = netGrossProfit - totalOperatingExpenses;
+    const netIncome = netOperatingProfit + totalOtherIncome;
     const grossProfitMargin = totalSettledInflow > 0 ? (netGrossProfit / totalSettledInflow) * 100 : 0;
 
     // 5. Compute Monthly Timeline Stream (Last 6 Months)
@@ -206,6 +225,14 @@ export async function getWorkspaceAnalyticsData(
       const label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }).toUpperCase();
       if (monthlyTimelineMap[label]) {
         monthlyTimelineMap[label].outflow += parseFloat(exp.amount || "0");
+      }
+    });
+
+    allIncomes.forEach(inc => {
+      const d = new Date(inc.incomeDate);
+      const label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }).toUpperCase();
+      if (monthlyTimelineMap[label]) {
+        monthlyTimelineMap[label].inflow += parseFloat(inc.amount || "0");
       }
     });
 
@@ -353,8 +380,10 @@ export async function getWorkspaceAnalyticsData(
         netOperatingCashFlow,
         totalCostOfGoodsSold,
         totalOperatingExpenses,
+        totalOtherIncome,
         netGrossProfit,
         netOperatingProfit,
+        netIncome,
         grossProfitMargin,
         pendingReceivables,
         accountsPayableDebt,

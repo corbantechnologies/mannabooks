@@ -145,7 +145,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="bg-white border border-emerald-200 rounded-lg p-4 space-y-1">
             <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Total Sales Revenue</span>
             <span className="text-lg font-bold text-black block font-sans">{formatCurrency(data.totalSettledInflow, data.currency)}</span>
@@ -172,9 +172,15 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
             <span className="text-[9px] text-zinc-500 block">Rent, salaries, utilities, etc.</span>
           </div>
 
+          <div className="bg-white border border-emerald-200 rounded-lg p-4 space-y-1">
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Other Income</span>
+            <span className="text-lg font-bold text-emerald-600 block font-sans">{formatCurrency(data.totalOtherIncome, data.currency)}</span>
+            <span className="text-[9px] text-zinc-500 block">Non-operating revenue</span>
+          </div>
+
           <div className="bg-black border border-black rounded-lg p-4 space-y-1 shadow-md">
-            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Net Operating Profit</span>
-            <span className={`text-xl font-black block font-sans ${data.netOperatingProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{formatCurrency(data.netOperatingProfit, data.currency)}</span>
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Net Income</span>
+            <span className={`text-xl font-black block font-sans ${data.netIncome >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{formatCurrency(data.netIncome, data.currency)}</span>
             <span className="text-[9px] font-bold text-zinc-300 block">
               The absolute bottom line
             </span>

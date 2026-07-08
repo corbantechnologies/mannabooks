@@ -1,4 +1,3 @@
-// src/app/workspaces/[slug]/payroll/new/NewPayrollClientForm.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -24,9 +23,21 @@ interface NewPayrollClientFormProps {
   initialEmployees: any[];
 }
 
+function getWeekNumber(date: Date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return weekNo;
+}
+
 export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPayrollClientFormProps) {
   const router = useRouter();
   
+  const [issueDate, setIssueDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [payoutCycle, setPayoutCycle] = useState<"MONTHLY" | "WEEKLY">("MONTHLY");
+
   const currentMonthYear = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase().replace(/\s+/g, "-");
   const [period, setPeriod] = useState(currentMonthYear);
   const [mode, setMode] = useState<PayrollMode>("KENYA_STATUTORY");
@@ -52,6 +63,25 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
       { id: "row-3", fullName: "Mwangi J. (Casual Yard Labour)", baseSalary: 18000, allowances: 500, commissions: 0, customDeductions: 0 },
     ];
   });
+
+  const handleCycleChange = (cycle: "MONTHLY" | "WEEKLY", targetDateStr: string) => {
+    setPayoutCycle(cycle);
+    const d = new Date(targetDateStr);
+    if (isNaN(d.getTime())) return;
+
+    if (cycle === "MONTHLY") {
+      const monthStr = d.toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase().replace(/\s+/g, "-");
+      setPeriod(monthStr);
+    } else {
+      const weekNum = getWeekNumber(d);
+      setPeriod(`WEEK-${weekNum}-${d.getFullYear()}`);
+    }
+  };
+
+  const handleDateChange = (dateStr: string) => {
+    setIssueDate(dateStr);
+    handleCycleChange(payoutCycle, dateStr);
+  };
 
   const updateRowField = (id: string, field: keyof SpreadsheetEmployeeRow, value: string | number) => {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
@@ -109,6 +139,7 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
       payrollPeriodCode: period,
       mode,
       status: targetStatus,
+      issueDate: new Date(issueDate),
       lines: payload,
     });
 
@@ -128,9 +159,31 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
     <div className="space-y-8 font-mono text-xs selection:bg-black selection:text-white">
       
       {/* CONTROL & STRATEGY PANEL */}
-      <div className="card-modern p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white">
+      <div className="card-modern p-6 grid grid-cols-1 md:grid-cols-4 gap-4 bg-white">
         <div className="space-y-1">
-          <label className="text-zinc-400 uppercase text-[10px] font-semibold block">Payroll Period Identifier</label>
+          <label className="text-zinc-400 uppercase text-[10px] font-semibold block">Voucher Date</label>
+          <input
+            type="date"
+            value={issueDate}
+            onChange={(e) => handleDateChange(e.target.value)}
+            className="w-full px-3 py-2 border border-zinc-300 bg-white font-mono text-xs font-semibold focus:outline-none focus:border-black rounded"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-zinc-400 uppercase text-[10px] font-semibold block">Payout Cycle</label>
+          <select
+            value={payoutCycle}
+            onChange={(e) => handleCycleChange(e.target.value as any, issueDate)}
+            className="w-full px-3 py-2 border border-zinc-300 bg-white font-mono text-xs font-semibold focus:outline-none focus:border-black rounded appearance-none cursor-pointer"
+          >
+            <option value="MONTHLY">Monthly Payout</option>
+            <option value="WEEKLY">Weekly Payout</option>
+          </select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-zinc-400 uppercase text-[10px] font-semibold block">Payroll Period Code</label>
           <input
             type="text"
             value={period}
@@ -141,7 +194,7 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
         </div>
 
         <div className="space-y-1">
-          <label className="text-zinc-400 uppercase text-[10px] font-semibold block">Deduction Engine Strategy</label>
+          <label className="text-zinc-400 uppercase text-[10px] font-semibold block">Deduction Strategy</label>
           <div className="grid grid-cols-2 border border-zinc-300 divide-x divide-zinc-300 bg-white rounded overflow-hidden">
             <button
               type="button"
@@ -150,7 +203,7 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
                 mode === "KENYA_STATUTORY" ? "bg-black text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"
               }`}
             >
-              Kenya Statutory (PAYE/SHIF/NSSF)
+              Statutory
             </button>
             <button
               type="button"
@@ -159,7 +212,7 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
                 mode === "MANUAL_CUSTOM" ? "bg-black text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"
               }`}
             >
-              Manual / Custom Outflow
+              Manual
             </button>
           </div>
         </div>
@@ -168,9 +221,14 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
       {/* SPREADSHEET LEDGER CONTAINER ROW MATRIX */}
       <div className="card-modern bg-white">
         <div className="bg-zinc-50/80 border-b border-zinc-200/80 px-4 py-3 flex justify-between items-center">
-          <span className="font-semibold uppercase tracking-wider text-black font-sans text-xs">
-            Staff Disbursement Spreadsheet Matrix ({rows.length} Active Rows)
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="font-semibold uppercase tracking-wider text-black font-sans text-xs">
+              Staff Disbursement Spreadsheet Matrix ({rows.length} Active Rows)
+            </span>
+            <span className="bg-amber-100 border border-amber-300 text-amber-900 font-mono text-[9px] px-2 py-0.5 rounded font-bold uppercase">
+              Cycle: {payoutCycle}
+            </span>
+          </div>
           <button
             type="button"
             onClick={addBlankRow}

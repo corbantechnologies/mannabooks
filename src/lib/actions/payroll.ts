@@ -188,6 +188,7 @@ export async function commitPayrollVoucherRun(input: {
     payrollPeriodCode: string; // e.g. "JULY-2026"
     mode?: PayrollMode;
     status?: "DRAFT" | "PAID";
+    issueDate?: Date;
     lines: {
         employeeId?: string;
         employeeName: string;
@@ -238,6 +239,7 @@ export async function commitPayrollVoucherRun(input: {
                 subTotal: globalSubTotal.toString(),
                 taxAmount: globalTaxPool.toString(),
                 grandTotal: globalGrandTotal.toString(),
+                issueDate: input.issueDate ? new Date(input.issueDate) : new Date(),
             }).returning();
 
             // 3. Insert document items for each employee line in this run

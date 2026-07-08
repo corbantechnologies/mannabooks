@@ -80,6 +80,8 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
 
       <OnboardingTracker 
         shopSlug={slug}
+        shopId={shop.id}
+        hideOnboarding={shop.hideOnboarding}
         hasSettings={!!shop.taxPin}
         hasPayment={(paymentCountRes[0]?.value || 0) > 0}
         hasProducts={(productCountRes[0]?.value || 0) > 0}

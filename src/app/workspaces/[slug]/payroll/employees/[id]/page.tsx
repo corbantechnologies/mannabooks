@@ -7,6 +7,7 @@ import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { getEmployeeById } from "@/lib/actions/payroll";
 import { DeleteEmployeeButton } from "@/app/workspaces/[slug]/employees/DeleteEmployeeButton";
+import { EditEmployeeModal } from "./EditEmployeeModal";
 
 interface EmployeeDetailPageProps {
   params: Promise<{ slug: string; id: string }>;
@@ -55,6 +56,9 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
               {employeeData.fullName}
             </h1>
             <p className="text-xs text-zinc-500 lowercase mt-0.5">&gt; id: {employeeData.id}</p>
+            {employeeData.email && (
+              <p className="text-xs text-zinc-600 font-mono mt-1 font-semibold">✉ Email: {employeeData.email}</p>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-[10px]">
@@ -73,6 +77,11 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
             }`}>
               {employeeData.isActive ? "Active Node" : "Inactive Node"}
             </span>
+            <EditEmployeeModal
+              employee={employeeData}
+              shopId={shop.id}
+              shopSlug={slug}
+            />
             <DeleteEmployeeButton
               employeeId={employeeData.id}
               fullName={employeeData.fullName}

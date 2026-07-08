@@ -5,6 +5,7 @@ import { shops, shopMembers } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { verifyAndGetSession } from "./auth";
+import { revalidatePath } from "next/cache";
 
 import { cache } from "react";
 
@@ -129,4 +130,20 @@ export async function createAdditionalShop(input: { userId: string; businessName
     });
 
     return { success: true as const, shopSlug: newShop.slug };
+}
+
+export async function disableOnboardingGuideAction(shopId: string, shopSlug: string) {
+    const session = await verifyAndGetSession();
+    if (!session) return { success: false, error: "Unauthorized session context." };
+
+    try {
+        await db.update(shops)
+            .set({ hideOnboarding: true })
+            .where(eq(shops.id, shopId));
+
+        revalidatePath(`/workspaces/${shopSlug}`);
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message || "Failed to dismiss guide." };
+    }
 }

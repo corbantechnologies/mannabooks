@@ -1,18 +1,21 @@
 import type { Metadata } from "next";
-import { Inter, Roboto_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "react-hot-toast";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const robotoMono = Roboto_Mono({
-  subsets: ["latin"],
-  variable: "--font-roboto-mono",
+const googleSans = localFont({
+  src: [
+    {
+      path: "../../public/fonts/GoogleSans-VariableFont_GRAD,opsz,wght.ttf",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/GoogleSans-Italic-VariableFont_GRAD,opsz,wght.ttf",
+      style: "italic",
+    }
+  ],
+  variable: "--font-google-sans",
   display: "swap",
 });
 
@@ -91,7 +94,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
+    <html lang="en" className={`${googleSans.variable}`}>
       <body className="font-sans min-h-screen flex flex-col bg-white text-black">
         <QueryProvider>
           {children}
@@ -107,7 +110,7 @@ export default function RootLayout({
               color: '#ffffff',
               border: '1px solid #000000',
               borderRadius: '0px',
-              fontFamily: 'var(--font-roboto-mono), monospace',
+              fontFamily: 'var(--font-google-sans), sans-serif',
               fontSize: '12px',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',

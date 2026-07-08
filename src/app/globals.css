@@ -6,8 +6,8 @@
   --radius-lg: 8px;
 
   /* Bind custom CSS typography variables configured in layout metadata */
-  --font-sans: var(--font-inter), sans-serif;
-  --font-mono: var(--font-roboto-mono), monospace;
+  --font-sans: var(--font-google-sans), sans-serif;
+  --font-mono: var(--font-google-sans), sans-serif;
 }
 
 @layer base {

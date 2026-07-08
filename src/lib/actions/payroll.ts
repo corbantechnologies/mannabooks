@@ -440,7 +440,7 @@ export async function emailPayslipsAction(voucherId: string, shopId: string, sho
 
                     <div style="border-top: 1px dashed #e4e4e7; pt: 12px; text-align: center; font-size: 10px; color: #a1a1aa; line-height: 1.4;">
                         <p style="margin: 0;">This is a system-generated payslip matching your official employment contract.</p>
-                        <p style="margin: 4px 0 0 0;">Manna Books ERP • Secure Ledger Node</p>
+                        <p style="margin: 4px 0 0 0;">${voucher.shop.name} • Secure Ledger Node</p>
                     </div>
                 </div>
             `;
@@ -448,7 +448,7 @@ export async function emailPayslipsAction(voucherId: string, shopId: string, sho
             await resend.emails.send({
                 from: fromAddress,
                 to: emp.email,
-                subject: `Manna Books Payslip - ${parsed.period} - ${parsed.staffName}`,
+                subject: `${voucher.shop.name} — Payslip for ${parsed.period}`,
                 html: htmlContent,
             });
 

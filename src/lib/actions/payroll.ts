@@ -294,7 +294,7 @@ export async function updatePayrollVoucherStatus(voucherId: string, shopId: stri
     }
 }
 
-export function parsePayslipDescription(desc: string) {
+function parsePayslipDescription(desc: string) {
   try {
     const periodMatch = desc.match(/\[Payroll Run:\s*([^\]]+)\]/);
     const staffMatch = desc.match(/Staff:\s*([^|]+)/);

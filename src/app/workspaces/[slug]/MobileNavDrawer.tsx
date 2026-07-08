@@ -32,29 +32,29 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
   };
 
   const navItems: NavItem[] = [
-    { href: `/workspaces/${slug}`, label: "[0] Overview", exact: true },
-    { href: `/workspaces/${slug}/documents`, label: "[1] Fiscal Ledgers" },
-    { href: `/workspaces/${slug}/inbox`, label: "[1.5] B2B Shared Inbox" },
-    { href: `/workspaces/${slug}/pos`, label: "[2] Walk-in Sales" },
+    { href: `/workspaces/${slug}`, label: "Overview", exact: true },
+    { href: `/workspaces/${slug}/documents`, label: "Fiscal Ledgers" },
+    { href: `/workspaces/${slug}/inbox`, label: "B2B Shared Inbox" },
+    { href: `/workspaces/${slug}/pos`, label: "Walk-in Sales" },
     { 
-      label: "[3] CRM", 
+      label: "CRM", 
       children: [
         { href: `/workspaces/${slug}/clients`, label: "Client Flow" },
         { href: `/workspaces/${slug}/suppliers`, label: "Supplier Network" },
       ]
     },
-    { href: `/workspaces/${slug}/products`, label: "[4] Product Catalog" },
-    { href: `/workspaces/${slug}/expenses`, label: "[5] Operating Expenses" },
+    { href: `/workspaces/${slug}/products`, label: "Product Catalog" },
+    { href: `/workspaces/${slug}/expenses`, label: "Operating Expenses" },
     {
-      label: "[6] Payroll",
+      label: "Payroll",
       children: [
         { href: `/workspaces/${slug}/payroll`, label: "Payroll Vouchers" },
         { href: `/workspaces/${slug}/employees`, label: "Employees" },
       ]
     },
-    { href: `/workspaces/${slug}/analytics`, label: "[7] Analytics" },
+    { href: `/workspaces/${slug}/analytics`, label: "Analytics" },
     {
-      label: "[8] Settings",
+      label: "Settings",
       children: [
         { href: `/workspaces/${slug}/team`, label: "Team Management" },
         { href: `/workspaces/${slug}/settings`, label: "Workspace Settings" },

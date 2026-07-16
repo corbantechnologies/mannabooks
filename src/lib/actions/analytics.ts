@@ -268,7 +268,9 @@ export async function getWorkspaceAnalyticsData(
 
     allDocs.forEach((d) => {
       const issue = new Date(d.issueDate);
-      if (issue >= currentMonthStart && issue <= currentMonthEnd && (d.type === "INVOICE" || d.type === "RECEIPT")) {
+      // Skip receipts derived from invoices to avoid counting VAT twice
+      const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
+      if (!isReceiptFromInvoice && issue >= currentMonthStart && issue <= currentMonthEnd && (d.type === "INVOICE" || d.type === "RECEIPT")) {
         const docTax = parseFloat(d.taxAmount || "0");
         outputVat16 += docTax;
 
@@ -324,7 +326,9 @@ export async function getWorkspaceAnalyticsData(
     let totalSalesItemRevenue = 0;
 
     filteredDocs.forEach((d) => {
-      if (d.type === "INVOICE" || d.type === "RECEIPT") {
+      // Skip receipts derived from invoices — the invoice itself is already PAID and counted
+      const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
+      if (!isReceiptFromInvoice && (d.type === "INVOICE" || d.type === "RECEIPT")) {
         d.items.forEach((item) => {
           const rev = parseFloat(item.itemTotal || "0");
           const qty = parseFloat(item.quantity || "1");
@@ -356,7 +360,9 @@ export async function getWorkspaceAnalyticsData(
     let totalClientRevenue = 0;
 
     allDocs.forEach((d) => {
-      if (d.client && (d.type === "RECEIPT" || (d.type === "INVOICE" && d.status === "PAID"))) {
+      // Skip receipts derived from invoices to avoid double-counting LTV
+      const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
+      if (d.client && !isReceiptFromInvoice && (d.type === "RECEIPT" || (d.type === "INVOICE" && d.status === "PAID"))) {
         const val = parseFloat(d.grandTotal || "0");
         totalClientRevenue += val;
 

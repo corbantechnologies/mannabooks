@@ -130,7 +130,7 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
             <h1 className="text-xl font-semibold uppercase tracking-tight font-sans" style={{ color: brandColor }}>
               {shop.shortName || shop.name}
             </h1>
-            {shop.taxPin && <p className="text-[11px] text-zinc-500">VAT PIN: {shop.taxPin}</p>}
+            {shop.taxPin && <p className="text-[11px] text-zinc-500">Tax PIN: {shop.taxPin}</p>}
             {shop.phone && <p className="text-[11px] text-zinc-500">Tel: {shop.phone}</p>}
             {shop.website && (
               <a href={shop.website} target="_blank" rel="noopener noreferrer" className="text-[11px] underline block font-semibold" style={{ color: brandColor }}>

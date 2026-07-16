@@ -161,7 +161,11 @@ export async function getWorkspaceAnalyticsData(
       const isSales = d.type === "INVOICE" || d.type === "RECEIPT" || d.type === "QUOTATION";
       const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER" || d.type === "GOODS_RECEIVED_NOTE" || d.type === "PAYROLL_VOUCHER";
 
-      if (d.status === "PAID" || d.type === "RECEIPT") {
+      // A RECEIPT generated from an invoice (has parentDocumentId) must be skipped — 
+      // its parent invoice is already PAID and counted as inflow. Only count standalone receipts.
+      const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
+
+      if (!isReceiptFromInvoice && (d.status === "PAID" || d.type === "RECEIPT")) {
         if (isSales) {
           totalSettledInflow += val;
           d.items.forEach((item) => {
@@ -213,7 +217,10 @@ export async function getWorkspaceAnalyticsData(
         const isSales = d.type === "INVOICE" || d.type === "RECEIPT";
         const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER" || d.type === "PAYROLL_VOUCHER";
 
-        if (d.status === "PAID" || d.type === "RECEIPT") {
+        // Same rule: skip receipts derived from invoices to avoid double-counting in the chart
+        const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
+
+        if (!isReceiptFromInvoice && (d.status === "PAID" || d.type === "RECEIPT")) {
           if (isSales) monthlyTimelineMap[label].inflow += val;
           else if (isOutflow) monthlyTimelineMap[label].outflow += val;
         }

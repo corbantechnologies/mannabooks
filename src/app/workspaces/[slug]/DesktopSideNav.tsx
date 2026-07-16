@@ -46,6 +46,18 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
         { href: `/workspaces/${slug}/employees`, label: "Employees" },
       ]
     },
+    {
+      label: "Finance",
+      children: [
+        { href: `/workspaces/${slug}/finance/accounts`, label: "Chart of Accounts" },
+        { href: `/workspaces/${slug}/finance/ledger`, label: "General Ledger" },
+        { href: `/workspaces/${slug}/finance/periods`, label: "Accounting Periods" },
+        { href: `/workspaces/${slug}/finance/budgets`, label: "Budgets" },
+        { href: `/workspaces/${slug}/finance/reports/pl`, label: "P&L Statement" },
+        { href: `/workspaces/${slug}/finance/reports/cashflow`, label: "Cash Flow" },
+        { href: `/workspaces/${slug}/finance/reports/trial-balance`, label: "Trial Balance" },
+      ]
+    },
     { href: `/workspaces/${slug}/analytics`, label: "Analytics" },
     {
       label: "Settings",

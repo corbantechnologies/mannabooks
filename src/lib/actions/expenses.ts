@@ -5,6 +5,7 @@ import { expenses } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { enforcePermission } from "./rbac";
 import { revalidatePath } from "next/cache";
+import { createJournalEntry, EXPENSE_CATEGORY_ACCOUNT_MAP } from "./gl";
 
 type ExpenseCategory = 'RENT' | 'UTILITIES' | 'FUEL' | 'MARKETING' | 'SALARIES' | 'OFFICE_SUPPLIES' | 'OTHER';
 
@@ -29,6 +30,20 @@ export async function createExpense(
 
         revalidatePath(`/workspaces/${shopId}/expenses`);
         revalidatePath(`/workspaces/${shopId}/analytics`);
+
+        // Auto-journal: DR Expense Account / CR Cash & Bank (if GL is active)
+        const expenseAccountCode = EXPENSE_CATEGORY_ACCOUNT_MAP[data.category] || "6900";
+        await createJournalEntry({
+            shopId,
+            entryDate: data.expenseDate,
+            description: `Expense: ${data.description}`,
+            debitAccountCode: expenseAccountCode,
+            creditAccountCode: "1200", // Cash & Bank
+            amount: data.amount,
+            sourceType: "expense",
+            sourceId: newExpense[0].id,
+        });
+
         return { success: true, expense: newExpense[0] };
     } catch (error: any) {
         console.error("Failed to create expense:", error);

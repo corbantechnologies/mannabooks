@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, varchar, timestamp, numeric, pgEnum, unique, boolean, index, integer } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, varchar, timestamp, numeric, pgEnum, unique, boolean, index, integer, jsonb, date } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // ==========================================
@@ -17,13 +17,17 @@ export const docTypeEnum = pgEnum('doc_type', [
     'PAYMENT_VOUCHER',
     'PAYROLL_VOUCHER'
 ]);
-export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'ISSUED', 'OVERDUE', 'PAID', 'RECEIVED']);
+// docStatusEnum is defined below after GL enums
 export const taxTypeEnum = pgEnum('tax_type', ['V_16', 'V_0', 'EXEMPT']); // 16% VAT, 0% VAT, Tax Exempt
 export const clientTypeEnum = pgEnum('client_type', ['WALK_IN', 'INDIVIDUAL', 'CORPORATE']);
 export const userRoleEnum = pgEnum('user_role', ['OWNER', 'ADMIN', 'MANAGER', 'ACCOUNTANT', 'EMPLOYEE', 'VIEWER']);
 export const recurringIntervalEnum = pgEnum('recurring_interval', ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']);
 export const expenseCategoryEnum = pgEnum('expense_category', ['RENT', 'UTILITIES', 'FUEL', 'MARKETING', 'SALARIES', 'OFFICE_SUPPLIES', 'OTHER']);
 export const invitationStatusEnum = pgEnum('invitation_status', ['PENDING', 'ACCEPTED', 'REVOKED']);
+export const accountTypeEnum = pgEnum('account_type', ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE']);
+export const periodStatusEnum = pgEnum('period_status', ['OPEN', 'CLOSED']);
+export const journalSourceEnum = pgEnum('journal_source', ['document', 'expense', 'income', 'payroll', 'manual', 'migrated']);
+export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'ISSUED', 'OVERDUE', 'PAID', 'PARTIALLY_PAID', 'RECEIVED']);
 
 // ==========================================
 // 2. TABLES
@@ -57,6 +61,9 @@ export const shops = pgTable('shops', {
     vatNumber: varchar('vat_number', { length: 50 }), // Optional/Required VAT Registration Number
     fiscalYearStartMonth: integer('fiscal_year_start_month').default(1).notNull(), // 1 = January, 7 = July etc.
     hideOnboarding: boolean('hide_onboarding').default(false).notNull(),
+    // General Ledger
+    isGlEnabled: boolean('is_gl_enabled').default(false).notNull(),
+    glOnboardingMode: boolean('gl_onboarding_mode').default(false).notNull(), // When true, allows backdating past closed periods
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -260,6 +267,70 @@ export const shopInvitations = pgTable('shop_invitations', {
 });
 
 // ==========================================
+// GENERAL LEDGER TABLES
+// ==========================================
+
+// CHART OF ACCOUNTS
+export const chartOfAccounts = pgTable('chart_of_accounts', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    code: varchar('code', { length: 10 }).notNull(),   // e.g. '4100', '6200'
+    name: text('name').notNull(),                       // e.g. 'Sales Revenue', 'Rent Expense'
+    accountType: accountTypeEnum('account_type').notNull(),
+    isSystem: boolean('is_system').default(false).notNull(), // System accounts cannot be deleted
+    parentCode: varchar('parent_code', { length: 10 }), // For sub-accounts
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_account_code').on(table.shopId, table.code),
+]);
+
+// ACCOUNTING PERIODS (Monthly)
+export const accountingPeriods = pgTable('accounting_periods', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    periodName: varchar('period_name', { length: 50 }).notNull(), // e.g. 'July 2026'
+    startDate: date('start_date').notNull(),
+    endDate: date('end_date').notNull(),
+    status: periodStatusEnum('status').default('OPEN').notNull(),
+    closedAt: timestamp('closed_at'),
+    closedById: uuid('closed_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_period').on(table.shopId, table.startDate),
+]);
+
+// JOURNAL ENTRIES (Double-Entry)
+export const journalEntries = pgTable('journal_entries', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    periodId: uuid('period_id').references(() => accountingPeriods.id),
+    entryDate: timestamp('entry_date').notNull(),
+    description: text('description').notNull(),
+    debitAccountId: uuid('debit_account_id').references(() => chartOfAccounts.id).notNull(),
+    creditAccountId: uuid('credit_account_id').references(() => chartOfAccounts.id).notNull(),
+    amount: numeric('amount', { precision: 15, scale: 2 }).notNull(),
+    sourceType: journalSourceEnum('source_type').default('manual').notNull(),
+    sourceId: uuid('source_id'),               // FK to originating record (document, expense, etc.)
+    createdById: uuid('created_by_id').references(() => users.id),
+    isBackdated: boolean('is_backdated').default(false).notNull(),
+    backdatedReason: text('backdated_reason'),  // Required when isBackdated = true
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// BUDGETS (Monthly per expense account)
+export const budgets = pgTable('budgets', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    accountId: uuid('account_id').references(() => chartOfAccounts.id, { onDelete: 'cascade' }).notNull(),
+    month: integer('month').notNull(),   // 1–12
+    year: integer('year').notNull(),
+    monthlyLimit: numeric('monthly_limit', { precision: 15, scale: 2 }).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_budget_account_period').on(table.shopId, table.accountId, table.month, table.year),
+]);
+
+// ==========================================
 // 3. RELATIONS (For ORM Querying)
 // ==========================================
 export const usersRelations = relations(users, ({ many }) => ({
@@ -278,6 +349,10 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     expenses: many(expenses),
     incomes: many(incomes),
     invitations: many(shopInvitations),
+    chartOfAccounts: many(chartOfAccounts),
+    accountingPeriods: many(accountingPeriods),
+    journalEntries: many(journalEntries),
+    budgets: many(budgets),
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
@@ -340,10 +415,41 @@ export const expensesRelations = relations(expenses, ({ one }) => ({
     shop: one(shops, { fields: [expenses.shopId], references: [shops.id] }),
 }));
 
+export const incomesRelations = relations(incomes, ({ one }) => ({
+    shop: one(shops, { fields: [incomes.shopId], references: [shops.id] }),
+}));
+
 export const employeesRelations = relations(employees, ({ one }) => ({
     shop: one(shops, { fields: [employees.shopId], references: [shops.id] }),
 }));
 
 export const shopInvitationsRelations = relations(shopInvitations, ({ one }) => ({
     shop: one(shops, { fields: [shopInvitations.shopId], references: [shops.id] }),
+}));
+
+// GL Relations
+export const chartOfAccountsRelations = relations(chartOfAccounts, ({ one, many }) => ({
+    shop: one(shops, { fields: [chartOfAccounts.shopId], references: [shops.id] }),
+    debitEntries: many(journalEntries, { relationName: 'debit_account' }),
+    creditEntries: many(journalEntries, { relationName: 'credit_account' }),
+    budgets: many(budgets),
+}));
+
+export const accountingPeriodsRelations = relations(accountingPeriods, ({ one, many }) => ({
+    shop: one(shops, { fields: [accountingPeriods.shopId], references: [shops.id] }),
+    closedBy: one(users, { fields: [accountingPeriods.closedById], references: [users.id] }),
+    journalEntries: many(journalEntries),
+}));
+
+export const journalEntriesRelations = relations(journalEntries, ({ one }) => ({
+    shop: one(shops, { fields: [journalEntries.shopId], references: [shops.id] }),
+    period: one(accountingPeriods, { fields: [journalEntries.periodId], references: [accountingPeriods.id] }),
+    debitAccount: one(chartOfAccounts, { fields: [journalEntries.debitAccountId], references: [chartOfAccounts.id], relationName: 'debit_account' }),
+    creditAccount: one(chartOfAccounts, { fields: [journalEntries.creditAccountId], references: [chartOfAccounts.id], relationName: 'credit_account' }),
+    createdBy: one(users, { fields: [journalEntries.createdById], references: [users.id] }),
+}));
+
+export const budgetsRelations = relations(budgets, ({ one }) => ({
+    shop: one(shops, { fields: [budgets.shopId], references: [shops.id] }),
+    account: one(chartOfAccounts, { fields: [budgets.accountId], references: [chartOfAccounts.id] }),
 }));

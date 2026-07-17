@@ -17,6 +17,7 @@ export const DEFAULT_ACCOUNTS = [
     { code: "2100", name: "Accounts Payable",       accountType: "LIABILITY" as const, isSystem: true },
     { code: "2200", name: "Payroll Payable",        accountType: "LIABILITY" as const, isSystem: true },
     { code: "3100", name: "Owner's Equity",         accountType: "EQUITY"    as const, isSystem: true },
+    { code: "3200", name: "Opening Balances",       accountType: "EQUITY"    as const, isSystem: true }, // Contra account for GL onboarding
     { code: "4100", name: "Sales Revenue",          accountType: "REVENUE"   as const, isSystem: true },
     { code: "4200", name: "Non-Operating Income",   accountType: "REVENUE"   as const, isSystem: true },
     { code: "5100", name: "Cost of Goods Sold",     accountType: "EXPENSE"   as const, isSystem: true },
@@ -323,5 +324,152 @@ export async function reopenPeriod(shopId: string, shopSlug: string, periodId: s
         return { success: true };
     } catch (error: any) {
         return { success: false, error: error.message };
+    }
+}
+
+// ================================================================
+// OPENING BALANCES
+// ================================================================
+
+export interface OpeningBalanceLine {
+    accountId: string;
+    accountCode: string;
+    accountName: string;
+    accountType: string;
+    debitBalance: number;  // Enter as positive; system posts as DR
+    creditBalance: number; // Enter as positive; system posts as CR
+}
+
+/**
+ * Posts opening balance journal entries for all accounts.
+ * Uses account 3200 "Opening Balances" as the contra account.
+ * Each line creates one DR or CR journal entry.
+ *
+ * Standard convention:
+ *   Assets/Expenses with positive balance → DR Account / CR Opening Balances
+ *   Liabilities/Equity/Revenue with positive balance → DR Opening Balances / CR Account
+ */
+export async function postOpeningBalances(
+    shopId: string,
+    shopSlug: string,
+    asOfDate: Date,
+    lines: Array<{ accountId: string; accountCode: string; debitAmount: number; creditAmount: number }>
+) {
+    try {
+        await enforcePermission(shopId, "manage_expenses");
+        const session = await verifyAndGetSession();
+        if (!session) return { success: false, error: "Authentication required." };
+
+        const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
+        if (!shop?.isGlEnabled) return { success: false, error: "GL not activated." };
+
+        // Find the Opening Balances contra account (3200)
+        const openingBalancesAccount = await db.query.chartOfAccounts.findFirst({
+            where: and(eq(chartOfAccounts.shopId, shopId), eq(chartOfAccounts.code, "3200")),
+        });
+        if (!openingBalancesAccount) return { success: false, error: "Opening Balances account (3200) not found in Chart of Accounts." };
+
+        let posted = 0;
+        for (const line of lines) {
+            const targetAccount = await db.query.chartOfAccounts.findFirst({
+                where: and(eq(chartOfAccounts.id, line.accountId), eq(chartOfAccounts.shopId, shopId)),
+            });
+            if (!targetAccount) continue;
+
+            // Post debit-side opening balance
+            if (line.debitAmount > 0) {
+                await createJournalEntry({
+                    shopId,
+                    entryDate: asOfDate,
+                    description: `Opening Balance: ${targetAccount.name} (as of ${asOfDate.toLocaleDateString("en-KE")})`,
+                    debitAccountCode: targetAccount.code,
+                    creditAccountCode: "3200",
+                    amount: line.debitAmount,
+                    sourceType: "manual",
+                    createdById: session.userId,
+                    isBackdated: asOfDate < new Date(),
+                    backdatedReason: "GL onboarding — opening balance",
+                });
+                posted++;
+            }
+
+            // Post credit-side opening balance
+            if (line.creditAmount > 0) {
+                await createJournalEntry({
+                    shopId,
+                    entryDate: asOfDate,
+                    description: `Opening Balance: ${targetAccount.name} (as of ${asOfDate.toLocaleDateString("en-KE")})`,
+                    debitAccountCode: "3200",
+                    creditAccountCode: targetAccount.code,
+                    amount: line.creditAmount,
+                    sourceType: "manual",
+                    createdById: session.userId,
+                    isBackdated: asOfDate < new Date(),
+                    backdatedReason: "GL onboarding — opening balance",
+                });
+                posted++;
+            }
+        }
+
+        revalidatePath(`/workspaces/${shopSlug}/finance`);
+        return { success: true, posted };
+    } catch (error: any) {
+        console.error("Opening balance error:", error);
+        return { success: false, error: error.message || "Failed to post opening balances." };
+    }
+}
+
+// ================================================================
+// MANUAL JOURNAL ENTRIES (Option B — historical transaction entry)
+// ================================================================
+
+export async function postManualJournalEntry(
+    shopId: string,
+    shopSlug: string,
+    data: {
+        entryDate: Date;
+        description: string;
+        debitAccountId: string;
+        creditAccountId: string;
+        amount: number;
+        isBackdated?: boolean;
+        backdatedReason?: string;
+    }
+) {
+    try {
+        await enforcePermission(shopId, "manage_expenses");
+        const session = await verifyAndGetSession();
+        if (!session) return { success: false, error: "Authentication required." };
+
+        const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
+        if (!shop?.isGlEnabled) return { success: false, error: "GL not activated." };
+
+        const [debitAccount, creditAccount] = await Promise.all([
+            db.query.chartOfAccounts.findFirst({ where: and(eq(chartOfAccounts.id, data.debitAccountId), eq(chartOfAccounts.shopId, shopId)) }),
+            db.query.chartOfAccounts.findFirst({ where: and(eq(chartOfAccounts.id, data.creditAccountId), eq(chartOfAccounts.shopId, shopId)) }),
+        ]);
+
+        if (!debitAccount || !creditAccount) return { success: false, error: "One or both accounts not found." };
+        if (debitAccount.id === creditAccount.id) return { success: false, error: "Debit and credit accounts must be different." };
+        if (data.amount <= 0) return { success: false, error: "Amount must be greater than zero." };
+
+        await createJournalEntry({
+            shopId,
+            entryDate: data.entryDate,
+            description: data.description,
+            debitAccountCode: debitAccount.code,
+            creditAccountCode: creditAccount.code,
+            amount: data.amount,
+            sourceType: "manual",
+            createdById: session.userId,
+            isBackdated: data.isBackdated || data.entryDate < new Date(new Date().setHours(0, 0, 0, 0)),
+            backdatedReason: data.backdatedReason || (data.entryDate < new Date() ? "Manual historical entry" : undefined),
+        });
+
+        revalidatePath(`/workspaces/${shopSlug}/finance/ledger`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Manual journal entry error:", error);
+        return { success: false, error: error.message || "Failed to post journal entry." };
     }
 }

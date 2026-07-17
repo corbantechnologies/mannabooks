@@ -50,6 +50,7 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
       label: "Finance",
       children: [
         { href: `/workspaces/${slug}/finance/accounts`, label: "Chart of Accounts" },
+        { href: `/workspaces/${slug}/finance/opening-balances`, label: "Opening Balances" },
         { href: `/workspaces/${slug}/finance/ledger`, label: "General Ledger" },
         { href: `/workspaces/${slug}/finance/periods`, label: "Accounting Periods" },
         { href: `/workspaces/${slug}/finance/budgets`, label: "Budgets" },

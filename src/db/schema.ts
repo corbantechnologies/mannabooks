@@ -293,10 +293,24 @@ export const chartOfAccounts = pgTable('chart_of_accounts', {
     unique('unique_shop_account_code').on(table.shopId, table.code),
 ]);
 
+// FISCAL YEARS
+export const fiscalYears = pgTable('fiscal_years', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    label: varchar('label', { length: 100 }).notNull(), // e.g. "Fiscal Year 2025/2026"
+    startDate: date('start_date').notNull(),
+    endDate: date('end_date').notNull(),
+    isClosed: boolean('is_closed').default(false).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_fy_label').on(table.shopId, table.label),
+]);
+
 // ACCOUNTING PERIODS (Monthly)
 export const accountingPeriods = pgTable('accounting_periods', {
     id: uuid('id').defaultRandom().primaryKey(),
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    fiscalYearId: uuid('fiscal_year_id').references(() => fiscalYears.id, { onDelete: 'cascade' }),
     periodName: varchar('period_name', { length: 50 }).notNull(), // e.g. 'July 2026'
     startDate: date('start_date').notNull(),
     endDate: date('end_date').notNull(),
@@ -406,6 +420,7 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     incomes: many(incomes),
     invitations: many(shopInvitations),
     chartOfAccounts: many(chartOfAccounts),
+    fiscalYears: many(fiscalYears),
     accountingPeriods: many(accountingPeriods),
     journalEntries: many(journalEntries),
     budgets: many(budgets),
@@ -494,9 +509,15 @@ export const chartOfAccountsRelations = relations(chartOfAccounts, ({ one, many 
     budgets: many(budgets),
 }));
 
+export const fiscalYearsRelations = relations(fiscalYears, ({ one, many }) => ({
+    shop: one(shops, { fields: [fiscalYears.shopId], references: [shops.id] }),
+    periods: many(accountingPeriods),
+}));
+
 export const accountingPeriodsRelations = relations(accountingPeriods, ({ one, many }) => ({
     shop: one(shops, { fields: [accountingPeriods.shopId], references: [shops.id] }),
     closedBy: one(users, { fields: [accountingPeriods.closedById], references: [users.id] }),
+    fiscalYear: one(fiscalYears, { fields: [accountingPeriods.fiscalYearId], references: [fiscalYears.id] }),
     journalEntries: many(journalEntries),
 }));
 

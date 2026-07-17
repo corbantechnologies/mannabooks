@@ -11,6 +11,7 @@ export const DEFAULT_ACCOUNTS = [
     { code: "2350", name: "WHT Payable",            accountType: "LIABILITY" as const, isSystem: true },
     { code: "3100", name: "Owner's Equity",         accountType: "EQUITY"    as const, isSystem: true },
     { code: "3200", name: "Opening Balances",       accountType: "EQUITY"    as const, isSystem: true },
+    { code: "3300", name: "Retained Earnings",      accountType: "EQUITY"    as const, isSystem: true },
     { code: "4100", name: "Sales Revenue",          accountType: "REVENUE"   as const, isSystem: true },
     { code: "4200", name: "Non-Operating Income",   accountType: "REVENUE"   as const, isSystem: true },
     { code: "5100", name: "Cost of Goods Sold",     accountType: "EXPENSE"   as const, isSystem: true },

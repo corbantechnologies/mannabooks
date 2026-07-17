@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { chartOfAccounts, accountingPeriods, journalEntries, shops } from "@/db/schema";
+import { chartOfAccounts, accountingPeriods, journalEntries, shops, fiscalYears } from "@/db/schema";
 import { eq, and, gte, lte, or } from "drizzle-orm";
 import { verifyAndGetSession } from "./auth";
 import { enforcePermission } from "./rbac";
@@ -15,10 +15,14 @@ import { DEFAULT_ACCOUNTS, EXPENSE_CATEGORY_ACCOUNT_MAP } from "../gl-constants"
 
 /**
  * Activates the General Ledger for a workspace.
- * Seeds the Chart of Accounts, creates the current accounting period,
+ * Seeds the Chart of Accounts, creates the initial Fiscal Year and its monthly periods,
  * and enables GL onboarding mode to allow backdating.
  */
-export async function activateGeneralLedger(shopId: string, shopSlug: string) {
+export async function activateGeneralLedger(
+    shopId: string,
+    shopSlug: string,
+    fyData?: { label: string; startDate: string; endDate: string }
+) {
     try {
         await enforcePermission(shopId, "manage_expenses"); // Owner/Admin only
         const session = await verifyAndGetSession();
@@ -28,27 +32,54 @@ export async function activateGeneralLedger(shopId: string, shopSlug: string) {
         if (!shop) return { success: false, error: "Workspace not found." };
         if (shop.isGlEnabled) return { success: false, error: "GL is already activated for this workspace." };
 
+        // Determine default fiscal year if not provided (e.g. current calendar year)
+        const label = fyData?.label.trim() || `Fiscal Year ${new Date().getFullYear()}`;
+        const start = fyData?.startDate ? new Date(fyData.startDate) : new Date(new Date().getFullYear(), 0, 1);
+        const end = fyData?.endDate ? new Date(fyData.endDate) : new Date(new Date().getFullYear(), 11, 31);
+
+        if (end <= start) {
+            return { success: false, error: "End Date must be after Start Date." };
+        }
+
         await db.transaction(async (tx) => {
             // 1. Seed Chart of Accounts
             await tx.insert(chartOfAccounts).values(
                 DEFAULT_ACCOUNTS.map(a => ({ ...a, shopId }))
             );
 
-            // 2. Create current accounting period
-            const now = new Date();
-            const start = new Date(now.getFullYear(), now.getMonth(), 1);
-            const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            const periodName = now.toLocaleDateString("en-KE", { month: "long", year: "numeric" });
-
-            await tx.insert(accountingPeriods).values({
+            // 2. Create the Fiscal Year
+            const [createdFy] = await tx.insert(fiscalYears).values({
                 shopId,
-                periodName,
+                label,
                 startDate: start.toISOString().split("T")[0],
                 endDate: end.toISOString().split("T")[0],
-                status: "OPEN",
-            });
+                isClosed: false,
+            }).returning();
 
-            // 3. Enable GL + onboarding mode (allows backdating for historical data entry)
+            // 3. Auto-populate monthly accounting periods
+            let current = new Date(start.getFullYear(), start.getMonth(), 1);
+            while (current <= end) {
+                const pStart = new Date(current.getFullYear(), current.getMonth(), 1);
+                const actualStart = pStart < start ? start : pStart;
+                
+                const pEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+                const actualEnd = pEnd > end ? end : pEnd;
+
+                const periodName = actualStart.toLocaleDateString("en-KE", { month: "long", year: "numeric" });
+                
+                await tx.insert(accountingPeriods).values({
+                    shopId,
+                    fiscalYearId: createdFy.id,
+                    periodName,
+                    startDate: actualStart.toISOString().split("T")[0],
+                    endDate: actualEnd.toISOString().split("T")[0],
+                    status: "OPEN",
+                });
+
+                current.setMonth(current.getMonth() + 1);
+            }
+
+            // 4. Enable GL + onboarding mode
             await tx.update(shops).set({
                 isGlEnabled: true,
                 glOnboardingMode: true,
@@ -176,19 +207,22 @@ export async function createJournalEntry(input: JournalEntryInput) {
         ),
     });
 
+    if (!period) {
+        throw new Error(`No active accounting period found for date ${entryDateStr}. Transaction date must fall within a declared Fiscal Year.`);
+    }
+
     // Validate period access
-    if (period?.status === "CLOSED") {
+    if (period.status === "CLOSED") {
         // Only allow posting to closed periods in onboarding mode or for migrated entries
         const allowedToBackdate = shop.glOnboardingMode || input.sourceType === "migrated";
-        if (!allowedToBackdate && !input.isBackdated) {
-            console.warn(`Attempted to post to closed period ${period.periodName} — rejected.`);
-            return;
+        if (!allowedToBackdate) {
+            throw new Error(`Accounting period "${period.periodName}" is closed. Postings to closed periods are locked.`);
         }
     }
 
     await db.insert(journalEntries).values({
         shopId: input.shopId,
-        periodId: period?.id || null,
+        periodId: period.id,
         entryDate: input.entryDate,
         description: input.description,
         debitAccountId: debitAccount.id,
@@ -227,7 +261,7 @@ export async function getJournalEntries(shopId: string, filters?: {
 export async function getAccountingPeriods(shopId: string) {
     return db.query.accountingPeriods.findMany({
         where: eq(accountingPeriods.shopId, shopId),
-        with: { closedBy: true },
+        with: { closedBy: true, fiscalYear: true },
         orderBy: (p, { desc }) => [desc(p.startDate)],
     });
 }
@@ -238,9 +272,7 @@ export async function getAccountingPeriods(shopId: string) {
  */
 export async function ensureAccountingPeriod(shopId: string, date: Date): Promise<string | null> {
     const start = new Date(date.getFullYear(), date.getMonth(), 1);
-    const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     const startStr = start.toISOString().split("T")[0];
-    const endStr = end.toISOString().split("T")[0];
 
     const existing = await db.query.accountingPeriods.findFirst({
         where: and(eq(accountingPeriods.shopId, shopId), eq(accountingPeriods.startDate, startStr)),
@@ -248,16 +280,7 @@ export async function ensureAccountingPeriod(shopId: string, date: Date): Promis
 
     if (existing) return existing.id;
 
-    const periodName = date.toLocaleDateString("en-KE", { month: "long", year: "numeric" });
-    const [created] = await db.insert(accountingPeriods).values({
-        shopId,
-        periodName,
-        startDate: startStr,
-        endDate: endStr,
-        status: "OPEN",
-    }).returning();
-
-    return created.id;
+    throw new Error(`Accounting period starting ${startStr} is not defined. Please declare a Fiscal Year covering this period.`);
 }
 
 export async function closePeriod(shopId: string, shopSlug: string, periodId: string) {

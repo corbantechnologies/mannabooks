@@ -5,7 +5,8 @@ import { expenses } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { enforcePermission } from "./rbac";
 import { revalidatePath } from "next/cache";
-import { createJournalEntry, EXPENSE_CATEGORY_ACCOUNT_MAP } from "./gl";
+import { createJournalEntry } from "./gl";
+import { EXPENSE_CATEGORY_ACCOUNT_MAP } from "../gl-constants";
 
 type ExpenseCategory = 'RENT' | 'UTILITIES' | 'FUEL' | 'MARKETING' | 'SALARIES' | 'OFFICE_SUPPLIES' | 'OTHER';
 

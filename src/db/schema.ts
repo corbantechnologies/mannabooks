@@ -28,6 +28,8 @@ export const accountTypeEnum = pgEnum('account_type', ['ASSET', 'LIABILITY', 'EQ
 export const periodStatusEnum = pgEnum('period_status', ['OPEN', 'CLOSED']);
 export const journalSourceEnum = pgEnum('journal_source', ['document', 'expense', 'income', 'payroll', 'manual', 'migrated']);
 export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'ISSUED', 'OVERDUE', 'PAID', 'PARTIALLY_PAID', 'RECEIVED']);
+export const taxRegimeEnum = pgEnum('tax_regime', ['CIT', 'TOT', 'EXEMPT']);
+export const assetClassEnum = pgEnum('asset_class', ['CLASS_1', 'CLASS_2', 'CLASS_3', 'CLASS_4', 'BUILDING']);
 
 // ==========================================
 // 2. TABLES
@@ -64,6 +66,10 @@ export const shops = pgTable('shops', {
     // General Ledger
     isGlEnabled: boolean('is_gl_enabled').default(false).notNull(),
     glOnboardingMode: boolean('gl_onboarding_mode').default(false).notNull(), // When true, allows backdating past closed periods
+    // Income Tax settings
+    taxRegime: taxRegimeEnum('tax_regime').default('EXEMPT').notNull(),
+    citRate: numeric('cit_rate', { precision: 5, scale: 2 }).default('30.00').notNull(),
+    estimatedAnnualProfit: numeric('estimated_annual_profit', { precision: 15, scale: 2 }).default('0.00').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -250,6 +256,7 @@ export const expenses = pgTable('expenses', {
     paymentChannel: varchar('payment_channel', { length: 50 }), // e.g. BANK, MPESA, CASH, CHEQUE, OTHER
     paymentReference: varchar('payment_reference', { length: 100 }),
     receiptUrl: text('receipt_url'), // Cloudinary URL for attached receipt
+    isNonDeductible: boolean('is_non_deductible').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -330,6 +337,53 @@ export const budgets = pgTable('budgets', {
     unique('unique_budget_account_period').on(table.shopId, table.accountId, table.month, table.year),
 ]);
 
+// FIXED ASSETS REGISTER
+export const fixedAssets = pgTable('fixed_assets', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    name: text('name').notNull(),
+    assetClass: assetClassEnum('asset_class').notNull(),
+    purchaseDate: date('purchase_date').notNull(),
+    purchaseCost: numeric('purchase_cost', { precision: 15, scale: 2 }).notNull(),
+    taxWdv: numeric('tax_wdv', { precision: 15, scale: 2 }).notNull(), // Written Down Value for KRA
+    scrapValue: numeric('scrap_value', { precision: 15, scale: 2 }).default('0.00').notNull(),
+    isDisposed: boolean('is_disposed').default(false).notNull(),
+    disposalDate: date('disposal_date'),
+    disposalProceeds: numeric('disposal_proceeds', { precision: 15, scale: 2 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// TAX INSTALMENTS SCHEDULE & PAYMENTS
+export const taxInstalments = pgTable('tax_instalments', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    year: integer('year').notNull(),
+    instalmentNumber: integer('instalment_number').notNull(), // 1, 2, 3, 4
+    dueDate: date('due_date').notNull(),
+    estimatedAmount: numeric('estimated_amount', { precision: 15, scale: 2 }).notNull(),
+    paidAmount: numeric('paid_amount', { precision: 15, scale: 2 }).default('0.00').notNull(),
+    paidAt: timestamp('paid_at'),
+    paymentReference: text('payment_reference'),
+    status: text('status').default('PENDING').notNull(), // PENDING, PAID, OVERDUE
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_instalment').on(table.shopId, table.year, table.instalmentNumber),
+]);
+
+// WITHHOLDING TAX (WHT) ACCUMULATED RECORDS
+export const whtPayments = pgTable('wht_payments', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    month: integer('month').notNull(),
+    year: integer('year').notNull(),
+    grossAmount: numeric('gross_amount', { precision: 15, scale: 2 }).notNull(),
+    whtRate: numeric('wht_rate', { precision: 5, scale: 2 }).notNull(), // e.g. 5.00, 10.00
+    whtAmount: numeric('wht_amount', { precision: 15, scale: 2 }).notNull(),
+    sourceDocumentId: uuid('source_document_id').references(() => documents.id, { onDelete: 'set null' }),
+    status: text('status').default('PENDING').notNull(), // PENDING, PAID/REMITTED
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // ==========================================
 // 3. RELATIONS (For ORM Querying)
 // ==========================================
@@ -353,6 +407,9 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     accountingPeriods: many(accountingPeriods),
     journalEntries: many(journalEntries),
     budgets: many(budgets),
+    fixedAssets: many(fixedAssets),
+    taxInstalments: many(taxInstalments),
+    whtPayments: many(whtPayments),
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
@@ -452,4 +509,18 @@ export const journalEntriesRelations = relations(journalEntries, ({ one }) => ({
 export const budgetsRelations = relations(budgets, ({ one }) => ({
     shop: one(shops, { fields: [budgets.shopId], references: [shops.id] }),
     account: one(chartOfAccounts, { fields: [budgets.accountId], references: [chartOfAccounts.id] }),
+}));
+
+// Tax Relations
+export const fixedAssetsRelations = relations(fixedAssets, ({ one }) => ({
+    shop: one(shops, { fields: [fixedAssets.shopId], references: [shops.id] }),
+}));
+
+export const taxInstalmentsRelations = relations(taxInstalments, ({ one }) => ({
+    shop: one(shops, { fields: [taxInstalments.shopId], references: [shops.id] }),
+}));
+
+export const whtPaymentsRelations = relations(whtPayments, ({ one }) => ({
+    shop: one(shops, { fields: [whtPayments.shopId], references: [shops.id] }),
+    sourceDocument: one(documents, { fields: [whtPayments.sourceDocumentId], references: [documents.id] }),
 }));

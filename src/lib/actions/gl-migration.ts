@@ -3,7 +3,8 @@
 import { db } from "@/db";
 import { documents, expenses, incomes, shops } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { createJournalEntry, EXPENSE_CATEGORY_ACCOUNT_MAP } from "./gl";
+import { createJournalEntry } from "./gl";
+import { EXPENSE_CATEGORY_ACCOUNT_MAP } from "../gl-constants";
 import { enforcePermission } from "./rbac";
 
 /**

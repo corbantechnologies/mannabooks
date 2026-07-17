@@ -5,6 +5,7 @@ import { budgets, chartOfAccounts, expenses } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { enforcePermission } from "./rbac";
 import { revalidatePath } from "next/cache";
+import { EXPENSE_CATEGORY_ACCOUNT_MAP } from "../gl-constants";
 
 export async function getBudgetsWithActuals(shopId: string, month: number, year: number) {
     // Get all expense accounts with their budgets for the period
@@ -30,16 +31,10 @@ export async function getBudgetsWithActuals(shopId: string, month: number, year:
         return d >= startDate && d <= endDate;
     });
 
-    // Map expense categories to GL account codes
-    const CATEGORY_MAP: Record<string, string> = {
-        RENT: "6100", UTILITIES: "6200", SALARIES: "6300",
-        FUEL: "6400", MARKETING: "6500", OFFICE_SUPPLIES: "6600", OTHER: "6900",
-    };
-
     // Aggregate actuals by account code
     const actualsByCode: Record<string, number> = {};
     filteredExpenses.forEach(e => {
-        const code = CATEGORY_MAP[e.category] || "6900";
+        const code = EXPENSE_CATEGORY_ACCOUNT_MAP[e.category] || "6900";
         actualsByCode[code] = (actualsByCode[code] || 0) + parseFloat(e.amount || "0");
     });
 

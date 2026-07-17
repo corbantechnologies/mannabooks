@@ -33,6 +33,7 @@ export default async function AccountingPeriodsPage({ params }: { params: Promis
                     status: p.status,
                     closedAt: p.closedAt?.toISOString() || null,
                     closedByName: p.closedBy?.name || null,
+                    fiscalYearLabel: p.fiscalYear?.label || "Unassigned / Historical",
                 }))}
             />
         </div>

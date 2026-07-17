@@ -2,6 +2,9 @@
 import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { logoutAction } from "@/lib/actions/logout";
 import Link from "next/link";
+import { db } from "@/db";
+import { fiscalYears } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 import { MobileNavDrawer } from "./MobileNavDrawer";
 import { DesktopSideNav } from "./DesktopSideNav";
@@ -17,6 +20,11 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
 
   // 2. Authenticate session and fetch multi-tenant profile fields entirely on the server
   const { shop, user } = await getActiveWorkspaceContext(slug);
+
+  // 3. Check if GL is enabled and at least one fiscal year is declared
+  const hasFiscalYear = !shop.isGlEnabled || (await db.query.fiscalYears.findFirst({
+      where: eq(fiscalYears.shopId, shop.id),
+  })) !== undefined;
 
   const brandColor = shop.primaryColor || "#000000";
 
@@ -128,6 +136,17 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
 
       {/* CORE WORKSPACE DASHBOARD VIEWPORT STREAM */}
       <main className="flex-1 overflow-y-auto min-w-0 bg-white">
+        {!hasFiscalYear && (
+          <div className="bg-amber-50 border-b border-amber-200/80 p-4 font-sans text-sm text-amber-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+             <div>
+                <p className="font-bold flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide">⚠️ Action Required: Declare Fiscal Year</p>
+                <p className="text-xs text-amber-700 mt-1">General Ledger is active, but you have not declared a descriptive Fiscal Year. Financial entries and document locks will remain unassigned or locked until a Fiscal Year is declared.</p>
+             </div>
+             <Link href={`/workspaces/${slug}/finance/tax/settings`} className="bg-amber-800 hover:bg-amber-900 text-white font-mono text-[10px] uppercase font-bold px-3 py-1.5 rounded transition-colors shrink-0">
+                Setup Now
+             </Link>
+          </div>
+        )}
         {children}
       </main>
 

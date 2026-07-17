@@ -11,6 +11,7 @@ interface Period {
     status: "OPEN" | "CLOSED";
     closedAt: string | null;
     closedByName: string | null;
+    fiscalYearLabel: string;
 }
 
 interface Props {
@@ -70,13 +71,21 @@ export default function AccountingPeriodsClient({ shopId, shopSlug, isGlEnabled,
         return (
             <div className="text-center py-16 text-zinc-400">
                 <p className="font-mono text-sm">No accounting periods found.</p>
-                <p className="text-sm mt-1">Periods are auto-created when GL is activated and when journal entries are posted.</p>
+                <p className="text-sm mt-1">Periods are auto-created when GL is activated and when a Fiscal Year is declared.</p>
             </div>
         );
     }
 
+    // Group periods by their parent fiscal year label
+    const groupedPeriods: Record<string, Period[]> = {};
+    periods.forEach(p => {
+        const label = p.fiscalYearLabel || "Unassigned / Historical";
+        if (!groupedPeriods[label]) groupedPeriods[label] = [];
+        groupedPeriods[label].push(p);
+    });
+
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
             {message && (
                 <div className={`px-4 py-3 rounded-lg text-sm font-medium border ${message.type === "success" ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-rose-50 text-rose-800 border-rose-200"}`}>
                     {message.text}
@@ -109,47 +118,53 @@ export default function AccountingPeriodsClient({ shopId, shopSlug, isGlEnabled,
                 </div>
             )}
 
-            {/* Periods Table */}
-            <div className="border border-zinc-200 rounded-xl overflow-hidden">
-                <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
-                    <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Period</span>
-                    <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Date Range</span>
-                    <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Closed By</span>
-                    <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Status</span>
-                </div>
-                <div className="divide-y divide-zinc-100">
-                    {periods.map(period => (
-                        <div key={period.id} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 px-4 py-3.5 items-center hover:bg-zinc-50 transition-colors">
-                            <span className="text-sm font-semibold text-black">{period.periodName}</span>
-                            <span className="text-xs text-zinc-500 font-mono">
-                                {period.startDate} → {period.endDate}
-                            </span>
-                            <span className="text-xs text-zinc-500">
-                                {period.closedAt
-                                    ? `${period.closedByName || "Unknown"} · ${new Date(period.closedAt).toLocaleDateString("en-KE")}`
-                                    : "—"
-                                }
-                            </span>
-                            <div className="flex items-center gap-3">
-                                <span className={`font-mono text-[10px] uppercase px-2 py-1 rounded-full border font-bold ${period.status === "OPEN" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-zinc-100 text-zinc-500 border-zinc-200"}`}>
-                                    {period.status}
-                                </span>
-                                {period.status === "OPEN" ? (
-                                    <button onClick={() => setConfirmClose(period.id)} disabled={isPending}
-                                        className="font-mono text-[10px] uppercase text-zinc-500 hover:text-rose-600 transition-colors disabled:opacity-40">
-                                        Close
-                                    </button>
-                                ) : (
-                                    <button onClick={() => handleReopen(period.id)} disabled={isPending}
-                                        className="font-mono text-[10px] uppercase text-zinc-500 hover:text-emerald-600 transition-colors disabled:opacity-40">
-                                        Reopen
-                                    </button>
-                                )}
-                            </div>
+            {/* Periods Grouped Tables */}
+            {Object.entries(groupedPeriods).map(([fyLabel, fyPeriods]) => (
+                <div key={fyLabel} className="space-y-3">
+                    <h3 className="font-mono text-xs uppercase font-bold text-zinc-500 tracking-wider pl-1">{fyLabel}</h3>
+                    
+                    <div className="border border-zinc-200 rounded-xl overflow-hidden">
+                        <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
+                            <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Period</span>
+                            <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Date Range</span>
+                            <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Closed By</span>
+                            <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Status</span>
                         </div>
-                    ))}
+                        <div className="divide-y divide-zinc-100">
+                            {fyPeriods.map(period => (
+                                <div key={period.id} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 px-4 py-3.5 items-center hover:bg-zinc-50 transition-colors">
+                                    <span className="text-sm font-semibold text-black">{period.periodName}</span>
+                                    <span className="text-xs text-zinc-500 font-mono">
+                                        {period.startDate} → {period.endDate}
+                                    </span>
+                                    <span className="text-xs text-zinc-500">
+                                        {period.closedAt
+                                            ? `${period.closedByName || "Unknown"} · ${new Date(period.closedAt).toLocaleDateString("en-KE")}`
+                                            : "—"
+                                        }
+                                    </span>
+                                    <div className="flex items-center gap-3">
+                                        <span className={`font-mono text-[10px] uppercase px-2 py-1 rounded-full border font-bold ${period.status === "OPEN" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-zinc-100 text-zinc-500 border-zinc-200"}`}>
+                                            {period.status}
+                                        </span>
+                                        {period.status === "OPEN" ? (
+                                            <button onClick={() => setConfirmClose(period.id)} disabled={isPending}
+                                                className="font-mono text-[10px] uppercase text-zinc-500 hover:text-rose-600 transition-colors disabled:opacity-40">
+                                                Close
+                                            </button>
+                                        ) : (
+                                            <button onClick={() => handleReopen(period.id)} disabled={isPending}
+                                                className="font-mono text-[10px] uppercase text-zinc-500 hover:text-emerald-600 transition-colors disabled:opacity-40">
+                                                Reopen
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-            </div>
+            ))}
         </div>
     );
 }

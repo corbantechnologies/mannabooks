@@ -187,67 +187,71 @@ export default function FixedAssetsClient({ shopId, shopSlug, initialAssets, cur
 
             {/* Asset Table */}
             <div className="border border-zinc-200 rounded-xl overflow-hidden">
-                <div className="grid grid-cols-[2fr_1.5fr_1fr_1.2fr_1.2fr_1fr] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
-                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Asset</span>
-                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Class</span>
-                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Acquired</span>
-                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">Cost</span>
-                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">Current WDV</span>
-                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-center">Status</span>
-                </div>
+                <div className="overflow-x-auto">
+                    <div className="min-w-[800px]">
+                        <div className="grid grid-cols-[2fr_1.5fr_1fr_1.2fr_1.2fr_1fr] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
+                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Asset</span>
+                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Class</span>
+                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Acquired</span>
+                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">Cost</span>
+                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">Current WDV</span>
+                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-center">Status</span>
+                        </div>
 
-                {assets.length === 0 ? (
-                    <div className="text-center py-16 text-zinc-400">
-                        <p className="font-mono text-sm">No assets registered yet.</p>
-                        <p className="text-sm mt-1">Register new equipment or computers above to begin tracking depreciation.</p>
-                    </div>
-                ) : (
-                    <div className="divide-y divide-zinc-100">
-                        {assets.map(asset => (
-                            <div key={asset.id} className="space-y-3 p-4 hover:bg-zinc-50/50 transition-colors">
-                                <div className="grid grid-cols-[2fr_1.5fr_1fr_1.2fr_1.2fr_1fr] gap-4 items-center">
-                                    <span className="text-sm font-semibold text-black truncate">{asset.name}</span>
-                                    <span className="text-xs text-zinc-600 truncate">{CLASS_LABELS[asset.assetClass].split(" ")[0]} ({CLASS_LABELS[asset.assetClass].split("(")[1].split("-")[0].trim()})</span>
-                                    <span className="text-xs text-zinc-500 font-mono">{asset.purchaseDate}</span>
-                                    <span className="text-xs font-mono text-right text-black">{currency} {parseFloat(asset.purchaseCost).toLocaleString("en-KE")}</span>
-                                    <span className="text-xs font-mono text-right text-black font-bold">{currency} {parseFloat(asset.taxWdv).toLocaleString("en-KE")}</span>
-                                    <div className="flex justify-center items-center gap-2">
-                                        <span className={`font-mono text-[9px] uppercase px-2 py-0.5 rounded border font-bold ${asset.isDisposed ? "bg-zinc-100 text-zinc-500 border-zinc-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"}`}>
-                                            {asset.isDisposed ? "Disposed" : "Active"}
-                                        </span>
-                                        {!asset.isDisposed && (
-                                            <button onClick={() => setDisposingId(asset.id)}
-                                                className="text-[10px] text-zinc-400 hover:text-rose-600 font-mono uppercase font-bold">
-                                                Dispose
-                                            </button>
+                        {assets.length === 0 ? (
+                            <div className="text-center py-16 text-zinc-400">
+                                <p className="font-mono text-sm">No assets registered yet.</p>
+                                <p className="text-sm mt-1">Register new equipment or computers above to begin tracking depreciation.</p>
+                            </div>
+                        ) : (
+                            <div className="divide-y divide-zinc-100">
+                                {assets.map(asset => (
+                                    <div key={asset.id} className="space-y-3 p-4 hover:bg-zinc-50/50 transition-colors">
+                                        <div className="grid grid-cols-[2fr_1.5fr_1fr_1.2fr_1.2fr_1fr] gap-4 items-center">
+                                            <span className="text-sm font-semibold text-black truncate">{asset.name}</span>
+                                            <span className="text-xs text-zinc-600 truncate">{CLASS_LABELS[asset.assetClass].split(" ")[0]} ({CLASS_LABELS[asset.assetClass].split("(")[1].split("-")[0].trim()})</span>
+                                            <span className="text-xs text-zinc-500 font-mono">{asset.purchaseDate}</span>
+                                            <span className="text-xs font-mono text-right text-black">{currency} {parseFloat(asset.purchaseCost).toLocaleString("en-KE")}</span>
+                                            <span className="text-xs font-mono text-right text-black font-bold">{currency} {parseFloat(asset.taxWdv).toLocaleString("en-KE")}</span>
+                                            <div className="flex justify-center items-center gap-2">
+                                                <span className={`font-mono text-[9px] uppercase px-2 py-0.5 rounded border font-bold ${asset.isDisposed ? "bg-zinc-100 text-zinc-500 border-zinc-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"}`}>
+                                                    {asset.isDisposed ? "Disposed" : "Active"}
+                                                </span>
+                                                {!asset.isDisposed && (
+                                                    <button onClick={() => setDisposingId(asset.id)}
+                                                        className="text-[10px] text-zinc-400 hover:text-rose-600 font-mono uppercase font-bold">
+                                                        Dispose
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Disposal Dialog Box inline */}
+                                        {disposingId === asset.id && (
+                                            <div className="bg-rose-50 border border-rose-100 rounded-lg p-3 space-y-3">
+                                                <p className="font-mono text-[10px] font-bold text-rose-700 uppercase">Dispose Fixed Asset</p>
+                                                <div className="grid grid-cols-2 gap-3 max-w-md">
+                                                    <input type="date" value={disposal.disposalDate} onChange={e => setDisposal(p => ({ ...p, disposalDate: e.target.value }))}
+                                                        className="border border-rose-200 rounded px-2 py-1 text-xs focus:ring-rose-500 bg-white font-mono" />
+                                                    <input type="number" value={disposal.disposalProceeds} onChange={e => setDisposal(p => ({ ...p, disposalProceeds: e.target.value }))}
+                                                        placeholder="Disposal proceeds (KES)"
+                                                        className="border border-rose-200 rounded px-2 py-1 text-xs focus:ring-rose-500 bg-white font-mono" />
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => handleDispose(asset.id)} disabled={isPending || !disposal.disposalProceeds}
+                                                        className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-mono uppercase font-bold px-3 py-1.5 rounded disabled:opacity-40">
+                                                        Confirm Disposal
+                                                    </button>
+                                                    <button onClick={() => setDisposingId(null)} className="text-xs text-zinc-500 hover:text-black">Cancel</button>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
-                                </div>
-
-                                {/* Disposal Dialog Box inline */}
-                                {disposingId === asset.id && (
-                                    <div className="bg-rose-50 border border-rose-100 rounded-lg p-3 space-y-3">
-                                        <p className="font-mono text-[10px] font-bold text-rose-700 uppercase">Dispose Fixed Asset</p>
-                                        <div className="grid grid-cols-2 gap-3 max-w-md">
-                                            <input type="date" value={disposal.disposalDate} onChange={e => setDisposal(p => ({ ...p, disposalDate: e.target.value }))}
-                                                className="border border-rose-200 rounded px-2 py-1 text-xs focus:ring-rose-500 bg-white font-mono" />
-                                            <input type="number" value={disposal.disposalProceeds} onChange={e => setDisposal(p => ({ ...p, disposalProceeds: e.target.value }))}
-                                                placeholder="Disposal proceeds (KES)"
-                                                className="border border-rose-200 rounded px-2 py-1 text-xs focus:ring-rose-500 bg-white font-mono" />
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button onClick={() => handleDispose(asset.id)} disabled={isPending || !disposal.disposalProceeds}
-                                                className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-mono uppercase font-bold px-3 py-1.5 rounded disabled:opacity-40">
-                                                Confirm Disposal
-                                            </button>
-                                            <button onClick={() => setDisposingId(null)} className="text-xs text-zinc-500 hover:text-black">Cancel</button>
-                                        </div>
-                                    </div>
-                                )}
+                                ))}
                             </div>
-                        ))}
+                        )}
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );

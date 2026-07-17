@@ -64,26 +64,30 @@ export default function TurnoverTaxClient({ shopId, year: initialYear, quarters:
 
                     {/* Quarter Breakdown */}
                     <div className="border border-zinc-200 rounded-xl overflow-hidden">
-                        <div className="grid grid-cols-[80px_2fr_1.5fr_1.5fr] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
-                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Quarter</span>
-                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Period</span>
-                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">Gross Sales</span>
-                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">TOT Liability (1.5%)</span>
-                        </div>
-
-                        <div className="divide-y divide-zinc-100">
-                            {quarters.map(q => (
-                                <div key={q.quarter} className="grid grid-cols-[80px_2fr_1.5fr_1.5fr] gap-4 px-4 py-3.5 items-center hover:bg-zinc-50/50 transition-colors">
-                                    <span className="text-sm font-bold text-black">Q{q.quarter}</span>
-                                    <span className="text-xs text-zinc-500 font-mono">
-                                        {new Date(q.startDate).toLocaleDateString("en-KE", { month: "short", year: "numeric" })}
-                                        {" – "}
-                                        {new Date(q.endDate).toLocaleDateString("en-KE", { month: "short", year: "numeric" })}
-                                    </span>
-                                    <span className="text-xs font-mono text-right text-black">{fmt(q.grossSales, currency)}</span>
-                                    <span className="text-xs font-mono text-right text-amber-700 font-bold">{fmt(q.taxLiability, currency)}</span>
+                        <div className="overflow-x-auto">
+                            <div className="min-w-[600px]">
+                                <div className="grid grid-cols-[80px_2fr_1.5fr_1.5fr] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
+                                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Quarter</span>
+                                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Period</span>
+                                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">Gross Sales</span>
+                                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">TOT Liability (1.5%)</span>
                                 </div>
-                            ))}
+
+                                <div className="divide-y divide-zinc-100">
+                                    {quarters.map(q => (
+                                        <div key={q.quarter} className="grid grid-cols-[80px_2fr_1.5fr_1.5fr] gap-4 px-4 py-3.5 items-center hover:bg-zinc-50/50 transition-colors">
+                                            <span className="text-sm font-bold text-black">Q{q.quarter}</span>
+                                            <span className="text-xs text-zinc-500 font-mono">
+                                                {new Date(q.startDate).toLocaleDateString("en-KE", { month: "short", year: "numeric" })}
+                                                {" – "}
+                                                {new Date(q.endDate).toLocaleDateString("en-KE", { month: "short", year: "numeric" })}
+                                            </span>
+                                            <span className="text-xs font-mono text-right text-black">{fmt(q.grossSales, currency)}</span>
+                                            <span className="text-xs font-mono text-right text-amber-700 font-bold">{fmt(q.taxLiability, currency)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

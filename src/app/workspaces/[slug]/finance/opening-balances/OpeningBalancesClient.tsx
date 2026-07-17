@@ -133,42 +133,44 @@ export default function OpeningBalancesClient({ shopId, shopSlug, accounts }: Pr
                             <span className="font-mono text-xs font-bold uppercase text-zinc-600">{type} Accounts</span>
                             <span className="text-xs text-zinc-400">{TYPE_HINT[type]}</span>
                         </div>
-                        <div className="divide-y divide-zinc-100">
-                            {/* Column Headers */}
-                            <div className="grid grid-cols-[80px_1fr_160px_160px] gap-4 px-4 py-2 bg-zinc-50/50">
-                                <span className="font-mono text-[9px] uppercase text-zinc-400">Code</span>
-                                <span className="font-mono text-[9px] uppercase text-zinc-400">Account</span>
-                                <span className="font-mono text-[9px] uppercase text-zinc-400 text-right">Debit (DR)</span>
-                                <span className="font-mono text-[9px] uppercase text-zinc-400 text-right">Credit (CR)</span>
+                        <div className="overflow-x-auto">
+                            <div className="min-w-[650px] divide-y divide-zinc-100">
+                                {/* Column Headers */}
+                                <div className="grid grid-cols-[80px_1fr_160px_160px] gap-4 px-4 py-2 bg-zinc-50/50">
+                                    <span className="font-mono text-[9px] uppercase text-zinc-400">Code</span>
+                                    <span className="font-mono text-[9px] uppercase text-zinc-400">Account</span>
+                                    <span className="font-mono text-[9px] uppercase text-zinc-400 text-right">Debit (DR)</span>
+                                    <span className="font-mono text-[9px] uppercase text-zinc-400 text-right">Credit (CR)</span>
+                                </div>
+                                {group.map(account => {
+                                    const bal = balances[account.id];
+                                    const defaultSide = TYPE_DEFAULT[type];
+                                    return (
+                                        <div key={account.id} className="grid grid-cols-[80px_1fr_160px_160px] gap-4 px-4 py-2.5 items-center hover:bg-zinc-50">
+                                            <span className="font-mono text-xs text-zinc-400 font-bold">{account.code}</span>
+                                            <span className="text-sm text-black">{account.name}</span>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                placeholder={defaultSide === "debit" ? "e.g. 240000" : "—"}
+                                                value={bal.debitAmount}
+                                                onChange={e => { setField(account.id, "debitAmount", e.target.value); if (e.target.value) clearOpposite(account.id, "debitAmount"); }}
+                                                className="border border-zinc-200 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-1 focus:ring-black font-mono"
+                                            />
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                placeholder={defaultSide === "credit" ? "e.g. 150000" : "—"}
+                                                value={bal.creditAmount}
+                                                onChange={e => { setField(account.id, "creditAmount", e.target.value); if (e.target.value) clearOpposite(account.id, "creditAmount"); }}
+                                                className="border border-zinc-200 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-1 focus:ring-black font-mono"
+                                            />
+                                        </div>
+                                    );
+                                })}
                             </div>
-                            {group.map(account => {
-                                const bal = balances[account.id];
-                                const defaultSide = TYPE_DEFAULT[type];
-                                return (
-                                    <div key={account.id} className="grid grid-cols-[80px_1fr_160px_160px] gap-4 px-4 py-2.5 items-center hover:bg-zinc-50">
-                                        <span className="font-mono text-xs text-zinc-400 font-bold">{account.code}</span>
-                                        <span className="text-sm text-black">{account.name}</span>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            placeholder={defaultSide === "debit" ? "e.g. 240000" : "—"}
-                                            value={bal.debitAmount}
-                                            onChange={e => { setField(account.id, "debitAmount", e.target.value); if (e.target.value) clearOpposite(account.id, "debitAmount"); }}
-                                            className="border border-zinc-200 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-1 focus:ring-black font-mono"
-                                        />
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            placeholder={defaultSide === "credit" ? "e.g. 150000" : "—"}
-                                            value={bal.creditAmount}
-                                            onChange={e => { setField(account.id, "creditAmount", e.target.value); if (e.target.value) clearOpposite(account.id, "creditAmount"); }}
-                                            className="border border-zinc-200 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-1 focus:ring-black font-mono"
-                                        />
-                                    </div>
-                                );
-                            })}
                         </div>
                     </div>
                 );

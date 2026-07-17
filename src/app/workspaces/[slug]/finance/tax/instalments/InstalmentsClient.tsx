@@ -123,63 +123,67 @@ export default function InstalmentsClient({ shopId, shopSlug, year, estimatedTax
 
                     {/* Schedule List */}
                     <div className="border border-zinc-200 rounded-xl overflow-hidden">
-                        <div className="grid grid-cols-[80px_1fr_1.2fr_1.2fr_120px] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
-                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Instalment</span>
-                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Due Date</span>
-                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">Est. Liability</span>
-                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">Paid Amount</span>
-                            <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-center">Status</span>
-                        </div>
+                        <div className="overflow-x-auto">
+                            <div className="min-w-[700px]">
+                                <div className="grid grid-cols-[80px_1fr_1.2fr_1.2fr_120px] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
+                                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Instalment</span>
+                                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Due Date</span>
+                                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">Est. Liability</span>
+                                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">Paid Amount</span>
+                                    <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-center">Status</span>
+                                </div>
 
-                        <div className="divide-y divide-zinc-100">
-                            {instalments.map(inst => (
-                                <div key={inst.id} className="p-4 hover:bg-zinc-50/50 transition-colors space-y-3">
-                                    <div className="grid grid-cols-[80px_1fr_1.2fr_1.2fr_120px] gap-4 items-center">
-                                        <span className="text-sm font-bold text-black">#{inst.instalmentNumber}</span>
-                                        <span className="text-xs text-zinc-600 font-mono">
-                                            {new Date(inst.dueDate).toLocaleDateString("en-KE", { day: "2-digit", month: "short", year: "numeric" })}
-                                        </span>
-                                        <span className="text-xs font-mono text-right text-zinc-600">{fmt(parseFloat(inst.estimatedAmount), currency)}</span>
-                                        <span className="text-xs font-mono text-right text-black font-semibold">
-                                            {parseFloat(inst.paidAmount) > 0 ? fmt(parseFloat(inst.paidAmount), currency) : "—"}
-                                        </span>
-                                        <div className="flex justify-center items-center gap-2">
-                                            <span className={`font-mono text-[9px] uppercase px-2 py-0.5 rounded border font-bold ${inst.status === "PAID" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
-                                                {inst.status}
-                                            </span>
-                                            {inst.status === "PENDING" && (
-                                                <button onClick={() => setPayingId(inst.id)}
-                                                    className="text-[10px] text-zinc-400 hover:text-black font-mono uppercase font-bold">
-                                                    Pay
-                                                </button>
+                                <div className="divide-y divide-zinc-100">
+                                    {instalments.map(inst => (
+                                        <div key={inst.id} className="p-4 hover:bg-zinc-50/50 transition-colors space-y-3">
+                                            <div className="grid grid-cols-[80px_1fr_1.2fr_1.2fr_120px] gap-4 items-center">
+                                                <span className="text-sm font-bold text-black">#{inst.instalmentNumber}</span>
+                                                <span className="text-xs text-zinc-600 font-mono">
+                                                    {new Date(inst.dueDate).toLocaleDateString("en-KE", { day: "2-digit", month: "short", year: "numeric" })}
+                                                </span>
+                                                <span className="text-xs font-mono text-right text-zinc-600">{fmt(parseFloat(inst.estimatedAmount), currency)}</span>
+                                                <span className="text-xs font-mono text-right text-black font-semibold">
+                                                    {parseFloat(inst.paidAmount) > 0 ? fmt(parseFloat(inst.paidAmount), currency) : "—"}
+                                                </span>
+                                                <div className="flex justify-center items-center gap-2">
+                                                    <span className={`font-mono text-[9px] uppercase px-2 py-0.5 rounded border font-bold ${inst.status === "PAID" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-emerald-200"}`}>
+                                                        {inst.status}
+                                                    </span>
+                                                    {inst.status === "PENDING" && (
+                                                        <button onClick={() => setPayingId(inst.id)}
+                                                            className="text-[10px] text-zinc-400 hover:text-black font-mono uppercase font-bold">
+                                                            Pay
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {payingId === inst.id && (
+                                                <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 space-y-3">
+                                                    <p className="font-mono text-[10px] font-bold text-emerald-700 uppercase">Record Instalment Remittance</p>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                        <input type="number" step="0.01" value={payment.paidAmount} onChange={e => setPayment(p => ({ ...p, paidAmount: e.target.value }))}
+                                                            placeholder="Amount Paid (KES)"
+                                                            className="border border-emerald-200 rounded px-3 py-1.5 text-xs focus:ring-emerald-500 bg-white font-mono" />
+                                                        <input type="text" value={payment.paymentReference} onChange={e => setPayment(p => ({ ...p, paymentReference: e.target.value }))}
+                                                            placeholder="KRA Payment PRN / Ref"
+                                                            className="border border-emerald-200 rounded px-3 py-1.5 text-xs focus:ring-emerald-500 bg-white" />
+                                                        <input type="date" value={payment.paidAt} onChange={e => setPayment(p => ({ ...p, paidAt: e.target.value }))}
+                                                            className="border border-emerald-200 rounded px-3 py-1.5 text-xs focus:ring-emerald-500 bg-white font-mono" />
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => handleRecordPayment(inst.id)} disabled={isPending || !payment.paidAmount || !payment.paymentReference}
+                                                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-mono uppercase font-bold px-3 py-1.5 rounded disabled:opacity-40">
+                                                            Confirm Payment
+                                                        </button>
+                                                        <button onClick={() => setPayingId(null)} className="text-xs text-zinc-500 hover:text-black">Cancel</button>
+                                                    </div>
+                                                </div>
                                             )}
                                         </div>
-                                    </div>
-
-                                    {payingId === inst.id && (
-                                        <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 space-y-3">
-                                            <p className="font-mono text-[10px] font-bold text-emerald-700 uppercase">Record Instalment Remittance</p>
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                                <input type="number" step="0.01" value={payment.paidAmount} onChange={e => setPayment(p => ({ ...p, paidAmount: e.target.value }))}
-                                                    placeholder="Amount Paid (KES)"
-                                                    className="border border-emerald-200 rounded px-3 py-1.5 text-xs focus:ring-emerald-500 bg-white font-mono" />
-                                                <input type="text" value={payment.paymentReference} onChange={e => setPayment(p => ({ ...p, paymentReference: e.target.value }))}
-                                                    placeholder="KRA Payment PRN / Ref"
-                                                    className="border border-emerald-200 rounded px-3 py-1.5 text-xs focus:ring-emerald-500 bg-white" />
-                                                <input type="date" value={payment.paidAt} onChange={e => setPayment(p => ({ ...p, paidAt: e.target.value }))}
-                                                    className="border border-emerald-200 rounded px-3 py-1.5 text-xs focus:ring-emerald-500 bg-white font-mono" />
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => handleRecordPayment(inst.id)} disabled={isPending || !payment.paidAmount || !payment.paymentReference}
-                                                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-mono uppercase font-bold px-3 py-1.5 rounded disabled:opacity-40">
-                                                    Confirm Payment
-                                                </button>
-                                                <button onClick={() => setPayingId(null)} className="text-xs text-zinc-500 hover:text-black">Cancel</button>
-                                            </div>
-                                        </div>
-                                    )}
+                                    ))}
                                 </div>
-                            ))}
+                            </div>
                         </div>
                     </div>
                 </>

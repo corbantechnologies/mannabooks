@@ -39,7 +39,8 @@ export default async function ExpensesPage({ params }: { params: Promise<{ slug:
         expenseDate: e.expenseDate.toISOString(),
         receiptUrl: e.receiptUrl,
         paymentChannel: e.paymentChannel,
-        paymentReference: e.paymentReference
+        paymentReference: e.paymentReference,
+        isNonDeductible: e.isNonDeductible,
     }));
 
     return (

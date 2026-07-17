@@ -3,8 +3,12 @@ export const DEFAULT_ACCOUNTS = [
     { code: "1100", name: "Accounts Receivable",   accountType: "ASSET"     as const, isSystem: true },
     { code: "1200", name: "Cash & Bank",            accountType: "ASSET"     as const, isSystem: true },
     { code: "1300", name: "Inventory",              accountType: "ASSET"     as const, isSystem: true },
+    { code: "1400", name: "Fixed Assets (Net)",     accountType: "ASSET"     as const, isSystem: true },
     { code: "2100", name: "Accounts Payable",       accountType: "LIABILITY" as const, isSystem: true },
     { code: "2200", name: "Payroll Payable",        accountType: "LIABILITY" as const, isSystem: true },
+    { code: "2300", name: "Income Tax Payable",    accountType: "LIABILITY" as const, isSystem: true },
+    { code: "2310", name: "Instalment Tax Paid",    accountType: "ASSET"     as const, isSystem: true },
+    { code: "2350", name: "WHT Payable",            accountType: "LIABILITY" as const, isSystem: true },
     { code: "3100", name: "Owner's Equity",         accountType: "EQUITY"    as const, isSystem: true },
     { code: "3200", name: "Opening Balances",       accountType: "EQUITY"    as const, isSystem: true },
     { code: "4100", name: "Sales Revenue",          accountType: "REVENUE"   as const, isSystem: true },
@@ -16,7 +20,9 @@ export const DEFAULT_ACCOUNTS = [
     { code: "6400", name: "Fuel & Travel",          accountType: "EXPENSE"   as const, isSystem: true },
     { code: "6500", name: "Marketing & Ads",        accountType: "EXPENSE"   as const, isSystem: true },
     { code: "6600", name: "Office Supplies",        accountType: "EXPENSE"   as const, isSystem: true },
+    { code: "6800", name: "Depreciation Expense",   accountType: "EXPENSE"   as const, isSystem: true },
     { code: "6900", name: "Other Expenses",         accountType: "EXPENSE"   as const, isSystem: true },
+    { code: "6950", name: "Income Tax Expense",     accountType: "EXPENSE"   as const, isSystem: true },
 ];
 
 // Map expense categories to GL account codes

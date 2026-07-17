@@ -104,10 +104,10 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
   const rowsWithCalcs = rows.map((r) => ({
     ...r,
     computed: computeKenyanDeductions({
-      baseSalary: r.baseSalary,
-      allowances: r.allowances,
-      commissions: r.commissions,
-      customDeductions: r.customDeductions,
+      baseSalary: parseFloat(r.baseSalary as any) || 0,
+      allowances: parseFloat(r.allowances as any) || 0,
+      commissions: parseFloat(r.commissions as any) || 0,
+      customDeductions: parseFloat(r.customDeductions as any) || 0,
       mode,
     }),
   }));
@@ -128,10 +128,10 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
     const payload = rowsWithCalcs.map((r) => ({
       employeeId: r.employeeId,
       employeeName: r.fullName,
-      baseSalary: r.baseSalary,
-      allowances: r.allowances,
-      commissions: r.commissions,
-      customDeductions: r.customDeductions,
+      baseSalary: parseFloat(r.baseSalary as any) || 0,
+      allowances: parseFloat(r.allowances as any) || 0,
+      commissions: parseFloat(r.commissions as any) || 0,
+      customDeductions: parseFloat(r.customDeductions as any) || 0,
     }));
 
     const res = await commitPayrollVoucherRun({
@@ -279,9 +279,9 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
                       type="number"
                       step="0.01"
                       min="0"
-                      value={row.baseSalary || ""}
+                      value={row.baseSalary}
                       placeholder="0.00"
-                      onChange={(e) => updateRowField(row.id, "baseSalary", parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateRowField(row.id, "baseSalary", e.target.value)}
                       className="w-24 border border-zinc-300 p-1.5 bg-white text-right font-semibold focus:border-black focus:outline-none rounded text-xs"
                     />
                   </td>
@@ -290,9 +290,9 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
                       type="number"
                       step="0.01"
                       min="0"
-                      value={row.allowances || ""}
+                      value={row.allowances}
                       placeholder="0.00"
-                      onChange={(e) => updateRowField(row.id, "allowances", parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateRowField(row.id, "allowances", e.target.value)}
                       className="w-20 border border-zinc-300 p-1.5 bg-white text-right focus:border-black focus:outline-none rounded text-xs"
                     />
                   </td>
@@ -301,9 +301,9 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
                       type="number"
                       step="0.01"
                       min="0"
-                      value={row.commissions || ""}
+                      value={row.commissions}
                       placeholder="0.00"
-                      onChange={(e) => updateRowField(row.id, "commissions", parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateRowField(row.id, "commissions", e.target.value)}
                       className="w-20 border border-zinc-300 p-1.5 bg-white text-right focus:border-black focus:outline-none rounded text-xs"
                     />
                   </td>
@@ -312,9 +312,9 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
                       type="number"
                       step="0.01"
                       min="0"
-                      value={row.customDeductions || ""}
+                      value={row.customDeductions}
                       placeholder="0.00"
-                      onChange={(e) => updateRowField(row.id, "customDeductions", parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateRowField(row.id, "customDeductions", e.target.value)}
                       className="w-20 border border-zinc-300 p-1.5 bg-white text-right text-rose-600 focus:border-black focus:outline-none rounded text-xs"
                     />
                   </td>

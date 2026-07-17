@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateShopSettings } from "@/lib/actions/workspace";
-import { useAddPaymentMethod, useDeletePaymentMethod, useSetDefaultPaymentMethod } from "@/hooks/usePayments";
+import { useAddPaymentMethod, useDeletePaymentMethod, useSetDefaultPaymentMethod, useUpdatePaymentMethod } from "@/hooks/usePayments";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 
@@ -99,9 +99,16 @@ export function SettingsForm({
   const [pmDefault, setPmDefault] = useState(false);
   const [pmMsg, setPmMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // Edit payment method state
+  const [editingPm, setEditingPm] = useState<PaymentMethod | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDetails, setEditDetails] = useState("");
+  const [editDefault, setEditDefault] = useState(false);
+
   const addPaymentMutation = useAddPaymentMethod(shopId, shopSlug);
   const deletePaymentMutation = useDeletePaymentMethod(shopId, shopSlug);
   const setDefaultPaymentMutation = useSetDefaultPaymentMethod(shopId, shopSlug);
+  const updatePaymentMutation = useUpdatePaymentMethod(shopId, shopSlug);
 
   async function handleProfileSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -208,6 +215,27 @@ export function SettingsForm({
           setPmDefault(false);
           router.refresh();
         },
+      }
+    );
+  }
+
+  async function handleEditPaymentMethod(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingPm) return;
+    if (!editName.trim() || !editDetails.trim()) {
+      toast.error("Name and Details/Instructions are required.");
+      return;
+    }
+    updatePaymentMutation.mutate(
+      { id: editingPm.id, name: editName.trim(), details: editDetails.trim(), isDefault: editDefault },
+      {
+        onSuccess: () => {
+          setEditingPm(null);
+          setEditName("");
+          setEditDetails("");
+          setEditDefault(false);
+          router.refresh();
+        }
       }
     );
   }
@@ -628,13 +656,28 @@ export function SettingsForm({
                       </button>
                     </div>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => setDeletingPmId(pm.id)}
-                      className="border border-rose-200 bg-rose-50 text-rose-600 px-2 py-1 text-[10px] font-semibold uppercase hover:bg-rose-600 hover:text-white rounded transition-colors"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingPm(pm);
+                          setEditName(pm.name);
+                          setEditDetails(pm.details);
+                          setEditDefault(pm.isDefault);
+                          document.getElementById("payment-method-form-anchor")?.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className="border border-zinc-300 bg-white text-zinc-600 px-2 py-1 text-[10px] font-semibold uppercase hover:border-black hover:text-black rounded transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeletingPmId(pm.id)}
+                        className="border border-rose-200 bg-rose-50 text-rose-600 px-2 py-1 text-[10px] font-semibold uppercase hover:bg-rose-600 hover:text-white rounded transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -648,214 +691,287 @@ export function SettingsForm({
           </div>
         )}
 
-        {/* Add New Method Form */}
-        <form onSubmit={handleAddPaymentMethod} className="p-6 space-y-6 font-mono text-xs bg-zinc-50/50 border-t border-zinc-200/80">
-          <div className="space-y-1">
-            <p className="text-[10px] text-zinc-400 uppercase font-semibold">Add New Payment Method</p>
-            <p className="font-sans text-xs text-zinc-500">Select payment type to configure structured remittance details.</p>
-          </div>
+        <div id="payment-method-form-anchor" />
 
-          {/* Category Tabs */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {[
-              { id: "BANK", label: "Bank Account" },
-              { id: "TILL", label: "M-Pesa Till" },
-              { id: "PAYBILL", label: "M-Pesa Paybill" },
-              { id: "CUSTOM", label: "Custom Instructions" },
-            ].map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setPmCategory(cat.id as any)}
-                className={`py-2 px-3 text-[11px] font-semibold uppercase border rounded transition-colors ${
-                  pmCategory === cat.id
-                    ? "bg-black text-white border-black"
-                    : "bg-white text-zinc-600 border-zinc-300 hover:border-black hover:text-black"
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          {/* BANK ACCOUNT FIELDS */}
-          {pmCategory === "BANK" && (
-            <div className="space-y-4 border border-zinc-200 p-4 bg-white rounded">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Bank Name *</label>
-                  <input
-                    type="text"
-                    value={bankName}
-                    onChange={(e) => setBankName(e.target.value)}
-                    placeholder="e.g., NCBA Bank / KCB"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
-                    required
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Branch Name</label>
-                  <input
-                    type="text"
-                    value={branchName}
-                    onChange={(e) => setBranchName(e.target.value)}
-                    placeholder="e.g., Kilimani Branch"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Account Name / Title *</label>
-                  <input
-                    type="text"
-                    value={accountName}
-                    onChange={(e) => setAccountName(e.target.value)}
-                    placeholder="e.g., Ventures of Africa LTD"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
-                    required
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Account Number *</label>
-                  <input
-                    type="text"
-                    value={accountNumber}
-                    onChange={(e) => setAccountNumber(e.target.value)}
-                    placeholder="e.g., 01108239101"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block font-semibold">SWIFT / BIC Code (Optional)</label>
-                <input
-                  type="text"
-                  value={swiftCode}
-                  onChange={(e) => setSwiftCode(e.target.value)}
-                  placeholder="e.g., NCBAKE22"
-                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 uppercase rounded text-xs"
-                />
-              </div>
+        {editingPm ? (
+          <form onSubmit={handleEditPaymentMethod} className="p-6 space-y-6 font-mono text-xs bg-amber-50/10 border-t border-amber-200">
+            <div className="space-y-1">
+              <p className="text-[10px] text-amber-700 uppercase font-bold">Edit Payment Method</p>
+              <p className="font-sans text-xs text-zinc-500">Update the details or change instructions for this remittance method.</p>
             </div>
-          )}
 
-          {/* M-PESA TILL FIELDS */}
-          {pmCategory === "TILL" && (
-            <div className="space-y-4 border border-zinc-200 p-4 bg-white rounded">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Buy Goods Till Number *</label>
-                  <input
-                    type="text"
-                    value={tillNumber}
-                    onChange={(e) => setTillNumber(e.target.value)}
-                    placeholder="e.g., 552134"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
-                    required
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Store / Merchant Name</label>
-                  <input
-                    type="text"
-                    value={storeName}
-                    onChange={(e) => setStoreName(e.target.value)}
-                    placeholder="e.g., Ventures of Africa"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* M-PESA PAYBILL FIELDS */}
-          {pmCategory === "PAYBILL" && (
-            <div className="space-y-4 border border-zinc-200 p-4 bg-white rounded">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Business / Paybill Number *</label>
-                  <input
-                    type="text"
-                    value={paybillNumber}
-                    onChange={(e) => setPaybillNumber(e.target.value)}
-                    placeholder="e.g., 247247"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
-                    required
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Account Ref / Instructions</label>
-                  <input
-                    type="text"
-                    value={accountRef}
-                    onChange={(e) => setAccountRef(e.target.value)}
-                    placeholder="e.g., Invoice Number / Client Name"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* CUSTOM INSTRUCTIONS FIELDS */}
-          {pmCategory === "CUSTOM" && (
             <div className="space-y-4 border border-zinc-200 p-4 bg-white rounded">
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block font-semibold">Method Title *</label>
+                <label className="text-zinc-400 uppercase block font-semibold">Method Name *</label>
                 <input
                   type="text"
-                  value={customName}
-                  onChange={(e) => setCustomName(e.target.value)}
-                  placeholder="e.g., PayPal / Cash / Cheque"
-                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="e.g., NCBA Bank Account"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
                   required
                 />
               </div>
+
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block font-semibold">Payment Instructions *</label>
+                <label className="text-zinc-400 uppercase block font-semibold">Instructions / Details *</label>
                 <textarea
-                  value={customInstructions}
-                  onChange={(e) => setCustomInstructions(e.target.value)}
-                  placeholder="e.g., Send PayPal payment to billing@domain.com or issue cheque to Ventures of Africa LTD."
-                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs h-20 font-sans"
+                  value={editDetails}
+                  onChange={(e) => setEditDetails(e.target.value)}
+                  placeholder="Account number / instructions"
+                  rows={4}
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-mono leading-relaxed"
                   required
-                ></textarea>
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="editDefault"
+                  checked={editDefault}
+                  onChange={(e) => setEditDefault(e.target.checked)}
+                  className="w-4 h-4 border border-zinc-300 accent-black rounded-sm cursor-pointer"
+                />
+                <label htmlFor="editDefault" className="cursor-pointer select-none uppercase font-semibold text-xs">
+                  Set as default payment method on invoices
+                </label>
               </div>
             </div>
-          )}
 
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="pmDefault"
-              checked={pmDefault}
-              onChange={(e) => setPmDefault(e.target.checked)}
-              className="w-4 h-4 border border-zinc-300 accent-black rounded-sm cursor-pointer"
-            />
-            <label htmlFor="pmDefault" className="cursor-pointer select-none uppercase font-semibold text-xs">
-              Set as default payment method on invoices
-            </label>
-          </div>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={updatePaymentMutation.isPending}
+                className="btn-primary-modern bg-black text-white px-6 py-2.5 font-semibold uppercase tracking-wider text-xs disabled:bg-zinc-300"
+              >
+                {updatePaymentMutation.isPending ? (
+                  <span className="flex items-center justify-center gap-1.5">
+                    <Spinner size={12} color="white" />
+                    <span>SAVING...</span>
+                  </span>
+                ) : (
+                  "SAVE CHANGES"
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingPm(null)}
+                className="bg-zinc-100 text-zinc-600 px-6 py-2.5 rounded font-semibold uppercase hover:bg-zinc-200 border border-zinc-200 text-xs transition-colors"
+              >
+                CANCEL
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleAddPaymentMethod} className="p-6 space-y-6 font-mono text-xs bg-zinc-50/50 border-t border-zinc-200/80">
+            <div className="space-y-1">
+              <p className="text-[10px] text-zinc-400 uppercase font-semibold">Add New Payment Method</p>
+              <p className="font-sans text-xs text-zinc-500">Select payment type to configure structured remittance details.</p>
+            </div>
 
-          <button
-            type="submit"
-            disabled={addPaymentMutation.isPending}
-            className="btn-primary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs disabled:bg-zinc-300 w-full sm:w-auto"
-          >
-            {addPaymentMutation.isPending ? (
-              <span className="flex items-center justify-center gap-1.5">
-                <Spinner size={12} color="white" />
-                <span>SAVING...</span>
-              </span>
-            ) : (
-              "+ SAVE PAYMENT METHOD"
+            {/* Category Tabs */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { id: "BANK", label: "Bank Account" },
+                { id: "TILL", label: "M-Pesa Till" },
+                { id: "PAYBILL", label: "M-Pesa Paybill" },
+                { id: "CUSTOM", label: "Custom Instructions" },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setPmCategory(cat.id as any)}
+                  className={`py-2 px-3 text-[11px] font-semibold uppercase border rounded transition-colors ${
+                    pmCategory === cat.id
+                      ? "bg-black text-white border-black"
+                      : "bg-white text-zinc-600 border-zinc-300 hover:border-black hover:text-black"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* BANK ACCOUNT FIELDS */}
+            {pmCategory === "BANK" && (
+              <div className="space-y-4 border border-zinc-200 p-4 bg-white rounded">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-zinc-400 uppercase block font-semibold">Bank Name *</label>
+                    <input
+                      type="text"
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      placeholder="e.g., NCBA Bank / KCB"
+                      className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-zinc-400 uppercase block font-semibold">Branch Name</label>
+                    <input
+                      type="text"
+                      value={branchName}
+                      onChange={(e) => setBranchName(e.target.value)}
+                      placeholder="e.g., Kilimani Branch"
+                      className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-zinc-400 uppercase block font-semibold">Account Name / Title *</label>
+                    <input
+                      type="text"
+                      value={accountName}
+                      onChange={(e) => setAccountName(e.target.value)}
+                      placeholder="e.g., Ventures of Africa LTD"
+                      className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-zinc-400 uppercase block font-semibold">Account Number *</label>
+                    <input
+                      type="text"
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      placeholder="e.g., 01108239101"
+                      className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-zinc-400 uppercase block font-semibold">SWIFT / BIC Code (Optional)</label>
+                  <input
+                    type="text"
+                    value={swiftCode}
+                    onChange={(e) => setSwiftCode(e.target.value)}
+                    placeholder="e.g., NCBAKE22"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 uppercase rounded text-xs"
+                  />
+                </div>
+              </div>
             )}
-          </button>
-        </form>
+
+            {/* M-PESA TILL FIELDS */}
+            {pmCategory === "TILL" && (
+              <div className="space-y-4 border border-zinc-200 p-4 bg-white rounded">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-zinc-400 uppercase block font-semibold">Till Number *</label>
+                    <input
+                      type="text"
+                      value={tillNumber}
+                      onChange={(e) => setTillNumber(e.target.value)}
+                      placeholder="e.g., 552134"
+                      className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-zinc-400 uppercase block font-semibold">Store / Merchant Name</label>
+                    <input
+                      type="text"
+                      value={storeName}
+                      onChange={(e) => setStoreName(e.target.value)}
+                      placeholder="e.g., Ventures of Africa"
+                      className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* M-PESA PAYBILL FIELDS */}
+            {pmCategory === "PAYBILL" && (
+              <div className="space-y-4 border border-zinc-200 p-4 bg-white rounded">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-zinc-400 uppercase block font-semibold">Business / Paybill Number *</label>
+                    <input
+                      type="text"
+                      value={paybillNumber}
+                      onChange={(e) => setPaybillNumber(e.target.value)}
+                      placeholder="e.g., 247247"
+                      className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-zinc-400 uppercase block font-semibold">Account Ref / Instructions</label>
+                    <input
+                      type="text"
+                      value={accountRef}
+                      onChange={(e) => setAccountRef(e.target.value)}
+                      placeholder="e.g., Invoice Number / Client Name"
+                      className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CUSTOM INSTRUCTIONS FIELDS */}
+            {pmCategory === "CUSTOM" && (
+              <div className="space-y-4 border border-zinc-200 p-4 bg-white rounded">
+                <div className="space-y-1">
+                  <label className="text-zinc-400 uppercase block font-semibold">Method Title *</label>
+                  <input
+                    type="text"
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    placeholder="e.g., PayPal / Cash / Cheque"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-semibold"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-zinc-400 uppercase block font-semibold">Payment Instructions *</label>
+                  <textarea
+                    value={customInstructions}
+                    onChange={(e) => setCustomInstructions(e.target.value)}
+                    placeholder="e.g., Send PayPal payment to billing@domain.com or issue cheque to Ventures of Africa LTD."
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs h-20 font-sans"
+                    required
+                  ></textarea>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="pmDefault"
+                checked={pmDefault}
+                onChange={(e) => setPmDefault(e.target.checked)}
+                className="w-4 h-4 border border-zinc-300 accent-black rounded-sm cursor-pointer"
+              />
+              <label htmlFor="pmDefault" className="cursor-pointer select-none uppercase font-semibold text-xs">
+                Set as default payment method on invoices
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={addPaymentMutation.isPending}
+              className="btn-primary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs disabled:bg-zinc-300 w-full sm:w-auto"
+            >
+              {addPaymentMutation.isPending ? (
+                <span className="flex items-center justify-center gap-1.5">
+                  <Spinner size={12} color="white" />
+                  <span>SAVING...</span>
+                </span>
+              ) : (
+                "+ SAVE PAYMENT METHOD"
+              )}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

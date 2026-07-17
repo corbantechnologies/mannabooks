@@ -68,6 +68,8 @@ export const shops = pgTable('shops', {
     glOnboardingMode: boolean('gl_onboarding_mode').default(false).notNull(), // When true, allows backdating past closed periods
     // Income Tax settings
     taxRegime: taxRegimeEnum('tax_regime').default('EXEMPT').notNull(),
+    isCitActive: boolean('is_cit_active').default(true).notNull(),
+    isTotActive: boolean('is_tot_active').default(false).notNull(),
     citRate: numeric('cit_rate', { precision: 5, scale: 2 }).default('30.00').notNull(),
     estimatedAnnualProfit: numeric('estimated_annual_profit', { precision: 15, scale: 2 }).default('0.00').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),

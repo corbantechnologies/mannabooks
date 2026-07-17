@@ -18,6 +18,7 @@ type Expense = {
     receiptUrl: string | null;
     paymentChannel: string | null;
     paymentReference: string | null;
+    isNonDeductible: boolean;
 };
 
 export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpenses }: { shopId: string, shopCurrency: string, initialExpenses: Expense[] }) {
@@ -30,6 +31,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
     const [paymentChannel, setPaymentChannel] = useState("");
     const [paymentReference, setPaymentReference] = useState("");
     const [receiptUrl, setReceiptUrl] = useState("");
+    const [isNonDeductible, setIsNonDeductible] = useState(false);
 
     const [status, setStatus] = useState<"IDLE" | "LOADING" | "ERROR">("IDLE");
     const [isUploading, setIsUploading] = useState(false);
@@ -95,7 +97,8 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
             currency: shopCurrency,
             paymentChannel: paymentChannel || undefined,
             paymentReference: paymentReference || undefined,
-            receiptUrl: receiptUrl || undefined
+            receiptUrl: receiptUrl || undefined,
+            isNonDeductible,
         });
 
         if (res.success) {
@@ -106,6 +109,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
             setPaymentChannel("");
             setPaymentReference("");
             setReceiptUrl("");
+            setIsNonDeductible(false);
             setIsAdding(false);
             setStatus("IDLE");
         } else {
@@ -212,6 +216,19 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                             </div>
                         </div>
 
+                        <div className="flex items-center gap-2 py-2">
+                            <input
+                                id="isNonDeductible"
+                                type="checkbox"
+                                checked={isNonDeductible}
+                                onChange={(e) => setIsNonDeductible(e.target.checked)}
+                                className="w-4 h-4 rounded text-black focus:ring-black border-zinc-300"
+                            />
+                            <label htmlFor="isNonDeductible" className="text-xs font-semibold text-zinc-700 cursor-pointer select-none">
+                                Non-deductible expense (adds back for Kenya Income Tax calculation)
+                            </label>
+                        </div>
+
                         <div className="pt-2">
                             <label className="block text-xs font-bold text-black uppercase mb-1.5">Attach Receipt Image (Optional)</label>
                             
@@ -293,7 +310,12 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                         {initialExpenses.map(expense => (
                             <tr key={expense.id} className="hover:bg-zinc-50/80 transition-colors">
                                 <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-black">{expense.expenseDate.split('T')[0]}</td>
-                                <td className="p-4 border-r border-zinc-200/80 text-zinc-600">{expense.description}</td>
+                                <td className="p-4 border-r border-zinc-200/80 text-zinc-600">
+                                    <div>{expense.description}</div>
+                                    {expense.isNonDeductible && (
+                                        <span className="inline-block mt-1 font-mono text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">Non-Deductible</span>
+                                    )}
+                                </td>
                                 <td className="p-4 border-r border-zinc-200/80">
                                     <span className="inline-block px-2 py-1 bg-zinc-100 text-zinc-800 rounded text-[10px] font-bold tracking-wider uppercase">
                                         {expense.category}

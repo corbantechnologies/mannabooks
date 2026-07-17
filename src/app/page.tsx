@@ -279,6 +279,18 @@ export default function LandingPage() {
                   body: "Clients view, download PDFs, and inspect settlements via secure 64-character token links — no accounts or passwords required.",
                   emoji: "🔐",
                 },
+                {
+                  tag: "[09] Bookkeeping",
+                  title: "General Ledger & GL",
+                  body: "Full double-entry general ledger, customizable Chart of Accounts, opening balance onboarding, closed accounting periods, Trial Balance, Cash Flow, and P&L.",
+                  emoji: "⚖️",
+                },
+                {
+                  tag: "[10] Tax Suite",
+                  title: "Kenya Income Tax Tracker",
+                  body: "Assess CIT, log non-deductible add-backs, generate KRA capital allowances (Fixed Assets wear & tear bands), and track Turnover Tax (TOT) liabilities.",
+                  emoji: "📊",
+                },
               ].map((f) => (
                 <div
                   key={f.tag}

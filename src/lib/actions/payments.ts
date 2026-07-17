@@ -105,3 +105,41 @@ export async function setDefaultPaymentMethod(id: string, shopId: string, shopSl
     return { success: false, error: "Failed to update default payment method." };
   }
 }
+
+interface UpdatePaymentMethodInput {
+  id: string;
+  shopId: string;
+  shopSlug: string;
+  name: string;
+  details: string;
+  isDefault: boolean;
+}
+
+export async function updatePaymentMethod(input: UpdatePaymentMethodInput): Promise<{ success: true } | { success: false; error: string }> {
+  try {
+    const session = await verifyAndGetSession();
+    if (!session) return { success: false, error: "Authentication credentials required." };
+
+    return await db.transaction(async (tx) => {
+      if (input.isDefault) {
+        await tx.update(paymentMethods)
+          .set({ isDefault: false })
+          .where(eq(paymentMethods.shopId, input.shopId));
+      }
+
+      await tx.update(paymentMethods)
+        .set({
+          name: input.name.trim(),
+          details: input.details.trim(),
+          isDefault: input.isDefault,
+        })
+        .where(and(eq(paymentMethods.id, input.id), eq(paymentMethods.shopId, input.shopId)));
+
+      revalidatePath(`/workspaces/${input.shopSlug}/settings`);
+      return { success: true };
+    });
+  } catch (error) {
+    console.error("Failed to update payment method:", error);
+    return { success: false, error: "Failed to update payment method." };
+  }
+}

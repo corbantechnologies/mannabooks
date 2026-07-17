@@ -5,12 +5,14 @@ import { expenses } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { enforcePermission } from "./rbac";
 import { revalidatePath } from "next/cache";
+import { createJournalEntry } from "./gl";
+import { EXPENSE_CATEGORY_ACCOUNT_MAP } from "../gl-constants";
 
 type ExpenseCategory = 'RENT' | 'UTILITIES' | 'FUEL' | 'MARKETING' | 'SALARIES' | 'OFFICE_SUPPLIES' | 'OTHER';
 
 export async function createExpense(
     shopId: string, 
-    data: { description: string, amount: number, category: ExpenseCategory, expenseDate: Date, receiptUrl?: string, currency?: string, paymentChannel?: string, paymentReference?: string }
+    data: { description: string, amount: number, category: ExpenseCategory, expenseDate: Date, receiptUrl?: string, currency?: string, paymentChannel?: string, paymentReference?: string, isNonDeductible?: boolean }
 ) {
     try {
         await enforcePermission(shopId, "manage_expenses");
@@ -24,11 +26,26 @@ export async function createExpense(
             receiptUrl: data.receiptUrl || null,
             currency: data.currency || "KES",
             paymentChannel: data.paymentChannel || null,
-            paymentReference: data.paymentReference || null
+            paymentReference: data.paymentReference || null,
+            isNonDeductible: data.isNonDeductible || false,
         }).returning();
 
         revalidatePath(`/workspaces/${shopId}/expenses`);
         revalidatePath(`/workspaces/${shopId}/analytics`);
+
+        // Auto-journal: DR Expense Account / CR Cash & Bank (if GL is active)
+        const expenseAccountCode = EXPENSE_CATEGORY_ACCOUNT_MAP[data.category] || "6900";
+        await createJournalEntry({
+            shopId,
+            entryDate: data.expenseDate,
+            description: `Expense: ${data.description}`,
+            debitAccountCode: expenseAccountCode,
+            creditAccountCode: "1200", // Cash & Bank
+            amount: data.amount,
+            sourceType: "expense",
+            sourceId: newExpense[0].id,
+        });
+
         return { success: true, expense: newExpense[0] };
     } catch (error: any) {
         console.error("Failed to create expense:", error);

@@ -10,6 +10,7 @@ import { verifyAndGetSession } from "./auth";
 
 import { applyDocumentStockMovements } from "@/lib/actions/stock";
 import { getFiscalYearRange, getFyDocSuffix } from "@/lib/fiscalYear";
+import { createJournalEntry } from "./gl";
 
 export type DocumentType = 
   | "QUOTATION" 
@@ -222,6 +223,23 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
             revalidatePath(`/workspaces/${input.shopSlug}/documents`);
             revalidatePath(`/workspaces/${input.shopSlug}/clients/${input.clientId}`);
 
+            // AUTO-JOURNAL: Standalone Receipt (no parent invoice) → DR Cash & Bank / CR Sales Revenue
+            if (input.type === "RECEIPT" && !input.parentDocumentId) {
+                const amount = parseFloat(calculatedTotals.grandTotal.toString());
+                if (amount > 0) {
+                    await createJournalEntry({
+                        shopId: input.shopId,
+                        entryDate: new Date(),
+                        description: `Receipt ${formattedSerial} — Direct POS sale`,
+                        debitAccountCode: "1200",  // Cash & Bank
+                        creditAccountCode: "4100", // Sales Revenue
+                        amount,
+                        sourceType: "document",
+                        sourceId: newDoc.id,
+                    });
+                }
+            }
+
             return { success: true, documentId: newDoc.id, serial: formattedSerial };
         });
     } catch (error) {
@@ -293,6 +311,57 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
         revalidatePath(`/workspaces/${input.shopSlug}/documents`);
         revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.documentId}`);
         revalidatePath(`/workspaces/${input.shopSlug}/clients`);
+
+        // AUTO-JOURNAL: Post GL entries when an invoice is paid
+        if (existing.status !== "PAID" && input.status === "PAID") {
+            const amount = parseFloat(existing.grandTotal || "0");
+            if (amount > 0) {
+                if (existing.type === "INVOICE") {
+                    // Invoice paid: DR Cash & Bank / CR AR (clears the receivable)
+                    await createJournalEntry({
+                        shopId: input.shopId,
+                        entryDate: new Date(),
+                        description: `Invoice ${existing.docNumber} — Settled`,
+                        debitAccountCode: "1200",  // Cash & Bank
+                        creditAccountCode: "1100", // Accounts Receivable
+                        amount,
+                        sourceType: "document",
+                        sourceId: existing.id,
+                    });
+                } else if (existing.type === "LPO" || existing.type === "PO" || existing.type === "PAYMENT_VOUCHER") {
+                    // Supplier payment: DR Accounts Payable / CR Cash & Bank
+                    await createJournalEntry({
+                        shopId: input.shopId,
+                        entryDate: new Date(),
+                        description: `${existing.type} ${existing.docNumber} — Paid to supplier`,
+                        debitAccountCode: "2100", // Accounts Payable
+                        creditAccountCode: "1200", // Cash & Bank
+                        amount,
+                        sourceType: "document",
+                        sourceId: existing.id,
+                    });
+                }
+            }
+        }
+
+        // AUTO-JOURNAL: When invoice is first issued (creates the receivable)
+        if (existing.status === "DRAFT" && (input.status === "ISSUED" || input.status === "PAID")) {
+            if (existing.type === "INVOICE") {
+                const amount = parseFloat(existing.grandTotal || "0");
+                if (amount > 0) {
+                    await createJournalEntry({
+                        shopId: input.shopId,
+                        entryDate: new Date(),
+                        description: `Invoice ${existing.docNumber} — Issued`,
+                        debitAccountCode: "1100",  // Accounts Receivable
+                        creditAccountCode: "4100", // Sales Revenue
+                        amount,
+                        sourceType: "document",
+                        sourceId: existing.id,
+                    });
+                }
+            }
+        }
 
         return { success: true };
     } catch (error) {

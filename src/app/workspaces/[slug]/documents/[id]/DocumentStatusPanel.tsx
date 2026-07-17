@@ -24,7 +24,7 @@ interface DocumentStatusPanelProps {
   documentId: string;
   shopId: string;
   shopSlug: string;
-  currentStatus: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED";
+  currentStatus: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED";
   docType: DocumentType;
   items: DocumentItem[];
   portalLink: string | null;

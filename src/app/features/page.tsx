@@ -74,6 +74,8 @@ export default function FeaturesPage() {
               { href: "#b2b-inbox", label: "B2B Inbox" },
               { href: "#analytics", label: "A/R & Analytics" },
               { href: "#team", label: "Team Management" },
+              { href: "#general-ledger", label: "General Ledger" },
+              { href: "#income-tax", label: "Kenya Income Tax" },
             ].map((link) => (
               <a key={link.href} href={link.href} className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase">
                 {link.label}
@@ -404,6 +406,56 @@ export default function FeaturesPage() {
                 { title: "Live Read Receipts", body: "When you send a document via the network, know exactly when the recipient opens it with automatic '👁️ Viewed' read receipts." },
               ].map((item) => (
                 <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 12: GENERAL LEDGER & FINANCIAL REPORTING */}
+          <div id="general-ledger" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 12</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                General Ledger &amp; Double-Entry Bookkeeping
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Full-featured Double-Entry Accounting framework. Complete chart of accounts, customizable opening balances, monthly accounting periods with backdate controls, and real-time trial balance, P&L, and balance sheet reporting.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Standardized Chart of Accounts", body: "Configurable double-entry accounts mapped across Assets, Liabilities, Equity, Revenue, Cost of Sales, and Operating Expenses. Full audit trial ledger entries." },
+                { title: "Closing Accounting Periods", body: "Close monthly accounting periods to lock down transactions and prevent backdating. Grant custom roles specific override permissions to reopen when necessary." },
+                { title: "Real-time Financial Statements", body: "Dynamic Profit & Loss, Balance Sheet, and Trial Balance reports compiled instantly from ledger postings. Easily exportable for board or compliance audits." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 13: KENYA INCOME TAX COMPLIANCE SUITE */}
+          <div id="income-tax" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-emerald-700 text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 13</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Kenya Income Tax Compliance Suite
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              KRA-compliant tax computation and instalment tracking module. Automatically assess Corporate Income Tax (CIT) obligations, Wear &amp; Tear Wear register allowances, and Turnover Tax (TOT) liabilities.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Corporate Income Tax (CIT)", body: "Annual tax computation including non-deductible add-backs (marketing, entertainment) and capital allowances. Instantly determine resident/non-resident company liabilities." },
+                { title: "Fixed Assets & Capital Allowances", body: "Categorize fixed assets into KRA Class bands (Class I 50%, Class II 25%, Class III 25%, Class IV 10%) to auto-calculate annual wear-and-tear depreciation deduction." },
+                { title: "Instalment & Turnover Tax (TOT)", body: "Quarterly CIT instalment scheduler (with KES 30,000 auto-obligation check) and Turnover Tax (TOT) 1.5% calculation on monthly gross revenue." },
+              ].map((item) => (
+                <div key={item.title} className="border border-emerald-200 rounded-xl p-6 bg-white space-y-3 hover:border-emerald-400 hover:shadow-md transition-all">
                   <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>

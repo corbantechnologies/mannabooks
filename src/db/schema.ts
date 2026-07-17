@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, varchar, timestamp, numeric, pgEnum, unique, boolean, index, integer } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, varchar, timestamp, numeric, pgEnum, unique, boolean, index, integer, jsonb, date } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // ==========================================
@@ -17,13 +17,19 @@ export const docTypeEnum = pgEnum('doc_type', [
     'PAYMENT_VOUCHER',
     'PAYROLL_VOUCHER'
 ]);
-export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'ISSUED', 'OVERDUE', 'PAID', 'RECEIVED']);
+// docStatusEnum is defined below after GL enums
 export const taxTypeEnum = pgEnum('tax_type', ['V_16', 'V_0', 'EXEMPT']); // 16% VAT, 0% VAT, Tax Exempt
 export const clientTypeEnum = pgEnum('client_type', ['WALK_IN', 'INDIVIDUAL', 'CORPORATE']);
 export const userRoleEnum = pgEnum('user_role', ['OWNER', 'ADMIN', 'MANAGER', 'ACCOUNTANT', 'EMPLOYEE', 'VIEWER']);
 export const recurringIntervalEnum = pgEnum('recurring_interval', ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']);
 export const expenseCategoryEnum = pgEnum('expense_category', ['RENT', 'UTILITIES', 'FUEL', 'MARKETING', 'SALARIES', 'OFFICE_SUPPLIES', 'OTHER']);
 export const invitationStatusEnum = pgEnum('invitation_status', ['PENDING', 'ACCEPTED', 'REVOKED']);
+export const accountTypeEnum = pgEnum('account_type', ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE']);
+export const periodStatusEnum = pgEnum('period_status', ['OPEN', 'CLOSED']);
+export const journalSourceEnum = pgEnum('journal_source', ['document', 'expense', 'income', 'payroll', 'manual', 'migrated']);
+export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'ISSUED', 'OVERDUE', 'PAID', 'PARTIALLY_PAID', 'RECEIVED']);
+export const taxRegimeEnum = pgEnum('tax_regime', ['CIT', 'TOT', 'EXEMPT']);
+export const assetClassEnum = pgEnum('asset_class', ['CLASS_1', 'CLASS_2', 'CLASS_3', 'CLASS_4', 'BUILDING']);
 
 // ==========================================
 // 2. TABLES
@@ -57,6 +63,15 @@ export const shops = pgTable('shops', {
     vatNumber: varchar('vat_number', { length: 50 }), // Optional/Required VAT Registration Number
     fiscalYearStartMonth: integer('fiscal_year_start_month').default(1).notNull(), // 1 = January, 7 = July etc.
     hideOnboarding: boolean('hide_onboarding').default(false).notNull(),
+    // General Ledger
+    isGlEnabled: boolean('is_gl_enabled').default(false).notNull(),
+    glOnboardingMode: boolean('gl_onboarding_mode').default(false).notNull(), // When true, allows backdating past closed periods
+    // Income Tax settings
+    taxRegime: taxRegimeEnum('tax_regime').default('EXEMPT').notNull(),
+    isCitActive: boolean('is_cit_active').default(true).notNull(),
+    isTotActive: boolean('is_tot_active').default(false).notNull(),
+    citRate: numeric('cit_rate', { precision: 5, scale: 2 }).default('30.00').notNull(),
+    estimatedAnnualProfit: numeric('estimated_annual_profit', { precision: 15, scale: 2 }).default('0.00').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -243,6 +258,7 @@ export const expenses = pgTable('expenses', {
     paymentChannel: varchar('payment_channel', { length: 50 }), // e.g. BANK, MPESA, CASH, CHEQUE, OTHER
     paymentReference: varchar('payment_reference', { length: 100 }),
     receiptUrl: text('receipt_url'), // Cloudinary URL for attached receipt
+    isNonDeductible: boolean('is_non_deductible').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -257,6 +273,117 @@ export const shopInvitations = pgTable('shop_invitations', {
     status: invitationStatusEnum('status').default('PENDING').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     expiresAt: timestamp('expires_at').notNull(),
+});
+
+// ==========================================
+// GENERAL LEDGER TABLES
+// ==========================================
+
+// CHART OF ACCOUNTS
+export const chartOfAccounts = pgTable('chart_of_accounts', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    code: varchar('code', { length: 10 }).notNull(),   // e.g. '4100', '6200'
+    name: text('name').notNull(),                       // e.g. 'Sales Revenue', 'Rent Expense'
+    accountType: accountTypeEnum('account_type').notNull(),
+    isSystem: boolean('is_system').default(false).notNull(), // System accounts cannot be deleted
+    parentCode: varchar('parent_code', { length: 10 }), // For sub-accounts
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_account_code').on(table.shopId, table.code),
+]);
+
+// ACCOUNTING PERIODS (Monthly)
+export const accountingPeriods = pgTable('accounting_periods', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    periodName: varchar('period_name', { length: 50 }).notNull(), // e.g. 'July 2026'
+    startDate: date('start_date').notNull(),
+    endDate: date('end_date').notNull(),
+    status: periodStatusEnum('status').default('OPEN').notNull(),
+    closedAt: timestamp('closed_at'),
+    closedById: uuid('closed_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_period').on(table.shopId, table.startDate),
+]);
+
+// JOURNAL ENTRIES (Double-Entry)
+export const journalEntries = pgTable('journal_entries', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    periodId: uuid('period_id').references(() => accountingPeriods.id),
+    entryDate: timestamp('entry_date').notNull(),
+    description: text('description').notNull(),
+    debitAccountId: uuid('debit_account_id').references(() => chartOfAccounts.id).notNull(),
+    creditAccountId: uuid('credit_account_id').references(() => chartOfAccounts.id).notNull(),
+    amount: numeric('amount', { precision: 15, scale: 2 }).notNull(),
+    sourceType: journalSourceEnum('source_type').default('manual').notNull(),
+    sourceId: uuid('source_id'),               // FK to originating record (document, expense, etc.)
+    createdById: uuid('created_by_id').references(() => users.id),
+    isBackdated: boolean('is_backdated').default(false).notNull(),
+    backdatedReason: text('backdated_reason'),  // Required when isBackdated = true
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// BUDGETS (Monthly per expense account)
+export const budgets = pgTable('budgets', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    accountId: uuid('account_id').references(() => chartOfAccounts.id, { onDelete: 'cascade' }).notNull(),
+    month: integer('month').notNull(),   // 1–12
+    year: integer('year').notNull(),
+    monthlyLimit: numeric('monthly_limit', { precision: 15, scale: 2 }).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_budget_account_period').on(table.shopId, table.accountId, table.month, table.year),
+]);
+
+// FIXED ASSETS REGISTER
+export const fixedAssets = pgTable('fixed_assets', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    name: text('name').notNull(),
+    assetClass: assetClassEnum('asset_class').notNull(),
+    purchaseDate: date('purchase_date').notNull(),
+    purchaseCost: numeric('purchase_cost', { precision: 15, scale: 2 }).notNull(),
+    taxWdv: numeric('tax_wdv', { precision: 15, scale: 2 }).notNull(), // Written Down Value for KRA
+    scrapValue: numeric('scrap_value', { precision: 15, scale: 2 }).default('0.00').notNull(),
+    isDisposed: boolean('is_disposed').default(false).notNull(),
+    disposalDate: date('disposal_date'),
+    disposalProceeds: numeric('disposal_proceeds', { precision: 15, scale: 2 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// TAX INSTALMENTS SCHEDULE & PAYMENTS
+export const taxInstalments = pgTable('tax_instalments', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    year: integer('year').notNull(),
+    instalmentNumber: integer('instalment_number').notNull(), // 1, 2, 3, 4
+    dueDate: date('due_date').notNull(),
+    estimatedAmount: numeric('estimated_amount', { precision: 15, scale: 2 }).notNull(),
+    paidAmount: numeric('paid_amount', { precision: 15, scale: 2 }).default('0.00').notNull(),
+    paidAt: timestamp('paid_at'),
+    paymentReference: text('payment_reference'),
+    status: text('status').default('PENDING').notNull(), // PENDING, PAID, OVERDUE
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_instalment').on(table.shopId, table.year, table.instalmentNumber),
+]);
+
+// WITHHOLDING TAX (WHT) ACCUMULATED RECORDS
+export const whtPayments = pgTable('wht_payments', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    month: integer('month').notNull(),
+    year: integer('year').notNull(),
+    grossAmount: numeric('gross_amount', { precision: 15, scale: 2 }).notNull(),
+    whtRate: numeric('wht_rate', { precision: 5, scale: 2 }).notNull(), // e.g. 5.00, 10.00
+    whtAmount: numeric('wht_amount', { precision: 15, scale: 2 }).notNull(),
+    sourceDocumentId: uuid('source_document_id').references(() => documents.id, { onDelete: 'set null' }),
+    status: text('status').default('PENDING').notNull(), // PENDING, PAID/REMITTED
+    createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // ==========================================
@@ -278,6 +405,13 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     expenses: many(expenses),
     incomes: many(incomes),
     invitations: many(shopInvitations),
+    chartOfAccounts: many(chartOfAccounts),
+    accountingPeriods: many(accountingPeriods),
+    journalEntries: many(journalEntries),
+    budgets: many(budgets),
+    fixedAssets: many(fixedAssets),
+    taxInstalments: many(taxInstalments),
+    whtPayments: many(whtPayments),
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
@@ -340,10 +474,55 @@ export const expensesRelations = relations(expenses, ({ one }) => ({
     shop: one(shops, { fields: [expenses.shopId], references: [shops.id] }),
 }));
 
+export const incomesRelations = relations(incomes, ({ one }) => ({
+    shop: one(shops, { fields: [incomes.shopId], references: [shops.id] }),
+}));
+
 export const employeesRelations = relations(employees, ({ one }) => ({
     shop: one(shops, { fields: [employees.shopId], references: [shops.id] }),
 }));
 
 export const shopInvitationsRelations = relations(shopInvitations, ({ one }) => ({
     shop: one(shops, { fields: [shopInvitations.shopId], references: [shops.id] }),
+}));
+
+// GL Relations
+export const chartOfAccountsRelations = relations(chartOfAccounts, ({ one, many }) => ({
+    shop: one(shops, { fields: [chartOfAccounts.shopId], references: [shops.id] }),
+    debitEntries: many(journalEntries, { relationName: 'debit_account' }),
+    creditEntries: many(journalEntries, { relationName: 'credit_account' }),
+    budgets: many(budgets),
+}));
+
+export const accountingPeriodsRelations = relations(accountingPeriods, ({ one, many }) => ({
+    shop: one(shops, { fields: [accountingPeriods.shopId], references: [shops.id] }),
+    closedBy: one(users, { fields: [accountingPeriods.closedById], references: [users.id] }),
+    journalEntries: many(journalEntries),
+}));
+
+export const journalEntriesRelations = relations(journalEntries, ({ one }) => ({
+    shop: one(shops, { fields: [journalEntries.shopId], references: [shops.id] }),
+    period: one(accountingPeriods, { fields: [journalEntries.periodId], references: [accountingPeriods.id] }),
+    debitAccount: one(chartOfAccounts, { fields: [journalEntries.debitAccountId], references: [chartOfAccounts.id], relationName: 'debit_account' }),
+    creditAccount: one(chartOfAccounts, { fields: [journalEntries.creditAccountId], references: [chartOfAccounts.id], relationName: 'credit_account' }),
+    createdBy: one(users, { fields: [journalEntries.createdById], references: [users.id] }),
+}));
+
+export const budgetsRelations = relations(budgets, ({ one }) => ({
+    shop: one(shops, { fields: [budgets.shopId], references: [shops.id] }),
+    account: one(chartOfAccounts, { fields: [budgets.accountId], references: [chartOfAccounts.id] }),
+}));
+
+// Tax Relations
+export const fixedAssetsRelations = relations(fixedAssets, ({ one }) => ({
+    shop: one(shops, { fields: [fixedAssets.shopId], references: [shops.id] }),
+}));
+
+export const taxInstalmentsRelations = relations(taxInstalments, ({ one }) => ({
+    shop: one(shops, { fields: [taxInstalments.shopId], references: [shops.id] }),
+}));
+
+export const whtPaymentsRelations = relations(whtPayments, ({ one }) => ({
+    shop: one(shops, { fields: [whtPayments.shopId], references: [shops.id] }),
+    sourceDocument: one(documents, { fields: [whtPayments.sourceDocumentId], references: [documents.id] }),
 }));

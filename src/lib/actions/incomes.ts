@@ -5,6 +5,7 @@ import { incomes } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { enforcePermission } from "./rbac";
 import { revalidatePath } from "next/cache";
+import { createJournalEntry } from "./gl";
 
 export type IncomeCategory = 'INTEREST' | 'DIVIDENDS' | 'ASSET_SALE' | 'REFUNDS' | 'COMMISSION' | 'RENTAL_INCOME' | 'GRANTS_SUBSIDIES' | 'OTHER';
 
@@ -29,6 +30,19 @@ export async function createIncome(
 
         revalidatePath(`/workspaces/${shopId}/incomes`);
         revalidatePath(`/workspaces/${shopId}/analytics`);
+
+        // Auto-journal: DR Cash & Bank / CR Non-Operating Income (if GL is active)
+        await createJournalEntry({
+            shopId,
+            entryDate: data.incomeDate,
+            description: `Income: ${data.description} (${data.category})`,
+            debitAccountCode: "1200",  // Cash & Bank
+            creditAccountCode: "4200", // Non-Operating Income
+            amount: data.amount,
+            sourceType: "income",
+            sourceId: newIncome[0].id,
+        });
+
         return { success: true, income: newIncome[0] };
     } catch (error: any) {
         console.error("Failed to log income:", error);

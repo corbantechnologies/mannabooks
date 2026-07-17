@@ -58,6 +58,24 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
         { href: `/workspaces/${slug}/employees`, label: "Employees" },
       ]
     },
+    {
+      label: "Finance",
+      children: [
+        { href: `/workspaces/${slug}/finance/tax/settings`, label: "Tax Profile" },
+        { href: `/workspaces/${slug}/finance/tax/computation`, label: "Tax Computation" },
+        { href: `/workspaces/${slug}/finance/accounts`, label: "Chart of Accounts" },
+        { href: `/workspaces/${slug}/finance/opening-balances`, label: "Opening Balances" },
+        { href: `/workspaces/${slug}/finance/ledger`, label: "General Ledger" },
+        { href: `/workspaces/${slug}/finance/periods`, label: "Accounting Periods" },
+        { href: `/workspaces/${slug}/finance/budgets`, label: "Budgets" },
+        { href: `/workspaces/${slug}/finance/reports/pl`, label: "P&L Statement" },
+        { href: `/workspaces/${slug}/finance/reports/cashflow`, label: "Cash Flow" },
+        { href: `/workspaces/${slug}/finance/reports/trial-balance`, label: "Trial Balance" },
+        { href: `/workspaces/${slug}/finance/tax/assets`, label: "Fixed Assets Register" },
+        { href: `/workspaces/${slug}/finance/tax/instalments`, label: "Instalment Tax" },
+        { href: `/workspaces/${slug}/finance/tax/tot`, label: "Turnover Tax (TOT)" },
+      ]
+    },
     { href: `/workspaces/${slug}/analytics`, label: "Analytics" },
     {
       label: "Settings",

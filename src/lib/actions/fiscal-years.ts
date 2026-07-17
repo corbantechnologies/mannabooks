@@ -88,15 +88,29 @@ export async function declareFiscalYear(shopId: string, shopSlug: string, data: 
                 const actualEnd = pEnd > end ? end : pEnd;
 
                 const periodName = actualStart.toLocaleDateString("en-KE", { month: "long", year: "numeric" });
-                
-                await tx.insert(accountingPeriods).values({
-                    shopId,
-                    fiscalYearId: createdFy.id,
-                    periodName,
-                    startDate: actualStart.toISOString().split("T")[0],
-                    endDate: actualEnd.toISOString().split("T")[0],
-                    status: "OPEN",
+                const actualStartStr = actualStart.toISOString().split("T")[0];
+
+                const existing = await tx.query.accountingPeriods.findFirst({
+                    where: and(
+                        eq(accountingPeriods.shopId, shopId),
+                        eq(accountingPeriods.startDate, actualStartStr)
+                    ),
                 });
+
+                if (existing) {
+                    await tx.update(accountingPeriods)
+                        .set({ fiscalYearId: createdFy.id })
+                        .where(eq(accountingPeriods.id, existing.id));
+                } else {
+                    await tx.insert(accountingPeriods).values({
+                        shopId,
+                        fiscalYearId: createdFy.id,
+                        periodName,
+                        startDate: actualStartStr,
+                        endDate: actualEnd.toISOString().split("T")[0],
+                        status: "OPEN",
+                    });
+                }
 
                 current.setMonth(current.getMonth() + 1);
             }

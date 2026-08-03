@@ -17,6 +17,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<AnalyticsData>(initialData);
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+  const [showArDetails, setShowArDetails] = useState(false);
 
   async function handleTimeframeChange(tf: TimeframeFilter) {
     setTimeframe(tf);
@@ -308,9 +309,20 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans">&gt; Accounts Receivable Aging Risk Matrix</h2>
-          <span className="text-[10px] text-zinc-400 font-semibold uppercase font-mono shrink-0">
-            Total A/R: {formatCurrency(data.arAging.totalAr, data.currency)}
-          </span>
+          <div className="flex items-center gap-4 shrink-0 font-mono text-[10px]">
+            {data.outstandingInvoices && data.outstandingInvoices.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowArDetails(!showArDetails)}
+                className="font-bold uppercase underline hover:no-underline text-zinc-600"
+              >
+                {showArDetails ? "Hide Invoices [-]" : "Inspect Invoices [+]"}
+              </button>
+            )}
+            <span className="text-zinc-400 font-semibold uppercase">
+              Total A/R: {formatCurrency(data.arAging.totalAr, data.currency)}
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -335,6 +347,62 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
             </div>
           ))}
         </div>
+
+        {/* Expandable Outstanding Invoices List */}
+        {showArDetails && data.outstandingInvoices && data.outstandingInvoices.length > 0 && (
+          <div className="border border-zinc-200 bg-white rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
+            <div className="px-4 py-3 bg-zinc-50 border-b border-zinc-200 flex justify-between items-center">
+              <span className="font-bold uppercase text-[10px] text-zinc-500">Drill-Down: Uncollected Client Debt Details</span>
+              <span className="text-[9px] text-zinc-400 uppercase font-semibold">{data.outstandingInvoices.length} outstanding invoice(s)</span>
+            </div>
+            <div className="overflow-x-auto max-h-[350px]">
+              <table className="w-full text-left font-mono text-[11px] border-collapse">
+                <thead>
+                  <tr className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 uppercase tracking-wider">
+                    <th className="p-3 border-r border-zinc-200">Doc Number</th>
+                    <th className="p-3 border-r border-zinc-200">Client / Customer</th>
+                    <th className="p-3 border-r border-zinc-200">Issue Date</th>
+                    <th className="p-3 border-r border-zinc-200 text-center">Age (Days)</th>
+                    <th className="p-3 text-right">Outstanding Valuation</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 bg-white">
+                  {data.outstandingInvoices.map((inv: any) => {
+                    let ageColor = "text-emerald-700 font-semibold";
+                    if (inv.ageInDays > 90) ageColor = "text-rose-700 font-bold";
+                    else if (inv.ageInDays > 60) ageColor = "text-orange-700 font-bold";
+                    else if (inv.ageInDays > 30) ageColor = "text-amber-700 font-bold";
+
+                    return (
+                      <tr key={inv.id} className="hover:bg-zinc-50/50 transition-colors">
+                        <td className="p-3 border-r border-zinc-200/80 font-bold">
+                          <a
+                            href={`/workspaces/${shopSlug}/documents/${inv.id}`}
+                            className="underline hover:no-underline text-black"
+                          >
+                            {inv.docNumber} ➔
+                          </a>
+                        </td>
+                        <td className="p-3 border-r border-zinc-200/80 font-sans font-semibold uppercase text-zinc-800">
+                          {inv.clientName}
+                        </td>
+                        <td className="p-3 border-r border-zinc-200/80 text-zinc-500">
+                          {new Date(inv.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
+                        </td>
+                        <td className={`p-3 border-r border-zinc-200/80 text-center ${ageColor}`}>
+                          {inv.ageInDays} d
+                        </td>
+                        <td className="p-3 text-right font-bold text-black font-sans">
+                          {formatCurrency(inv.amount, data.currency)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* LEADERBOARDS: TOP PRODUCTS & CLIENT LTV */}

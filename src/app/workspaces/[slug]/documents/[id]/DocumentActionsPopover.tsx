@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { convertDocumentAction, DocumentType } from "@/lib/actions/documents";
+import { convertDocumentAction, cancelQuotationAction, cancelInvoiceAction, DocumentType } from "@/lib/actions/documents";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { CreditNotePopover } from "./CreditNotePopover";
@@ -22,7 +22,7 @@ interface DocumentActionsPopoverProps {
   docType: DocumentType;
   items: DocumentItem[];
   kraCuInvoiceNumber?: string | null;
-  status: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED";
+  status: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED" | "CANCELLED";
 }
 
 export function DocumentActionsPopover({
@@ -38,6 +38,43 @@ export function DocumentActionsPopover({
   const [isOpen, setIsOpen] = useState(false);
   const [showCreditNoteModal, setShowCreditNoteModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+
+  async function handleCancelQuotation() {
+    setLoading(true);
+    setConfirmCancel(false);
+    try {
+      const res = await cancelQuotationAction(shopId, documentId);
+      if (res.success) {
+        toast.success("Quotation has been successfully cancelled.");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to cancel quotation.");
+      }
+    } catch (err) {
+      toast.error("An unexpected error occurred during cancellation.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCancelInvoice() {
+    setLoading(true);
+    setConfirmCancel(false);
+    try {
+      const res = await cancelInvoiceAction(shopId, documentId);
+      if (res.success) {
+        toast.success("Invoice successfully cancelled & reversed in GL.");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to cancel invoice.");
+      }
+    } catch (err) {
+      toast.error("An unexpected error occurred during cancellation.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleConvert(targetType: DocumentType) {
     setLoading(true);
@@ -78,12 +115,47 @@ export function DocumentActionsPopover({
 
           {/* QUOTATION CONVERSIONS */}
           {docType === "QUOTATION" && (
-            <button
-              onClick={() => handleConvert("INVOICE")}
-              className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
-            >
-              ➔ Convert to Invoice
-            </button>
+            <>
+              {status !== "CANCELLED" && (
+                <button
+                  onClick={() => handleConvert("INVOICE")}
+                  className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
+                >
+                  ➔ Convert to Invoice
+                </button>
+              )}
+
+              {status !== "CANCELLED" ? (
+                confirmCancel ? (
+                  <div className="bg-rose-50 p-2 flex flex-col gap-1 border-t border-zinc-200">
+                    <span className="text-[9px] text-rose-600 font-bold uppercase block px-2 leading-tight">Cancel this quotation?</span>
+                    <button
+                      onClick={handleCancelQuotation}
+                      className="w-full text-left px-2 py-1 text-rose-700 hover:bg-rose-600 hover:text-white font-bold uppercase text-[10px] rounded transition-colors"
+                    >
+                      Confirm Cancel
+                    </button>
+                    <button
+                      onClick={() => setConfirmCancel(false)}
+                      className="w-full text-left px-2 py-1 text-zinc-500 hover:bg-zinc-100 font-bold uppercase text-[10px] rounded transition-colors"
+                    >
+                      Keep Quotation
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmCancel(true)}
+                    className="w-full text-left px-4 py-2.5 hover:bg-rose-50 text-rose-600 font-bold uppercase text-[11px] transition-colors border-t border-zinc-100"
+                  >
+                    ➔ Cancel Quotation
+                  </button>
+                )
+              ) : (
+                <div className="px-4 py-2 text-[10px] text-zinc-400 italic font-semibold">
+                  Quotation Cancelled
+                </div>
+              )}
+            </>
           )}
 
           {/* INVOICE CONVERSIONS & CREDIT NOTES */}
@@ -122,6 +194,41 @@ export function DocumentActionsPopover({
               >
                 ➔ Raise Debit Note
               </button>
+
+              {status !== "CANCELLED" && (status === "ISSUED" || status === "OVERDUE") && (
+                <>
+                  {confirmCancel ? (
+                    <div className="bg-rose-50 p-2 flex flex-col gap-1 border-t border-zinc-200">
+                      <span className="text-[9px] text-rose-600 font-bold uppercase block px-2 leading-tight">Cancel &amp; reverse in GL?</span>
+                      <button
+                        onClick={handleCancelInvoice}
+                        className="w-full text-left px-2 py-1 text-rose-700 hover:bg-rose-600 hover:text-white font-bold uppercase text-[10px] rounded transition-colors"
+                      >
+                        Confirm Cancel
+                      </button>
+                      <button
+                        onClick={() => setConfirmCancel(false)}
+                        className="w-full text-left px-2 py-1 text-zinc-500 hover:bg-zinc-100 font-bold uppercase text-[10px] rounded transition-colors"
+                      >
+                        Keep Invoice
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmCancel(true)}
+                      className="w-full text-left px-4 py-2.5 hover:bg-rose-50 text-rose-600 font-bold uppercase text-[11px] transition-colors border-t border-zinc-100"
+                    >
+                      ➔ Cancel Invoice
+                    </button>
+                  )}
+                </>
+              )}
+
+              {status === "CANCELLED" && (
+                <div className="px-4 py-2.5 text-[10px] text-zinc-400 italic font-semibold border-t border-zinc-100">
+                  Invoice Cancelled
+                </div>
+              )}
             </>
           )}
 

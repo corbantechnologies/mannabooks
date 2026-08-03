@@ -68,6 +68,16 @@ export interface AnalyticsData {
     ltv: number;
     revenueSharePercent: number;
   }[];
+
+  outstandingInvoices?: {
+    id: string;
+    docNumber: string;
+    clientName: string;
+    issueDate: string;
+    dueDate: string | null;
+    ageInDays: number;
+    amount: number;
+  }[];
 }
 
 /**
@@ -308,6 +318,7 @@ export async function getWorkspaceAnalyticsData(
     let due31To60 = 0;
     let late61To90 = 0;
     let overdue90Plus = 0;
+    const outstandingInvoices: any[] = [];
 
     allDocs.forEach((d) => {
       if ((d.type === "INVOICE") && (d.status === "ISSUED" || d.status === "OVERDUE")) {
@@ -319,8 +330,20 @@ export async function getWorkspaceAnalyticsData(
         else if (ageInDays <= 60) due31To60 += val;
         else if (ageInDays <= 90) late61To90 += val;
         else overdue90Plus += val;
+
+        outstandingInvoices.push({
+          id: d.id,
+          docNumber: d.docNumber,
+          clientName: d.client?.name || "General Client",
+          issueDate: d.issueDate,
+          dueDate: d.dueDate || null,
+          ageInDays,
+          amount: val,
+        });
       }
     });
+
+    outstandingInvoices.sort((a, b) => b.ageInDays - a.ageInDays);
 
     const totalAr = current0To30 + due31To60 + late61To90 + overdue90Plus;
 
@@ -422,6 +445,7 @@ export async function getWorkspaceAnalyticsData(
         monthlyTimeline,
         kraVatSummary,
         arAging,
+        outstandingInvoices,
         topProducts,
         topClients,
       },

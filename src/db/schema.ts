@@ -27,7 +27,7 @@ export const invitationStatusEnum = pgEnum('invitation_status', ['PENDING', 'ACC
 export const accountTypeEnum = pgEnum('account_type', ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE']);
 export const periodStatusEnum = pgEnum('period_status', ['OPEN', 'CLOSED']);
 export const journalSourceEnum = pgEnum('journal_source', ['document', 'expense', 'income', 'payroll', 'manual', 'migrated']);
-export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'ISSUED', 'OVERDUE', 'PAID', 'PARTIALLY_PAID', 'RECEIVED']);
+export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'ISSUED', 'OVERDUE', 'PAID', 'PARTIALLY_PAID', 'RECEIVED', 'CANCELLED']);
 export const taxRegimeEnum = pgEnum('tax_regime', ['CIT', 'TOT', 'EXEMPT']);
 export const assetClassEnum = pgEnum('asset_class', ['CLASS_1', 'CLASS_2', 'CLASS_3', 'CLASS_4', 'BUILDING']);
 
@@ -546,4 +546,18 @@ export const taxInstalmentsRelations = relations(taxInstalments, ({ one }) => ({
 export const whtPaymentsRelations = relations(whtPayments, ({ one }) => ({
     shop: one(shops, { fields: [whtPayments.shopId], references: [shops.id] }),
     sourceDocument: one(documents, { fields: [whtPayments.sourceDocumentId], references: [documents.id] }),
+}));
+
+// Ledger Snapshots (GL Backups before resets)
+export const ledgerSnapshots = pgTable('ledger_snapshots', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    entryCount: integer('entry_count').default(0).notNull(),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    data: jsonb('data').notNull(),
+});
+
+export const ledgerSnapshotsRelations = relations(ledgerSnapshots, ({ one }) => ({
+    shop: one(shops, { fields: [ledgerSnapshots.shopId], references: [shops.id] }),
 }));

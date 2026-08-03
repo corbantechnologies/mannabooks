@@ -16,6 +16,14 @@ interface PaymentMethod {
   isDefault: boolean;
 }
 
+interface LedgerSnapshot {
+  id: string;
+  entryCount: number;
+  notes: string | null;
+  createdAt: string;
+  data: any;
+}
+
 interface SettingsFormProps {
   shopId: string;
   shopSlug: string;
@@ -32,6 +40,7 @@ interface SettingsFormProps {
   initialCurrency: string;
   initialFiscalYearStartMonth: number;
   paymentMethods: PaymentMethod[];
+  ledgerSnapshots: LedgerSnapshot[];
 }
 
 const COLOR_PALETTES = [
@@ -60,12 +69,14 @@ export function SettingsForm({
   initialCurrency,
   initialFiscalYearStartMonth = 1,
   paymentMethods: initialMethods,
+  ledgerSnapshots = [],
 }: SettingsFormProps) {
   const router = useRouter();
 
   // Ledger repair state
   const [repairing, setRepairing] = useState(false);
   const [showRebuildConfirm, setShowRebuildConfirm] = useState(false);
+  const [expandedSnapshotId, setExpandedSnapshotId] = useState<string | null>(null);
 
   async function handleRebuildLedger() {
     setShowRebuildConfirm(false);
@@ -1044,6 +1055,61 @@ export function SettingsForm({
         )}
       </div>
     </div>
+
+    {/* ── HISTORICAL GENERAL LEDGER BACKUPS & SNAPSHOTS ── */}
+    {ledgerSnapshots.length > 0 && (
+      <div className="card-modern p-6 bg-white font-mono text-xs space-y-4">
+        <div>
+          <h2 className="font-semibold uppercase tracking-wider text-sm text-black font-sans">Ledger Backups &amp; Snapshots</h2>
+          <p className="text-[10px] text-zinc-400 uppercase mt-0.5">Historical database instances saved before rebuild operations</p>
+        </div>
+        <div className="border-t border-zinc-200/80 pt-4 overflow-x-auto">
+          <table className="w-full text-left font-mono text-xs border-collapse">
+            <thead>
+              <tr className="bg-zinc-50 border-b border-zinc-200 uppercase font-semibold text-zinc-600">
+                <th className="p-3 border-r border-zinc-200">Backup Date</th>
+                <th className="p-3 border-r border-zinc-200 text-center">Entries Count</th>
+                <th className="p-3 border-r border-zinc-200">Notes</th>
+                <th className="p-3 text-center">Payload Data</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-200 bg-white">
+              {ledgerSnapshots.map((snap) => {
+                const isExpanded = expandedSnapshotId === snap.id;
+                return (
+                  <tr key={snap.id} className="hover:bg-zinc-50/50 transition-colors">
+                    <td className="p-3 border-r border-zinc-200/80 font-semibold text-zinc-900">
+                      {new Date(snap.createdAt).toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" })}
+                    </td>
+                    <td className="p-3 border-r border-zinc-200/80 text-center text-black font-bold">
+                      {snap.entryCount}
+                    </td>
+                    <td className="p-3 border-r border-zinc-200/80 text-zinc-500 text-[11px]">
+                      {snap.notes || "GL Reset Snapshot"}
+                    </td>
+                    <td className="p-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedSnapshotId(isExpanded ? null : snap.id)}
+                        className="text-[10px] font-bold uppercase tracking-wider underline hover:no-underline text-zinc-800"
+                      >
+                        {isExpanded ? "Hide Data" : "Inspect JSON"}
+                      </button>
+                      
+                      {isExpanded && (
+                        <div className="mt-2 text-left bg-zinc-900 text-emerald-400 p-3 rounded overflow-x-auto max-h-60 max-w-lg font-mono text-[9px] select-all">
+                          <pre>{JSON.stringify(snap.data, null, 2)}</pre>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )}
   </div>
   );
 }

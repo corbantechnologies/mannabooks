@@ -24,7 +24,7 @@ interface DocumentStatusPanelProps {
   documentId: string;
   shopId: string;
   shopSlug: string;
-  currentStatus: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED";
+  currentStatus: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED" | "CANCELLED";
   docType: DocumentType;
   items: DocumentItem[];
   portalLink: string | null;
@@ -62,7 +62,7 @@ export function DocumentStatusPanel({
   parentDocument,
 }: DocumentStatusPanelProps) {
   const router = useRouter();
-  const [status, setStatus] = useState<"DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED">(currentStatus as any);
+  const [status, setStatus] = useState<"DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED" | "CANCELLED">(currentStatus as any);
   const [cuNumber, setCuNumber] = useState(kraCuInvoiceNumber || "");
   const [paymentChannel, setPaymentChannel] = useState(initialPaymentChannel || "");
   const [paymentReference, setPaymentReference] = useState(initialPaymentReference || "");
@@ -192,10 +192,13 @@ export function DocumentStatusPanel({
           {status === "PAID" && (
             <span className="text-[9px] text-zinc-400 italic">PAID status is final. Use Credit Note to reverse.</span>
           )}
+          {status === "CANCELLED" && (
+            <span className="text-[9px] text-rose-600 italic">CANCELLED status is final. Document is voided.</span>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           {STATUS_OPTIONS.map((opt) => {
-            const isBlocked = status === "PAID" && opt.value !== "PAID";
+            const isBlocked = (status === "PAID" || status === "CANCELLED") && opt.value !== status;
             const isCurrentPending = updateStatusMutation.isPending && updateStatusMutation.variables?.status === opt.value;
             return (
               <button
@@ -220,6 +223,16 @@ export function DocumentStatusPanel({
               </button>
             );
           })}
+
+          {status === "CANCELLED" && (
+            <button
+              type="button"
+              disabled
+              className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider border bg-rose-600 text-white border-rose-600 rounded-none cursor-not-allowed"
+            >
+              Cancelled
+            </button>
+          )}
         </div>
       </div>
 

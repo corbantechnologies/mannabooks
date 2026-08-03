@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from "@/db";
-import { documents, documentItems, documentTokens, shops, clients, journalEntries } from "@/db/schema";
+import { documents, documentItems, documentTokens, shops, clients, journalEntries, ledgerSnapshots } from "@/db/schema";
 import { calculateLineItem, calculateDocumentTotals } from "@/lib/utils";
-import { eq, and, gte, lte, inArray } from "drizzle-orm";
+import { eq, and, gte, lte, inArray, desc } from "drizzle-orm";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { verifyAndGetSession } from "./auth";
@@ -816,6 +816,19 @@ export async function repairLedgerAction(
                     );
             }
 
+            // 0.2 Backup all current journal entries of the shop to ledgerSnapshots before reset
+            const existingEntries = await tx.query.journalEntries.findMany({
+                where: eq(journalEntries.shopId, shopId),
+            });
+            if (existingEntries.length > 0) {
+                await tx.insert(ledgerSnapshots).values({
+                    shopId,
+                    entryCount: existingEntries.length,
+                    notes: `Automatic pre-rebuild backup of General Ledger.`,
+                    data: existingEntries,
+                });
+            }
+
             // 1. Delete all existing document-related journal entries for this shop
             await tx.delete(journalEntries).where(
                 and(
@@ -838,7 +851,7 @@ export async function repairLedgerAction(
 
                 // INVOICE
                 if (doc.type === "INVOICE") {
-                    if (doc.status === "ISSUED" || doc.status === "PAID") {
+                    if (doc.status === "ISSUED" || doc.status === "PAID" || doc.status === "CANCELLED") {
                         // AR / Sales Revenue
                         await createJournalEntry({
                             shopId,
@@ -858,6 +871,19 @@ export async function repairLedgerAction(
                             entryDate,
                             description: `Invoice ${doc.docNumber} — Settled (Repaired)`,
                             debitAccountCode: "1200",  // Cash & Bank
+                            creditAccountCode: "1100", // Accounts Receivable
+                            amount,
+                            sourceType: "document",
+                            sourceId: doc.id,
+                        });
+                    }
+                    if (doc.status === "CANCELLED") {
+                        // Reversing entry: DR Sales / CR AR
+                        await createJournalEntry({
+                            shopId,
+                            entryDate,
+                            description: `Invoice ${doc.docNumber} — Cancelled/Reverted (Repaired)`,
+                            debitAccountCode: "4100",  // Sales Revenue
                             creditAccountCode: "1100", // Accounts Receivable
                             amount,
                             sourceType: "document",
@@ -918,5 +944,106 @@ export async function repairLedgerAction(
     } catch (error: any) {
         console.error("Ledger repair failed:", error);
         return { success: false, error: error.message || "Failed to repair ledger." };
+    }
+}
+
+/**
+ * Action: Cancel a Quotation document.
+ */
+export async function cancelQuotationAction(shopId: string, docId: string) {
+    try {
+        await enforcePermission(shopId, "manage_documents");
+        await db.update(documents)
+            .set({ status: "CANCELLED" })
+            .where(
+                and(
+                    eq(documents.id, docId),
+                    eq(documents.shopId, shopId),
+                    eq(documents.type, "QUOTATION")
+                )
+            );
+        
+        revalidatePath(`/workspaces/${shopId}/documents`);
+        revalidatePath(`/workspaces/${shopId}/documents/${docId}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Quotation cancellation failed:", error);
+        return { success: false, error: error.message || "Failed to cancel quotation." };
+    }
+}
+
+/**
+ * Action: Cancel an unpaid (issued or overdue) invoice, posting a reversing entry.
+ */
+export async function cancelInvoiceAction(shopId: string, docId: string) {
+    try {
+        await enforcePermission(shopId, "manage_documents");
+        
+        const res = await db.transaction(async (tx) => {
+            const invoice = await tx.query.documents.findFirst({
+                where: and(
+                    eq(documents.id, docId),
+                    eq(documents.shopId, shopId),
+                    eq(documents.type, "INVOICE")
+                )
+            });
+
+            if (!invoice) {
+                return { success: false, error: "Invoice not found." };
+            }
+
+            if (invoice.status !== "ISSUED" && invoice.status !== "OVERDUE") {
+                return { success: false, error: "Only unpaid (issued or overdue) invoices can be directly cancelled. Paid invoices must be refunded via a Credit Note." };
+            }
+
+            // Update status to CANCELLED
+            await tx.update(documents)
+                .set({ status: "CANCELLED" })
+                .where(eq(documents.id, docId));
+
+            // Write reversing GL entries: DR Revenue (4100) / CR AR (1100)
+            const amount = parseFloat(invoice.grandTotal || "0");
+            if (amount > 0) {
+                const entryDate = new Date();
+                await createJournalEntry({
+                    shopId,
+                    entryDate,
+                    description: `Invoice ${invoice.docNumber} — Cancelled/Reverted`,
+                    debitAccountCode: "4100",  // Sales Revenue (debit reduces revenue)
+                    creditAccountCode: "1100", // Accounts Receivable (credit reduces A/R debt)
+                    amount,
+                    sourceType: "document",
+                    sourceId: invoice.id,
+                });
+            }
+
+            return { success: true };
+        });
+
+        if (res.success) {
+            revalidatePath(`/workspaces/${shopId}/documents`);
+            revalidatePath(`/workspaces/${shopId}/documents/${docId}`);
+        }
+        return res;
+    } catch (error: any) {
+        console.error("Invoice cancellation failed:", error);
+        return { success: false, error: error.message || "Failed to cancel invoice." };
+    }
+}
+
+/**
+ * Action: Fetch all saved pre-rebuild backups of the General Ledger for a shop.
+ */
+export async function getLedgerSnapshotsAction(shopId: string) {
+    try {
+        await enforcePermission(shopId, "manage_expenses");
+        const snapshots = await db.query.ledgerSnapshots.findMany({
+            where: eq(ledgerSnapshots.shopId, shopId),
+            orderBy: [desc(ledgerSnapshots.createdAt)],
+        });
+        return { success: true, data: snapshots };
+    } catch (error: any) {
+        console.error("Failed to fetch ledger snapshots:", error);
+        return { success: false, error: error.message || "Failed to retrieve ledger backups." };
     }
 }

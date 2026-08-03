@@ -92,7 +92,23 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
       <div className="grid grid-cols-1 sm:grid-cols-3 border border-black divide-y sm:divide-y-0 sm:divide-x divide-black bg-white">
         <div className="p-5 space-y-1">
           <p className="font-mono text-[10px] text-zinc-400 uppercase">{doc.supplier ? "Supplier" : "Client"}</p>
-          <p className="font-bold uppercase text-sm">{party.name}</p>
+          {doc.client ? (
+            <Link
+              href={`/workspaces/${slug}/clients/${doc.client.id}`}
+              className="font-bold uppercase text-sm hover:underline hover:text-black block"
+            >
+              {party.name} ➔
+            </Link>
+          ) : doc.supplier ? (
+            <Link
+              href={`/workspaces/${slug}/suppliers/${doc.supplier.id}`}
+              className="font-bold uppercase text-sm hover:underline hover:text-black block"
+            >
+              {party.name} ➔
+            </Link>
+          ) : (
+            <p className="font-bold uppercase text-sm">{party.name}</p>
+          )}
           <p className="font-mono text-xs text-zinc-500">{party.email}</p>
           {party.taxPin && (
             <p className="font-mono text-[10px] text-zinc-600">PIN: {party.taxPin}</p>

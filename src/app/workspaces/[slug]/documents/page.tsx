@@ -160,7 +160,23 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
                   </span>
                 </td>
                 <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-zinc-900">
-                  {doc.client?.name || doc.supplier?.name || "General Contact"}
+                  {doc.client ? (
+                    <Link
+                      href={`/workspaces/${slug}/clients/${doc.client.id}`}
+                      className="hover:underline text-black font-semibold"
+                    >
+                      {doc.client.name} ➔
+                    </Link>
+                  ) : doc.supplier ? (
+                    <Link
+                      href={`/workspaces/${slug}/suppliers/${doc.supplier.id}`}
+                      className="hover:underline text-zinc-700"
+                    >
+                      {doc.supplier.name} ➔
+                    </Link>
+                  ) : (
+                    "General Contact"
+                  )}
                 </td>
                 <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
                   {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}

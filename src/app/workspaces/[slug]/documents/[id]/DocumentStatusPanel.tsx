@@ -171,6 +171,7 @@ export function DocumentStatusPanel({
           docType={docType}
           items={items}
           kraCuInvoiceNumber={kraCuInvoiceNumber}
+          status={status}
         />
       </div>
 

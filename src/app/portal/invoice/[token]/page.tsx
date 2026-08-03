@@ -5,6 +5,7 @@ import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import crypto from "crypto";
+import QRCode from "react-qr-code";
 
 interface PortalPageProps {
   params: Promise<{ token: string }>;
@@ -284,6 +285,22 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
               <span>TOTAL OUTSTANDING:</span>
               <span className="underline underline-offset-2 decoration-double">{formatCurrency(doc.grandTotal, shop.currency)}</span>
             </div>
+
+            {doc.kraCuInvoiceNumber && (
+              <div className="border-t border-zinc-200 pt-4 mt-4 flex flex-col items-center gap-2">
+                <span className="text-[9px] text-zinc-400 font-bold uppercase">KRA eTIMS VERIFICATION QR</span>
+                <div className="bg-white p-2 border border-black flex justify-center items-center">
+                  <QRCode
+                    value={`https://etims.kra.go.ke/query/invoice/verify?invoiceNo=${doc.kraCuInvoiceNumber}`}
+                    size={100}
+                    style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                  />
+                </div>
+                <span className="text-[8px] text-zinc-400 font-sans text-center leading-tight">
+                  Scan to verify this statutory tax document on the official KRA portal.
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

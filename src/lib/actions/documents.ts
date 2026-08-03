@@ -1,12 +1,13 @@
 "use server";
 
 import { db } from "@/db";
-import { documents, documentItems, documentTokens, shops, clients } from "@/db/schema";
+import { documents, documentItems, documentTokens, shops, clients, journalEntries } from "@/db/schema";
 import { calculateLineItem, calculateDocumentTotals } from "@/lib/utils";
 import { eq, and, gte, lte } from "drizzle-orm";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { verifyAndGetSession } from "./auth";
+import { enforcePermission } from "./rbac";
 
 import { applyDocumentStockMovements } from "@/lib/actions/stock";
 import { getFiscalYearRange, getFyDocSuffix } from "@/lib/fiscalYear";
@@ -63,8 +64,8 @@ function determineDefaultStatus(type: DocumentType, sourceDocType?: DocumentType
         case "RECEIPT":
         case "PAYMENT_VOUCHER":
         case "PAYROLL_VOUCHER":
-            return "PAID";
         case "CREDIT_NOTE":
+            return "PAID";
         case "DEBIT_NOTE":
         case "DELIVERY_NOTE":
             return "ISSUED";
@@ -233,6 +234,23 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                         description: `Receipt ${formattedSerial} — Direct POS sale`,
                         debitAccountCode: "1200",  // Cash & Bank
                         creditAccountCode: "4100", // Sales Revenue
+                        amount,
+                        sourceType: "document",
+                        sourceId: newDoc.id,
+                    });
+                }
+            }
+
+            // AUTO-JOURNAL: Credit Note → DR Sales Revenue / CR Cash & Bank
+            if (input.type === "CREDIT_NOTE") {
+                const amount = parseFloat(calculatedTotals.grandTotal.toString());
+                if (amount > 0) {
+                    await createJournalEntry({
+                        shopId: input.shopId,
+                        entryDate: new Date(),
+                        description: `Credit Note ${formattedSerial} — Reversed invoice payment`,
+                        debitAccountCode: "4100",  // Sales Revenue (debit reduces revenue)
+                        creditAccountCode: "1200", // Cash & Bank (credit reduces cash)
                         amount,
                         sourceType: "document",
                         sourceId: newDoc.id,
@@ -534,6 +552,14 @@ export async function raiseCreditNoteAction(input: RaiseCreditNoteInput) {
             return { success: false, error: "Target invoice not found." };
         }
 
+        if (invoice.type !== "INVOICE") {
+            return { success: false, error: "A credit note can only be raised for an invoice." };
+        }
+
+        if (invoice.status !== "PAID") {
+            return { success: false, error: "A credit note cannot be raised for an invoice that is not paid." };
+        }
+
         let targetItems = invoice.items;
         if (input.isPartial && input.selectedItemIds && input.selectedItemIds.length > 0) {
             targetItems = invoice.items.filter((item) => input.selectedItemIds?.includes(item.id));
@@ -740,5 +766,116 @@ export async function updateBillingDocument(input: UpdateDocumentInput) {
     } catch (error) {
         console.error("Critical failure during document update transaction:", error);
         return { success: false, error: "Failed to persist document updates." };
+    }
+}
+
+/**
+ * Maintenance Action: Deletes and rebuilds all document journal entries chronologically for a shop.
+ */
+export async function repairLedgerAction(shopId: string, shopSlug: string) {
+    try {
+        await enforcePermission(shopId, "manage_expenses");
+        
+        return await db.transaction(async (tx) => {
+            // 1. Delete all existing document-related journal entries for this shop
+            await tx.delete(journalEntries).where(
+                and(
+                    eq(journalEntries.shopId, shopId),
+                    eq(journalEntries.sourceType, "document")
+                )
+            );
+
+            // 2. Fetch all documents for this shop
+            const allDocs = await tx.query.documents.findMany({
+                where: eq(documents.shopId, shopId),
+            });
+
+            // 3. Re-create journal entries chronologically
+            for (const doc of allDocs) {
+                const amount = parseFloat(doc.grandTotal || "0");
+                if (amount <= 0) continue;
+
+                const entryDate = new Date(doc.issueDate);
+
+                // INVOICE
+                if (doc.type === "INVOICE") {
+                    if (doc.status === "ISSUED" || doc.status === "PAID") {
+                        // AR / Sales Revenue
+                        await createJournalEntry({
+                            shopId,
+                            entryDate,
+                            description: `Invoice ${doc.docNumber} — Issued (Repaired)`,
+                            debitAccountCode: "1100",  // Accounts Receivable
+                            creditAccountCode: "4100", // Sales Revenue
+                            amount,
+                            sourceType: "document",
+                            sourceId: doc.id,
+                        });
+                    }
+                    if (doc.status === "PAID") {
+                        // Cash & Bank / AR
+                        await createJournalEntry({
+                            shopId,
+                            entryDate,
+                            description: `Invoice ${doc.docNumber} — Settled (Repaired)`,
+                            debitAccountCode: "1200",  // Cash & Bank
+                            creditAccountCode: "1100", // Accounts Receivable
+                            amount,
+                            sourceType: "document",
+                            sourceId: doc.id,
+                        });
+                    }
+                }
+
+                // RECEIPT (standalone only)
+                if (doc.type === "RECEIPT" && !doc.parentDocumentId) {
+                    await createJournalEntry({
+                        shopId,
+                        entryDate,
+                        description: `Receipt ${doc.docNumber} — Direct POS sale (Repaired)`,
+                        debitAccountCode: "1200",  // Cash & Bank
+                        creditAccountCode: "4100", // Sales Revenue
+                        amount,
+                        sourceType: "document",
+                        sourceId: doc.id,
+                    });
+                }
+
+                // CREDIT NOTE
+                if (doc.type === "CREDIT_NOTE" && doc.status === "PAID") {
+                    await createJournalEntry({
+                        shopId,
+                        entryDate,
+                        description: `Credit Note ${doc.docNumber} — Reversed invoice payment (Repaired)`,
+                        debitAccountCode: "4100",  // Sales Revenue (debit reduces revenue)
+                        creditAccountCode: "1200", // Cash & Bank (credit reduces cash)
+                        amount,
+                        sourceType: "document",
+                        sourceId: doc.id,
+                    });
+                }
+
+                // LPO / PO / PAYMENT VOUCHER
+                if ((doc.type === "LPO" || doc.type === "PO" || doc.type === "PAYMENT_VOUCHER") && doc.status === "PAID") {
+                    await createJournalEntry({
+                        shopId,
+                        entryDate,
+                        description: `${doc.type} ${doc.docNumber} — Paid to supplier (Repaired)`,
+                        debitAccountCode: "2100",  // Accounts Payable
+                        creditAccountCode: "1200", // Cash & Bank
+                        amount,
+                        sourceType: "document",
+                        sourceId: doc.id,
+                    });
+                }
+            }
+
+            revalidatePath(`/workspaces/${shopSlug}/finance`);
+            revalidatePath(`/workspaces/${shopSlug}/documents`);
+            return { success: true };
+        });
+    } catch (error: any) {
+        console.error("Ledger repair failed:", error);
+        return { success: false, error: error.message || "Failed to repair ledger." };
     }
 }

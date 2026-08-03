@@ -6,15 +6,22 @@ import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { EditClientModal } from "../EditClientModal";
 import { SyncClientToSupplierButton } from "./SyncClientToSupplierButton";
+import { ClientDocumentsFilterBar } from "./ClientDocumentsFilterBar";
 import Link from "next/link";
 
 interface ClientProfilePageProps {
   params: Promise<{ slug: string; id: string }>;
+  searchParams: Promise<{
+    type?: string;
+    status?: string;
+    search?: string;
+  }>;
 }
 
-export default async function ClientProfileLedgerPage({ params }: ClientProfilePageProps) {
-  // 1. Await params (required in Next.js 15+)
+export default async function ClientProfileLedgerPage({ params, searchParams }: ClientProfilePageProps) {
+  // 1. Await params and searchParams (required in Next.js 15+)
   const { slug, id } = await params;
+  const { type, status: docStatus, search } = await searchParams;
 
   // 2. Resolve multi-tenant shop criteria context
   const shop = await db.query.shops.findFirst({
@@ -40,6 +47,26 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
 
   if (!clientRecord) {
     notFound();
+  }
+
+  // 4. In-memory filter on client's documents based on search parameters
+  let filteredDocs = clientRecord.documents;
+
+  if (type && type !== "ALL") {
+    filteredDocs = filteredDocs.filter((d) => d.type === type);
+  }
+
+  if (docStatus && docStatus !== "ALL") {
+    filteredDocs = filteredDocs.filter((d) => d.status === docStatus);
+  }
+
+  if (search && search.trim() !== "") {
+    const q = search.toLowerCase().trim();
+    filteredDocs = filteredDocs.filter(
+      (d) =>
+        d.docNumber.toLowerCase().includes(q) ||
+        (d.notes && d.notes.toLowerCase().includes(q))
+    );
   }
 
   // 3.5 Check if a corresponding supplier profile already exists
@@ -185,6 +212,8 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
       <div className="space-y-4">
         <h3 className="font-semibold uppercase tracking-tight text-sm font-sans text-black">&gt; Transaction Sub-Ledger</h3>
         
+        <ClientDocumentsFilterBar />
+        
         <div className="card-modern overflow-x-auto">
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
@@ -198,7 +227,7 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200/80 bg-white">
-              {clientRecord.documents.map((doc) => (
+              {filteredDocs.map((doc) => (
                 <tr key={doc.id} className="hover:bg-zinc-50/80 transition-colors">
                   <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider">
                     <Link 
@@ -240,7 +269,7 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
                 </tr>
               ))}
 
-              {clientRecord.documents.length === 0 && (
+              {filteredDocs.length === 0 && (
                 <tr>
                   <td colSpan={6} className="p-12 text-center text-zinc-400 italic">
                     &gt; NO REVENUE RECORDS ASSIGNED TO THIS INDIVIDUAL CLIENT TRACKING NODE.

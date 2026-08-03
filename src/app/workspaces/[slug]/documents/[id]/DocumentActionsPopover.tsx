@@ -22,6 +22,7 @@ interface DocumentActionsPopoverProps {
   docType: DocumentType;
   items: DocumentItem[];
   kraCuInvoiceNumber?: string | null;
+  status: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED";
 }
 
 export function DocumentActionsPopover({
@@ -31,6 +32,7 @@ export function DocumentActionsPopover({
   docType,
   items,
   kraCuInvoiceNumber,
+  status,
 }: DocumentActionsPopoverProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -103,12 +105,15 @@ export function DocumentActionsPopover({
 
               <button
                 onClick={() => {
+                  if (status !== "PAID") return;
                   setIsOpen(false);
                   setShowCreditNoteModal(true);
                 }}
-                className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] text-rose-600 transition-colors"
+                disabled={status !== "PAID"}
+                className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] text-rose-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={status !== "PAID" ? "Invoice must be paid to raise a credit note" : ""}
               >
-                ➔ Raise Credit Note
+                ➔ Raise Credit Note {status !== "PAID" && "(Invoice Unpaid)"}
               </button>
 
               <button

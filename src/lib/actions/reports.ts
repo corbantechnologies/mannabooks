@@ -104,10 +104,12 @@ export async function getPLStatement(
         let cogs = 0;
         filteredDocs.forEach(d => {
             const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
-            if (!isReceiptFromInvoice && (d.type === "RECEIPT" || (d.type === "INVOICE" && d.status === "PAID"))) {
-                salesRevenue += parseFloat(d.grandTotal || "0");
+            const isSalesDoc = d.type === "RECEIPT" || (d.type === "INVOICE" && d.status === "PAID") || (d.type === "CREDIT_NOTE" && d.status === "PAID");
+            if (!isReceiptFromInvoice && isSalesDoc) {
+                const factor = d.type === "CREDIT_NOTE" ? -1 : 1;
+                salesRevenue += parseFloat(d.grandTotal || "0") * factor;
                 d.items.forEach(item => {
-                    cogs += parseFloat(item.quantity || "1") * parseFloat(item.product?.costPrice || "0");
+                    cogs += parseFloat(item.quantity || "1") * parseFloat(item.product?.costPrice || "0") * factor;
                 });
             }
         });
@@ -292,8 +294,10 @@ export async function getCashFlowStatement(
         allDocs.forEach(d => {
             const val = parseFloat(d.grandTotal || "0");
             const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
-            if (!isReceiptFromInvoice && (d.type === "RECEIPT" || (d.type === "INVOICE" && d.status === "PAID"))) {
-                receiptsFromClients += val;
+            const isSalesDoc = d.type === "RECEIPT" || (d.type === "INVOICE" && d.status === "PAID") || (d.type === "CREDIT_NOTE" && d.status === "PAID");
+            if (!isReceiptFromInvoice && isSalesDoc) {
+                const factor = d.type === "CREDIT_NOTE" ? -1 : 1;
+                receiptsFromClients += val * factor;
             }
             if ((d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER") && d.status === "PAID") {
                 paymentsToSuppliers += val;

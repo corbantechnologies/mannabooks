@@ -70,6 +70,7 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
       children: [
         { href: `/workspaces/${slug}/team`, label: "Team Management" },
         { href: `/workspaces/${slug}/settings`, label: "System Settings" },
+        { href: `/workspaces/${slug}/settings/diagnostics`, label: "GL Diagnostics" },
         { href: `/workspaces/${slug}/guide`, label: "Operator Guide" },
       ]
     }

@@ -82,6 +82,7 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
       children: [
         { href: `/workspaces/${slug}/team`, label: "Team Management" },
         { href: `/workspaces/${slug}/settings`, label: "Workspace Settings" },
+        { href: `/workspaces/${slug}/settings/diagnostics`, label: "GL Diagnostics" },
         { href: `/workspaces/${slug}/guide`, label: "Operator Guide" },
       ]
     }

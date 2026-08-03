@@ -777,6 +777,16 @@ export async function repairLedgerAction(shopId: string, shopSlug: string): Prom
         await enforcePermission(shopId, "manage_expenses");
         
         return await db.transaction(async (tx) => {
+            // 0. Automatically migrate all existing Credit Notes to PAID status in the database
+            await tx.update(documents)
+                .set({ status: "PAID" })
+                .where(
+                    and(
+                        eq(documents.shopId, shopId),
+                        eq(documents.type, "CREDIT_NOTE")
+                    )
+                );
+
             // 1. Delete all existing document-related journal entries for this shop
             await tx.delete(journalEntries).where(
                 and(
@@ -785,7 +795,7 @@ export async function repairLedgerAction(shopId: string, shopSlug: string): Prom
                 )
             );
 
-            // 2. Fetch all documents for this shop
+            // 2. Fetch all documents for this shop (including newly migrated credit notes)
             const allDocs = await tx.query.documents.findMany({
                 where: eq(documents.shopId, shopId),
             });

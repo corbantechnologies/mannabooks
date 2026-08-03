@@ -772,7 +772,7 @@ export async function updateBillingDocument(input: UpdateDocumentInput) {
 /**
  * Maintenance Action: Deletes and rebuilds all document journal entries chronologically for a shop.
  */
-export async function repairLedgerAction(shopId: string, shopSlug: string) {
+export async function repairLedgerAction(shopId: string, shopSlug: string): Promise<{ success: boolean; error?: string }> {
     try {
         await enforcePermission(shopId, "manage_expenses");
         

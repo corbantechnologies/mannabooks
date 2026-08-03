@@ -772,9 +772,15 @@ export async function updateBillingDocument(input: UpdateDocumentInput) {
 /**
  * Maintenance Action: Deletes and rebuilds all document journal entries chronologically for a shop.
  */
-export async function repairLedgerAction(shopId: string, shopSlug: string): Promise<{ success: boolean; error?: string }> {
+export async function repairLedgerAction(
+    shopId: string,
+    shopSlug: string,
+    skipAuth: boolean = false
+): Promise<{ success: boolean; error?: string }> {
     try {
-        await enforcePermission(shopId, "manage_expenses");
+        if (!skipAuth) {
+            await enforcePermission(shopId, "manage_expenses");
+        }
         
         return await db.transaction(async (tx) => {
             // 0. Automatically migrate all existing Credit Notes to PAID status in the database
@@ -903,8 +909,10 @@ export async function repairLedgerAction(shopId: string, shopSlug: string): Prom
                 }
             }
 
-            revalidatePath(`/workspaces/${shopSlug}/finance`);
-            revalidatePath(`/workspaces/${shopSlug}/documents`);
+            if (!skipAuth) {
+                revalidatePath(`/workspaces/${shopSlug}/finance`);
+                revalidatePath(`/workspaces/${shopSlug}/documents`);
+            }
             return { success: true };
         });
     } catch (error: any) {

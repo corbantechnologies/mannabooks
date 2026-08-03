@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { documents, documentItems, documentTokens, shops, clients, journalEntries } from "@/db/schema";
 import { calculateLineItem, calculateDocumentTotals } from "@/lib/utils";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, inArray } from "drizzle-orm";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { verifyAndGetSession } from "./auth";
@@ -786,6 +786,29 @@ export async function repairLedgerAction(shopId: string, shopSlug: string): Prom
                         eq(documents.type, "CREDIT_NOTE")
                     )
                 );
+
+            // 0.1 Automatically migrate any parent invoices of existing Credit Notes to PAID status
+            // This corrects legacy test data where credit notes were raised against ISSUED/unpaid invoices.
+            const creditNotes = await tx.query.documents.findMany({
+                where: and(
+                    eq(documents.shopId, shopId),
+                    eq(documents.type, "CREDIT_NOTE")
+                ),
+            });
+            const parentDocIds = creditNotes
+                .map((cn) => cn.parentDocumentId)
+                .filter((id): id is string => !!id);
+
+            if (parentDocIds.length > 0) {
+                await tx.update(documents)
+                    .set({ status: "PAID" })
+                    .where(
+                        and(
+                            eq(documents.shopId, shopId),
+                            inArray(documents.id, parentDocIds)
+                        )
+                    );
+            }
 
             // 1. Delete all existing document-related journal entries for this shop
             await tx.delete(journalEntries).where(

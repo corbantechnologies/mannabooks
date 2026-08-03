@@ -65,11 +65,10 @@ export function SettingsForm({
 
   // Ledger repair state
   const [repairing, setRepairing] = useState(false);
+  const [showRebuildConfirm, setShowRebuildConfirm] = useState(false);
 
   async function handleRebuildLedger() {
-    if (!confirm("Are you sure you want to delete and rebuild all document journal entries? This operation might take a moment.")) {
-      return;
-    }
+    setShowRebuildConfirm(false);
     setRepairing(true);
     const toastId = toast.loading("Rebuilding ledger journal entries...");
     try {
@@ -1014,21 +1013,35 @@ export function SettingsForm({
             This utility will clear all automatically generated journal entries (debits and credits) associated with invoices, receipts, credit notes, LPOs, and POs in this workspace. It will then reconstruct them chronologically using the latest lifecycle posting rules. Recommended if your analytics or general ledger balances are out of sync.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleRebuildLedger}
-          disabled={repairing}
-          className="btn-secondary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs border border-black hover:bg-black hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-        >
-          {repairing ? (
-            <span className="flex items-center gap-1.5">
-              <Spinner size={12} color="black" />
-              <span>REBUILDING...</span>
-            </span>
-          ) : (
-            "REBUILD JOURNAL ENTRIES"
-          )}
-        </button>
+        {showRebuildConfirm ? (
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleRebuildLedger}
+              disabled={repairing}
+              className="btn-primary-modern bg-rose-600 hover:bg-rose-700 text-white border border-rose-600 px-6 py-2.5 font-semibold uppercase tracking-wider text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {repairing ? "REBUILDING..." : "CONFIRM REBUILD"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowRebuildConfirm(false)}
+              disabled={repairing}
+              className="btn-secondary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs border border-zinc-300 hover:bg-zinc-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              CANCEL
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowRebuildConfirm(true)}
+            disabled={repairing}
+            className="btn-secondary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs border border-black hover:bg-black hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          >
+            REBUILD JOURNAL ENTRIES
+          </button>
+        )}
       </div>
     </div>
   </div>

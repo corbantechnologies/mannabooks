@@ -179,6 +179,13 @@ export async function getWorkspaceAnalyticsData(
       } else if (d.status === "ISSUED" || d.status === "OVERDUE") {
         if (isSales) pendingReceivables += val;
         else if (isOutflow && d.type !== "PAYROLL_VOUCHER") accountsPayableDebt += val;
+      } else if (d.type === "CREDIT_NOTE" && d.status === "PAID") {
+        totalSettledInflow -= val;
+        d.items.forEach((item) => {
+          const qty = parseFloat(item.quantity || "1");
+          const cost = parseFloat(item.product?.costPrice || "0");
+          totalCostOfGoodsSold -= qty * cost;
+        });
       }
     });
 
@@ -223,6 +230,8 @@ export async function getWorkspaceAnalyticsData(
         if (!isReceiptFromInvoice && (d.status === "PAID" || d.type === "RECEIPT")) {
           if (isSales) monthlyTimelineMap[label].inflow += val;
           else if (isOutflow) monthlyTimelineMap[label].outflow += val;
+        } else if (d.type === "CREDIT_NOTE" && d.status === "PAID") {
+          monthlyTimelineMap[label].inflow -= val;
         }
       }
     });
@@ -270,15 +279,17 @@ export async function getWorkspaceAnalyticsData(
       const issue = new Date(d.issueDate);
       // Skip receipts derived from invoices to avoid counting VAT twice
       const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
-      if (!isReceiptFromInvoice && issue >= currentMonthStart && issue <= currentMonthEnd && (d.type === "INVOICE" || d.type === "RECEIPT")) {
+      const isSalesDoc = d.type === "INVOICE" || d.type === "RECEIPT" || d.type === "CREDIT_NOTE";
+      if (!isReceiptFromInvoice && issue >= currentMonthStart && issue <= currentMonthEnd && isSalesDoc) {
         const docTax = parseFloat(d.taxAmount || "0");
-        outputVat16 += docTax;
+        const factor = d.type === "CREDIT_NOTE" ? -1 : 1;
+        outputVat16 += docTax * factor;
 
         d.items.forEach((item) => {
           const itemVal = parseFloat(item.itemTotal || "0");
-          if (item.taxType === "V_16") taxableSalesVolume += itemVal;
-          else if (item.taxType === "V_0") zeroRatedVolume += itemVal;
-          else if (item.taxType === "EXEMPT") exemptVolume += itemVal;
+          if (item.taxType === "V_16") taxableSalesVolume += itemVal * factor;
+          else if (item.taxType === "V_0") zeroRatedVolume += itemVal * factor;
+          else if (item.taxType === "EXEMPT") exemptVolume += itemVal * factor;
         });
       }
     });
@@ -328,18 +339,24 @@ export async function getWorkspaceAnalyticsData(
     filteredDocs.forEach((d) => {
       // Skip receipts derived from invoices — the invoice itself is already PAID and counted
       const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
-      if (!isReceiptFromInvoice && (d.type === "INVOICE" || d.type === "RECEIPT")) {
+      const isSalesDoc = d.type === "INVOICE" || d.type === "RECEIPT" || d.type === "CREDIT_NOTE";
+      if (!isReceiptFromInvoice && isSalesDoc && (d.status === "PAID" || d.type === "RECEIPT")) {
         d.items.forEach((item) => {
           const rev = parseFloat(item.itemTotal || "0");
           const qty = parseFloat(item.quantity || "1");
-          totalSalesItemRevenue += rev;
+          const factor = d.type === "CREDIT_NOTE" ? -1 : 1;
+          totalSalesItemRevenue += rev * factor;
 
-          const key = item.description.trim().toUpperCase();
-          if (!productSalesMap[key]) {
-            productSalesMap[key] = { name: item.description.trim(), qty: 0, revenue: 0 };
+          let descText = item.description.trim();
+          if (descText.startsWith("Credit Adjustment: ")) {
+            descText = descText.substring("Credit Adjustment: ".length);
           }
-          productSalesMap[key].qty += qty;
-          productSalesMap[key].revenue += rev;
+          const key = descText.toUpperCase();
+          if (!productSalesMap[key]) {
+            productSalesMap[key] = { name: descText, qty: 0, revenue: 0 };
+          }
+          productSalesMap[key].qty += qty * factor;
+          productSalesMap[key].revenue += rev * factor;
         });
       }
     });
@@ -362,14 +379,16 @@ export async function getWorkspaceAnalyticsData(
     allDocs.forEach((d) => {
       // Skip receipts derived from invoices to avoid double-counting LTV
       const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
-      if (d.client && !isReceiptFromInvoice && (d.type === "RECEIPT" || (d.type === "INVOICE" && d.status === "PAID"))) {
+      const isSalesDoc = d.type === "RECEIPT" || d.type === "INVOICE" || d.type === "CREDIT_NOTE";
+      if (d.client && !isReceiptFromInvoice && isSalesDoc && (d.type === "RECEIPT" || d.status === "PAID")) {
         const val = parseFloat(d.grandTotal || "0");
-        totalClientRevenue += val;
+        const factor = d.type === "CREDIT_NOTE" ? -1 : 1;
+        totalClientRevenue += val * factor;
 
         if (!clientLtvMap[d.client.id]) {
           clientLtvMap[d.client.id] = { id: d.client.id, name: d.client.name, ltv: 0 };
         }
-        clientLtvMap[d.client.id].ltv += val;
+        clientLtvMap[d.client.id].ltv += val * factor;
       }
     });
 

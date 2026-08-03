@@ -470,8 +470,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         
         let qrCodeDataUrl = "";
         try {
-            const portalUrl = `https://mannabooks.co.ke/portal/invoice/${actualToken}`;
-            qrCodeDataUrl = await QRCode.toDataURL(portalUrl, { errorCorrectionLevel: 'H', margin: 1 });
+            const qrText = doc.kraCuInvoiceNumber
+                ? `https://etims.kra.go.ke/query/invoice/verify?invoiceNo=${doc.kraCuInvoiceNumber}`
+                : `https://mannabooks.co.ke/portal/invoice/${actualToken}`;
+            qrCodeDataUrl = await QRCode.toDataURL(qrText, { errorCorrectionLevel: 'H', margin: 1 });
         } catch (err) {
             console.error("Failed to generate QR Code", err);
         }

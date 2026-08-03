@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateShopSettings } from "@/lib/actions/workspace";
+import { repairLedgerAction } from "@/lib/actions/documents";
 import { useAddPaymentMethod, useDeletePaymentMethod, useSetDefaultPaymentMethod, useUpdatePaymentMethod } from "@/hooks/usePayments";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
@@ -61,6 +62,30 @@ export function SettingsForm({
   paymentMethods: initialMethods,
 }: SettingsFormProps) {
   const router = useRouter();
+
+  // Ledger repair state
+  const [repairing, setRepairing] = useState(false);
+
+  async function handleRebuildLedger() {
+    if (!confirm("Are you sure you want to delete and rebuild all document journal entries? This operation might take a moment.")) {
+      return;
+    }
+    setRepairing(true);
+    const toastId = toast.loading("Rebuilding ledger journal entries...");
+    try {
+      const res = await repairLedgerAction(shopId, shopSlug);
+      if (res.success) {
+        toast.success("Ledger journal entries successfully rebuilt and repaired.", { id: toastId });
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to repair ledger.", { id: toastId });
+      }
+    } catch (err) {
+      toast.error("An unexpected error occurred during ledger repair.", { id: toastId });
+    } finally {
+      setRepairing(false);
+    }
+  }
 
   // Profile form state
   const [businessName, setBusinessName] = useState(initialName);
@@ -284,7 +309,8 @@ export function SettingsForm({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
       {/* ── BUSINESS PROFILE FORM ── */}
       <form onSubmit={handleProfileSubmit} className="space-y-6 font-mono text-xs card-modern p-6 bg-white">
         <h2 className="font-semibold uppercase tracking-wider text-sm text-black font-sans">Business Profile</h2>
@@ -974,5 +1000,37 @@ export function SettingsForm({
         )}
       </div>
     </div>
+
+    {/* ── LEDGER DIAGNOSTICS & MAINTENANCE ── */}
+    <div className="card-modern p-6 bg-white font-mono text-xs space-y-4">
+      <div>
+        <h2 className="font-semibold uppercase tracking-wider text-sm text-black font-sans">Ledger Diagnostics &amp; Maintenance</h2>
+        <p className="text-[10px] text-zinc-400 uppercase mt-0.5">Repair and rebuild workspace transaction records</p>
+      </div>
+      <div className="border-t border-zinc-200/80 pt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="space-y-1 max-w-xl">
+          <p className="font-bold text-zinc-900 uppercase text-[11px]">Rebuild Ledger Journal Entries</p>
+          <p className="font-sans text-[11px] text-zinc-500 normal-case leading-normal">
+            This utility will clear all automatically generated journal entries (debits and credits) associated with invoices, receipts, credit notes, LPOs, and POs in this workspace. It will then reconstruct them chronologically using the latest lifecycle posting rules. Recommended if your analytics or general ledger balances are out of sync.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleRebuildLedger}
+          disabled={repairing}
+          className="btn-secondary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs border border-black hover:bg-black hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+        >
+          {repairing ? (
+            <span className="flex items-center gap-1.5">
+              <Spinner size={12} color="black" />
+              <span>REBUILDING...</span>
+            </span>
+          ) : (
+            "REBUILD JOURNAL ENTRIES"
+          )}
+        </button>
+      </div>
+    </div>
+  </div>
   );
 }

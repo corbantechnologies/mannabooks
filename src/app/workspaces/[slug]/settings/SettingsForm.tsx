@@ -3,8 +3,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { updateShopSettings } from "@/lib/actions/workspace";
-import { repairLedgerAction } from "@/lib/actions/documents";
 import { useAddPaymentMethod, useDeletePaymentMethod, useSetDefaultPaymentMethod, useUpdatePaymentMethod } from "@/hooks/usePayments";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
@@ -14,14 +14,6 @@ interface PaymentMethod {
   name: string;
   details: string;
   isDefault: boolean;
-}
-
-interface LedgerSnapshot {
-  id: string;
-  entryCount: number;
-  notes: string | null;
-  createdAt: string;
-  data: any;
 }
 
 interface SettingsFormProps {
@@ -40,7 +32,6 @@ interface SettingsFormProps {
   initialCurrency: string;
   initialFiscalYearStartMonth: number;
   paymentMethods: PaymentMethod[];
-  ledgerSnapshots: LedgerSnapshot[];
 }
 
 const COLOR_PALETTES = [
@@ -69,33 +60,8 @@ export function SettingsForm({
   initialCurrency,
   initialFiscalYearStartMonth = 1,
   paymentMethods: initialMethods,
-  ledgerSnapshots = [],
 }: SettingsFormProps) {
   const router = useRouter();
-
-  // Ledger repair state
-  const [repairing, setRepairing] = useState(false);
-  const [showRebuildConfirm, setShowRebuildConfirm] = useState(false);
-  const [expandedSnapshotId, setExpandedSnapshotId] = useState<string | null>(null);
-
-  async function handleRebuildLedger() {
-    setShowRebuildConfirm(false);
-    setRepairing(true);
-    const toastId = toast.loading("Rebuilding ledger journal entries...");
-    try {
-      const res = await repairLedgerAction(shopId, shopSlug);
-      if (res.success) {
-        toast.success("Ledger journal entries successfully rebuilt and repaired.", { id: toastId });
-        router.refresh();
-      } else {
-        toast.error(res.error || "Failed to repair ledger.", { id: toastId });
-      }
-    } catch (err) {
-      toast.error("An unexpected error occurred during ledger repair.", { id: toastId });
-    } finally {
-      setRepairing(false);
-    }
-  }
 
   // Profile form state
   const [businessName, setBusinessName] = useState(initialName);
@@ -1011,105 +977,24 @@ export function SettingsForm({
       </div>
     </div>
 
-    {/* ── LEDGER DIAGNOSTICS & MAINTENANCE ── */}
+    {/* ── LEDGER DIAGNOSTICS LINK ── */}
     <div className="card-modern p-6 bg-white font-mono text-xs space-y-4">
       <div>
         <h2 className="font-semibold uppercase tracking-wider text-sm text-black font-sans">Ledger Diagnostics &amp; Maintenance</h2>
-        <p className="text-[10px] text-zinc-400 uppercase mt-0.5">Repair and rebuild workspace transaction records</p>
+        <p className="text-[10px] text-zinc-400 uppercase mt-0.5">Reset, backup, or rebuild the General Ledger</p>
       </div>
       <div className="border-t border-zinc-200/80 pt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="space-y-1 max-w-xl">
-          <p className="font-bold text-zinc-900 uppercase text-[11px]">Rebuild Ledger Journal Entries</p>
-          <p className="font-sans text-[11px] text-zinc-500 normal-case leading-normal">
-            This utility will clear all automatically generated journal entries (debits and credits) associated with invoices, receipts, credit notes, LPOs, and POs in this workspace. It will then reconstruct them chronologically using the latest lifecycle posting rules. Recommended if your analytics or general ledger balances are out of sync.
-          </p>
-        </div>
-        {showRebuildConfirm ? (
-          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={handleRebuildLedger}
-              disabled={repairing}
-              className="btn-primary-modern bg-rose-600 hover:bg-rose-700 text-white border border-rose-600 px-6 py-2.5 font-semibold uppercase tracking-wider text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {repairing ? "REBUILDING..." : "CONFIRM REBUILD"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowRebuildConfirm(false)}
-              disabled={repairing}
-              className="btn-secondary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs border border-zinc-300 hover:bg-zinc-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              CANCEL
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setShowRebuildConfirm(true)}
-            disabled={repairing}
-            className="btn-secondary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs border border-black hover:bg-black hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-          >
-            REBUILD JOURNAL ENTRIES
-          </button>
-        )}
+        <p className="font-sans text-[11px] text-zinc-500 normal-case leading-normal max-w-xl">
+          Need to correct invoice discrepancies, inspect historical ledger snapshots, or temporarily pause GL posting? Open the dedicated Diagnostics console.
+        </p>
+        <Link
+          href={`/workspaces/${shopSlug}/settings/diagnostics`}
+          className="btn-secondary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs border border-black hover:bg-black hover:text-white transition-colors shrink-0 no-underline text-black inline-block text-center font-bold"
+        >
+          Open Diagnostics Page ➔
+        </Link>
       </div>
     </div>
-
-    {/* ── HISTORICAL GENERAL LEDGER BACKUPS & SNAPSHOTS ── */}
-    {ledgerSnapshots.length > 0 && (
-      <div className="card-modern p-6 bg-white font-mono text-xs space-y-4">
-        <div>
-          <h2 className="font-semibold uppercase tracking-wider text-sm text-black font-sans">Ledger Backups &amp; Snapshots</h2>
-          <p className="text-[10px] text-zinc-400 uppercase mt-0.5">Historical database instances saved before rebuild operations</p>
-        </div>
-        <div className="border-t border-zinc-200/80 pt-4 overflow-x-auto">
-          <table className="w-full text-left font-mono text-xs border-collapse">
-            <thead>
-              <tr className="bg-zinc-50 border-b border-zinc-200 uppercase font-semibold text-zinc-600">
-                <th className="p-3 border-r border-zinc-200">Backup Date</th>
-                <th className="p-3 border-r border-zinc-200 text-center">Entries Count</th>
-                <th className="p-3 border-r border-zinc-200">Notes</th>
-                <th className="p-3 text-center">Payload Data</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 bg-white">
-              {ledgerSnapshots.map((snap) => {
-                const isExpanded = expandedSnapshotId === snap.id;
-                return (
-                  <tr key={snap.id} className="hover:bg-zinc-50/50 transition-colors">
-                    <td className="p-3 border-r border-zinc-200/80 font-semibold text-zinc-900">
-                      {new Date(snap.createdAt).toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" })}
-                    </td>
-                    <td className="p-3 border-r border-zinc-200/80 text-center text-black font-bold">
-                      {snap.entryCount}
-                    </td>
-                    <td className="p-3 border-r border-zinc-200/80 text-zinc-500 text-[11px]">
-                      {snap.notes || "GL Reset Snapshot"}
-                    </td>
-                    <td className="p-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() => setExpandedSnapshotId(isExpanded ? null : snap.id)}
-                        className="text-[10px] font-bold uppercase tracking-wider underline hover:no-underline text-zinc-800"
-                      >
-                        {isExpanded ? "Hide Data" : "Inspect JSON"}
-                      </button>
-                      
-                      {isExpanded && (
-                        <div className="mt-2 text-left bg-zinc-900 text-emerald-400 p-3 rounded overflow-x-auto max-h-60 max-w-lg font-mono text-[9px] select-all">
-                          <pre>{JSON.stringify(snap.data, null, 2)}</pre>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    )}
   </div>
   );
 }

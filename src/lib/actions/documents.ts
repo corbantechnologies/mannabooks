@@ -793,6 +793,11 @@ export async function repairLedgerAction(
                     )
                 );
 
+            // 0.05 Re-enable GL posting for this shop
+            await tx.update(shops)
+                .set({ isGlEnabled: true })
+                .where(eq(shops.id, shopId));
+
             // 0.1 Automatically migrate any parent invoices of existing Credit Notes to PAID status
             // This corrects legacy test data where credit notes were raised against ISSUED/unpaid invoices.
             const creditNotes = await tx.query.documents.findMany({
@@ -1045,5 +1050,61 @@ export async function getLedgerSnapshotsAction(shopId: string) {
     } catch (error: any) {
         console.error("Failed to fetch ledger snapshots:", error);
         return { success: false, error: error.message || "Failed to retrieve ledger backups." };
+    }
+}
+
+/**
+ * Action: Pauses live GL posting for a shop and purges all document journal entries.
+ * Backs them up in ledgerSnapshots before purging.
+ */
+export async function purgeLedgerAction(
+    shopId: string,
+    shopSlug: string,
+    skipAuth: boolean = false
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        if (!skipAuth) {
+            await enforcePermission(shopId, "manage_settings");
+        }
+        
+        return await db.transaction(async (tx) => {
+            // 1. Pause GL posting by updating isGlEnabled flag
+            await tx.update(shops)
+                .set({ isGlEnabled: false })
+                .where(eq(shops.id, shopId));
+
+            // 2. Query all existing document journal entries for the shop
+            const existingEntries = await tx.query.journalEntries.findMany({
+                where: eq(journalEntries.shopId, shopId),
+            });
+
+            // 3. Write a serialized snapshot backup
+            if (existingEntries.length > 0) {
+                await tx.insert(ledgerSnapshots).values({
+                    shopId,
+                    entryCount: existingEntries.length,
+                    notes: `Pre-purge GL Reset Backup. GL paused for maintenance.`,
+                    data: existingEntries,
+                });
+            }
+
+            // 4. Delete all existing document-related journal entries for this shop
+            await tx.delete(journalEntries).where(
+                and(
+                    eq(journalEntries.shopId, shopId),
+                    eq(journalEntries.sourceType, "document")
+                )
+            );
+
+            if (!skipAuth) {
+                revalidatePath(`/workspaces/${shopSlug}/finance`);
+                revalidatePath(`/workspaces/${shopSlug}/documents`);
+                revalidatePath(`/workspaces/${shopSlug}/settings/diagnostics`);
+            }
+            return { success: true };
+        });
+    } catch (error: any) {
+        console.error("Ledger purge failed:", error);
+        return { success: false, error: error.message || "Failed to purge ledger." };
     }
 }

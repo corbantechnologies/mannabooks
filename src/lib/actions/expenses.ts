@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { expenses } from "@/db/schema";
+import { expenses, shops } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { enforcePermission } from "./rbac";
 import { revalidatePath } from "next/cache";
@@ -30,8 +30,11 @@ export async function createExpense(
             isNonDeductible: data.isNonDeductible || false,
         }).returning();
 
-        revalidatePath(`/workspaces/${shopId}/expenses`);
-        revalidatePath(`/workspaces/${shopId}/analytics`);
+        // Look up slug for cache invalidation (URLs use slug, not UUID)
+        const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
+        const shopSlug = shop?.slug || shopId;
+        revalidatePath(`/workspaces/${shopSlug}/expenses`);
+        revalidatePath(`/workspaces/${shopSlug}/analytics`);
 
         // Auto-journal: DR Expense Account / CR Cash & Bank (if GL is active)
         const expenseAccountCode = EXPENSE_CATEGORY_ACCOUNT_MAP[data.category] || "6900";
@@ -81,8 +84,12 @@ export async function deleteExpense(shopId: string, expenseId: string) {
             )
         );
 
-        revalidatePath(`/workspaces/${shopId}/expenses`);
-        revalidatePath(`/workspaces/${shopId}/analytics`);
+        // Look up slug for cache invalidation
+        const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
+        const shopSlug = shop?.slug || shopId;
+        revalidatePath(`/workspaces/${shopSlug}/expenses`);
+        revalidatePath(`/workspaces/${shopSlug}/analytics`);
+
         return { success: true };
     } catch (error: any) {
         console.error("Failed to delete expense:", error);

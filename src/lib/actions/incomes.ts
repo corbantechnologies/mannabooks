@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { incomes } from "@/db/schema";
+import { incomes, shops } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { enforcePermission } from "./rbac";
 import { revalidatePath } from "next/cache";
@@ -28,8 +28,11 @@ export async function createIncome(
             paymentReference: data.paymentReference || null
         }).returning();
 
-        revalidatePath(`/workspaces/${shopId}/incomes`);
-        revalidatePath(`/workspaces/${shopId}/analytics`);
+        // Look up slug for cache invalidation (URLs use slug, not UUID)
+        const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
+        const shopSlug = shop?.slug || shopId;
+        revalidatePath(`/workspaces/${shopSlug}/incomes`);
+        revalidatePath(`/workspaces/${shopSlug}/analytics`);
 
         // Auto-journal: DR Cash & Bank / CR Non-Operating Income (if GL is active)
         await createJournalEntry({
@@ -77,8 +80,12 @@ export async function deleteIncome(shopId: string, incomeId: string) {
             )
         );
 
-        revalidatePath(`/workspaces/${shopId}/incomes`);
-        revalidatePath(`/workspaces/${shopId}/analytics`);
+        // Look up slug for cache invalidation
+        const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
+        const shopSlug = shop?.slug || shopId;
+        revalidatePath(`/workspaces/${shopSlug}/incomes`);
+        revalidatePath(`/workspaces/${shopSlug}/analytics`);
+
         return { success: true };
     } catch (error: any) {
         console.error("Failed to delete income:", error);

@@ -168,7 +168,7 @@ export async function getWorkspaceAnalyticsData(
 
     filteredDocs.forEach((d) => {
       const val = parseFloat(d.grandTotal || "0");
-      const isSales = d.type === "INVOICE" || d.type === "RECEIPT" || d.type === "QUOTATION";
+      const isSales = d.type === "INVOICE" || d.type === "RECEIPT"; // QUOTATION excluded — not settled revenue
       const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER" || d.type === "GOODS_RECEIVED_NOTE" || d.type === "PAYROLL_VOUCHER";
 
       // A RECEIPT generated from an invoice (has parentDocumentId) must be skipped — 
@@ -231,7 +231,7 @@ export async function getWorkspaceAnalyticsData(
       const label = issue.toLocaleDateString("en-US", { month: "short", year: "2-digit" }).toUpperCase();
       if (monthlyTimelineMap[label]) {
         const val = parseFloat(d.grandTotal || "0");
-        const isSales = d.type === "INVOICE" || d.type === "RECEIPT";
+        const isSales = d.type === "INVOICE" || d.type === "RECEIPT"; // QUOTATION excluded — not settled revenue
         const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER" || d.type === "PAYROLL_VOUCHER";
 
         // Same rule: skip receipts derived from invoices to avoid double-counting in the chart

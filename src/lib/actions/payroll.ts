@@ -9,6 +9,7 @@ import { computeKenyanDeductions, PayrollMode } from "@/lib/payroll-utils";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { Resend } from "resend";
+import { createJournalEntry } from "@/lib/actions/gl";
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_mock_key");
 
@@ -267,6 +268,21 @@ export async function commitPayrollVoucherRun(input: {
                 revalidatePath(`/workspaces/${shop.slug}/documents`);
             }
 
+            // AUTO-JOURNAL: Post GL entry when payroll run is committed as PAID
+            // DR Salaries Expense (6100) / CR Cash & Bank (1200)
+            if (targetStatus === "PAID" && globalGrandTotal > 0) {
+                await createJournalEntry({
+                    shopId: input.shopId,
+                    entryDate: input.issueDate ? new Date(input.issueDate) : new Date(),
+                    description: `Payroll Run ${voucherDocNumber} — Net wages disbursed`,
+                    debitAccountCode: "6100",  // Salaries & Wages Expense
+                    creditAccountCode: "1200", // Cash & Bank
+                    amount: globalGrandTotal,
+                    sourceType: "payroll",
+                    sourceId: voucher.id,
+                });
+            }
+
             return { success: true, docNumber: voucherDocNumber, voucherId: voucher.id, status: targetStatus };
         });
     } catch (err: any) {
@@ -279,6 +295,15 @@ export async function updatePayrollVoucherStatus(voucherId: string, shopId: stri
     if (!session) return { success: false, error: "Unauthorized session context." };
 
     try {
+        // Fetch current voucher state before updating (to check prior status and get totals)
+        const existingVoucher = await db.query.documents.findFirst({
+            where: and(eq(documents.id, voucherId), eq(documents.shopId, shopId), eq(documents.type, "PAYROLL_VOUCHER")),
+        });
+
+        if (!existingVoucher) {
+            return { success: false, error: "Payroll voucher not found." };
+        }
+
         await db.update(documents)
             .set({ status })
             .where(and(eq(documents.id, voucherId), eq(documents.shopId, shopId), eq(documents.type, "PAYROLL_VOUCHER")));
@@ -288,6 +313,24 @@ export async function updatePayrollVoucherStatus(voucherId: string, shopId: stri
             revalidatePath(`/workspaces/${shop.slug}/payroll`);
             revalidatePath(`/workspaces/${shop.slug}/payroll/${voucherId}`);
             revalidatePath(`/workspaces/${shop.slug}/documents`);
+        }
+
+        // AUTO-JOURNAL: Post GL entry when payroll voucher transitions to PAID
+        // DR Salaries Expense (6100) / CR Cash & Bank (1200)
+        if (existingVoucher.status !== "PAID" && status === "PAID") {
+            const amount = parseFloat(existingVoucher.grandTotal || "0");
+            if (amount > 0) {
+                await createJournalEntry({
+                    shopId,
+                    entryDate: new Date(),
+                    description: `Payroll Voucher ${existingVoucher.docNumber} — Net wages disbursed`,
+                    debitAccountCode: "6100",  // Salaries & Wages Expense
+                    creditAccountCode: "1200", // Cash & Bank
+                    amount,
+                    sourceType: "payroll",
+                    sourceId: voucherId,
+                });
+            }
         }
 
         return { success: true };

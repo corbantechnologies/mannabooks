@@ -44,7 +44,7 @@ export function DocumentActionsPopover({
     setLoading(true);
     setConfirmCancel(false);
     try {
-      const res = await cancelQuotationAction(shopId, documentId);
+      const res = await cancelQuotationAction(shopId, documentId, shopSlug);
       if (res.success) {
         toast.success("Quotation has been successfully cancelled.");
         router.refresh();
@@ -62,7 +62,7 @@ export function DocumentActionsPopover({
     setLoading(true);
     setConfirmCancel(false);
     try {
-      const res = await cancelInvoiceAction(shopId, documentId);
+      const res = await cancelInvoiceAction(shopId, documentId, shopSlug);
       if (res.success) {
         toast.success("Invoice successfully cancelled & reversed in GL.");
         router.refresh();

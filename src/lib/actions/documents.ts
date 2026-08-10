@@ -938,6 +938,20 @@ export async function repairLedgerAction(
                         sourceId: doc.id,
                     });
                 }
+
+                // PAYROLL VOUCHER — DR Salaries Expense / CR Cash & Bank
+                if (doc.type === "PAYROLL_VOUCHER" && doc.status === "PAID") {
+                    await createJournalEntry({
+                        shopId,
+                        entryDate,
+                        description: `Payroll Voucher ${doc.docNumber} — Net wages disbursed (Repaired)`,
+                        debitAccountCode: "6100",  // Salaries & Wages Expense
+                        creditAccountCode: "1200", // Cash & Bank
+                        amount,
+                        sourceType: "payroll",
+                        sourceId: doc.id,
+                    });
+                }
             }
 
             if (!skipAuth) {
@@ -955,7 +969,7 @@ export async function repairLedgerAction(
 /**
  * Action: Cancel a Quotation document.
  */
-export async function cancelQuotationAction(shopId: string, docId: string) {
+export async function cancelQuotationAction(shopId: string, docId: string, shopSlug: string) {
     try {
         await enforcePermission(shopId, "manage_documents");
         await db.update(documents)
@@ -968,8 +982,8 @@ export async function cancelQuotationAction(shopId: string, docId: string) {
                 )
             );
         
-        revalidatePath(`/workspaces/${shopId}/documents`);
-        revalidatePath(`/workspaces/${shopId}/documents/${docId}`);
+        revalidatePath(`/workspaces/${shopSlug}/documents`);
+        revalidatePath(`/workspaces/${shopSlug}/documents/${docId}`);
         return { success: true };
     } catch (error: any) {
         console.error("Quotation cancellation failed:", error);
@@ -980,7 +994,7 @@ export async function cancelQuotationAction(shopId: string, docId: string) {
 /**
  * Action: Cancel an unpaid (issued or overdue) invoice, posting a reversing entry.
  */
-export async function cancelInvoiceAction(shopId: string, docId: string) {
+export async function cancelInvoiceAction(shopId: string, docId: string, shopSlug: string) {
     try {
         await enforcePermission(shopId, "manage_documents");
         
@@ -1026,8 +1040,8 @@ export async function cancelInvoiceAction(shopId: string, docId: string) {
         });
 
         if (res.success) {
-            revalidatePath(`/workspaces/${shopId}/documents`);
-            revalidatePath(`/workspaces/${shopId}/documents/${docId}`);
+            revalidatePath(`/workspaces/${shopSlug}/documents`);
+            revalidatePath(`/workspaces/${shopSlug}/documents/${docId}`);
         }
         return res;
     } catch (error: any) {

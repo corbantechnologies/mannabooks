@@ -97,6 +97,11 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
                 {shop.phone && (
                   <p className="font-mono text-[9px] text-zinc-500 truncate mt-0.5">{shop.phone}</p>
                 )}
+                {shop.code && (
+                  <div className="inline-block border border-zinc-200 font-mono text-[9px] px-1.5 py-0.5 uppercase tracking-tight text-zinc-600 bg-zinc-50 rounded-sm mt-1 mr-1 font-semibold">
+                    CODE: {shop.code}
+                  </div>
+                )}
                 {shop.taxPin ? (
                   <div className="inline-block border border-zinc-200 font-mono text-[9px] px-1.5 py-0.5 uppercase tracking-tight text-zinc-600 bg-zinc-50 rounded-sm mt-1 font-semibold">
                     PIN: {shop.taxPin}

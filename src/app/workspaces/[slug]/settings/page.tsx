@@ -26,6 +26,7 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
         shopSlug={slug}
         initialName={shop.name}
         initialShortName={shop.shortName || ""}
+        initialCode={shop.code || ""}
         initialPhone={shop.phone || ""}
         initialWebsite={shop.website || ""}
         initialPrimaryColor={shop.primaryColor || "#000000"}

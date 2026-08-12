@@ -31,6 +31,7 @@ interface SettingsFormProps {
   initialVatNumber?: string;
   initialCurrency: string;
   initialFiscalYearStartMonth: number;
+  initialCode?: string;
   paymentMethods: PaymentMethod[];
 }
 
@@ -59,6 +60,7 @@ export function SettingsForm({
   initialVatNumber = "",
   initialCurrency,
   initialFiscalYearStartMonth = 1,
+  initialCode = "",
   paymentMethods: initialMethods,
 }: SettingsFormProps) {
   const router = useRouter();
@@ -301,7 +303,7 @@ export function SettingsForm({
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1">
             <label className="text-zinc-400 uppercase block font-semibold">Trading Legal Name</label>
             <input
@@ -321,6 +323,16 @@ export function SettingsForm({
               onChange={(e) => setShortName(e.target.value)}
               placeholder="e.g. Corban Tech"
               className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-zinc-400 uppercase block font-semibold">Workspace Prefix Code</label>
+            <input
+              type="text"
+              value={initialCode}
+              disabled
+              className="w-full px-3 py-2 border border-zinc-200 bg-zinc-50 text-zinc-500 rounded text-xs font-semibold select-all"
             />
           </div>
         </div>

@@ -14,6 +14,7 @@ interface MobileNavDrawerProps {
     primaryColor?: string | null;
     logoUrl?: string | null;
     taxPin?: string | null;
+    code?: string | null;
   };
   user: {
     name: string;
@@ -142,6 +143,11 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
                 Switch / Add →
               </Link>
             </div>
+            {shop.code && (
+              <span className="inline-block border border-zinc-200 text-[9px] px-1.5 py-0.5 uppercase tracking-tight text-zinc-600 bg-zinc-50 font-bold mr-1">
+                CODE: {shop.code}
+              </span>
+            )}
             {shop.taxPin ? (
               <span className="inline-block border border-black text-[9px] px-1.5 py-0.5 uppercase tracking-tight text-zinc-600 bg-zinc-50 font-bold">
                 PIN: {shop.taxPin}

@@ -236,8 +236,14 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 token: secureHexToken,
             });
 
-            revalidatePath(`/workspaces/${input.shopSlug}/documents`);
-            revalidatePath(`/workspaces/${input.shopSlug}/clients/${input.clientId}`);
+            try {
+                revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+                if (input.clientId) {
+                    revalidatePath(`/workspaces/${input.shopSlug}/clients/${input.clientId}`);
+                }
+            } catch (e) {
+                console.warn("revalidatePath skipped outside Next.js environment context.");
+            }
 
             // AUTO-JOURNAL: Standalone Receipt (no parent invoice) → DR Cash & Bank / CR Sales Revenue
             if (input.type === "RECEIPT" && !input.parentDocumentId) {

@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
+import { generateUniqueShopCode } from "./shopCode";
 
 const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "manna_session_token";
 const SESSION_DURATION_DAYS = Number(process.env.COOKIE_DURATION_DAYS) || 30;
@@ -131,11 +132,14 @@ export async function registerOwnerAccount(input: RegisterOwnerInput) {
             });
             const finalSlug = existingSlug ? `${baseSlug}-${Date.now().toString().slice(-4)}` : baseSlug;
 
+            const shopCode = await generateUniqueShopCode(tx);
+
             // 5. Write the Shop Workspace profile
             const [newShop] = await tx.insert(shops).values({
                 ownerId: newUser.id,
                 name: input.businessName.trim(),
                 slug: finalSlug,
+                code: shopCode,
                 currency: "KES", // Default baseline currency
                 primaryColor: "#000000", // Stark sleek default
                 isVatRegistered: false,  // Default to non-VAT until configured

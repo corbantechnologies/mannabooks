@@ -52,6 +52,7 @@ export const shops = pgTable('shops', {
     name: text('name').notNull(),
     shortName: varchar('short_name', { length: 50 }), // Optional short trading alias e.g. Corban Tech
     slug: varchar('slug', { length: 100 }).notNull().unique(),
+    code: varchar('code', { length: 10 }).unique(),
     currency: varchar('currency', { length: 3 }).default('KES').notNull(),
     phone: varchar('phone', { length: 30 }), // Business phone contact e.g. +254 712 345 678
     website: varchar('website', { length: 255 }), // Business website URL e.g. https://corbantechnologies.org

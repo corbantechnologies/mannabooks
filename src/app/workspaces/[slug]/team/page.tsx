@@ -62,7 +62,7 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
         <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
                 <div>
-                    <span className="font-mono text-xs text-zinc-400 font-semibold">SYSTEM_SECURITY // ROLE_ACCESS_CONTROL</span>
+                    <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Access Control & Team</span>
                     <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Team Management</h1>
                 </div>
             </div>

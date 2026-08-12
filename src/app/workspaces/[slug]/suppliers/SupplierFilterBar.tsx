@@ -40,13 +40,14 @@ export function SupplierFilterBar() {
     <div className="card-modern p-4 space-y-4 font-mono text-xs">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-zinc-200/80 pb-3">
         <div className="flex items-center gap-2">
-          <span className="font-semibold uppercase tracking-wider text-black font-sans text-xs">FILTER // SUPPLIER_REGISTRY</span>
+          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Filters</span>
           {hasActiveFilters && (
             <span className="bg-black text-white text-[9px] px-2 py-0.5 font-semibold uppercase rounded">
               ACTIVE
             </span>
           )}
         </div>
+      </div>
 
         {hasActiveFilters && (
           <button

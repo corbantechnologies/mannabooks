@@ -15,7 +15,7 @@ export default async function AccountingPeriodsPage({ params }: { params: Promis
     return (
         <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
             <div className="border-b border-zinc-200/80 pb-6">
-                <span className="font-mono text-xs text-zinc-400 font-semibold">FINANCE // ACCOUNTING_PERIODS</span>
+                <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Accounting Periods</span>
                 <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Accounting Periods</h1>
                 <p className="text-sm text-zinc-500 mt-1">Close a period to lock entries and prevent backdating. Only Owners and Admins can reopen a closed period.</p>
             </div>

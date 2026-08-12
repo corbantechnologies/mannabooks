@@ -37,13 +37,13 @@ export default async function WalkInSalesPage({ params }: WalkInSalesPageProps) 
       <div className="border-b border-zinc-200/80 pb-6 space-y-2">
         <Link
           href={`/workspaces/${slug}/documents`}
-          className="text-xs font-semibold text-zinc-400 hover:text-black transition-colors block"
+          className="text-xs font-sans font-bold text-zinc-400 hover:text-black transition-colors block"
         >
-          ← BACK TO FISCAL LEDGERS
+          ← Back to Billing & Invoices
         </Link>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <span className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider block">COUNTER_TERMINAL // WALK_IN_SALES</span>
+            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider block">Walk-in POS Terminal</span>
             <h1 className="text-2xl font-bold uppercase tracking-tight text-black font-sans mt-0.5 flex items-center gap-2">
               <span>⚡ Walk-in Sales (POS Terminal)</span>
             </h1>

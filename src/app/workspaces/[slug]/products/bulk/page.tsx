@@ -25,14 +25,14 @@ export default async function BulkProductsPage({ params }: BulkProductsPageProps
     <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white max-w-6xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
         <div>
-          <span className="font-mono text-xs text-zinc-400 font-semibold">CATALOG // BULK_PROVISIONING</span>
+          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Bulk Provisioning</span>
           <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
             Bulk Catalog Import
           </h1>
         </div>
         <Link 
           href={`/workspaces/${slug}/products`}
-          className="btn-secondary-modern px-4 py-2 font-mono text-xs font-semibold uppercase"
+          className="btn-secondary-modern px-4 py-2 font-sans text-xs font-bold text-zinc-400 hover:text-black transition-colors"
         >
           ← Back to Catalog
         </Link>

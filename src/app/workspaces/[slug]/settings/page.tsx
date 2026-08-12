@@ -17,7 +17,7 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
   return (
     <div className="p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white">
       <div>
-        <span className="font-mono text-xs text-zinc-400 uppercase">SYS_PROPERTIES // ENVIRONMENT_CONFIG</span>
+        <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">System Configuration</span>
         <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">Compliance &amp; Profile</h1>
       </div>
 

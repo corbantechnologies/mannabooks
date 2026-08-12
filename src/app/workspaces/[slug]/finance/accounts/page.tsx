@@ -24,7 +24,7 @@ export default async function ChartOfAccountsPage({ params }: { params: Promise<
         <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
                 <div>
-                    <span className="font-mono text-xs text-zinc-400 font-semibold">FINANCE // CHART_OF_ACCOUNTS</span>
+                    <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Chart of Accounts</span>
                     <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Chart of Accounts</h1>
                 </div>
             </div>

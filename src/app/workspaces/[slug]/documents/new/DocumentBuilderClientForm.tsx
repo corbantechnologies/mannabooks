@@ -235,7 +235,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           <h2 className="font-sans text-sm font-bold uppercase tracking-tight text-black">
             1. Document Header &amp; Entity Configuration
           </h2>
-          <span className="text-[10px] text-zinc-400 font-mono">NODE_CONFIG // STEP_01</span>
+          <span className="text-[10px] text-zinc-400 font-sans font-bold uppercase tracking-wider">Properties</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

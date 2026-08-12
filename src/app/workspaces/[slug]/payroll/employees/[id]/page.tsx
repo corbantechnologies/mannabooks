@@ -44,18 +44,18 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
       <div className="border-b border-zinc-200/80 pb-6 space-y-2">
         <Link
           href={`/workspaces/${slug}/payroll`}
-          className="text-xs font-semibold text-zinc-400 hover:underline block"
+          className="text-xs font-sans font-bold text-zinc-400 hover:underline block"
         >
-          ← BACK TO PAYROLL HUB &amp; DIRECTORY
+          ← Back to Payroll Hub
         </Link>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
           <div>
-            <span className="text-xs text-zinc-400 font-semibold">HUMAN_CAPITAL // EMPLOYEE_PROFILE</span>
+            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Employee Payslips</span>
             <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
               {employeeData.fullName}
             </h1>
-            <p className="text-xs text-zinc-500 lowercase mt-0.5">&gt; id: {employeeData.id}</p>
+            <p className="font-sans text-xs text-zinc-500 mt-0.5">ID: {employeeData.id}</p>
             {employeeData.email && (
               <p className="text-xs text-zinc-600 font-mono mt-1 font-semibold">✉ Email: {employeeData.email}</p>
             )}

@@ -82,7 +82,7 @@ export function DiagnosticsClient({
       {/* HEADER SECTION */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="text-zinc-400 uppercase font-semibold">SYS_MAINTENANCE // LEDGER_RESET_UTILITY</span>
+          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Ledger Maintenance</span>
           <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">General Ledger Diagnostics</h1>
         </div>
         <Link

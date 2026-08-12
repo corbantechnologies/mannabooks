@@ -68,16 +68,16 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
       <div className="border-b border-zinc-200/80 pb-6 space-y-2">
         <Link
           href={`/workspaces/${slug}/suppliers`}
-          className="text-xs font-semibold text-zinc-400 hover:underline block"
+          className="text-xs font-sans font-bold text-zinc-400 hover:underline block"
         >
-          {"<-"} BACK TO SUPPLIER NETWORK
+          ← Back to Supplier Registry
         </Link>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
           <div>
-            <span className="text-xs text-zinc-400 font-semibold">SUPPLIER_NODE // PROCUREMENT_SUMMARY</span>
+            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Procurement Summary</span>
             <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">{supplierRecord.name}</h1>
-            <p className="text-xs text-zinc-500 lowercase mt-0.5">&gt; id: {supplierRecord.id}</p>
+            <p className="font-sans text-xs text-zinc-500 mt-0.5">ID: {supplierRecord.id}</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-[10px]">

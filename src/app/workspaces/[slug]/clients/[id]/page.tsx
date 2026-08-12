@@ -107,15 +107,15 @@ export default async function ClientProfileLedgerPage({ params, searchParams }: 
       <div className="border-b border-zinc-200/80 pb-6 space-y-2">
         <Link 
           href={`/workspaces/${slug}/clients`} 
-          className="font-mono text-xs font-semibold text-zinc-400 hover:underline block"
+          className="font-sans text-xs font-bold text-zinc-400 hover:underline block"
         >
-          ← BACK TO MASTER CLIENT REGISTRY
+          ← Back to Client Directory
         </Link>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <span className="font-mono text-xs text-zinc-400 font-semibold">LEDGER_NODE // CUSTOMER_PROFILE</span>
+            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Customer Statement</span>
             <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">{clientRecord.name}</h1>
-            <p className="font-mono text-xs text-zinc-500 lowercase mt-0.5">&gt; id: {clientRecord.id}</p>
+            <p className="font-sans text-xs text-zinc-500 mt-0.5">ID: {clientRecord.id}</p>
           </div>
           
           <div className="flex flex-wrap items-center gap-2 font-mono text-[10px]">

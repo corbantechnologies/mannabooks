@@ -59,15 +59,15 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
       <div className="border-b border-black pb-6 space-y-2">
         <Link
           href={`/workspaces/${slug}/documents`}
-          className="font-mono text-xs font-bold text-zinc-400 hover:underline block"
+          className="font-sans text-xs font-bold text-zinc-400 hover:underline block"
         >
-          {"<-"} BACK TO FISCAL LEDGERS
+          ← Back to Billing & Invoices
         </Link>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
           <div>
-            <span className="font-mono text-xs text-zinc-400">LEDGER_NODE // DOCUMENT_DETAIL</span>
+            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Transaction Detail</span>
             <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">{doc.docNumber}</h1>
-            <p className="font-mono text-xs text-zinc-500 lowercase mt-0.5">{"> party: "}{party.name}</p>
+            <p className="font-sans text-xs text-zinc-500 mt-0.5">Party: {party.name}</p>
           </div>
           <div className="flex gap-2 font-mono text-[10px] flex-wrap">
             <span className="border border-black px-2 py-1 bg-zinc-50 font-bold uppercase">{doc.type}</span>

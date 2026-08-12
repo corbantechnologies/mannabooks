@@ -47,7 +47,6 @@ export function SupplierFilterBar() {
             </span>
           )}
         </div>
-      </div>
 
         {hasActiveFilters && (
           <button

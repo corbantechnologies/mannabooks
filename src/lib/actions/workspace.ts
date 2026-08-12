@@ -6,6 +6,7 @@ import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { verifyAndGetSession } from "./auth";
 import { revalidatePath } from "next/cache";
+import { generateUniqueShopCode } from "./shopCode";
 
 import { cache } from "react";
 
@@ -115,10 +116,13 @@ export async function createAdditionalShop(input: { userId: string; businessName
     const existingSlug = await db.query.shops.findFirst({ where: eq(shops.slug, baseSlug) });
     const finalSlug = existingSlug ? `${baseSlug}-${Date.now().toString().slice(-4)}` : baseSlug;
 
+    const shopCode = await generateUniqueShopCode(db);
+
     const [newShop] = await db.insert(shops).values({
         ownerId: input.userId,
         name: input.businessName.trim(),
         slug: finalSlug,
+        code: shopCode,
         currency: input.currency,
         primaryColor: "#000000",
         isVatRegistered: false,

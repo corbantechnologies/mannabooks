@@ -116,7 +116,6 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 ),
             });
 
-            const nextSequence = activeTypeRecords.length + 1;
             const prefixMap: Record<DocumentType, string> = {
                 QUOTATION: "QT",
                 INVOICE: "INV",
@@ -131,7 +130,23 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 PAYROLL_VOUCHER: "PAY",
             };
             const prefix = prefixMap[input.type] || "DOC";
-            const formattedSerial = `${prefix}-${fySuffix}-${String(nextSequence).padStart(4, "0")}`;
+
+            let nextSequence = 1;
+            if (activeTypeRecords.length > 0) {
+                let maxSeq = 0;
+                for (const doc of activeTypeRecords) {
+                    const parts = doc.docNumber.split("-");
+                    const lastPart = parts[parts.length - 1];
+                    const seqNum = parseInt(lastPart, 10);
+                    if (!isNaN(seqNum) && seqNum > maxSeq) {
+                        maxSeq = seqNum;
+                    }
+                }
+                nextSequence = maxSeq + 1;
+            }
+
+            const shopCode = shopProfile.code ? `${shopProfile.code}-` : "";
+            const formattedSerial = `${shopCode}${prefix}-${fySuffix}-${String(nextSequence).padStart(4, "0")}`;
 
             // 3. Process walk-in customer email dynamically
             let finalClientId = input.clientId;

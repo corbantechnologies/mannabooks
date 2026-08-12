@@ -64,17 +64,8 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
       {/* HEADER TITLE */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
         <div>
-          <span className="font-mono text-xs text-zinc-400 font-semibold">WORKSPACE_NODE // FINANCIAL_OVERVIEW</span>
+          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Financial Summary</span>
           <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">{shop.name} Overview</h1>
-        </div>
-
-        <div className="flex gap-2">
-          <Link
-            href={`/workspaces/${slug}/documents/new`}
-            className="btn-primary-modern px-4 py-2 text-xs font-semibold uppercase tracking-wider"
-          >
-            + Generate Document
-          </Link>
         </div>
       </div>
 

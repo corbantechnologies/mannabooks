@@ -47,8 +47,8 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
       {/* HEADER & TOP ACTION BUTTONS */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
         <div>
-          <span className="text-[10px] text-zinc-400 uppercase font-semibold">HUMAN_CAPITAL // PAYROLL_VOUCHERS</span>
-          <h1 className="text-xl font-semibold uppercase tracking-tight font-sans text-black">{shop.name} Payroll Hub</h1>
+          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Payroll Registry</span>
+          <h1 className="text-xl font-semibold uppercase tracking-tight font-sans text-black">{shop.name} Payroll</h1>
           <p className="font-sans text-xs text-zinc-600">
             Log employee salaries, casual wages, sales commissions, and track statutory deductions.
           </p>

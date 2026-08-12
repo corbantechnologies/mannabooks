@@ -34,22 +34,22 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
 
   const navItems: NavItem[] = [
     { href: `/workspaces/${slug}`, label: "Overview", exact: true },
-    { href: `/workspaces/${slug}/documents`, label: "Fiscal Ledgers" },
-    { href: `/workspaces/${slug}/inbox`, label: "B2B Shared Inbox" },
-    { href: `/workspaces/${slug}/pos`, label: "Walk-in Sales" },
+    { href: `/workspaces/${slug}/documents`, label: "Billing & Invoices" },
+    { href: `/workspaces/${slug}/inbox`, label: "Shared Inbox" },
+    { href: `/workspaces/${slug}/pos`, label: "Point of Sale (POS)" },
     { 
-      label: "CRM", 
+      label: "Contacts", 
       children: [
-        { href: `/workspaces/${slug}/clients`, label: "Client Flow" },
-        { href: `/workspaces/${slug}/suppliers`, label: "Supplier Network" },
+        { href: `/workspaces/${slug}/clients`, label: "Clients" },
+        { href: `/workspaces/${slug}/suppliers`, label: "Suppliers" },
       ]
     },
     { href: `/workspaces/${slug}/products`, label: "Product Catalog" },
     {
-      label: "Cash Flow",
+      label: "Cash Book",
       children: [
         { href: `/workspaces/${slug}/incomes`, label: "Other Income" },
-        { href: `/workspaces/${slug}/expenses`, label: "Operating Expenses" },
+        { href: `/workspaces/[slug]/expenses`, label: "Operating Expenses" },
       ]
     },
     {
@@ -60,15 +60,15 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
       ]
     },
     {
-      label: "Finance",
+      label: "Accounting",
       children: [
         { href: `/workspaces/${slug}/finance/tax/settings`, label: "Tax Profile" },
         { href: `/workspaces/${slug}/finance/tax/computation`, label: "Tax Computation" },
         { href: `/workspaces/${slug}/finance/accounts`, label: "Chart of Accounts" },
         { href: `/workspaces/${slug}/finance/opening-balances`, label: "Opening Balances" },
-        { href: `/workspaces/${slug}/finance/ledger`, label: "General Ledger" },
+        { href: `/workspaces/${slug}/finance/ledger`, label: "Journal Entries" },
         { href: `/workspaces/${slug}/finance/periods`, label: "Accounting Periods" },
-        { href: `/workspaces/${slug}/finance/budgets`, label: "Budgets" },
+        { href: `/workspaces/${slug}/finance/budgets`, label: "Operating Budgets" },
         { href: `/workspaces/${slug}/finance/reports/pl`, label: "P&L Statement" },
         { href: `/workspaces/${slug}/finance/reports/cashflow`, label: "Cash Flow" },
         { href: `/workspaces/${slug}/finance/reports/trial-balance`, label: "Trial Balance" },
@@ -82,7 +82,7 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
       label: "Settings",
       children: [
         { href: `/workspaces/${slug}/team`, label: "Team Management" },
-        { href: `/workspaces/${slug}/settings`, label: "Workspace Settings" },
+        { href: `/workspaces/${slug}/settings`, label: "Workspace Details" },
         { href: `/workspaces/${slug}/settings/diagnostics`, label: "GL Diagnostics" },
         { href: `/workspaces/${slug}/guide`, label: "Operator Guide" },
       ]
@@ -159,8 +159,8 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
 
           {/* NAVIGATION LINKS */}
           <div className="space-y-2">
-            <span className="text-[9px] uppercase tracking-widest text-zinc-400 block mb-2 font-semibold">LEDGER DIRECTORIES</span>
-            <nav className="flex flex-col gap-1.5 font-semibold uppercase text-xs tracking-wider">
+            <span className="text-[10px] uppercase tracking-wider text-zinc-400 block mb-2 font-bold font-sans">Directories</span>
+            <nav className="flex flex-col gap-1 font-medium font-sans text-xs tracking-normal text-zinc-600">
               {navItems.map((item, idx) => {
                 if (item.children) {
                   const isChildActive = item.children.some(child => isActive(child.href, child.exact));

@@ -29,9 +29,9 @@ export default async function B2BInboxPage({ params }: B2BInboxPageProps) {
       
       {/* HEADER TITLE */}
       <div className="border-b border-zinc-200/80 pb-6 space-y-1">
-        <span className="text-[10px] text-zinc-400 uppercase font-semibold">COLLABORATION // B2B_SHARED_INBOX</span>
+        <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">B2B Shared Inbox</span>
         <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
-          B2B Shared Inbox
+          Shared Inbox
         </h1>
         <p className="font-sans text-xs text-zinc-600">
           Review incoming bills, price quotes, and purchase orders dispatched to your business PIN from other Mannabooks members.

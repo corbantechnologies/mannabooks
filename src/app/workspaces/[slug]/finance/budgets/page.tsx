@@ -19,7 +19,7 @@ export default async function BudgetsPage({ params }: { params: Promise<{ slug: 
     return (
         <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
             <div className="border-b border-zinc-200/80 pb-6">
-                <span className="font-mono text-xs text-zinc-400 font-semibold">FINANCE // BUDGETS</span>
+                <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Operating Budgets</span>
                 <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Monthly Budgets</h1>
                 <p className="text-sm text-zinc-500 mt-1">
                     Set monthly spending limits per expense category. Alerts fire at 80% and 100%.

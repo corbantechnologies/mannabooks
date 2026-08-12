@@ -43,8 +43,8 @@ export default async function WorkspaceEmployeesPage({ params }: WorkspaceEmploy
       {/* HEADER & ACTION BUTTON */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
         <div>
-          <span className="text-[10px] text-zinc-400 uppercase font-semibold">HUMAN_CAPITAL // EMPLOYEE_NETWORK</span>
-          <h1 className="text-xl font-semibold uppercase tracking-tight font-sans text-black">{shop.name} Employee Directory</h1>
+          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Employee Directory</span>
+          <h1 className="text-xl font-semibold uppercase tracking-tight font-sans text-black">{shop.name} Employees</h1>
           <p className="font-sans text-xs text-zinc-600">
             Register and manage staff profiles, contractual base compensation, commission rates, and identity credentials.
           </p>

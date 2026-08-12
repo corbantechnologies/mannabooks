@@ -63,13 +63,13 @@ export default async function EditDocumentPage({ params }: EditDocumentPageProps
       <div className="border-b border-zinc-200/80 pb-6 space-y-2">
         <Link
           href={`/workspaces/${slug}/documents/${doc.id}`}
-          className="text-xs font-semibold text-zinc-400 hover:text-black transition-colors block"
+          className="text-xs font-sans font-bold text-zinc-400 hover:text-black transition-colors block"
         >
-          ← BACK TO {doc.docNumber}
+          ← Back to {doc.docNumber}
         </Link>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <span className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider block">COMPILER // TRANSACTION_MUTATOR</span>
+            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider block">Edit Transaction</span>
             <h1 className="text-2xl font-bold uppercase tracking-tight text-black font-sans mt-0.5">
               Edit Draft {doc.docNumber}
             </h1>

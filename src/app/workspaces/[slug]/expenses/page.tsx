@@ -47,7 +47,7 @@ export default async function ExpensesPage({ params }: { params: Promise<{ slug:
         <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
                 <div>
-                    <span className="font-mono text-xs text-zinc-400 font-semibold">FINANCIALS // OPERATING_EXPENSES</span>
+                    <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Operating Expenses</span>
                     <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Expense Tracker</h1>
                 </div>
             </div>

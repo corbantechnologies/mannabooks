@@ -266,7 +266,7 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
                 React.createElement(
                     ReactPDF.View,
                     null,
-                    React.createElement(ReactPDF.Text, { style: styles.docTitle }, `${doc.type} ${doc.docNumber}`),
+                    React.createElement(ReactPDF.Text, { style: styles.docTitle }, `${doc.type ? doc.type.replace(/_/g, " ") : ""} ${doc.docNumber}`),
                     doc.kraCuInvoiceNumber && React.createElement(ReactPDF.Text, { style: { textAlign: "right", fontSize: 8, fontWeight: "bold", color: "#000000", marginTop: 2 } }, "KRA eTIMS CU #: " + doc.kraCuInvoiceNumber),
                     doc.paymentChannel && React.createElement(ReactPDF.Text, { style: { textAlign: "right", fontSize: 8, fontWeight: "bold", color: "#047857", marginTop: 2 } }, "Paid via: " + doc.paymentChannel + (doc.paymentReference ? " (Ref: " + doc.paymentReference + ")" : "")),
                     React.createElement(ReactPDF.Text, { style: { textAlign: "right", fontSize: 8, color: "#71717a", marginTop: 2 } }, "Issued Date: " + new Date(doc.issueDate).toLocaleDateString()),

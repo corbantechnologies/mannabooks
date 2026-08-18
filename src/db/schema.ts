@@ -112,6 +112,7 @@ export const products = pgTable('products', {
     trackStock: boolean('track_stock').default(false).notNull(),
     stockQuantity: numeric('stock_quantity', { precision: 12, scale: 2 }).default('0.00').notNull(),
     reorderThreshold: numeric('reorder_threshold', { precision: 12, scale: 2 }).default('5.00').notNull(),
+    defaultLocationId: uuid('default_location_id'), // FK set after stock_locations is defined
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -402,6 +403,85 @@ export const whtPayments = pgTable('wht_payments', {
 });
 
 // ==========================================
+// INVENTORY MANAGEMENT TABLES
+// ==========================================
+
+// STOCK LOCATIONS TABLE (Physical storage nodes per workspace)
+export const stockLocations = pgTable('stock_locations', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    name: varchar('name', { length: 255 }).notNull(),          // e.g. "Main Warehouse", "Nairobi Branch"
+    code: varchar('code', { length: 50 }),                      // e.g. "WH-01", "BRANCH-NBI"
+    isDefault: boolean('is_default').default(false).notNull(),
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const stockMovementTypeEnum = pgEnum('stock_movement_type', [
+    'PURCHASE_RECEIPT',
+    'SALE',
+    'ADJUSTMENT_IN',
+    'ADJUSTMENT_OUT',
+    'TRANSFER_OUT',
+    'TRANSFER_IN',
+    'OPENING_BALANCE',
+    'RETURN',
+    'VOID',
+]);
+
+export const stockAdjustmentReasonEnum = pgEnum('stock_adjustment_reason', [
+    'DAMAGED',
+    'EXPIRED',
+    'THEFT',
+    'COUNT_CORRECTION',
+    'PROMOTION',
+    'OTHER',
+]);
+
+// STOCK LEDGER TABLE (Immutable audit trail of every stock movement)
+export const stockLedger = pgTable('stock_ledger', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    productId: uuid('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+    locationId: uuid('location_id').references(() => stockLocations.id, { onDelete: 'set null' }),
+    movementType: stockMovementTypeEnum('movement_type').notNull(),
+    quantity: numeric('quantity', { precision: 12, scale: 2 }).notNull(), // Always positive; type indicates direction
+    unitCost: numeric('unit_cost', { precision: 12, scale: 2 }).default('0.00').notNull(), // Cost at movement time (FIFO)
+    runningBalance: numeric('running_balance', { precision: 12, scale: 2 }), // Qty on-hand after this entry
+    sourceDocumentId: uuid('source_document_id').references(() => documents.id, { onDelete: 'set null' }),
+    transferId: uuid('transfer_id'),  // Links paired TRANSFER_OUT + TRANSFER_IN rows
+    adjustmentReason: stockAdjustmentReasonEnum('adjustment_reason'),
+    notes: text('notes'),
+    createdById: uuid('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const stockTransferStatusEnum = pgEnum('stock_transfer_status', ['DRAFT', 'IN_TRANSIT', 'COMPLETED', 'CANCELLED']);
+
+// STOCK TRANSFERS TABLE (Inter-location stock movement requests)
+export const stockTransfers = pgTable('stock_transfers', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    fromLocationId: uuid('from_location_id').references(() => stockLocations.id).notNull(),
+    toLocationId: uuid('to_location_id').references(() => stockLocations.id).notNull(),
+    status: stockTransferStatusEnum('status').default('DRAFT').notNull(),
+    notes: text('notes'),
+    requestedById: uuid('requested_by_id').references(() => users.id),
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// STOCK TRANSFER ITEMS TABLE (Line items per transfer)
+export const stockTransferItems = pgTable('stock_transfer_items', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    transferId: uuid('transfer_id').references(() => stockTransfers.id, { onDelete: 'cascade' }).notNull(),
+    productId: uuid('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+    quantityRequested: numeric('quantity_requested', { precision: 12, scale: 2 }).notNull(),
+    quantityReceived: numeric('quantity_received', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    notes: text('notes'),
+});
+
+// ==========================================
 // 3. RELATIONS (For ORM Querying)
 // ==========================================
 export const usersRelations = relations(users, ({ many }) => ({
@@ -428,6 +508,9 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     fixedAssets: many(fixedAssets),
     taxInstalments: many(taxInstalments),
     whtPayments: many(whtPayments),
+    stockLocations: many(stockLocations),
+    stockTransfers: many(stockTransfers),
+    stockLedger: many(stockLedger),
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
@@ -561,4 +644,44 @@ export const ledgerSnapshots = pgTable('ledger_snapshots', {
 
 export const ledgerSnapshotsRelations = relations(ledgerSnapshots, ({ one }) => ({
     shop: one(shops, { fields: [ledgerSnapshots.shopId], references: [shops.id] }),
+}));
+
+// ==========================================
+// INVENTORY RELATIONS
+// ==========================================
+
+export const stockLocationsRelations = relations(stockLocations, ({ one, many }) => ({
+    shop: one(shops, { fields: [stockLocations.shopId], references: [shops.id] }),
+    ledgerEntries: many(stockLedger),
+    transfersFrom: many(stockTransfers, { relationName: 'from_location' }),
+    transfersTo: many(stockTransfers, { relationName: 'to_location' }),
+}));
+
+export const stockLedgerRelations = relations(stockLedger, ({ one }) => ({
+    shop: one(shops, { fields: [stockLedger.shopId], references: [shops.id] }),
+    product: one(products, { fields: [stockLedger.productId], references: [products.id] }),
+    location: one(stockLocations, { fields: [stockLedger.locationId], references: [stockLocations.id] }),
+    sourceDocument: one(documents, { fields: [stockLedger.sourceDocumentId], references: [documents.id] }),
+    createdBy: one(users, { fields: [stockLedger.createdById], references: [users.id] }),
+}));
+
+export const stockTransfersRelations = relations(stockTransfers, ({ one, many }) => ({
+    shop: one(shops, { fields: [stockTransfers.shopId], references: [shops.id] }),
+    fromLocation: one(stockLocations, { fields: [stockTransfers.fromLocationId], references: [stockLocations.id], relationName: 'from_location' }),
+    toLocation: one(stockLocations, { fields: [stockTransfers.toLocationId], references: [stockLocations.id], relationName: 'to_location' }),
+    requestedBy: one(users, { fields: [stockTransfers.requestedById], references: [users.id] }),
+    items: many(stockTransferItems),
+}));
+
+export const stockTransferItemsRelations = relations(stockTransferItems, ({ one }) => ({
+    transfer: one(stockTransfers, { fields: [stockTransferItems.transferId], references: [stockTransfers.id] }),
+    product: one(products, { fields: [stockTransferItems.productId], references: [products.id] }),
+}));
+
+export const productsRelations = relations(products, ({ one, many }) => ({
+    shop: one(shops, { fields: [products.shopId], references: [shops.id] }),
+    documentItems: many(documentItems),
+    defaultLocation: one(stockLocations, { fields: [products.defaultLocationId], references: [stockLocations.id] }),
+    stockLedger: many(stockLedger),
+    transferItems: many(stockTransferItems),
 }));

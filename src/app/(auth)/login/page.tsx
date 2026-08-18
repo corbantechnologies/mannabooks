@@ -15,6 +15,7 @@ function LoginFormContent() {
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -100,12 +101,21 @@ function LoginFormContent() {
                 Forgot Password?
               </Link>
             </div>
-            <input
-              type="password"
-              name="password"
-              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                className="w-full px-3 py-2 pr-12 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 px-3 flex items-center text-[10px] text-zinc-400 hover:text-black font-semibold uppercase select-none cursor-pointer"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
 
           <button

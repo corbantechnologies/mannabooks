@@ -54,7 +54,8 @@ export default function PublicOperatorGuidePage() {
                 { href: "#module-7", label: "[07] KRA 20th VAT Tracker" },
                 { href: "#module-8", label: "[08] Analytics & A/R Aging" },
                 { href: "#module-9", label: "[09] Statutory Payroll" },
-                { href: "#module-10", label: "[10] PWA Appliance" },
+                { href: "#module-10", label: "[10] Multi-Location Stock" },
+                { href: "#module-11", label: "[11] PWA Appliance" },
               ].map((item) => (
                 <a
                   key={item.href}
@@ -98,7 +99,8 @@ export default function PublicOperatorGuidePage() {
                   { href: "#module-7", label: "[07] KRA 20th VAT Tracker" },
                   { href: "#module-8", label: "[08] Analytics & A/R Aging" },
                   { href: "#module-9", label: "[09] Statutory Payroll" },
-                  { href: "#module-10", label: "[10] PWA Appliance" },
+                  { href: "#module-10", label: "[10] Multi-Location Stock" },
+                  { href: "#module-11", label: "[11] PWA Appliance" },
                 ].map((item) => (
                   <a key={item.href} href={item.href} className="hover:underline text-black">{item.label}</a>
                 ))}
@@ -350,11 +352,34 @@ export default function PublicOperatorGuidePage() {
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 10: PWA APPLIANCE */}
+          {/* MODULE 10: MULTI-LOCATION STOCK TRANSFERS */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-10" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+          <section id="module-10" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 10]</span>
+              <h2 className="text-xl font-bold uppercase font-sans">Multi-Location Inventory &amp; Stock Transfers</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Define multiple locations (stores, warehouses, branches) and move products between them with dual-step dispatch and receipt validation.
+            </p>
+            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li>Create stock locations at <strong>Inventory &rarr; Locations</strong>. Mark one as the Default.</li>
+                <li>To perform a transfer, navigate to <strong>Inventory &rarr; Transfers &rarr; New Transfer</strong>. Select the source (From) and destination (To) locations.</li>
+                <li>Add lines for the products and requested quantities. Save to create a <strong>DRAFT</strong> transfer.</li>
+                <li>To dispatch, click <strong>🚚 Dispatch Transfer</strong>. This immediately writes a <code>TRANSFER_OUT</code> ledger entry and deducts stock from the source warehouse. The status moves to <strong>IN_TRANSIT</strong>.</li>
+                <li>When the shipment arrives, open the transfer and click <strong>✅ Confirm Receipt</strong>. Enter the received quantities (supports partial arrivals). This writes a <code>TRANSFER_IN</code> entry and credits stock to the destination.</li>
+              </ol>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 11: PWA APPLIANCE */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-11" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 11]</span>
               <h2 className="text-xl font-bold uppercase font-sans">Installing the Standalone PWA Appliance</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">

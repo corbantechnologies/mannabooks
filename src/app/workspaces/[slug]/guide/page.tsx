@@ -121,6 +121,30 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
           </div>
         </div>
 
+        {/* MODULE 6 */}
+        <div className="card-modern p-6 space-y-3">
+          <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-2">
+            <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[06] MULTI-LOCATION INVENTORY &amp; STOCK TRANSFERS</span>
+          </div>
+          <p className="font-sans text-xs text-zinc-600">
+            Establish multiple warehouses or branch stores. Log manual adjustments, execute inter-location stock transfers with dispatch/receive timelines, and monitor FIFO stock valuations and ABC Pareto tiers.
+          </p>
+          <div className="flex gap-3 pt-2">
+            <Link
+              href={`/workspaces/${slug}/inventory`}
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
+            >
+              Go to Stock Overview -&gt;
+            </Link>
+            <Link
+              href={`/workspaces/${slug}/inventory/transfers`}
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
+            >
+              Go to Stock Transfers -&gt;
+            </Link>
+          </div>
+        </div>
+
       </div>
 
     </div>

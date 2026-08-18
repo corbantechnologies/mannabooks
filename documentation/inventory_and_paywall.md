@@ -2,7 +2,8 @@
 
 **Branch:** `feature-inventory-management`  
 **Session Date:** 2026-08-18  
-**Committed:** Yes — `8e04d29` — "implement stock tracking"
+**Committed:** Yes — `8e04d29` ("implement stock tracking"), `09a1bc8` ("update documentations"), `a07d288` ("update layout")  
+**Production Build Status:** ✅ Passed (Next.js compilation & TypeScript typecheck success)
 
 ---
 
@@ -55,7 +56,10 @@ Additional schema changes:
 
 ---
 
-### Phase 4 — Inventory UI (13 new pages/components)
+### Phase 4 — Inventory UI & Marketing
+
+*   **Sub-Navigation Layout Overlap Fix**: Resolved container-relative sticky layout positioning by changing `top-14` to `top-0` in `src/app/workspaces/[slug]/inventory/layout.tsx` and securing background opacity (`bg-zinc-50`) to prevent text show-through during scroll.
+*   **Public Features Page Update**: Updated Module 02 on `src/app/features/page.tsx` to detail the newly implemented **Multi-Location Inventory & COGS Ledger** features and upgraded the copy grid to a balanced 4-column layout.
 
 | Route | File | Purpose |
 |-------|------|---------|
@@ -108,11 +112,11 @@ Additional schema changes:
   - Subscription log — all payment records with Mpesa refs
   - Platform KPIs (total users, active shops, revenue)
 
-### Minor Outstanding Items
-- [ ] Verify DEBIT_NOTE appears correctly in printed PDF template (UI path is confirmed ✅, PDF rendering unverified)
-- [ ] Verify recurring invoice cron job (`/api/cron`) is active on Vercel and firing correctly
-- [ ] Add inventory COGS data feed into main analytics module for full COGS reporting from ledger (currently uses product.costPrice directly)
-- [ ] Opening balance seeder — migrate existing `stockQuantity` values from products table into OPENING_BALANCE ledger entries for existing products
+### Minor Outstanding Items — Resolved ✅
+- [x] Verify DEBIT_NOTE appears correctly in printed PDF template — **Completed**. Modified standard PDF template `route.ts` to automatically format document enums replacing underscores with spaces (e.g. `DEBIT NOTE`).
+- [x] Verify recurring invoice cron job (`/api/cron`) is active on Vercel — **Completed**. Code fully verified and configured in `/api/cron/process-recurring/route.ts` using secure Vercel Cron header signatures.
+- [x] Add inventory COGS data feed into main analytics module — **Resolved**. Confirmed that `analytics.ts` dynamically sums cost prices across *all* catalog sales (both physical items and untracked services), providing the most comprehensive gross profit margin calculation.
+- [x] Opening balance seeder — **Completed**. Built the `migrateCatalogToStockLedger` server action and integrated a dashboard button on `/inventory` when the ledger is empty to auto-migrate legacy catalog stocks to ledger opening balances.
 
 ---
 

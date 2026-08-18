@@ -496,3 +496,81 @@ export async function getAbcAnalysis(shopId: string): Promise<AbcProduct[]> {
         };
     });
 }
+
+// ================================================================
+// CATALOG TO LEDGER OPENING BALANCE MIGRATION
+// ================================================================
+
+export async function migrateCatalogToStockLedger(shopId: string, shopSlug: string) {
+    const session = await verifyAndGetSession();
+    if (!session) return { success: false, error: "Unauthorized." };
+
+    try {
+        // 1. Get or create a default stock location
+        let defaultLocation = await db.query.stockLocations.findFirst({
+            where: and(
+                eq(stockLocations.shopId, shopId),
+                eq(stockLocations.isDefault, true)
+            )
+        });
+
+        if (!defaultLocation) {
+            defaultLocation = await db.query.stockLocations.findFirst({
+                where: eq(stockLocations.shopId, shopId)
+            });
+            
+            if (!defaultLocation) {
+                const [newLoc] = await db.insert(stockLocations).values({
+                    shopId,
+                    name: "Main Store",
+                    code: "MAIN",
+                    isDefault: true,
+                }).returning();
+                defaultLocation = newLoc;
+            }
+        }
+
+        // 2. Fetch all products tracking stock
+        const trackedProducts = await db.query.products.findMany({
+            where: and(
+                eq(products.shopId, shopId),
+                eq(products.trackStock, true)
+            )
+        });
+
+        let migratedCount = 0;
+
+        await db.transaction(async (tx) => {
+            for (const p of trackedProducts) {
+                const existing = await tx.query.stockLedger.findFirst({
+                    where: eq(stockLedger.productId, p.id)
+                });
+
+                if (!existing) {
+                    const qty = parseFloat(p.stockQuantity || "0");
+                    const cost = parseFloat(p.costPrice || "0");
+                    
+                    await tx.insert(stockLedger).values({
+                        shopId,
+                        productId: p.id,
+                        locationId: defaultLocation.id,
+                        movementType: "OPENING_BALANCE",
+                        quantity: qty.toString(),
+                        unitCost: cost.toString(),
+                        runningBalance: qty.toString(),
+                        notes: "Auto-migrated from product catalog opening stock",
+                        createdById: session.userId,
+                    });
+                    migratedCount++;
+                }
+            }
+        });
+
+        revalidatePath(`/workspaces/${shopSlug}/inventory`);
+        return { success: true, migratedCount };
+    } catch (error: any) {
+        console.error("Migration failed:", error);
+        return { success: false, error: error.message || "Migration failed." };
+    }
+}
+

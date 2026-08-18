@@ -4,7 +4,7 @@ import { shops } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
-import { getInventoryOverview } from "@/lib/actions/inventory";
+import { getInventoryOverview, migrateCatalogToStockLedger } from "@/lib/actions/inventory";
 import Link from "next/link";
 
 interface InventoryPageProps {
@@ -34,6 +34,18 @@ const MOVEMENT_TYPE_COLORS: Record<string, string> = {
   RETURN: "bg-cyan-100 text-cyan-900 border-cyan-300",
   VOID: "bg-zinc-100 text-zinc-400 border-zinc-200",
 };
+
+const MOVEMENT_TYPE_LIST = [
+  "PURCHASE_RECEIPT",
+  "SALE",
+  "ADJUSTMENT_IN",
+  "ADJUSTMENT_OUT",
+  "TRANSFER_OUT",
+  "TRANSFER_IN",
+  "OPENING_BALANCE",
+  "RETURN",
+  "VOID"
+];
 
 export default async function InventoryOverviewPage({ params }: InventoryPageProps) {
   const { slug } = await params;
@@ -178,6 +190,29 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
           </table>
         </div>
       </div>
+
+      {/* MIGRATION PROMPT if ledger is empty but tracked products exist */}
+      {overview.recentMovements.length === 0 && overview.totalTrackedProducts > 0 && (
+        <div className="border border-zinc-200 bg-zinc-50 rounded-xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <p className="font-sans font-bold text-black uppercase text-xs tracking-wide">📦 Populate Stock Ledger</p>
+            <p className="font-sans text-xs text-zinc-600 mt-1">
+              You have tracked products in your catalog, but no ledger entries. Initialize the ledger and migrate opening balances.
+            </p>
+          </div>
+          <form action={async () => {
+            "use server";
+            await migrateCatalogToStockLedger(shop.id, slug);
+          }}>
+            <button
+              type="submit"
+              className="bg-black hover:bg-zinc-800 text-white font-mono text-[10px] uppercase font-bold px-4 py-2 rounded transition-colors shrink-0"
+            >
+              Initialize Ledger &rarr;
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* SETUP PROMPT if no locations exist */}
       {overview.totalLocations === 0 && (

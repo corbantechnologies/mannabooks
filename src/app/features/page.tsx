@@ -144,17 +144,18 @@ export default function FeaturesPage() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
               <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 02</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
-                Smart Inventory &amp; COGS Margin Tracking
+                Multi-Location Inventory &amp; COGS Ledger
               </h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
-              Register catalog items as Products (with stock tracking) or Services. Set selling prices and cost prices (COGS) to automatically power gross profit margin intelligence in the analytics dashboard.
+              Define physical stock locations (warehouses, stores, branches) and track products across them with a real-time, double-entry audit trail ledger. Monitor profit margins, low stock status, and value on-hand inventory.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {[
-                { title: "Product vs. Service Types", body: "Classify catalog items as tangible Products (eligible for stock tracking) or intangible Services (labor, consulting). Services skip inventory tracking entirely." },
-                { title: "Auto Stock Deduction", body: "When a RECEIPT or POS walk-in sale is completed, tracked product quantities are automatically decremented. Low-stock alerts fire at configurable threshold levels." },
-                { title: "COGS & Profit Margins", body: "Set a cost price (COGS) per product. The analytics engine automatically calculates gross profit (Revenue − COGS) and gross margin % across all settled sales." },
+                { title: "Multi-Location Warehouses", body: "Map physical warehouses, retail stores, branches, or stock floors. Assign locations dynamically to stock movements and set per-workspace default locations." },
+                { title: "Immutable Stock Ledger", body: "Every inventory action — purchases, POS checkouts, invoice adjustments, or manual corrections — writes an unalterable audit log tracking quantity, cost, and running balance." },
+                { title: "Secure Stock Transfers", body: "Move stock between locations with in-transit lifecycle validation. Dispatch from source (deducts stock) and receive at destination (credits stock) with partial-receipt support." },
+                { title: "Advanced Stock Reporting", body: "Generate real-time FIFO stock valuations, inspect full ledger histories, review active low-stock alerts, and perform ABC revenue Pareto analyses." },
               ].map((item) => (
                 <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
                   <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>

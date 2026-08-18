@@ -46,6 +46,19 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
     },
     { href: `/workspaces/${slug}/products`, label: "Product Catalog" },
     {
+      label: "Inventory",
+      children: [
+        { href: `/workspaces/${slug}/inventory`, label: "Stock Overview", exact: true },
+        { href: `/workspaces/${slug}/inventory/locations`, label: "Locations" },
+        { href: `/workspaces/${slug}/inventory/adjustments`, label: "Adjustments" },
+        { href: `/workspaces/${slug}/inventory/transfers`, label: "Transfers" },
+        { href: `/workspaces/${slug}/inventory/reports/valuation`, label: "Stock Valuation" },
+        { href: `/workspaces/${slug}/inventory/reports/movement`, label: "Movement History" },
+        { href: `/workspaces/${slug}/inventory/reports/low-stock`, label: "Low Stock Alerts" },
+        { href: `/workspaces/${slug}/inventory/reports/abc`, label: "ABC Analysis" },
+      ]
+    },
+    {
       label: "Cash Book",
       children: [
         { href: `/workspaces/${slug}/incomes`, label: "Other Income" },

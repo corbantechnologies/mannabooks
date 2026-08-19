@@ -94,18 +94,142 @@ export default function IndustriesPage() {
       <main className="flex-1 flex flex-col">
         
         {/* HERO SECTION */}
-        <section className="border-b border-zinc-200/80 px-6 py-16 md:py-24 max-w-7xl mx-auto w-full space-y-7 text-center md:text-left">
-          <div className="inline-flex items-center gap-2 border border-zinc-300 px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest bg-zinc-50 rounded-full font-semibold text-zinc-600">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Target Markets &amp; Customer Solutions
+        <section className="relative overflow-hidden border-b border-zinc-200/80 px-6 py-16 md:py-24 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Subtle grid bg */}
+          <div
+            className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            aria-hidden="true"
+            style={{
+              backgroundImage:
+                "linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)",
+              backgroundSize: "40px 40px",
+            }}
+          />
+
+          <div className="lg:col-span-7 space-y-7 relative z-10 text-center md:text-left">
+            <div className="inline-flex items-center gap-2 border border-zinc-300 px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest bg-zinc-50 rounded-full font-semibold text-zinc-600">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Target Markets &amp; Customer Solutions
+            </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-none uppercase max-w-5xl">
+              Built for businesses<br />
+              <span className="text-zinc-400">demanding statutory compliance.</span>
+            </h1>
+            <p className="text-base md:text-lg text-zinc-600 max-w-3xl font-normal leading-relaxed">
+              Manna Books is tailored for Kenyan SMEs, counter retail shops, service providers, and distributors who need strict statutory compliance, POS terminals, and auditable financial records.
+            </p>
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-none uppercase max-w-5xl">
-            Built for businesses<br />
-            <span className="text-zinc-400">demanding statutory compliance.</span>
-          </h1>
-          <p className="text-base md:text-lg text-zinc-600 max-w-3xl font-normal leading-relaxed">
-            Manna Books is tailored for Kenyan SMEs, counter retail shops, service providers, and distributors who need strict statutory compliance, POS terminals, and auditable financial records.
-          </p>
+
+          {/* CONSOLE PREVIEW CARD — desktop only */}
+          <div className="lg:col-span-5 relative z-10 hidden lg:block">
+            <div className="border border-zinc-200/80 rounded-2xl shadow-2xl overflow-hidden font-mono text-xs bg-white text-black">
+              {/* Terminal bar */}
+              <div className="bg-zinc-950 px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-rose-500" />
+                  <div className="w-3 h-3 rounded-full bg-amber-400" />
+                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                </div>
+                <span className="text-zinc-400 text-[10px] font-semibold uppercase tracking-widest">
+                  manna console node
+                </span>
+                <span className="text-[10px] bg-emerald-900/60 text-emerald-400 border border-emerald-700/50 px-2 py-0.5 font-bold uppercase rounded-sm">
+                  eTIMS ACTIVE
+                </span>
+              </div>
+
+              <div className="bg-white p-5 space-y-4 text-left">
+                {/* KRA VAT ALERT */}
+                <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg space-y-1.5">
+                  <div className="flex justify-between items-center text-[10px] font-bold uppercase text-amber-700">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block" />
+                      KRA 20th VAT Tracker
+                    </span>
+                    <span>⏰ 15 Days Remaining</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-bold text-black">
+                    <span>Output VAT (16%):</span>
+                    <span>KES 42,800.00</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-amber-200 rounded-full overflow-hidden">
+                    <div className="h-full w-[60%] bg-amber-500 rounded-full" />
+                  </div>
+                </div>
+
+                {/* STOCK TRANSFER */}
+                <div className="bg-indigo-950 text-white p-3 rounded-lg space-y-1.5 border border-indigo-800/40">
+                  <div className="flex justify-between items-center text-[10px] font-bold uppercase">
+                    <span className="text-indigo-400">🔄 STOCK TRANSFER IN-TRANSIT</span>
+                    <span className="bg-indigo-500 text-white px-1.5 py-0.5 text-[9px] font-bold rounded-sm">
+                      DISPATCHED
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs font-semibold pt-0.5">
+                    <span>TRN-2026-042: MAIN &rarr; WESTLANDS</span>
+                    <span className="text-indigo-300">120 units</span>
+                  </div>
+                  <div className="text-[9px] text-indigo-200">In-transit safety locked · Stock reserved</div>
+                </div>
+
+                {/* POS WALK-IN counter */}
+                <div className="bg-emerald-950 text-white p-3 rounded-lg space-y-1.5">
+                  <div className="flex justify-between items-center text-[10px] font-bold uppercase">
+                    <span className="text-emerald-400">⚡ WALK-IN POS RECEIPT</span>
+                    <span className="bg-emerald-500 text-black px-1.5 py-0.5 text-[9px] font-bold rounded-sm">
+                      PAID · STOCK DEDUCTED
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs font-semibold pt-0.5">
+                    <span>RCT-2026-041 · M-Pesa QAB71239X</span>
+                    <span className="text-emerald-300">KES 14,200.00</span>
+                  </div>
+                  <div className="text-[9px] text-zinc-400">2 items · Margin: 38.4% · Stock auto-decremented</div>
+                </div>
+
+                {/* LOCATIONS LIST */}
+                <div className="space-y-2">
+                  {[
+                    {
+                      ref: "LOC-MAIN-STORE",
+                      sub: "148 products tracked · Default",
+                      amount: "Val: KES 1.2M",
+                      badge: "ACTIVE",
+                      cls: "bg-emerald-100 text-emerald-900 border border-emerald-300",
+                    },
+                    {
+                      ref: "LOC-WESTLANDS-BRANCH",
+                      sub: "94 products tracked",
+                      amount: "Val: KES 620K",
+                      badge: "ACTIVE",
+                      cls: "bg-emerald-100 text-emerald-900 border border-emerald-300",
+                    },
+                  ].map((loc) => (
+                    <div
+                      key={loc.ref}
+                      className="flex justify-between bg-white p-2.5 border border-zinc-200 items-center rounded-md text-black"
+                    >
+                      <div>
+                        <span className="font-bold block text-xs">{loc.ref}</span>
+                        <span className="text-[9px] text-zinc-500">{loc.sub}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-bold block text-xs">{loc.amount}</span>
+                        <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-sm ${loc.cls}`}>
+                          {loc.badge}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border-t border-zinc-200 pt-3 flex justify-between items-center text-[9px] text-zinc-400">
+                  <span>PWA APPLIANCE: STANDALONE</span>
+                  <span className="text-emerald-700 font-bold">● LIVE SYSTEM</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* INDUSTRIES SECTION */}

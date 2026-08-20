@@ -55,7 +55,8 @@ export default function PublicOperatorGuidePage() {
                 { href: "#module-8", label: "[08] Analytics & A/R Aging" },
                 { href: "#module-9", label: "[09] Statutory Payroll" },
                 { href: "#module-10", label: "[10] Multi-Location Stock" },
-                { href: "#module-11", label: "[11] PWA Appliance" },
+                { href: "#module-11", label: "[11] Shared B2B Inbox" },
+                { href: "#module-12", label: "[12] PWA Appliance" },
               ].map((item) => (
                 <a
                   key={item.href}
@@ -100,7 +101,8 @@ export default function PublicOperatorGuidePage() {
                   { href: "#module-8", label: "[08] Analytics & A/R Aging" },
                   { href: "#module-9", label: "[09] Statutory Payroll" },
                   { href: "#module-10", label: "[10] Multi-Location Stock" },
-                  { href: "#module-11", label: "[11] PWA Appliance" },
+                  { href: "#module-11", label: "[11] Shared B2B Inbox" },
+                  { href: "#module-12", label: "[12] PWA Appliance" },
                 ].map((item) => (
                   <a key={item.href} href={item.href} className="hover:underline text-black">{item.label}</a>
                 ))}
@@ -375,11 +377,34 @@ export default function PublicOperatorGuidePage() {
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 11: PWA APPLIANCE */}
+          {/* MODULE 11: SHARED B2B INBOX & INTERCOMPANY ROUTING */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-11" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+          <section id="module-11" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 11]</span>
+              <h2 className="text-xl font-bold uppercase font-sans">Shared B2B Inbox &amp; Intercompany Routing</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Route invoices and procurement documents between workspaces (e.g. from parent to division) directly using strict KRA PIN and Email matching, skipping email downloads.
+            </p>
+            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li>Ensure the target division/workspace is registered in your client or supplier directory with their matching KRA PIN and Business Email.</li>
+                <li>Create an invoice or LPO, and set the recipient.</li>
+                <li>In the document details page, click **Send via Manna Network** to route the document instantly.</li>
+                <li>The receiving division opens **Shared Inbox** in their workspace. The document will appear as a pending incoming item.</li>
+                <li>Click **Accept &amp; Convert to Expense** (for invoices) or **Convert to Sale** (for LPOs). The invoice fields populate automatically, and a read receipt is sent back to the sender.</li>
+              </ol>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 12: PWA APPLIANCE */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-12" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 12]</span>
               <h2 className="text-xl font-bold uppercase font-sans">Installing the Standalone PWA Appliance</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">

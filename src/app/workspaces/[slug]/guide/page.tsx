@@ -145,6 +145,24 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
           </div>
         </div>
 
+        {/* MODULE 7 */}
+        <div className="card-modern p-6 space-y-3">
+          <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-2">
+            <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[07] SHARED B2B INBOX &amp; INTERCOMPANY ROUTING</span>
+          </div>
+          <p className="font-sans text-xs text-zinc-600">
+            Route invoices and LPOs between related workspaces (e.g. parent and division) instantly matching by KRA PIN and Email. Convert incoming items directly to purchase records.
+          </p>
+          <div className="pt-2">
+            <Link
+              href={`/workspaces/${slug}/inbox`}
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
+            >
+              Go to Shared Inbox -&gt;
+            </Link>
+          </div>
+        </div>
+
       </div>
 
     </div>

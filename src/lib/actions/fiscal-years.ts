@@ -233,3 +233,41 @@ export async function closeFiscalYear(shopId: string, shopSlug: string, fyId: st
         return { success: false, error: error.message || "Failed to close fiscal year." };
     }
 }
+
+export async function deleteFiscalYear(shopId: string, shopSlug: string, fyId: string) {
+    try {
+        await enforcePermission(shopId, "manage_expenses");
+        const session = await verifyAndGetSession();
+        if (!session) return { success: false, error: "Authentication required." };
+
+        const fy = await db.query.fiscalYears.findFirst({
+            where: and(eq(fiscalYears.id, fyId), eq(fiscalYears.shopId, shopId)),
+            with: { periods: true },
+        });
+        if (!fy) return { success: false, error: "Fiscal Year not found." };
+
+        // 1. Ensure no periods in this fiscal year have journal entries
+        const periodIds = fy.periods.map(p => p.id);
+        if (periodIds.length > 0) {
+            const hasEntries = await db.query.journalEntries.findFirst({
+                where: and(
+                    eq(journalEntries.shopId, shopId),
+                    inArray(journalEntries.periodId, periodIds)
+                ),
+            });
+            if (hasEntries) {
+                return { success: false, error: "Cannot delete Fiscal Year because it contains periods with recorded journal entries." };
+            }
+        }
+
+        // 2. Perform deletion (cascade deletes the periods)
+        await db.delete(fiscalYears).where(eq(fiscalYears.id, fyId));
+
+        revalidatePath(`/workspaces/${shopSlug}/finance/periods`);
+        revalidatePath(`/workspaces/${shopSlug}/finance/tax/settings`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to delete fiscal year:", error);
+        return { success: false, error: error.message || "Failed to delete fiscal year." };
+    }
+}

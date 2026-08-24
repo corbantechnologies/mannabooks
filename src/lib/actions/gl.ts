@@ -52,23 +52,33 @@ export async function activateGeneralLedger(
                 );
             }
 
-            // 2. Create the Fiscal Year if it doesn't exist
-            const existingFy = await tx.query.fiscalYears.findFirst({
+            // 2. Create the Fiscal Year if none exists, or reuse an open one
+            const openFy = await tx.query.fiscalYears.findFirst({
                 where: and(
                     eq(fiscalYears.shopId, shopId),
-                    eq(fiscalYears.label, label)
+                    eq(fiscalYears.isClosed, false)
                 )
             });
-            let targetFyId = existingFy?.id;
-            if (!existingFy) {
-                const [createdFy] = await tx.insert(fiscalYears).values({
-                    shopId,
-                    label,
-                    startDate: start.toISOString().split("T")[0],
-                    endDate: end.toISOString().split("T")[0],
-                    isClosed: false,
-                }).returning();
-                targetFyId = createdFy.id;
+            let targetFyId = openFy?.id;
+            if (!openFy) {
+                const existingFy = await tx.query.fiscalYears.findFirst({
+                    where: and(
+                        eq(fiscalYears.shopId, shopId),
+                        eq(fiscalYears.label, label)
+                    )
+                });
+                if (existingFy) {
+                    targetFyId = existingFy.id;
+                } else {
+                    const [createdFy] = await tx.insert(fiscalYears).values({
+                        shopId,
+                        label,
+                        startDate: start.toISOString().split("T")[0],
+                        endDate: end.toISOString().split("T")[0],
+                        isClosed: false,
+                    }).returning();
+                    targetFyId = createdFy.id;
+                }
             }
 
             // 3. Auto-populate monthly accounting periods

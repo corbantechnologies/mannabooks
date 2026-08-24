@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { updateTaxSettings } from "@/lib/actions/tax";
-import { declareFiscalYear, closeFiscalYear } from "@/lib/actions/fiscal-years";
+import { declareFiscalYear, closeFiscalYear, deleteFiscalYear } from "@/lib/actions/fiscal-years";
+import { toast } from "react-hot-toast";
 
 interface FiscalYear {
     id: string;
@@ -99,19 +100,73 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
     }
 
     function handleCloseFiscalYear(fyId: string, label: string) {
-        if (!confirm(`Are you sure you want to CLOSE "${label}"? This will reset all Revenue and Expense accounts to Retained Earnings (3300) and lock all entries permanently. This action cannot be undone.`)) {
-            return;
-        }
+        toast((t) => (
+            <div className="flex flex-col gap-3 font-mono text-xs max-w-sm">
+                <span className="font-semibold uppercase tracking-tight text-black">Close Fiscal Year?</span>
+                <p className="text-zinc-500 normal-case leading-relaxed text-[11px]">
+                    Are you sure you want to CLOSE "{label}"? This will reset all Revenue and Expense accounts to Retained Earnings (3300) and lock all entries permanently.
+                </p>
+                <div className="flex gap-2">
+                    <button 
+                        className="bg-black text-white px-3 py-1.5 rounded font-bold uppercase tracking-wider hover:bg-zinc-800 transition-colors"
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            const toastId = toast.loading(`Closing "${label}"...`);
+                            const res = await closeFiscalYear(shopId, shopSlug, fyId);
+                            if (!res.success) {
+                                toast.error(res.error || "Failed to close fiscal year.", { id: toastId });
+                            } else {
+                                toast.success(`✓ Fiscal Year "${label}" closed successfully.`, { id: toastId });
+                                setTimeout(() => window.location.reload(), 1500);
+                            }
+                        }}
+                    >
+                        Confirm
+                    </button>
+                    <button 
+                        className="bg-zinc-200 text-zinc-800 px-3 py-1.5 rounded font-bold uppercase tracking-wider hover:bg-zinc-300 transition-colors"
+                        onClick={() => toast.dismiss(t.id)}
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), { duration: 10000, position: 'top-center' });
+    }
 
-        startTransition(async () => {
-            const res = await closeFiscalYear(shopId, shopSlug, fyId);
-            if (res.success) {
-                showMsg("success", `✓ Fiscal Year "${label}" closed successfully.`);
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                showMsg("error", res.error || "Failed to close fiscal year.");
-            }
-        });
+    function handleDeleteFiscalYear(fyId: string, label: string) {
+        toast((t) => (
+            <div className="flex flex-col gap-3 font-mono text-xs max-w-sm">
+                <span className="font-semibold uppercase tracking-tight text-black">Delete Fiscal Year?</span>
+                <p className="text-zinc-500 normal-case leading-relaxed text-[11px]">
+                    Are you sure you want to DELETE "${label}"? This will permanently delete this Fiscal Year and all its monthly periods. This action can only succeed if no journal entries are recorded in these periods.
+                </p>
+                <div className="flex gap-2">
+                    <button 
+                        className="bg-rose-600 text-white px-3 py-1.5 rounded font-bold uppercase tracking-wider hover:bg-rose-700 transition-colors"
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            const toastId = toast.loading(`Deleting "${label}"...`);
+                            const res = await deleteFiscalYear(shopId, shopSlug, fyId);
+                            if (!res.success) {
+                                toast.error(res.error || "Failed to delete fiscal year.", { id: toastId });
+                            } else {
+                                toast.success(`✓ Fiscal Year "${label}" deleted successfully.`, { id: toastId });
+                                setTimeout(() => window.location.reload(), 1500);
+                            }
+                        }}
+                    >
+                        Confirm Delete
+                    </button>
+                    <button 
+                        className="bg-zinc-200 text-zinc-800 px-3 py-1.5 rounded font-bold uppercase tracking-wider hover:bg-zinc-300 transition-colors"
+                        onClick={() => toast.dismiss(t.id)}
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), { duration: 10000, position: 'top-center' });
     }
 
     return (
@@ -297,13 +352,23 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
                                             </div>
 
                                             {!fy.isClosed && (
-                                                <button
-                                                    onClick={() => handleCloseFiscalYear(fy.id, fy.label)}
-                                                    disabled={isPending}
-                                                    className="w-full bg-zinc-100 border border-zinc-200 text-zinc-600 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 py-1.5 rounded text-xs font-mono uppercase font-bold transition-all disabled:opacity-40"
-                                                >
-                                                    Close Fiscal Year
-                                                </button>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleCloseFiscalYear(fy.id, fy.label)}
+                                                        disabled={isPending}
+                                                        className="flex-1 bg-zinc-100 border border-zinc-200 text-zinc-600 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 py-1.5 rounded text-xs font-mono uppercase font-bold transition-all disabled:opacity-40"
+                                                    >
+                                                        Close Fiscal Year
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteFiscalYear(fy.id, fy.label)}
+                                                        disabled={isPending}
+                                                        className="bg-zinc-100 border border-zinc-200 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 px-3 py-1.5 rounded text-xs font-mono uppercase font-bold transition-all disabled:opacity-40"
+                                                        title="Delete Fiscal Year"
+                                                    >
+                                                        🗑️
+                                                    </button>
+                                                </div>
                                             )}
                                         </div>
                                     ))}

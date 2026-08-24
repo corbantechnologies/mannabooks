@@ -42,19 +42,34 @@ export async function activateGeneralLedger(
         }
 
         await db.transaction(async (tx) => {
-            // 1. Seed Chart of Accounts
-            await tx.insert(chartOfAccounts).values(
-                DEFAULT_ACCOUNTS.map(a => ({ ...a, shopId }))
-            );
+            // 1. Seed Chart of Accounts if none exist
+            const existingAccounts = await tx.query.chartOfAccounts.findFirst({
+                where: eq(chartOfAccounts.shopId, shopId),
+            });
+            if (!existingAccounts) {
+                await tx.insert(chartOfAccounts).values(
+                    DEFAULT_ACCOUNTS.map(a => ({ ...a, shopId }))
+                );
+            }
 
-            // 2. Create the Fiscal Year
-            const [createdFy] = await tx.insert(fiscalYears).values({
-                shopId,
-                label,
-                startDate: start.toISOString().split("T")[0],
-                endDate: end.toISOString().split("T")[0],
-                isClosed: false,
-            }).returning();
+            // 2. Create the Fiscal Year if it doesn't exist
+            const existingFy = await tx.query.fiscalYears.findFirst({
+                where: and(
+                    eq(fiscalYears.shopId, shopId),
+                    eq(fiscalYears.label, label)
+                )
+            });
+            let targetFyId = existingFy?.id;
+            if (!existingFy) {
+                const [createdFy] = await tx.insert(fiscalYears).values({
+                    shopId,
+                    label,
+                    startDate: start.toISOString().split("T")[0],
+                    endDate: end.toISOString().split("T")[0],
+                    isClosed: false,
+                }).returning();
+                targetFyId = createdFy.id;
+            }
 
             // 3. Auto-populate monthly accounting periods
             let current = new Date(start.getFullYear(), start.getMonth(), 1);
@@ -77,12 +92,12 @@ export async function activateGeneralLedger(
 
                 if (existing) {
                     await tx.update(accountingPeriods)
-                        .set({ fiscalYearId: createdFy.id })
+                        .set({ fiscalYearId: targetFyId })
                         .where(eq(accountingPeriods.id, existing.id));
                 } else {
                     await tx.insert(accountingPeriods).values({
                         shopId,
-                        fiscalYearId: createdFy.id,
+                        fiscalYearId: targetFyId,
                         periodName,
                         startDate: actualStartStr,
                         endDate: actualEnd.toISOString().split("T")[0],

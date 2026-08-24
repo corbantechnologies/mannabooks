@@ -185,18 +185,16 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
                 >
                     Tax Obligations
                 </button>
-                {isGlEnabled && (
-                    <button
-                        onClick={() => setActiveTab("fiscal")}
-                        className={`px-6 py-4 font-mono text-xs uppercase font-bold tracking-wider border-b-2 transition-all ${
-                            activeTab === "fiscal"
-                                ? "border-black text-black bg-white"
-                                : "border-transparent text-zinc-400 hover:text-black"
-                        }`}
-                    >
-                        Fiscal Years
-                    </button>
-                )}
+                <button
+                    onClick={() => setActiveTab("fiscal")}
+                    className={`px-6 py-4 font-mono text-xs uppercase font-bold tracking-wider border-b-2 transition-all ${
+                        activeTab === "fiscal"
+                            ? "border-black text-black bg-white"
+                            : "border-transparent text-zinc-400 hover:text-black"
+                    }`}
+                >
+                    Fiscal Years
+                </button>
             </div>
 
             <div className="p-6 space-y-5 font-sans">

@@ -11,10 +11,10 @@ export default async function TaxSettingsPage({ params }: { params: Promise<{ sl
     const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
     if (!shop) redirect("/dashboard");
 
-    const years = shop.isGlEnabled ? await db.query.fiscalYears.findMany({
+    const years = await db.query.fiscalYears.findMany({
         where: eq(fiscalYears.shopId, shop.id),
         orderBy: (f, { desc }) => [desc(f.startDate)],
-    }) : [];
+    });
 
     return (
         <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">

@@ -246,22 +246,22 @@ export async function deleteFiscalYear(shopId: string, shopSlug: string, fyId: s
         });
         if (!fy) return { success: false, error: "Fiscal Year not found." };
 
-        // 1. Ensure no periods in this fiscal year have journal entries
         const periodIds = fy.periods.map(p => p.id);
-        if (periodIds.length > 0) {
-            const hasEntries = await db.query.journalEntries.findFirst({
-                where: and(
-                    eq(journalEntries.shopId, shopId),
-                    inArray(journalEntries.periodId, periodIds)
-                ),
-            });
-            if (hasEntries) {
-                return { success: false, error: "Cannot delete Fiscal Year because it contains periods with recorded journal entries." };
-            }
-        }
 
-        // 2. Perform deletion (cascade deletes the periods)
-        await db.delete(fiscalYears).where(eq(fiscalYears.id, fyId));
+        await db.transaction(async (tx) => {
+            // 1. Delete all journal entries belonging to the periods of this fiscal year first
+            if (periodIds.length > 0) {
+                await tx.delete(journalEntries).where(
+                    and(
+                        eq(journalEntries.shopId, shopId),
+                        inArray(journalEntries.periodId, periodIds)
+                    )
+                );
+            }
+
+            // 2. Perform deletion (cascade deletes the periods)
+            await tx.delete(fiscalYears).where(eq(fiscalYears.id, fyId));
+        });
 
         revalidatePath(`/workspaces/${shopSlug}/finance/periods`);
         revalidatePath(`/workspaces/${shopSlug}/finance/tax/settings`);

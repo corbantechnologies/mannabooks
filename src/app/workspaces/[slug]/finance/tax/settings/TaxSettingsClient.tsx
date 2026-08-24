@@ -117,6 +117,7 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
                                 toast.error(res.error || "Failed to close fiscal year.", { id: toastId });
                             } else {
                                 toast.success(`✓ Fiscal Year "${label}" closed successfully.`, { id: toastId });
+                                setFiscalYearsList(prev => prev.map(fy => fy.id === fyId ? { ...fy, isClosed: true } : fy));
                                 setTimeout(() => window.location.reload(), 1500);
                             }
                         }}
@@ -152,6 +153,7 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
                                 toast.error(res.error || "Failed to delete fiscal year.", { id: toastId });
                             } else {
                                 toast.success(`✓ Fiscal Year "${label}" deleted successfully.`, { id: toastId });
+                                setFiscalYearsList(prev => prev.filter(fy => fy.id !== fyId));
                                 setTimeout(() => window.location.reload(), 1500);
                             }
                         }}

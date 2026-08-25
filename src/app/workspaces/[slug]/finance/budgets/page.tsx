@@ -5,14 +5,25 @@ import { redirect } from "next/navigation";
 import { getBudgetsWithActuals } from "@/lib/actions/budgets";
 import BudgetsClient from "./BudgetsClient";
 
-export default async function BudgetsPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function BudgetsPage({
+    params,
+    searchParams,
+}: {
+    params: Promise<{ slug: string }>;
+    searchParams: Promise<{ month?: string; year?: string }>;
+}) {
     const { slug } = await params;
+    const { month: qMonth, year: qYear } = await searchParams;
+
     const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
     if (!shop) redirect("/dashboard");
 
     const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
+    const parsedMonth = qMonth ? parseInt(qMonth, 10) : now.getMonth() + 1;
+    const parsedYear = qYear ? parseInt(qYear, 10) : now.getFullYear();
+
+    const month = (!isNaN(parsedMonth) && parsedMonth >= 1 && parsedMonth <= 12) ? parsedMonth : now.getMonth() + 1;
+    const year = (!isNaN(parsedYear) && parsedYear >= 2000 && parsedYear <= 2100) ? parsedYear : now.getFullYear();
 
     const budgetLines = shop.isGlEnabled ? await getBudgetsWithActuals(shop.id, month, year) : [];
 

@@ -305,6 +305,88 @@ export async function getAccountingPeriods(shopId: string) {
     });
 }
 
+export async function getPeriodDetails(shopId: string, periodId: string) {
+    try {
+        const period = await db.query.accountingPeriods.findFirst({
+            where: and(eq(accountingPeriods.id, periodId), eq(accountingPeriods.shopId, shopId)),
+            with: { closedBy: true, fiscalYear: true },
+        });
+        if (!period) return { success: false, error: "Period not found." };
+
+        const entries = await db.query.journalEntries.findMany({
+            where: and(eq(journalEntries.periodId, periodId), eq(journalEntries.shopId, shopId)),
+            with: { debitAccount: true, creditAccount: true },
+            orderBy: (j, { asc }) => [asc(j.entryDate)],
+        });
+
+        let totalDebits = 0;
+        let totalCredits = 0;
+        let totalRevenue = 0;
+        let totalExpenses = 0;
+
+        for (const entry of entries) {
+            const amt = parseFloat(entry.amount || "0");
+            totalDebits += amt;
+            totalCredits += amt;
+
+            // Account revenue vs expense tracking
+            if (entry.creditAccount?.accountType === "REVENUE") {
+                totalRevenue += amt;
+            } else if (entry.debitAccount?.accountType === "REVENUE") {
+                totalRevenue -= amt; // Sales return / credit note
+            }
+
+            if (entry.debitAccount?.accountType === "EXPENSE") {
+                totalExpenses += amt;
+            } else if (entry.creditAccount?.accountType === "EXPENSE") {
+                totalExpenses -= amt;
+            }
+        }
+
+        const netIncome = totalRevenue - totalExpenses;
+
+        return {
+            success: true,
+            data: {
+                period: {
+                    id: period.id,
+                    periodName: period.periodName,
+                    startDate: period.startDate,
+                    endDate: period.endDate,
+                    status: period.status,
+                    closedAt: period.closedAt?.toISOString() || null,
+                    closedByName: period.closedBy?.name || null,
+                    fiscalYearLabel: period.fiscalYear?.label || "Unassigned",
+                },
+                kpis: {
+                    totalDebits,
+                    totalCredits,
+                    isBalanced: Math.abs(totalDebits - totalCredits) < 0.01,
+                    totalRevenue,
+                    totalExpenses,
+                    netIncome,
+                    entryCount: entries.length,
+                },
+                entries: entries.map(e => ({
+                    id: e.id,
+                    entryDate: e.entryDate.toISOString().split("T")[0],
+                    description: e.description,
+                    debitAccountCode: e.debitAccount?.code || "—",
+                    debitAccountName: e.debitAccount?.name || "Unknown",
+                    creditAccountCode: e.creditAccount?.code || "—",
+                    creditAccountName: e.creditAccount?.name || "Unknown",
+                    amount: parseFloat(e.amount || "0"),
+                    sourceType: e.sourceType,
+                    sourceId: e.sourceId,
+                })),
+            },
+        };
+    } catch (error: any) {
+        console.error("Failed to fetch period details:", error);
+        return { success: false, error: error.message || "Failed to fetch period details." };
+    }
+}
+
 /**
  * Ensures an accounting period exists for the given month.
  * Creates it if it doesn't yet exist.

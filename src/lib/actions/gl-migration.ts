@@ -68,6 +68,29 @@ export async function runGlMigration(shopId: string, shopSlug: string) {
                     results.documents++;
                 }
 
+                if (doc.type === "CREDIT_NOTE") {
+                    const creditAccount = doc.parentDocumentId ? "1100" : "1200";
+                    await createJournalEntry({
+                        shopId, entryDate: new Date(doc.issueDate),
+                        description: `[Migrated] Credit Note ${doc.docNumber} — ${doc.parentDocumentId ? "Credited against invoice" : "Sales refund"}`,
+                        debitAccountCode: "4100", creditAccountCode: creditAccount,
+                        amount, sourceType: "migrated", sourceId: doc.id, isBackdated: true,
+                        backdatedReason: "GL onboarding backfill"
+                    });
+                    results.documents++;
+                }
+
+                if (doc.type === "DEBIT_NOTE") {
+                    await createJournalEntry({
+                        shopId, entryDate: new Date(doc.issueDate),
+                        description: `[Migrated] Debit Note ${doc.docNumber} — Additional billing`,
+                        debitAccountCode: "1100", creditAccountCode: "4100",
+                        amount, sourceType: "migrated", sourceId: doc.id, isBackdated: true,
+                        backdatedReason: "GL onboarding backfill"
+                    });
+                    results.documents++;
+                }
+
                 if ((doc.type === "LPO" || doc.type === "PO" || doc.type === "PAYMENT_VOUCHER") && doc.status === "PAID") {
                     // Supplier Payment: DR Accounts Payable / CR Cash & Bank
                     await createJournalEntry({

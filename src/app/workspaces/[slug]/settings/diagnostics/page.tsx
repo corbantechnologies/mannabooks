@@ -20,6 +20,8 @@ export default async function WorkspaceDiagnosticsPage({ params }: DiagnosticsPa
       <DiagnosticsClient
         shopId={shop.id}
         shopSlug={slug}
+        shopCode={shop.code || shop.slug}
+        shopName={shop.name}
         initialIsGlEnabled={shop.isGlEnabled}
         ledgerSnapshots={snapshots as any}
       />

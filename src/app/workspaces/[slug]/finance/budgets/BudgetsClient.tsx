@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { upsertBudget } from "@/lib/actions/budgets";
+import { useState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { upsertBudget, copyPreviousMonthBudgetAction } from "@/lib/actions/budgets";
 
 interface BudgetLine {
     accountId: string;
@@ -25,22 +26,68 @@ interface Props {
     lines: BudgetLine[];
 }
 
-const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const MONTH_NAMES = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+];
 
 function fmt(n: number, currency: string) {
     return `${currency} ${n.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export default function BudgetsClient({ shopId, shopSlug, isGlEnabled, month, year, currency, lines: initialLines }: Props) {
+    const router = useRouter();
     const [lines, setLines] = useState<BudgetLine[]>(initialLines);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editValue, setEditValue] = useState("");
     const [isPending, startTransition] = useTransition();
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+    // Sync state when props change due to month/year router push
+    useEffect(() => {
+        setLines(initialLines);
+    }, [initialLines, month, year]);
+
     function showMsg(type: "success" | "error", text: string) {
         setMessage({ type, text });
-        setTimeout(() => setMessage(null), 4000);
+        setTimeout(() => setMessage(null), 5000);
+    }
+
+    function navigateToMonth(newMonth: number, newYear: number) {
+        router.push(`/workspaces/${shopSlug}/finance/budgets?month=${newMonth}&year=${newYear}`);
+    }
+
+    function handlePrevMonth() {
+        if (month === 1) {
+            navigateToMonth(12, year - 1);
+        } else {
+            navigateToMonth(month - 1, year);
+        }
+    }
+
+    function handleNextMonth() {
+        if (month === 12) {
+            navigateToMonth(1, year + 1);
+        } else {
+            navigateToMonth(month + 1, year);
+        }
+    }
+
+    function handleCurrentMonth() {
+        const now = new Date();
+        navigateToMonth(now.getMonth() + 1, now.getFullYear());
+    }
+
+    function handleClonePreviousBudget() {
+        startTransition(async () => {
+            const res = await copyPreviousMonthBudgetAction(shopId, shopSlug, month, year);
+            if (res.success) {
+                showMsg("success", res.message || "Previous budget cloned successfully.");
+                router.refresh();
+            } else {
+                showMsg("error", res.error || "Failed to clone previous month's budget.");
+            }
+        });
     }
 
     function handleSave(line: BudgetLine) {
@@ -79,14 +126,88 @@ export default function BudgetsClient({ shopId, shopSlug, isGlEnabled, month, ye
 
     const overBudgetCount = lines.filter(l => l.isOverBudget).length;
     const warningCount = lines.filter(l => l.isWarning).length;
+    const currentYear = new Date().getFullYear();
+    const availableYears = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-6">
             {message && (
                 <div className={`px-4 py-3 rounded-lg text-sm font-medium border ${message.type === "success" ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-rose-50 text-rose-800 border-rose-200"}`}>
                     {message.text}
                 </div>
             )}
+
+            {/* MONTH & YEAR NAVIGATION BAR */}
+            <div className="bg-white border border-zinc-200 rounded-xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-sm">
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={handlePrevMonth}
+                        disabled={isPending}
+                        className="px-3 py-2 border border-zinc-200 rounded-lg hover:bg-zinc-50 font-mono text-xs uppercase font-bold text-zinc-700 transition-colors"
+                        title="Previous Month"
+                    >
+                        ← Prev
+                    </button>
+
+                    <select
+                        value={month}
+                        onChange={(e) => navigateToMonth(parseInt(e.target.value, 10), year)}
+                        disabled={isPending}
+                        className="border border-zinc-200 rounded-lg px-3 py-2 font-sans text-xs font-bold uppercase text-black bg-white focus:outline-none focus:ring-1 focus:ring-black"
+                    >
+                        {MONTH_NAMES.map((name, idx) => (
+                            <option key={name} value={idx + 1}>
+                                {name}
+                            </option>
+                        ))}
+                    </select>
+
+                    <select
+                        value={year}
+                        onChange={(e) => navigateToMonth(month, parseInt(e.target.value, 10))}
+                        disabled={isPending}
+                        className="border border-zinc-200 rounded-lg px-3 py-2 font-mono text-xs font-bold text-black bg-white focus:outline-none focus:ring-1 focus:ring-black"
+                    >
+                        {availableYears.map((y) => (
+                            <option key={y} value={y}>
+                                {y}
+                            </option>
+                        ))}
+                    </select>
+
+                    <button
+                        type="button"
+                        onClick={handleNextMonth}
+                        disabled={isPending}
+                        className="px-3 py-2 border border-zinc-200 rounded-lg hover:bg-zinc-50 font-mono text-xs uppercase font-bold text-zinc-700 transition-colors"
+                        title="Next Month"
+                    >
+                        Next →
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={handleCurrentMonth}
+                        disabled={isPending}
+                        className="px-3 py-2 text-xs font-sans font-medium text-zinc-500 hover:text-black transition-colors"
+                    >
+                        Today
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={handleClonePreviousBudget}
+                        disabled={isPending}
+                        className="w-full md:w-auto px-4 py-2 border border-zinc-200 hover:border-black rounded-lg text-xs font-mono font-bold uppercase text-zinc-700 hover:text-black bg-zinc-50 hover:bg-white transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    >
+                        <span>📋</span>
+                        <span>{isPending ? "Cloning..." : "Copy Last Month's Budget"}</span>
+                    </button>
+                </div>
+            </div>
 
             {/* Summary Banner */}
             <div className="grid grid-cols-3 gap-4">

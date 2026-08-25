@@ -106,3 +106,69 @@ export async function deleteBudget(shopId: string, shopSlug: string, budgetId: s
         return { success: false, error: error.message };
     }
 }
+
+export async function copyPreviousMonthBudgetAction(
+    shopId: string,
+    shopSlug: string,
+    targetMonth: number,
+    targetYear: number
+) {
+    try {
+        await enforcePermission(shopId, "manage_expenses");
+
+        const prevMonth = targetMonth === 1 ? 12 : targetMonth - 1;
+        const prevYear = targetMonth === 1 ? targetYear - 1 : targetYear;
+
+        // Fetch previous month's budgets
+        const prevBudgets = await db.query.budgets.findMany({
+            where: and(
+                eq(budgets.shopId, shopId),
+                eq(budgets.month, prevMonth),
+                eq(budgets.year, prevYear)
+            ),
+        });
+
+        if (prevBudgets.length === 0) {
+            return {
+                success: false,
+                error: `No budget limits found for previous period (${prevMonth}/${prevYear}) to copy from.`,
+            };
+        }
+
+        let copiedCount = 0;
+        for (const pb of prevBudgets) {
+            const existing = await db.query.budgets.findFirst({
+                where: and(
+                    eq(budgets.shopId, shopId),
+                    eq(budgets.accountId, pb.accountId),
+                    eq(budgets.month, targetMonth),
+                    eq(budgets.year, targetYear)
+                ),
+            });
+
+            if (existing) {
+                await db.update(budgets)
+                    .set({ monthlyLimit: pb.monthlyLimit })
+                    .where(eq(budgets.id, existing.id));
+            } else {
+                await db.insert(budgets).values({
+                    shopId,
+                    accountId: pb.accountId,
+                    month: targetMonth,
+                    year: targetYear,
+                    monthlyLimit: pb.monthlyLimit,
+                });
+            }
+            copiedCount++;
+        }
+
+        revalidatePath(`/workspaces/${shopSlug}/finance/budgets`);
+        return {
+            success: true,
+            message: `Successfully cloned ${copiedCount} budget limits from ${prevMonth}/${prevYear}.`,
+        };
+    } catch (error: any) {
+        console.error("Copy previous budget error:", error);
+        return { success: false, error: error.message || "Failed to clone previous month's budget." };
+    }
+}

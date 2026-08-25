@@ -245,13 +245,15 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 console.warn("revalidatePath skipped outside Next.js environment context.");
             }
 
+            const docEntryDate = new Date(newDoc.issueDate);
+
             // AUTO-JOURNAL: Standalone Receipt (no parent invoice) → DR Cash & Bank / CR Sales Revenue
             if (input.type === "RECEIPT" && !input.parentDocumentId) {
                 const amount = parseFloat(calculatedTotals.grandTotal.toString());
                 if (amount > 0) {
                     await createJournalEntry({
                         shopId: input.shopId,
-                        entryDate: new Date(),
+                        entryDate: docEntryDate,
                         description: `Receipt ${formattedSerial} — Direct POS sale`,
                         debitAccountCode: "1200",  // Cash & Bank
                         creditAccountCode: "4100", // Sales Revenue
@@ -262,16 +264,34 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 }
             }
 
-            // AUTO-JOURNAL: Credit Note → DR Sales Revenue / CR Cash & Bank
+            // AUTO-JOURNAL: Credit Note → DR Sales Revenue / CR AR (if reducing invoice) or CR Cash & Bank (if direct refund)
             if (input.type === "CREDIT_NOTE") {
+                const amount = parseFloat(calculatedTotals.grandTotal.toString());
+                if (amount > 0) {
+                    const creditAccount = input.parentDocumentId ? "1100" : "1200"; // AR if linked, else Cash
+                    await createJournalEntry({
+                        shopId: input.shopId,
+                        entryDate: docEntryDate,
+                        description: `Credit Note ${formattedSerial} — ${input.parentDocumentId ? "Credited against Invoice" : "Sales Refund"}`,
+                        debitAccountCode: "4100",  // Sales Revenue (debit reduces revenue)
+                        creditAccountCode: creditAccount,
+                        amount,
+                        sourceType: "document",
+                        sourceId: newDoc.id,
+                    });
+                }
+            }
+
+            // AUTO-JOURNAL: Debit Note → DR Accounts Receivable / CR Sales Revenue
+            if (input.type === "DEBIT_NOTE") {
                 const amount = parseFloat(calculatedTotals.grandTotal.toString());
                 if (amount > 0) {
                     await createJournalEntry({
                         shopId: input.shopId,
-                        entryDate: new Date(),
-                        description: `Credit Note ${formattedSerial} — Reversed invoice payment`,
-                        debitAccountCode: "4100",  // Sales Revenue (debit reduces revenue)
-                        creditAccountCode: "1200", // Cash & Bank (credit reduces cash)
+                        entryDate: docEntryDate,
+                        description: `Debit Note ${formattedSerial} — Additional billing`,
+                        debitAccountCode: "1100",  // Accounts Receivable
+                        creditAccountCode: "4100", // Sales Revenue
                         amount,
                         sourceType: "document",
                         sourceId: newDoc.id,
@@ -933,13 +953,28 @@ export async function repairLedgerAction(
                 }
 
                 // CREDIT NOTE
-                if (doc.type === "CREDIT_NOTE" && doc.status === "PAID") {
+                if (doc.type === "CREDIT_NOTE") {
+                    const creditAccount = doc.parentDocumentId ? "1100" : "1200"; // AR if linked to invoice, else Cash
                     await createJournalEntry({
                         shopId,
                         entryDate,
-                        description: `Credit Note ${doc.docNumber} — Reversed invoice payment (Repaired)`,
+                        description: `Credit Note ${doc.docNumber} — ${doc.parentDocumentId ? "Credited against invoice" : "Sales refund"} (Repaired)`,
                         debitAccountCode: "4100",  // Sales Revenue (debit reduces revenue)
-                        creditAccountCode: "1200", // Cash & Bank (credit reduces cash)
+                        creditAccountCode: creditAccount,
+                        amount,
+                        sourceType: "document",
+                        sourceId: doc.id,
+                    });
+                }
+
+                // DEBIT NOTE
+                if (doc.type === "DEBIT_NOTE") {
+                    await createJournalEntry({
+                        shopId,
+                        entryDate,
+                        description: `Debit Note ${doc.docNumber} — Additional billing (Repaired)`,
+                        debitAccountCode: "1100",  // Accounts Receivable
+                        creditAccountCode: "4100", // Sales Revenue
                         amount,
                         sourceType: "document",
                         sourceId: doc.id,

@@ -482,9 +482,8 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                     <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Tax Rule</label>
                     <select
                       value={row.taxType}
-                      disabled={!shop.isVatRegistered}
                       onChange={(e) => updateRowField(index, "taxType", e.target.value)}
-                      className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-md text-xs disabled:bg-zinc-100 disabled:text-zinc-400 font-semibold focus:outline-none focus:ring-1 focus:ring-black"
+                      className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-md text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-black"
                     >
                       <option value="V_16">16% VAT Standard</option>
                       <option value="V_0">0% VAT (Zero-Rated)</option>

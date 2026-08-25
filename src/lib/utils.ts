@@ -30,7 +30,7 @@ export interface LineItemCalculationInput {
     quantity: number;
     unitPrice: number;
     taxType: "V_16" | "V_0" | "EXEMPT";
-    isShopVatRegistered: boolean;
+    isShopVatRegistered?: boolean;
 }
 
 export interface LineItemCalculationOutput {
@@ -42,17 +42,17 @@ export interface LineItemCalculationOutput {
 /**
  * The core mathematical engine for Manna Books line items.
  * Computes individual row figures with zero-rounding leakages.
+ * Supports explicit item-level VAT provisioning (V_16).
  */
 export function calculateLineItem({
     quantity,
     unitPrice,
     taxType,
-    isShopVatRegistered
 }: LineItemCalculationInput): LineItemCalculationOutput {
     const subTotal = quantity * unitPrice;
 
-    // If the merchant isn't VAT registered, or the item is exempt/zero-rated, tax is flat zero
-    if (!isShopVatRegistered || taxType === "EXEMPT" || taxType === "V_0") {
+    // If the item is exempt or zero-rated, tax is flat zero
+    if (taxType === "EXEMPT" || taxType === "V_0") {
         return {
             subTotal: Math.round(subTotal * 100) / 100,
             taxAmount: 0,
@@ -60,7 +60,7 @@ export function calculateLineItem({
         };
     }
 
-    // Standard local statutory 16% VAT calculation
+    // Standard statutory 16% VAT calculation for V_16 items
     const taxAmount = subTotal * 0.16;
     const itemTotal = subTotal + taxAmount;
 

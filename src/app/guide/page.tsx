@@ -4,21 +4,23 @@ import Link from "next/link";
 import { PublicNavbar } from "@/components/PublicNavbar";
 
 export const metadata: Metadata = {
-  title: "Operator Guide | Manna Books — How to Use KRA eTIMS Invoicing, Payroll & POS",
+  title: "Operator Guide | Manna Books — How to Use KRA eTIMS Invoicing, Payroll, Digital Catalog & POS",
   description:
-    "Step-by-step operator manual for Manna Books. Learn how to issue KRA eTIMS invoices, run statutory payroll, manage walk-in POS sales, track inventory and COGS, automate your monthly 20th VAT return, and use the A/R aging analytics dashboard.",
+    "Step-by-step operator manual for Manna Books. Learn how to issue KRA eTIMS invoices, share digital product catalogs, run statutory payroll, manage walk-in POS sales, track inventory and COGS, automate your monthly 20th VAT return, and inspect double-entry general ledgers.",
   keywords: [
     "Manna Books guide",
     "KRA eTIMS invoicing tutorial Kenya",
+    "digital product catalog guide Kenya",
     "statutory payroll guide Kenya",
     "POS sales Kenya",
     "20th VAT return Kenya tutorial",
+    "general ledger double entry guide Kenya",
     "mannabooks.co.ke guide",
     "how to use Manna Books",
   ],
   openGraph: {
-    title: "Operator Guide | Manna Books — KRA eTIMS, Payroll & Analytics",
-    description: "Complete step-by-step guide for Manna Books: eTIMS invoicing, statutory payroll, walk-in POS, COGS tracking, VAT return automation, and A/R analytics.",
+    title: "Operator Guide | Manna Books — KRA eTIMS, Payroll, Catalog & Analytics",
+    description: "Complete step-by-step guide for Manna Books: eTIMS invoicing, digital product catalogs, statutory payroll, walk-in POS, COGS tracking, VAT return automation, and double-entry accounting.",
     url: "https://mannabooks.co.ke/guide",
     siteName: "Manna Books",
     locale: "en_KE",
@@ -28,6 +30,23 @@ export const metadata: Metadata = {
     canonical: "https://mannabooks.co.ke/guide",
   },
 };
+
+const GUIDE_MODULES = [
+  { href: "#module-0", label: "[00] Walk-in POS Terminal" },
+  { href: "#module-1", label: "[01] Workspace Setup" },
+  { href: "#module-2", label: "[02] Product Catalog & Shareable Rate Cards" },
+  { href: "#module-3", label: "[03] Client & Supplier Directory" },
+  { href: "#module-4", label: "[04] Fiscal Invoices & eTIMS" },
+  { href: "#module-5", label: "[05] Passwordless Portals" },
+  { href: "#module-6", label: "[06] Payment Channels" },
+  { href: "#module-7", label: "[07] KRA 20th VAT Tracker" },
+  { href: "#module-8", label: "[08] Analytics & A/R Aging" },
+  { href: "#module-9", label: "[09] Statutory Payroll" },
+  { href: "#module-10", label: "[10] Multi-Location Stock" },
+  { href: "#module-11", label: "[11] Shared B2B Inbox" },
+  { href: "#module-12", label: "[12] General Ledger, Budgets & Diagnostics" },
+  { href: "#module-13", label: "[13] PWA Appliance" },
+];
 
 export default function PublicOperatorGuidePage() {
   return (
@@ -43,21 +62,7 @@ export default function PublicOperatorGuidePage() {
           <div className="space-y-1">
             <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 font-semibold block mb-3">Contents</span>
             <nav className="flex flex-col gap-1 font-mono text-xs font-semibold uppercase">
-              {[
-                { href: "#module-0", label: "[00] Walk-in POS Terminal" },
-                { href: "#module-1", label: "[01] Workspace Setup" },
-                { href: "#module-2", label: "[02] Product Catalog & COGS" },
-                { href: "#module-3", label: "[03] Client & Supplier Directory" },
-                { href: "#module-4", label: "[04] Fiscal Invoices & eTIMS" },
-                { href: "#module-5", label: "[05] Passwordless Portals" },
-                { href: "#module-6", label: "[06] Payment Channels" },
-                { href: "#module-7", label: "[07] KRA 20th VAT Tracker" },
-                { href: "#module-8", label: "[08] Analytics & A/R Aging" },
-                { href: "#module-9", label: "[09] Statutory Payroll" },
-                { href: "#module-10", label: "[10] Multi-Location Stock" },
-                { href: "#module-11", label: "[11] Shared B2B Inbox" },
-                { href: "#module-12", label: "[12] PWA Appliance" },
-              ].map((item) => (
+              {GUIDE_MODULES.map((item) => (
                 <a
                   key={item.href}
                   href={item.href}
@@ -76,34 +81,20 @@ export default function PublicOperatorGuidePage() {
           {/* GUIDE TITLE HEADER */}
           <div className="border-b border-zinc-200/80 pb-8 space-y-4">
             <div className="inline-block border border-zinc-300 px-3 py-1 text-[10px] font-mono uppercase tracking-widest bg-zinc-50 rounded-full font-semibold text-zinc-600">
-              Official Operator Manual // Version 2026.5
+              Official Operator Manual // Version 2026.6
             </div>
             <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-tight font-sans text-black">
               Manna Books Platform Guide &amp; Operating Specifications
             </h1>
             <p className="font-sans text-sm text-zinc-600 max-w-2xl leading-relaxed">
-              Step-by-step documentation for managing workspaces, issuing eTIMS invoices, running POS counter sales, tracking COGS profitability, managing statutory payroll, and analyzing business cash flows.
+              Step-by-step documentation for managing workspaces, issuing eTIMS invoices, sharing digital product catalogs, running POS counter sales, tracking COGS profitability, managing statutory payroll, and inspecting double-entry accounting ledgers.
             </p>
 
             {/* MOBILE INDEX (shown on mobile only) */}
             <div className="lg:hidden border border-zinc-200 rounded-xl p-5 space-y-3 mt-4">
               <span className="font-bold text-black uppercase text-xs block font-sans">&gt; Documentation Index</span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-semibold text-[10px] uppercase">
-                {[
-                  { href: "#module-0", label: "[00] Walk-in POS Terminal" },
-                  { href: "#module-1", label: "[01] Workspace Setup" },
-                  { href: "#module-2", label: "[02] Product Catalog & COGS" },
-                  { href: "#module-3", label: "[03] Client & Supplier Directory" },
-                  { href: "#module-4", label: "[04] Fiscal Invoices & eTIMS" },
-                  { href: "#module-5", label: "[05] Passwordless Portals" },
-                  { href: "#module-6", label: "[06] Payment Channels" },
-                  { href: "#module-7", label: "[07] KRA 20th VAT Tracker" },
-                  { href: "#module-8", label: "[08] Analytics & A/R Aging" },
-                  { href: "#module-9", label: "[09] Statutory Payroll" },
-                  { href: "#module-10", label: "[10] Multi-Location Stock" },
-                  { href: "#module-11", label: "[11] Shared B2B Inbox" },
-                  { href: "#module-12", label: "[12] PWA Appliance" },
-                ].map((item) => (
+                {GUIDE_MODULES.map((item) => (
                   <a key={item.href} href={item.href} className="hover:underline text-black">{item.label}</a>
                 ))}
               </div>
@@ -162,32 +153,37 @@ export default function PublicOperatorGuidePage() {
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 2: PRODUCT CATALOG & COGS */}
+          {/* MODULE 2: PRODUCT CATALOG, CURATED SELECTION & RATE CARDS */}
           {/* ─────────────────────────────────────────── */}
           <section id="module-2" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 02]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Product Catalog, Inventory &amp; COGS Tracking</h2>
+              <span className="bg-emerald-700 text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 02]</span>
+              <h2 className="text-xl font-bold uppercase font-sans">Product Catalog, Curated Selection &amp; Shareable Rate Cards</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
-              Register your full catalog of products and services. Setting cost prices (COGS) enables automatic gross profit margin analysis in the Analytics dashboard.
+              Register products and services with COGS cost tracking. Share your complete digital catalog or select specific models (curated lists) with prospective clients so they can browse specifications and request quotations before formal billing.
             </p>
+            
             <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
-              <h4 className="font-bold uppercase text-black text-xs">Registering a New Catalog Item:</h4>
+              <h4 className="font-bold uppercase text-black text-xs">Registering Catalog Items:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Navigate to <strong>[04] Product Catalog</strong> and click <strong>+ Register Catalog Item</strong>.</li>
-                <li>Select the <strong>Item Classification</strong>: <strong>📦 Product</strong> (tangible good, eligible for stock tracking) or <strong>🛠️ Service</strong> (labor/consulting, no stock tracking).</li>
-                <li>Enter the item <strong>Name</strong>, an optional <strong>SKU</strong> code (auto-generated if blank), the <strong>Selling Price</strong>, and the <strong>Cost Price / COGS</strong>.</li>
+                <li>Select the <strong>Item Classification</strong>: <strong>📦 Product</strong> (tangible good with stock tracking) or <strong>🛠️ Service</strong> (labor/consulting).</li>
+                <li>Enter the item <strong>Name</strong>, optional <strong>SKU</strong> code, <strong>Selling Price</strong>, and <strong>Cost Price / COGS</strong>.</li>
                 <li>Set the <strong>Default Tax Type</strong>: <code>V_16</code> (16% VAT), <code>V_0</code> (Zero-Rated), or <code>EXEMPT</code>.</li>
-                <li>For Products, toggle <strong>Track Inventory Stock</strong> ON to enter opening stock quantity and low-stock alert threshold.</li>
-                <li>Click <strong>Save Item</strong>.</li>
+                <li>For Products, toggle <strong>Track Inventory Stock</strong> to configure opening stock and low-stock alert thresholds.</li>
               </ol>
             </div>
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-2 rounded-xl">
-              <h4 className="font-bold uppercase text-black text-xs">How COGS Powers Analytics:</h4>
-              <p className="font-sans text-sm text-zinc-600 leading-relaxed">
-                When products with a <strong>Cost Price</strong> are sold (via receipt or POS), the Analytics engine calculates: <strong>Gross Profit = Total Revenue − Total COGS</strong>. The Gross Profit Margin % is displayed in the Analytics dashboard under &quot;COGS &amp; Gross Profit Intelligence&quot;.
-              </p>
+
+            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Sharing Curated Product Lists with Clients:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li>On the Product Catalog table, <strong>check the boxes <code>[✓]</code></strong> next to the specific products you want to share (e.g. 5 specific All-in-One PC models).</li>
+                <li>In the top selection toolbar, click <strong>🔗 Share Selected (X)</strong> to copy a private, curated link (<code>/portal/catalog/[slug]?items=...</code>) containing only those models.</li>
+                <li>Click <strong>💬 WhatsApp</strong> to send a pre-filled invitation directly to the client.</li>
+                <li>Or click <strong>📄 PDF Selected</strong> to download a clean, branded PDF rate card containing only the chosen items.</li>
+                <li>When the client opens the link, they browse specifications and prices (cost margins remain hidden), pick quantities, and click <strong>&quot;Submit Quote Request&quot;</strong> — automatically creating a draft Quotation in your dashboard!</li>
+              </ol>
             </div>
           </section>
 
@@ -220,10 +216,10 @@ export default function PublicOperatorGuidePage() {
           <section id="module-4" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 04]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Issuing Fiscal Invoices, Receipts &amp; eTIMS Taxes</h2>
+              <h2 className="text-xl font-bold uppercase font-sans">Issuing Fiscal Invoices, Receipts, Taxes &amp; Credit Notes</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
-              Generate all outbound sales documents and procurement documents. Multi-rate tax (16% VAT, 0% Zero-Rated, Exempt) is handled at the line-item level. Receipts are automatically marked PAID and trigger stock deduction.
+              Generate all outbound sales documents, procurement orders, and credit notes. Multi-rate tax (16% VAT, 0% Zero-Rated, Exempt) is handled per line item with dedicated VAT line display above Grand Total.
             </p>
             <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
@@ -231,10 +227,10 @@ export default function PublicOperatorGuidePage() {
                 <li>Click <strong>+ Issue Document</strong> from the Fiscal Ledgers stream or from a client/supplier profile page.</li>
                 <li>Select the <strong>Document Type</strong>: Invoice, Receipt, Quotation, LPO, PO, Delivery Note, Credit Note, Debit Note, GRN, or Payment Voucher.</li>
                 <li>For Receipts — a <strong>Client</strong> is optional (useful for walk-in / counter sales). For Invoices, select the target client. For procurement documents, select the supplier.</li>
-                <li>Add catalog line items from your product registry, or type custom descriptions. Set the tax rate per row: <code>V_16 (16%)</code>, <code>V_0 (0%)</code>, or <code>EXEMPT</code>.</li>
+                <li>Add line items. Set the tax rate per row: <code>V_16 (16%)</code>, <code>V_0 (0%)</code>, or <code>EXEMPT</code>. 16% VAT calculates and appears on its dedicated line right above Grand Total.</li>
                 <li>(Optional) Enter the statutory <strong>KRA eTIMS Control Unit (CU) Serial Number</strong> (e.g. <code>CU012345/2026</code>).</li>
-                <li>Set the <strong>Issue Date</strong>. Due Date is optional — receipts don&apos;t require a due date since payment is immediate.</li>
-                <li>Click <strong>Publish Ledger Document</strong>. Receipts are automatically set to <strong>PAID</strong> status and trigger stock deduction immediately.</li>
+                <li>For <strong>Credit Notes</strong>, link the parent invoice if crediting against receivables, or issue as a standalone cash refund. The general ledger automatically posts corresponding balancing double entries.</li>
+                <li>Click <strong>Publish Ledger Document</strong>.</li>
               </ol>
             </div>
           </section>
@@ -400,11 +396,52 @@ export default function PublicOperatorGuidePage() {
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 12: PWA APPLIANCE */}
+          {/* MODULE 12: GENERAL LEDGER, BUDGETS & DIAGNOSTICS */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-12" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+          <section id="module-12" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 12]</span>
+              <span className="bg-emerald-700 text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 12]</span>
+              <h2 className="text-xl font-bold uppercase font-sans">General Ledger, Operating Budgets &amp; Diagnostics</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Double-entry bookkeeping suite. Manage your chart of accounts, multi-month operating budgets, inspect accounting periods down to the journal entry, and perform clean slate factory resets with automated backup exports.
+            </p>
+            
+            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Operating Budgets &amp; Month Cloning:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li>Navigate to <strong>Finance &rarr; Operating Budgets</strong>.</li>
+                <li>Use the <strong>Month &amp; Year Navigation Bar</strong> (<code>← Prev Month</code> / <code>Next Month →</code>) to inspect budget allocations and actual spend for any calendar month.</li>
+                <li>Click <strong>Copy Last Month&apos;s Budget</strong> to carry forward all category expense limits from the preceding month with 1 click.</li>
+              </ol>
+            </div>
+
+            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Inspecting Monthly Accounting Periods:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li>Go to <strong>Finance &rarr; Accounting Periods</strong>.</li>
+                <li>Click <strong>Inspect</strong> on any open or closed month (e.g. August 2026).</li>
+                <li>Review the period&apos;s Gross Revenue, Operating Expenses, Net Income, and Debits vs Credits balance check (<code>✓ Balanced 0.00 Diff</code>).</li>
+                <li>Search and inspect the real-time stream of double-entry journal postings for that month.</li>
+              </ol>
+            </div>
+
+            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Clean Slate Reset &amp; Automated Backups:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li>Go to <strong>Settings &rarr; GL Diagnostics</strong> and scroll to <strong>Clean Slate &amp; Factory Reset</strong>.</li>
+                <li>Select <strong>Option A (Fresh Accounting Reset)</strong> to wipe transactions and restart sequences from <code>0001</code> while preserving your product catalog and contacts.</li>
+                <li>The system automatically triggers a download of a complete JSON backup archive (<code>manna_backup_*.json</code>) before any purge is executed on the database.</li>
+              </ol>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 13: PWA APPLIANCE */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-13" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 13]</span>
               <h2 className="text-xl font-bold uppercase font-sans">Installing the Standalone PWA Appliance</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">

@@ -11,6 +11,7 @@ interface PublicCatalogClientProps {
   shop: PublicShopProfile;
   initialProducts: PublicCatalogItem[];
   initialSearch?: string;
+  token?: string;
 }
 
 interface SelectedItem {
@@ -23,6 +24,7 @@ export function PublicCatalogClient({
   shop,
   initialProducts,
   initialSearch = "",
+  token = "",
 }: PublicCatalogClientProps) {
   const [search, setSearch] = useState(initialSearch);
   const [selectedType, setSelectedType] = useState<string>("ALL");
@@ -192,7 +194,10 @@ export function PublicCatalogClient({
           {/* TOP QUICK ACTION BUTTONS */}
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <a
-              href={`/api/catalog/${shop.slug}/pdf${search ? `?search=${encodeURIComponent(search)}` : ""}`}
+              href={`/api/catalog/${shop.slug}/pdf?${new URLSearchParams({
+                ...(token ? { token } : {}),
+                ...(search ? { search } : {}),
+              }).toString()}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 sm:flex-none border border-zinc-300 hover:border-black bg-white hover:bg-zinc-50 text-black px-4 py-2.5 rounded-xl font-mono text-xs font-bold uppercase transition-all shadow-sm flex items-center justify-center gap-2"

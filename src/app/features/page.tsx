@@ -4,21 +4,23 @@ import Link from "next/link";
 import { PublicNavbar } from "@/components/PublicNavbar";
 
 export const metadata: Metadata = {
-  title: "Features | Manna Books — KRA eTIMS Invoicing, Statutory Payroll & POS Platform",
+  title: "Features | Manna Books — KRA eTIMS Invoicing, Statutory Payroll, POS & Digital Catalog",
   description:
-    "Explore all Manna Books platform features: KRA eTIMS multi-rate invoicing, statutory payroll (PAYE, SHIF, AHL, NSSF), walk-in POS terminal, smart inventory with COGS tracking, 20th VAT return automation, A4 vector PDF engine, and passwordless client portals.",
+    "Explore all Manna Books platform features: KRA eTIMS multi-rate invoicing, statutory payroll (PAYE, SHIF, AHL, NSSF), walk-in POS terminal, shareable digital product catalog, smart multi-location inventory, 20th VAT return automation, general ledger, and passwordless client portals.",
   keywords: [
     "KRA eTIMS features Kenya",
     "statutory payroll PAYE SHIF NSSF Kenya",
     "invoicing software features Kenya",
+    "digital product catalog rate cards Kenya",
     "walk-in POS Kenya",
     "inventory management Kenya",
     "VAT tracker Kenya",
+    "general ledger double entry Kenya",
     "mannabooks.co.ke features",
   ],
   openGraph: {
-    title: "Platform Features | Manna Books — KRA eTIMS, Payroll & POS",
-    description: "Complete feature specifications for Manna Books: eTIMS invoicing, statutory payroll, walk-in POS, COGS analytics, and passwordless client portals — built for Kenyan SMEs.",
+    title: "Platform Features | Manna Books — KRA eTIMS, Payroll, POS & Digital Catalog",
+    description: "Complete feature specifications for Manna Books: eTIMS invoicing, statutory payroll, digital product catalog, walk-in POS, COGS analytics, and passwordless client portals — built for Kenyan SMEs.",
     url: "https://mannabooks.co.ke/features",
     siteName: "Manna Books",
     locale: "en_KE",
@@ -29,19 +31,11 @@ export const metadata: Metadata = {
   },
 };
 
-const NAV_LINKS = [
-  { href: "/features", label: "Features" },
-  { href: "/guide", label: "Guide" },
-  { href: "/login", label: "Login" },
-];
-
 export default function FeaturesPage() {
   return (
     <div className="flex-1 flex flex-col bg-white text-black selection:bg-black selection:text-white font-sans">
 
       <PublicNavbar />
-
-
 
       <main className="flex-1 flex flex-col">
 
@@ -64,6 +58,7 @@ export default function FeaturesPage() {
             {[
               { href: "#pos", label: "Walk-in POS" },
               { href: "#invoicing", label: "Invoicing & eTIMS" },
+              { href: "#catalog-showcase", label: "Digital Catalog & Rate Cards" },
               { href: "#inventory", label: "Smart Inventory" },
               { href: "#payroll", label: "Statutory Payroll" },
               { href: "#expenses", label: "Expenses" },
@@ -127,11 +122,39 @@ export default function FeaturesPage() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
-                { title: "Multi-Rate Tax Billing", body: "Support for KRA 16% Standard Output VAT, 0% Zero-Rated export lines, and Tax EXEMPT items on a per-line-item basis with automatic tax pooling." },
-                { title: "KRA CU & PIN Fields", body: "Embed official KRA eTIMS Control Unit (CU) serial numbers and merchant/client KRA PINs on all formal financial documents for statutory audit compliance." },
-                { title: "Full Document Lifecycle", body: "Issue Quotations with 1-click conversion to Invoices, Receipts, Purchase Orders, LPOs, GRNs, Credit Notes, and Debit Notes — tracked through DRAFT → ISSUED → PAID states." },
+                { title: "Item-Level VAT Provisioning", body: "Explicit 16% Standard VAT, 0% Zero-Rated, and Tax EXEMPT rules applied per line item. Computes and displays dedicated VAT line items right above Grand Total." },
+                { title: "Credit Notes & Debit Notes", body: "Issue double-entry credit and debit notes with automatic general ledger postings against Sales Revenue (4100), Accounts Receivable (1100), or Cash & Bank (1200)." },
+                { title: "KRA CU & PIN Compliance", body: "Embed official KRA eTIMS Control Unit (CU) serial numbers and merchant/client KRA PINs on all formal financial documents for statutory audit compliance." },
               ].map((item) => (
                 <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
+                  <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 14 (NEW): DIGITAL PRODUCT CATALOG & RATE CARDS */}
+          <div id="catalog-showcase" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-emerald-700 text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 02</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Shareable Digital Product Catalog &amp; Rate Cards
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Share your product catalog or curated product lists with prospective clients. Customers can browse models, view specifications and selling prices (with your profit margins strictly hidden), and submit quote requests directly into your dashboard.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Public Digital Showcase", body: "Live, mobile-optimized catalog portal (/portal/catalog/[slug]) displaying your brand logo, contact channels, product models, SKUs, and selling prices." },
+                { title: "Curated Selection Sharing", body: "Select specific products (e.g. 5 specific All-in-One PCs) to generate targeted public links and PDF price sheets containing only those selected models." },
+                { title: "Automated Quotation Request", body: "Clients pick items and click 'Request Quotation'. The system instantly registers their contact and generates a draft Quotation in your Manna Books workspace." },
+                { title: "Branded PDF Price Sheets", body: "1-click export of print-ready vector PDF rate cards complete with company branding, KRA PIN, item descriptions, and pricing — ideal for WhatsApp and email." },
+                { title: "1-Click WhatsApp Sharing", body: "Instantly generate and send pre-filled WhatsApp messages with your curated catalog link directly to clients." },
+                { title: "Zero Data Duplication", body: "Your catalog is powered directly by your product inventory — any price or name update reflects immediately on the live link and PDF." },
+              ].map((item) => (
+                <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-emerald-500 hover:shadow-md transition-all">
                   <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
@@ -142,7 +165,7 @@ export default function FeaturesPage() {
           {/* MODULE 2: SMART INVENTORY & COGS */}
           <div id="inventory" className="space-y-6 scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 02</span>
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 03</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 Multi-Location Inventory &amp; COGS Ledger
               </h2>
@@ -168,7 +191,7 @@ export default function FeaturesPage() {
           {/* MODULE 3: STATUTORY PAYROLL */}
           <div id="payroll" className="space-y-6 scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 03</span>
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 04</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 Statutory Payroll &amp; Wage Compiler
               </h2>
@@ -193,7 +216,7 @@ export default function FeaturesPage() {
           {/* MODULE 4: KRA 20TH VAT TRACKER */}
           <div id="vat" className="space-y-6 scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 04</span>
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 05</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 Statutory KRA 20th VAT Return Tracker
               </h2>
@@ -218,9 +241,9 @@ export default function FeaturesPage() {
           {/* MODULE 5: VECTOR PDF ENGINE */}
           <div id="pdf-engine" className="space-y-6 scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 05</span>
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 06</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
-                A4 Landscape Vector PDF Engine
+                A4 Vector PDF Engine &amp; Rate Cards
               </h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
@@ -229,36 +252,21 @@ export default function FeaturesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
                 {
-                  icon: "🧾",
-                  title: "A4 Vector PDF Engine",
-                  desc: "Generate pixel-perfect A4 invoice and receipt PDFs instantly, optimized for both digital sharing and physical thermal or laser printing."
+                  title: "A4 Vector Invoices & Receipts",
+                  body: "Generate pixel-perfect A4 invoice and receipt PDFs instantly, optimized for digital sharing, WhatsApp, or physical printing."
                 },
                 {
-                  icon: "🔄",
-                  title: "Retainers & Recurring Billing",
-                  desc: "Put service billing on autopilot. Set monthly, quarterly, or yearly recurring schedules, and auto-dispatch overdue aging reminders with a single click."
+                  title: "Product Rate Card PDFs",
+                  body: "Export branded product catalog sheets and price lists with company logos, contact info, SKUs, and selling prices."
                 },
                 {
-                  icon: "💱",
-                  title: "Multi-Currency Native",
-                  desc: "Bill local and international clients effectively. Switch between KES, USD, GBP or EUR natively on a per-document basis without breaking ledger math."
+                  title: "11-Column Payroll PDF",
+                  body: "Generates A4 Landscape payroll vouchers with 11 unbundled columns: Base, Allowances, Commission, Gross, PAYE, SHIF, AHL, NSSF, Advances, and Net Pay."
                 },
-                {
-                  icon: "📦",
-                  title: "Smart Procurement Flow",
-                  desc: "Generate Purchase Orders and LPOs. When marked as PAID/RECEIVED, your inventory inflow is automatically updated in real-time."
-                },
-                {
-                  icon: "⚡",
-                  title: "Rapid Bulk Provisioning",
-                  desc: "Import catalogs faster than a CSV upload with our dynamic 15-item bulk provisioner. Set COGS, margins, and VAT classes in one screen."
-                },
-                { title: "11-Column Payroll PDF", body: "Generates A4 Landscape payroll vouchers with 11 unbundled columns: Base, Allowances, Commission, Gross, PAYE, SHIF, AHL, NSSF, Advances, Deductions, Net Pay." },
-                { title: "Instant Download Links", body: "Download PDFs instantly from any document detail page with standardized file naming (MannaBooks_INV-2026-XXXX.pdf) for organized record keeping." },
               ].map((item) => (
                 <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
                   <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
-                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body || item.desc}</p>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
             </div>
@@ -267,7 +275,7 @@ export default function FeaturesPage() {
           {/* MODULE 6: PASSWORDLESS PORTALS */}
           <div id="portals" className="space-y-6 scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 06</span>
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 07</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 Passwordless Client &amp; Staff Portals
               </h2>
@@ -292,7 +300,7 @@ export default function FeaturesPage() {
           {/* MODULE 7: ANALYTICS & A/R AGING */}
           <div id="analytics" className="space-y-6 scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 07</span>
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 08</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 Business Intelligence &amp; A/R Aging Matrix
               </h2>
@@ -317,7 +325,7 @@ export default function FeaturesPage() {
           {/* MODULE 8: CRM — CLIENT & SUPPLIER NETWORK */}
           <div id="crm" className="space-y-6 scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 08</span>
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 09</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 CRM — Client &amp; Supplier Relationship Hub
               </h2>
@@ -342,7 +350,7 @@ export default function FeaturesPage() {
           {/* MODULE 9: OPERATING EXPENSES */}
           <div id="expenses" className="space-y-6 scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 09</span>
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 10</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 Operating Expenses Tracker
               </h2>
@@ -367,7 +375,7 @@ export default function FeaturesPage() {
           {/* MODULE 10: TEAM MANAGEMENT */}
           <div id="team" className="space-y-6 scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-emerald-700 text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 10</span>
+              <span className="font-mono text-xs font-bold bg-emerald-700 text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 11</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 Team Management &amp; RBAC
               </h2>
@@ -392,7 +400,7 @@ export default function FeaturesPage() {
           {/* MODULE 11: B2B NETWORK INBOX */}
           <div id="b2b-inbox" className="space-y-6 scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 11</span>
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 12</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 B2B Network Inbox &amp; Read Receipts
               </h2>
@@ -417,19 +425,22 @@ export default function FeaturesPage() {
           {/* MODULE 12: GENERAL LEDGER & FINANCIAL REPORTING */}
           <div id="general-ledger" className="space-y-6 scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 12</span>
+              <span className="font-mono text-xs font-bold bg-black text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 13</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 General Ledger &amp; Double-Entry Bookkeeping
               </h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
-              Full-featured Double-Entry Accounting framework. Complete chart of accounts, customizable opening balances, monthly accounting periods with backdate controls, and real-time trial balance, P&L, and balance sheet reporting.
+              Full-featured Double-Entry Accounting framework. Standardized chart of accounts, multi-month operating budget planner with 1-click cloning, accounting period financial inspector, and automated clean slate resets.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
-                { title: "Standardized Chart of Accounts", body: "Configurable double-entry accounts mapped across Assets, Liabilities, Equity, Revenue, Cost of Sales, and Operating Expenses. Full audit trial ledger entries." },
+                { title: "Standardized Chart of Accounts", body: "Configurable double-entry accounts mapped across Assets, Liabilities, Equity, Revenue, Cost of Sales, and Operating Expenses with immutable journal trails." },
+                { title: "Operating Budgets & Cloning", body: "Track budget vs actuals across past and future calendar months. 1-click 'Copy Last Month's Budget' feature to carry forward expense allocations effortlessly." },
+                { title: "Period Detail Inspector", body: "Inspect monthly gross revenue, expenses, net income, and double-entry balance check (DR = CR) alongside a real-time stream of all journal entries." },
+                { title: "Clean Slate & Auto-Backup", body: "Wipe transactions to start afresh with 0001 sequences (Fresh Accounting Reset) or full factory wipe, with automated JSON backup downloads before any purge." },
                 { title: "Closing Accounting Periods", body: "Close monthly accounting periods to lock down transactions and prevent backdating. Grant custom roles specific override permissions to reopen when necessary." },
-                { title: "Real-time Financial Statements", body: "Dynamic Profit & Loss, Balance Sheet, and Trial Balance reports compiled instantly from ledger postings. Easily exportable for board or compliance audits." },
+                { title: "Real-time Financial Statements", body: "Dynamic Profit & Loss, Balance Sheet, and Trial Balance reports compiled instantly from ledger postings for board or compliance audits." },
               ].map((item) => (
                 <div key={item.title} className="border border-zinc-200/80 rounded-xl p-6 bg-white space-y-3 hover:border-black hover:shadow-md transition-all">
                   <span className="text-emerald-700 font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
@@ -442,7 +453,7 @@ export default function FeaturesPage() {
           {/* MODULE 13: KENYA INCOME TAX COMPLIANCE SUITE */}
           <div id="income-tax" className="space-y-6 scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
-              <span className="font-mono text-xs font-bold bg-emerald-700 text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 13</span>
+              <span className="font-mono text-xs font-bold bg-emerald-700 text-white px-2.5 py-1 uppercase rounded-sm shrink-0">MODULE 14</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
                 Kenya Income Tax Compliance Suite
               </h2>
@@ -480,7 +491,7 @@ export default function FeaturesPage() {
               <span className="text-zinc-400">One workspace.</span>
             </h2>
             <p className="text-sm text-zinc-400 font-sans leading-relaxed max-w-xl mx-auto">
-              Initialize your Manna Books workspace in under 3 minutes. POS, eTIMS invoicing, statutory payroll, inventory tracking, and analytics — all ready out of the box.
+              Initialize your Manna Books workspace in under 3 minutes. POS, digital catalogs, eTIMS invoicing, statutory payroll, inventory tracking, and analytics — all ready out of the box.
             </p>
             <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center items-center font-mono text-xs">
               <Link 

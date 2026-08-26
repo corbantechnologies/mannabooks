@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import { getPublicCatalogData } from "@/lib/actions/catalog";
+import { getPublicCatalogData, decodeCatalogToken } from "@/lib/actions/catalog";
 import { PublicCatalogClient } from "./PublicCatalogClient";
 
 interface PublicCatalogPageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ search?: string; items?: string }>;
+  searchParams: Promise<{ search?: string; items?: string; token?: string; c?: string }>;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -21,9 +21,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PublicCatalogPage({ params, searchParams }: PublicCatalogPageProps) {
   const { slug } = await params;
-  const { search, items } = await searchParams;
+  const { search, items, token, c } = await searchParams;
 
-  const itemIds = items ? items.split(",").map((i) => i.trim()).filter(Boolean) : undefined;
+  const rawToken = token || c || items;
+  let itemIds: string[] | undefined;
+
+  if (rawToken) {
+    itemIds = await decodeCatalogToken(rawToken);
+  }
+
   const res = await getPublicCatalogData(slug, search, itemIds);
 
   if (!res.success || !res.shop) {
@@ -36,6 +42,7 @@ export default async function PublicCatalogPage({ params, searchParams }: Public
         shop={res.shop}
         initialProducts={res.products || []}
         initialSearch={search || ""}
+        token={rawToken || ""}
       />
     </div>
   );

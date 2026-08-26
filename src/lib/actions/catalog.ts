@@ -5,6 +5,59 @@ import { shops, products, clients, documents } from "@/db/schema";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { createBillingDocument } from "./documents";
 import { revalidatePath } from "next/cache";
+import zlib from "zlib";
+
+/**
+ * Encodes an array of UUIDs into a short, URL-safe compact token.
+ */
+export async function encodeCatalogToken(productIds: string[]): Promise<string> {
+    if (!productIds || productIds.length === 0) return "";
+    try {
+        const hex = productIds.map((id) => id.replace(/-/g, "")).join("");
+        const buf = Buffer.from(hex, "hex");
+        const compressed = zlib.deflateRawSync(buf);
+        return compressed.toString("base64url");
+    } catch {
+        return productIds.join(",");
+    }
+}
+
+/**
+ * Decodes a compact catalog token back into an array of full UUID strings.
+ */
+export async function decodeCatalogToken(token: string): Promise<string[]> {
+    if (!token) return [];
+    if (token.includes(",")) {
+        return token.split(",").map((t) => t.trim()).filter(Boolean);
+    }
+    // If it's a raw 32-char hex string (e.g. concatenated UUIDs without hyphens)
+    if (/^[0-9a-fA-F]{32,}$/.test(token) && token.length % 32 === 0) {
+        const ids: string[] = [];
+        for (let i = 0; i < token.length; i += 32) {
+            const chunk = token.slice(i, i + 32);
+            ids.push(
+                `${chunk.slice(0, 8)}-${chunk.slice(8, 12)}-${chunk.slice(12, 16)}-${chunk.slice(16, 20)}-${chunk.slice(20, 32)}`
+            );
+        }
+        return ids;
+    }
+    try {
+        const compressed = Buffer.from(token, "base64url");
+        const decompressed = zlib.inflateRawSync(compressed);
+        const hex = decompressed.toString("hex");
+        const ids: string[] = [];
+        for (let i = 0; i < hex.length; i += 32) {
+            const chunk = hex.slice(i, i + 32);
+            if (chunk.length === 32) {
+                const formatted = `${chunk.slice(0, 8)}-${chunk.slice(8, 12)}-${chunk.slice(12, 16)}-${chunk.slice(16, 20)}-${chunk.slice(20, 32)}`;
+                ids.push(formatted);
+            }
+        }
+        return ids.length > 0 ? ids : [token];
+    } catch {
+        return token.split(",").map((t) => t.trim()).filter(Boolean);
+    }
+}
 
 export interface PublicCatalogItem {
     id: string;

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
+import { encodeCatalogToken } from "@/lib/actions/catalog";
 
 interface ShareCatalogModalProps {
   shopSlug: string;
@@ -20,20 +21,34 @@ export function ShareCatalogModal({
 }: ShareCatalogModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [catalogUrl, setCatalogUrl] = useState("");
+  const [pdfUrl, setPdfUrl] = useState("");
   const [copied, setCopied] = useState(false);
 
   const isCurated = selectedProductIds && selectedProductIds.length > 0;
   const count = selectedProductIds?.length || 0;
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    let isMounted = true;
+    async function generateUrl() {
+      if (typeof window === "undefined") return;
       const base = `${window.location.origin}/portal/catalog/${shopSlug}`;
-      if (isCurated) {
-        setCatalogUrl(`${base}?items=${selectedProductIds.join(",")}`);
+      if (isCurated && selectedProductIds) {
+        const token = await encodeCatalogToken(selectedProductIds);
+        if (isMounted) {
+          setCatalogUrl(`${base}?token=${token}`);
+          setPdfUrl(`/api/catalog/${shopSlug}/pdf?token=${token}`);
+        }
       } else {
-        setCatalogUrl(base);
+        if (isMounted) {
+          setCatalogUrl(base);
+          setPdfUrl(`/api/catalog/${shopSlug}/pdf`);
+        }
       }
     }
+    generateUrl();
+    return () => {
+      isMounted = false;
+    };
   }, [shopSlug, selectedProductIds, isCurated]);
 
   function handleCopy() {
@@ -43,10 +58,6 @@ export function ShareCatalogModal({
     toast.success("Catalog link copied to clipboard!");
     setTimeout(() => setCopied(false), 2500);
   }
-
-  const pdfUrl = isCurated
-    ? `/api/catalog/${shopSlug}/pdf?items=${selectedProductIds.join(",")}`
-    : `/api/catalog/${shopSlug}/pdf`;
 
   const whatsappMessage = encodeURIComponent(
     isCurated

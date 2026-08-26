@@ -481,9 +481,10 @@ export async function emailPayslipsAction(voucherId: string, shopId: string, sho
                         <span style="font-size: 20px; font-weight: 800; color: #047857;">${voucher.shop.currency} ${parsed.netPay.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
 
-                    <div style="border-top: 1px dashed #e4e4e7; pt: 12px; text-align: center; font-size: 10px; color: #a1a1aa; line-height: 1.4;">
-                        <p style="margin: 0;">This is a system-generated payslip matching your official employment contract.</p>
-                        <p style="margin: 4px 0 0 0;">${voucher.shop.name} • Secure Ledger Node</p>
+                    <div style="border-top: 1px dashed #e4e4e7; padding-top: 12px; text-align: center; font-size: 10px; color: #a1a1aa; line-height: 1.4;">
+                        <p style="margin: 0; font-weight: bold; color: #475569;">${voucher.shop.name}</p>
+                        ${voucher.shop.phone ? `<p style="margin: 2px 0 0 0;">Tel: ${voucher.shop.phone} • Email: ${voucher.shop.email || '—'}</p>` : ''}
+                        <p style="margin: 4px 0 0 0;">Official Payslip Voucher Matching Employment Records • Powered by Manna Books</p>
                     </div>
                 </div>
             `;
@@ -491,6 +492,7 @@ export async function emailPayslipsAction(voucherId: string, shopId: string, sho
             await resend.emails.send({
                 from: fromAddress,
                 to: emp.email,
+                replyTo: voucher.shop.email ? [voucher.shop.email.trim()] : undefined,
                 subject: `${voucher.shop.name} — Payslip for ${parsed.period}`,
                 html: htmlContent,
             });

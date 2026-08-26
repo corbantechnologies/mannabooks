@@ -67,9 +67,10 @@ export async function dispatchDocumentEmail({ documentId, isReminder = false }: 
         const { data, error: resendError } = await resend.emails.send({
             from: fromAddress,
             to: [recipient.email],
+            replyTo: doc.shop.email ? [doc.shop.email.trim()] : undefined,
             subject: `${doc.shop.name} — ${doc.type} ${doc.docNumber}`,
             html: `
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background-color: #ffffff; color: #000000; border: 1px solid ${brandColor};">
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background-color: #ffffff; color: #000000; border: 1px solid ${brandColor}; border-radius: 8px;">
                     <div style="border-bottom: 2px solid ${brandColor}; padding-bottom: 16px; margin-bottom: 24px;">
                         <h1 style="font-size: 20px; font-weight: 800; text-transform: uppercase; margin: 0; color: ${brandColor}; tracking: -0.05em;">${doc.shop.name}</h1>
                         <p style="font-family: monospace; font-size: 11px; color: #71717a; margin: 4px 0 0 0; text-transform: uppercase;">Official Billing Statement</p>
@@ -81,7 +82,7 @@ export async function dispatchDocumentEmail({ documentId, isReminder = false }: 
                         ${introText}
                     </p>
 
-                    <div style="background-color: #f4f4f5; border: 1px solid ${brandColor}; padding: 20px; margin-bottom: 28px;">
+                    <div style="background-color: #f4f4f5; border: 1px solid ${brandColor}; padding: 20px; margin-bottom: 28px; border-radius: 6px;">
                         <table style="width: 100%; border-collapse: collapse; font-family: monospace; font-size: 13px;">
                             <tr>
                                 <td style="color: #71717a; padding-bottom: 8px;">DOCUMENT:</td>
@@ -108,14 +109,28 @@ export async function dispatchDocumentEmail({ documentId, isReminder = false }: 
                         </table>
                     </div>
 
-                    <div style="text-align: center; margin-bottom: 32px;">
-                        <a href="${publicSecureLink}" target="_blank" style="display: inline-block; background-color: ${brandColor}; color: #ffffff; font-weight: bold; font-size: 13px; text-transform: uppercase; text-decoration: none; padding: 14px 28px; border: 1px solid ${brandColor};">
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <a href="${publicSecureLink}" target="_blank" style="display: inline-block; background-color: ${brandColor}; color: #ffffff; font-weight: bold; font-size: 13px; text-transform: uppercase; text-decoration: none; padding: 14px 28px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             ${buttonText}
                         </a>
                     </div>
 
-                    <div style="border-t: 1px solid #e4e4e7; pt: 16px; font-family: monospace; font-size: 10px; color: #a1a1aa; text-align: center;">
-                        Direct Portal Link: <a href="${publicSecureLink}" style="color: ${brandColor};">${publicSecureLink}</a>
+                    <!-- DIRECT MERCHANT CONTACT & SETTLEMENT INQUIRIES -->
+                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
+                        <h4 style="margin: 0 0 6px 0; font-size: 11px; font-family: monospace; text-transform: uppercase; font-weight: bold; color: #0f172a;">
+                            Direct Merchant Contact Details:
+                        </h4>
+                        <div style="font-size: 12px; color: #334155; line-height: 1.8;">
+                            ${doc.shop.phone ? `<div>📞 <strong>Phone:</strong> <a href="tel:${doc.shop.phone.replace(/[^0-9+]/g, "")}" style="color: ${brandColor}; font-weight: bold; text-decoration: none;">${doc.shop.phone}</a> &nbsp;•&nbsp; 💬 <strong>WhatsApp:</strong> <a href="https://wa.me/${doc.shop.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hello ${doc.shop.name}, I am inquiring about ${doc.type} ${doc.docNumber}: ${publicSecureLink}`)}" target="_blank" style="color: #16a34a; font-weight: bold; text-decoration: none;">Chat on WhatsApp →</a></div>` : ''}
+                            ${doc.shop.email ? `<div>✉️ <strong>Email:</strong> <a href="mailto:${doc.shop.email}" style="color: ${brandColor}; font-weight: bold; text-decoration: none;">${doc.shop.email}</a> <span style="color: #64748b; font-size: 11px;">(or reply to this email)</span></div>` : ''}
+                            ${doc.shop.website ? `<div>🌐 <strong>Website:</strong> <a href="${doc.shop.website.startsWith("http") ? doc.shop.website : `https://${doc.shop.website}`}" target="_blank" style="color: #2563eb; text-decoration: none;">${doc.shop.website}</a></div>` : ''}
+                            ${doc.shop.taxPin ? `<div style="font-family: monospace; font-size: 11px; color: #64748b;">🏛️ <strong>KRA Tax PIN:</strong> ${doc.shop.taxPin}</div>` : ''}
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid #e4e4e7; padding-top: 14px; font-family: monospace; font-size: 10px; color: #94a3b8; text-align: center;">
+                        <p style="margin: 0 0 2px 0; font-weight: bold; color: #475569;">${doc.shop.name}</p>
+                        <p style="margin: 0;">Direct Portal Link: <a href="${publicSecureLink}" style="color: ${brandColor};">${publicSecureLink}</a></p>
                     </div>
                 </div>
             `,

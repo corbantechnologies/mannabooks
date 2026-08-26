@@ -428,21 +428,63 @@ export async function sendCatalogEmailAction(input: SendCatalogEmailInput) {
                 </div>
 
                 <!-- PDF DOWNLOAD LINK -->
-                <div style="text-align: center; margin-bottom: 28px;">
+                <div style="text-align: center; margin-bottom: 24px;">
                     <a href="${pdfLink}" target="_blank" style="font-size: 12px; font-family: monospace; color: #52525b; text-decoration: underline;">
                         📄 Or download printable PDF rate card
                     </a>
                 </div>
 
+                <!-- DIRECT BUSINESS CONTACT & INQUIRIES CARD -->
+                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 18px; margin-bottom: 24px;">
+                    <h4 style="margin: 0 0 8px 0; font-size: 11px; font-family: monospace; text-transform: uppercase; font-weight: bold; color: #0f172a; letter-spacing: 0.05em;">
+                        Direct Merchant Contact &amp; Inquiries:
+                    </h4>
+                    <p style="margin: 0 0 12px 0; font-size: 12px; color: #475569; line-height: 1.4;">
+                        For questions, bulk order discounts, delivery schedules, or immediate assistance, contact <strong>${shop.name}</strong> directly:
+                    </p>
+                    
+                    <div style="font-size: 12px; color: #1e293b; line-height: 1.8;">
+                        ${
+                            shop.phone
+                                ? `<div style="margin-bottom: 4px;">
+                                    📞 <strong>Phone:</strong> <a href="tel:${shop.phone.replace(/[^0-9+]/g, "")}" style="color: ${brandColor}; font-weight: bold; text-decoration: none;">${shop.phone}</a>
+                                    &nbsp;•&nbsp;
+                                    💬 <strong>WhatsApp:</strong> <a href="https://wa.me/${shop.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hello ${shop.name}, I am inquiring about your product catalog: ${catalogLink}`)}" target="_blank" style="color: #16a34a; font-weight: bold; text-decoration: none;">Chat on WhatsApp →</a>
+                                </div>`
+                                : ""
+                        }
+                        ${
+                            shop.email
+                                ? `<div style="margin-bottom: 4px;">
+                                    ✉️ <strong>Direct Email:</strong> <a href="mailto:${shop.email}" style="color: ${brandColor}; font-weight: bold; text-decoration: none;">${shop.email}</a>
+                                    <span style="color: #64748b; font-size: 11px;">(or reply directly to this email)</span>
+                                </div>`
+                                : ""
+                        }
+                        ${
+                            shop.website
+                                ? `<div style="margin-bottom: 4px;">
+                                    🌐 <strong>Website:</strong> <a href="${shop.website.startsWith("http") ? shop.website : `https://${shop.website}`}" target="_blank" style="color: #2563eb; text-decoration: none;">${shop.website}</a>
+                                </div>`
+                                : ""
+                        }
+                        ${
+                            shop.taxPin
+                                ? `<div style="margin-top: 6px; font-family: monospace; font-size: 11px; color: #64748b;">
+                                    🏛️ <strong>KRA Tax PIN:</strong> ${shop.taxPin}
+                                </div>`
+                                : ""
+                        }
+                    </div>
+                </div>
+
                 <!-- FOOTER -->
-                <div style="border-top: 1px solid #e4e4e7; padding-top: 16px; font-size: 11px; color: #71717a; line-height: 1.5;">
-                    <p style="margin: 0 0 4px 0; font-weight: bold; color: #18181b;">${shop.name}</p>
-                    ${shop.phone ? `<p style="margin: 0 0 2px 0;">Tel: ${shop.phone}</p>` : ""}
-                    ${shop.email ? `<p style="margin: 0 0 2px 0;">Email: ${shop.email}</p>` : ""}
-                    ${shop.website ? `<p style="margin: 0 0 2px 0;">Website: ${shop.website}</p>` : ""}
-                    ${shop.taxPin ? `<p style="margin: 0 0 2px 0;">KRA PIN: ${shop.taxPin}</p>` : ""}
-                    <p style="margin: 12px 0 0 0; font-size: 10px; color: #a1a1aa; font-family: monospace;">
-                        Sent via Manna Books Financial Operations Platform
+                <div style="border-top: 1px solid #e4e4e7; padding-top: 16px; font-size: 10px; color: #94a3b8; font-family: monospace; line-height: 1.5; text-align: center;">
+                    <p style="margin: 0 0 2px 0; font-weight: bold; color: #475569; text-transform: uppercase;">
+                        ${shop.name}
+                    </p>
+                    <p style="margin: 0;">
+                        Official Digital Quotation &amp; Commercial Catalog Dispatch • Powered by Manna Books
                     </p>
                 </div>
 

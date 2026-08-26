@@ -220,14 +220,25 @@ export function PublicCatalogClient({
         </div>
 
         {/* BUSINESS CONTACT BADGES */}
-        <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-zinc-600">
+        <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-zinc-600">
           {shop.phone && (
             <a
-              href={`tel:${shop.phone}`}
+              href={`tel:${shop.phone.replace(/[^0-9+]/g, "")}`}
               className="hover:text-black flex items-center gap-1.5 bg-zinc-50 px-3 py-1.5 rounded-lg border border-zinc-200 transition-colors"
             >
               <span>📞</span>
               <span>{shop.phone}</span>
+            </a>
+          )}
+          {shop.phone && (
+            <a
+              href={`https://wa.me/${shop.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hello ${shop.name}, I am inquiring about your product catalog.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-emerald-700 flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-lg border border-emerald-200 transition-colors font-semibold"
+            >
+              <span>💬</span>
+              <span>Chat on WhatsApp</span>
             </a>
           )}
           {shop.email && (

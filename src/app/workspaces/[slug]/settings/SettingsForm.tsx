@@ -316,7 +316,7 @@ export function SettingsForm({
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-400 uppercase block font-semibold">Short Alias / Trading Name</label>
+            <label className="text-zinc-400 uppercase block font-semibold">Trading Name</label>
             <input
               type="text"
               value={shortName}

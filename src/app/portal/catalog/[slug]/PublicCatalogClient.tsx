@@ -37,7 +37,12 @@ export function PublicCatalogClient({
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
-  const [submittedQuote, setSubmittedQuote] = useState<{ serial: string } | null>(null);
+  const [submittedQuote, setSubmittedQuote] = useState<{
+    serial: string;
+    token?: string;
+    documentId?: string;
+    grandTotal?: string;
+  } | null>(null);
 
   // Client-side filtering
   const filteredProducts = useMemo(() => {
@@ -145,9 +150,14 @@ export function PublicCatalogClient({
       });
 
       if (res.success && res.serial) {
-        setSubmittedQuote({ serial: res.serial });
+        setSubmittedQuote({
+          serial: res.serial,
+          token: res.token,
+          documentId: res.documentId,
+          grandTotal: res.grandTotal,
+        });
         setSelectedItems({});
-        toast.success(`Quotation ${res.serial} requested successfully!`);
+        toast.success(`Quotation ${res.serial} issued successfully!`);
       } else {
         toast.error((res as any).error || "Failed to submit quote request.");
       }
@@ -485,145 +495,261 @@ export function PublicCatalogClient({
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white border border-zinc-200 rounded-2xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div className="flex items-center justify-between border-b border-zinc-200 pb-4">
-              <div>
-                <span className="font-mono text-[10px] uppercase font-bold text-zinc-400 tracking-wider block">
-                  Commercial Request
-                </span>
-                <h2 className="text-xl font-bold font-sans text-black">
-                  Request Formal Quotation
-                </h2>
+            
+            {submittedQuote ? (
+              /* CONFIRMATION / SUCCESS VIEW */
+              <div className="space-y-6 text-center py-4 animate-in zoom-in-95 duration-200">
+                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl font-bold shadow-inner">
+                  ✓
+                </div>
+
+                <div className="space-y-2">
+                  <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 inline-block">
+                    Official Quotation {submittedQuote.serial} Issued
+                  </span>
+                  <h2 className="text-2xl font-extrabold text-black font-sans">
+                    Quotation Request Received!
+                  </h2>
+                  <p className="text-xs text-zinc-600 font-sans max-w-md mx-auto leading-relaxed">
+                    {customerEmail ? (
+                      <>
+                        A formal quotation estimate has been generated and emailed to{" "}
+                        <strong className="text-black">{customerEmail}</strong>. Our sales team at{" "}
+                        <strong>{shop.name}</strong> will also follow up on your request.
+                      </>
+                    ) : (
+                      <>
+                        Your quotation request has been officially recorded in our system. Our sales team at{" "}
+                        <strong>{shop.name}</strong> is reviewing your requested items and will reach out shortly.
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                {/* QUICK ACTION BUTTONS */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                  {submittedQuote.token && (
+                    <a
+                      href={`/portal/invoice/${submittedQuote.token}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-black hover:bg-zinc-800 text-white font-mono text-xs font-bold uppercase px-5 py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+                    >
+                      <span>🔗</span>
+                      <span>View Quotation Online</span>
+                    </a>
+                  )}
+
+                  {submittedQuote.token && (
+                    <a
+                      href={`/portal/invoice/${submittedQuote.token}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="border border-zinc-300 hover:border-black bg-white hover:bg-zinc-50 text-black font-mono text-xs font-bold uppercase px-5 py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+                    >
+                      <span>📄</span>
+                      <span>Download PDF</span>
+                    </a>
+                  )}
+                </div>
+
+                {/* DIRECT MERCHANT CONTACT CARD */}
+                <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 text-xs font-mono text-zinc-600 space-y-2 text-left">
+                  <p className="font-bold text-black uppercase text-[11px]">
+                    Need immediate confirmation or custom delivery?
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {shop.phone && (
+                      <a
+                        href={`tel:${shop.phone.replace(/[^0-9+]/g, "")}`}
+                        className="hover:text-black flex items-center gap-1 text-zinc-800 font-semibold"
+                      >
+                        <span>📞</span>
+                        <span>{shop.phone}</span>
+                      </a>
+                    )}
+                    {shop.phone && (
+                      <a
+                        href={`https://wa.me/${shop.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                          `Hello ${shop.name}, I just submitted Quotation ${submittedQuote.serial} online.`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-emerald-700 hover:underline flex items-center gap-1 font-bold"
+                      >
+                        <span>💬</span>
+                        <span>Chat on WhatsApp</span>
+                      </a>
+                    )}
+                    {shop.email && (
+                      <a
+                        href={`mailto:${shop.email}`}
+                        className="hover:text-black flex items-center gap-1 text-zinc-800"
+                      >
+                        <span>✉️</span>
+                        <span>{shop.email}</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSubmittedQuote(null);
+                      setIsDrawerOpen(false);
+                    }}
+                    className="w-full py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-xl font-mono text-xs font-bold uppercase transition-colors"
+                  >
+                    Done &amp; Continue Browsing
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={() => setIsDrawerOpen(false)}
-                className="text-zinc-400 hover:text-black font-mono text-xs uppercase font-bold"
-              >
-                ✕ Close
-              </button>
-            </div>
+            ) : (
+              /* THE USUAL REVIEW & FORM CONTENT */
+              <>
+                <div className="flex items-center justify-between border-b border-zinc-200 pb-4">
+                  <div>
+                    <span className="font-mono text-[10px] uppercase font-bold text-zinc-400 tracking-wider block">
+                      Commercial Request
+                    </span>
+                    <h2 className="text-xl font-bold font-sans text-black">
+                      Request Formal Quotation
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="text-zinc-400 hover:text-black font-mono text-xs uppercase font-bold"
+                  >
+                    ✕ Close
+                  </button>
+                </div>
 
-            {/* SELECTED ITEMS REVIEW */}
-            <div className="space-y-3">
-              <label className="font-mono text-xs uppercase font-bold text-zinc-600 block">
-                Selected Products ({selectedCount}):
-              </label>
+                {/* SELECTED ITEMS REVIEW */}
+                <div className="space-y-3">
+                  <label className="font-mono text-xs uppercase font-bold text-zinc-600 block">
+                    Selected Products ({selectedCount}):
+                  </label>
 
-              <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-xl overflow-hidden max-h-48 overflow-y-auto bg-zinc-50/50">
-                {Object.values(selectedItems).map(({ product, quantity, notes }) => (
-                  <div key={product.id} className="p-3 space-y-2">
-                    <div className="flex justify-between items-start gap-3">
-                      <div>
-                        <p className="text-xs font-bold text-black">{product.name}</p>
-                        <p className="font-mono text-[10px] text-zinc-500">
-                          {formatCurrency(product.unitPrice, shop.currency)} × {quantity}
-                        </p>
+                  <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-xl overflow-hidden max-h-48 overflow-y-auto bg-zinc-50/50">
+                    {Object.values(selectedItems).map(({ product, quantity }) => (
+                      <div key={product.id} className="p-3 space-y-2">
+                        <div className="flex justify-between items-start gap-3">
+                          <div>
+                            <p className="text-xs font-bold text-black">{product.name}</p>
+                            <p className="font-mono text-[10px] text-zinc-500">
+                              {formatCurrency(product.unitPrice, shop.currency)} × {quantity}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs font-bold text-black">
+                              {formatCurrency(product.unitPrice * quantity, shop.currency)}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleQuantityChange(product, -quantity)}
+                              className="text-rose-600 hover:text-rose-800 text-xs font-mono font-bold ml-1"
+                              title="Remove item"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-black">
-                          {formatCurrency(product.unitPrice * quantity, shop.currency)}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleQuantityChange(product, -quantity)}
-                          className="text-rose-600 hover:text-rose-800 text-xs font-mono font-bold ml-1"
-                          title="Remove item"
-                        >
-                          ✕
-                        </button>
-                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-between items-center p-3 bg-zinc-100 rounded-xl font-mono text-xs font-bold text-black">
+                    <span>ESTIMATED TOTAL:</span>
+                    <span>{formatCurrency(estimatedTotal, shop.currency)}</span>
+                  </div>
+                </div>
+
+                {/* CONTACT FORM */}
+                <form onSubmit={handleSubmitQuoteRequest} className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="font-mono text-[10px] uppercase font-bold text-zinc-700 block">
+                      Your Name / Business Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="e.g. John Doe / Acme Enterprises Ltd"
+                      className="w-full border border-zinc-300 rounded-lg px-3.5 py-2 font-sans text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-black bg-white"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-mono text-[10px] uppercase font-bold text-zinc-700 block">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={customerEmail}
+                        onChange={(e) => setCustomerEmail(e.target.value)}
+                        placeholder="name@company.com"
+                        className="w-full border border-zinc-300 rounded-lg px-3.5 py-2 font-sans text-xs focus:outline-none focus:ring-2 focus:ring-black bg-white"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-mono text-[10px] uppercase font-bold text-zinc-700 block">
+                        Phone / WhatsApp Number
+                      </label>
+                      <input
+                        type="tel"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        placeholder="+254 712 345 678"
+                        className="w-full border border-zinc-300 rounded-lg px-3.5 py-2 font-sans text-xs focus:outline-none focus:ring-2 focus:ring-black bg-white"
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
 
-              <div className="flex justify-between items-center p-3 bg-zinc-100 rounded-xl font-mono text-xs font-bold text-black">
-                <span>ESTIMATED TOTAL:</span>
-                <span>{formatCurrency(estimatedTotal, shop.currency)}</span>
-              </div>
-            </div>
+                  <div className="space-y-1">
+                    <label className="font-mono text-[10px] uppercase font-bold text-zinc-700 block">
+                      Additional Notes / Project Requirements (Optional)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={customerNotes}
+                      onChange={(e) => setCustomerNotes(e.target.value)}
+                      placeholder="e.g. Please include delivery to Westlands, urgent timeline..."
+                      className="w-full border border-zinc-300 rounded-lg px-3.5 py-2 font-sans text-xs focus:outline-none focus:ring-2 focus:ring-black bg-white resize-none"
+                    />
+                  </div>
 
-            {/* CONTACT FORM */}
-            <form onSubmit={handleSubmitQuoteRequest} className="space-y-4">
-              <div className="space-y-1">
-                <label className="font-mono text-[10px] uppercase font-bold text-zinc-700 block">
-                  Your Name / Business Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="e.g. John Doe / Acme Enterprises Ltd"
-                  className="w-full border border-zinc-300 rounded-lg px-3.5 py-2 font-sans text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-black bg-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="font-mono text-[10px] uppercase font-bold text-zinc-700 block">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    placeholder="name@company.com"
-                    className="w-full border border-zinc-300 rounded-lg px-3.5 py-2 font-sans text-xs focus:outline-none focus:ring-2 focus:ring-black bg-white"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-mono text-[10px] uppercase font-bold text-zinc-700 block">
-                    Phone / WhatsApp Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="+254 712 345 678"
-                    className="w-full border border-zinc-300 rounded-lg px-3.5 py-2 font-sans text-xs focus:outline-none focus:ring-2 focus:ring-black bg-white"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-mono text-[10px] uppercase font-bold text-zinc-700 block">
-                  Additional Notes / Project Requirements (Optional)
-                </label>
-                <textarea
-                  rows={2}
-                  value={customerNotes}
-                  onChange={(e) => setCustomerNotes(e.target.value)}
-                  placeholder="e.g. Please include delivery to Westlands, urgent timeline..."
-                  className="w-full border border-zinc-300 rounded-lg px-3.5 py-2 font-sans text-xs focus:outline-none focus:ring-2 focus:ring-black bg-white resize-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200">
-                <button
-                  type="button"
-                  onClick={() => setIsDrawerOpen(false)}
-                  disabled={isPending}
-                  className="px-4 py-2.5 border border-zinc-300 rounded-lg font-mono text-xs font-bold uppercase text-zinc-700 hover:bg-zinc-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isPending || selectedCount === 0}
-                  className="bg-black hover:bg-zinc-800 text-white px-6 py-2.5 rounded-lg font-mono text-xs font-bold uppercase shadow-sm flex items-center gap-2 disabled:opacity-50"
-                >
-                  {isPending ? (
-                    <>
-                      <Spinner className="w-4 h-4 text-white" />
-                      <span>Sending Request...</span>
-                    </>
-                  ) : (
-                    <span>Submit Quote Request →</span>
-                  )}
-                </button>
-              </div>
-            </form>
+                  <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200">
+                    <button
+                      type="button"
+                      onClick={() => setIsDrawerOpen(false)}
+                      disabled={isPending}
+                      className="px-4 py-2.5 border border-zinc-300 rounded-lg font-mono text-xs font-bold uppercase text-zinc-700 hover:bg-zinc-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isPending || selectedCount === 0}
+                      className="bg-black hover:bg-zinc-800 text-white px-6 py-2.5 rounded-lg font-mono text-xs font-bold uppercase shadow-sm flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isPending ? (
+                        <>
+                          <Spinner className="w-4 h-4 text-white" />
+                          <span>Sending Request...</span>
+                        </>
+                      ) : (
+                        <span>Submit Quote Request →</span>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </div>
       )}

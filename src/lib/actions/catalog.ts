@@ -1,9 +1,10 @@
 "use server";
 
 import { db } from "@/db";
-import { shops, products, clients, documents } from "@/db/schema";
+import { shops, products, clients, documents, documentTokens } from "@/db/schema";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { createBillingDocument } from "./documents";
+import { dispatchDocumentEmail } from "./email";
 import { revalidatePath } from "next/cache";
 import { Resend } from "resend";
 import zlib from "zlib";
@@ -258,8 +259,118 @@ export async function requestCatalogQuotationAction(input: CatalogQuoteRequestIn
             currency: shop.currency || "KES",
         });
 
-        if (!res.success) {
+        if (!res.success || !res.documentId) {
             return { success: false, error: (res as any).error || "Failed to generate quotation." };
+        }
+
+        // 3. Mark the Quotation as ISSUED immediately
+        await db
+            .update(documents)
+            .set({ status: "ISSUED" })
+            .where(eq(documents.id, res.documentId));
+
+        // 4. Retrieve the secure passwordless access token for this document
+        const docToken = await db.query.documentTokens.findFirst({
+            where: eq(documentTokens.documentId, res.documentId),
+        });
+
+        const createdDoc = await db.query.documents.findFirst({
+            where: eq(documents.id, res.documentId),
+            with: { items: true },
+        });
+
+        // 5. Automatic Email to Client (if email provided)
+        if (input.customerEmail && input.customerEmail.includes("@")) {
+            try {
+                await dispatchDocumentEmail({ documentId: res.documentId });
+            } catch (err) {
+                console.warn("Could not dispatch client quotation copy email:", err);
+            }
+        }
+
+        // 6. Automatic Alert Email to Merchant
+        if (shop.email && process.env.RESEND_FROM_EMAIL) {
+            try {
+                const resend = new Resend(process.env.RESEND_API_KEY || "re_mock_key");
+                const fromAddress = process.env.RESEND_FROM_EMAIL || "Manna Books <billing@corbantechnologies.org>";
+                const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "https://www.mannabooks.co.ke";
+                const dashboardDocUrl = `${appUrl}/workspaces/${shop.slug}/documents/${res.documentId}`;
+
+                const itemsTableHtml = (createdDoc?.items || [])
+                    .map(
+                        (it, idx) => `
+                    <tr style="border-bottom: 1px solid #e4e4e7;">
+                        <td style="padding: 8px; font-size: 12px; font-weight: bold; color: #18181b;">${idx + 1}. ${it.description}</td>
+                        <td style="padding: 8px; font-size: 12px; text-align: center; font-family: monospace;">${parseFloat(it.quantity || "1")}</td>
+                        <td style="padding: 8px; font-size: 12px; text-align: right; font-family: monospace; font-weight: bold;">${shop.currency} ${parseFloat(it.itemTotal || "0").toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>
+                `
+                    )
+                    .join("");
+
+                await resend.emails.send({
+                    from: fromAddress,
+                    to: [shop.email.trim()],
+                    replyTo: input.customerEmail ? [input.customerEmail.trim()] : undefined,
+                    subject: `🚨 New Quotation Request: ${res.serial} from ${input.customerName.trim()} (${shop.currency} ${parseFloat(createdDoc?.grandTotal || "0").toLocaleString()})`,
+                    html: `
+                        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; background-color: #ffffff; color: #09090b; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <div style="border-bottom: 2px solid #000000; padding-bottom: 14px; margin-bottom: 20px;">
+                                <span style="font-family: monospace; font-size: 10px; font-weight: bold; background-color: #fef08a; color: #854d0e; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">
+                                    New Online Quotation Request
+                                </span>
+                                <h2 style="font-size: 18px; font-weight: bold; margin: 8px 0 0 0; text-transform: uppercase;">
+                                    Quotation ${res.serial} Issued Online
+                                </h2>
+                            </div>
+
+                            <p style="font-size: 13px; color: #334155; line-height: 1.5; margin-bottom: 16px;">
+                                A customer has just submitted a formal quotation request from your public digital catalog. The quotation has been automatically created in your workspace at <strong>ISSUED</strong> status.
+                            </p>
+
+                            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px; margin-bottom: 20px; font-size: 12px; line-height: 1.6;">
+                                <div>👤 <strong>Client Name:</strong> ${input.customerName.trim()}</div>
+                                ${input.customerEmail ? `<div>✉️ <strong>Client Email:</strong> <a href="mailto:${input.customerEmail.trim()}">${input.customerEmail.trim()}</a></div>` : `<div>✉️ <strong>Client Email:</strong> <span style="color: #94a3b8;">Not provided</span></div>`}
+                                ${input.customerPhone ? `<div>📞 <strong>Client Phone / WhatsApp:</strong> <a href="tel:${input.customerPhone.trim()}">${input.customerPhone.trim()}</a> &nbsp;•&nbsp; <a href="https://wa.me/${input.customerPhone.replace(/[^0-9]/g, "")}" target="_blank" style="color: #16a34a; font-weight: bold;">WhatsApp →</a></div>` : `<div>📞 <strong>Client Phone:</strong> <span style="color: #94a3b8;">Not provided</span></div>`}
+                                ${input.customerNotes ? `<div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1; font-style: italic; color: #475569;">💬 <strong>Client Notes:</strong> "${input.customerNotes.trim()}"</div>` : ""}
+                            </div>
+
+                            <div style="border: 1px solid #e4e4e7; border-radius: 6px; overflow: hidden; margin-bottom: 20px;">
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background-color: #18181b; color: #ffffff;">
+                                            <th style="padding: 8px; font-size: 11px; font-family: monospace; text-align: left; text-transform: uppercase;">Requested Items</th>
+                                            <th style="padding: 8px; font-size: 11px; font-family: monospace; text-align: center; text-transform: uppercase;">Qty</th>
+                                            <th style="padding: 8px; font-size: 11px; font-family: monospace; text-align: right; text-transform: uppercase;">Total (${shop.currency})</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${itemsTableHtml}
+                                        <tr style="background-color: #f4f4f5; font-weight: bold;">
+                                            <td colspan="2" style="padding: 10px 8px; font-size: 13px; text-align: right;">GRAND TOTAL:</td>
+                                            <td style="padding: 10px 8px; font-size: 14px; text-align: right; font-family: monospace; color: #047857;">
+                                                ${shop.currency} ${parseFloat(createdDoc?.grandTotal || "0").toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div style="text-align: center; margin-bottom: 16px;">
+                                <a href="${dashboardDocUrl}" target="_blank" style="display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 12px; font-weight: bold; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                                    👉 Open Quotation in Manna Books Dashboard →
+                                </a>
+                            </div>
+
+                            <div style="text-align: center; font-size: 10px; color: #94a3b8; font-family: monospace; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+                                Notification generated automatically by Manna Books
+                            </div>
+                        </div>
+                    `,
+                });
+            } catch (err) {
+                console.warn("Could not dispatch merchant quote request alert email:", err);
+            }
         }
 
         revalidatePath(`/workspaces/${input.shopSlug}/documents`);
@@ -267,6 +378,8 @@ export async function requestCatalogQuotationAction(input: CatalogQuoteRequestIn
             success: true,
             documentId: res.documentId,
             serial: res.serial,
+            token: docToken?.token,
+            grandTotal: createdDoc?.grandTotal,
         };
     } catch (error: any) {
         console.error("Catalog quotation request error:", error);

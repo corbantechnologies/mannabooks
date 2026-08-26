@@ -50,23 +50,23 @@ const GUIDE_MODULES = [
 
 export default function PublicOperatorGuidePage() {
   return (
-    <div className="flex-1 flex flex-col bg-white text-black selection:bg-black selection:text-white font-sans">
+    <div className="flex-1 flex flex-col bg-white text-black selection:bg-[#064e3b] selection:text-white font-sans min-h-screen">
 
       <PublicNavbar />
 
       {/* DOCUMENTATION CONTENT BODY */}
-      <div className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full">
+      <div className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full bg-white">
 
         {/* STICKY LEFT SIDEBAR — TABLE OF CONTENTS (desktop only) */}
-        <aside className="hidden lg:block w-64 shrink-0 border-r border-zinc-200/80 sticky top-[57px] h-[calc(100vh-57px)] overflow-y-auto p-6 space-y-6">
+        <aside className="hidden lg:block w-64 shrink-0 border-r border-zinc-200/80 sticky top-[57px] h-[calc(100vh-57px)] overflow-y-auto p-6 space-y-6 bg-white">
           <div className="space-y-1">
-            <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 font-semibold block mb-3">Contents</span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-[#064e3b] font-semibold block mb-3">Contents</span>
             <nav className="flex flex-col gap-1 font-mono text-xs font-semibold uppercase">
               {GUIDE_MODULES.map((item) => (
                 <a
                   key={item.href}
                   href={item.href}
-                  className="px-3 py-2 text-zinc-500 border border-transparent rounded hover:border-zinc-300 hover:bg-zinc-50 hover:text-black transition-all block text-[10px] tracking-wider"
+                  className="px-3 py-2 text-zinc-600 border border-transparent rounded hover:border-emerald-200 hover:bg-emerald-50 hover:text-[#064e3b] transition-all block text-[10px] tracking-wider"
                 >
                   {item.label}
                 </a>
@@ -76,11 +76,11 @@ export default function PublicOperatorGuidePage() {
         </aside>
 
         {/* MAIN DOCUMENTATION BODY */}
-        <main className="flex-1 min-w-0 p-6 md:p-10 space-y-12 font-mono text-xs">
+        <main className="flex-1 min-w-0 p-6 md:p-10 space-y-12 font-mono text-xs bg-white">
 
           {/* GUIDE TITLE HEADER */}
           <div className="border-b border-zinc-200/80 pb-8 space-y-4">
-            <div className="inline-block border border-zinc-300 px-3 py-1 text-[10px] font-mono uppercase tracking-widest bg-zinc-50 rounded-full font-semibold text-zinc-600">
+            <div className="inline-block border border-emerald-200 px-3.5 py-1 text-[10px] font-mono uppercase tracking-widest bg-emerald-50 rounded-full font-semibold text-[#064e3b]">
               Official Operator Manual // Version 2026.6
             </div>
             <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-tight font-sans text-black">
@@ -91,11 +91,11 @@ export default function PublicOperatorGuidePage() {
             </p>
 
             {/* MOBILE INDEX (shown on mobile only) */}
-            <div className="lg:hidden border border-zinc-200 rounded-xl p-5 space-y-3 mt-4">
-              <span className="font-bold text-black uppercase text-xs block font-sans">&gt; Documentation Index</span>
+            <div className="lg:hidden border border-emerald-200 rounded-xl p-5 space-y-3 mt-4 bg-emerald-50/30">
+              <span className="font-bold text-[#064e3b] uppercase text-xs block font-sans">&gt; Documentation Index</span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-semibold text-[10px] uppercase">
                 {GUIDE_MODULES.map((item) => (
-                  <a key={item.href} href={item.href} className="hover:underline text-black">{item.label}</a>
+                  <a key={item.href} href={item.href} className="hover:underline text-zinc-800 hover:text-[#064e3b]">{item.label}</a>
                 ))}
               </div>
             </div>
@@ -106,13 +106,13 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-0" className="space-y-4 scroll-mt-20">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-emerald-700 text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 00]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Walk-in POS Counter Terminal</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 00]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Walk-in POS Counter Terminal</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               The dedicated walk-in sales counter for point-of-sale transactions that require no client record. Generates an official PAID receipt and automatically decrements stock.
             </p>
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Navigate to <strong>[02] Walk-in Sales</strong> in the workspace sidebar.</li>
@@ -122,8 +122,8 @@ export default function PublicOperatorGuidePage() {
                 <li>Click <strong>⚡ Complete Sale &amp; Print Receipt</strong>. An official PAID receipt is generated, stock is decremented automatically, and you are redirected to the receipt detail page.</li>
               </ol>
             </div>
-            <div className="bg-black text-white p-4 rounded-xl font-mono text-[10px] space-y-1">
-              <div className="text-emerald-400 font-bold uppercase">IMPORTANT</div>
+            <div className="bg-zinc-950 border border-emerald-900/60 text-white p-4 rounded-xl font-mono text-[10px] space-y-1">
+              <div className="text-emerald-300 font-bold uppercase">IMPORTANT</div>
               <p>Out-of-stock items are automatically blocked (dimmed and disabled) in the catalog. The basket also warns if quantity exceeds available stock levels.</p>
             </div>
           </section>
@@ -133,19 +133,19 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-1" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 01]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Provisioning Workspaces &amp; Custom Shop Themes</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 01]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Provisioning Workspaces &amp; Custom Shop Themes</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Manna Books supports multi-tenancy. Operate multiple business profiles under a single user account. Each workspace has its own brand color, logo, documents, products, and client directory.
             </p>
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Navigate to <strong>[09] System Settings</strong> in the workspace sidebar.</li>
                 <li>Enter your <strong>Business Name</strong>, <strong>KRA Tax PIN</strong>, <strong>Phone Number</strong>, <strong>Short Name</strong>, and <strong>Website URL</strong>.</li>
                 <li>Upload your shop logo asset to Cloudinary via the logo upload button.</li>
-                <li>Select your shop&apos;s <strong>Primary Theme Hex Color</strong> (e.g. Navy Blue <code>#1e3a8a</code> or Emerald Green <code>#065f46</code>). This color auto-styles action buttons, invoice portals, vector PDFs, and Resend emails.</li>
+                <li>Select your shop&apos;s <strong>Primary Theme Hex Color</strong> (e.g. Emerald Green <code>#064e3b</code> or Navy Blue <code>#1e3a8a</code>). This color auto-styles action buttons, invoice portals, vector PDFs, and Resend emails.</li>
                 <li>Toggle <strong>VAT Registered</strong> if your business is registered for 16% Standard VAT.</li>
                 <li>Click <strong>Commit Changes</strong> to save.</li>
               </ol>
@@ -157,14 +157,14 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-2" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-emerald-700 text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 02]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Product Catalog, Curated Selection &amp; Shareable Rate Cards</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 02]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Product Catalog, Curated Selection &amp; Shareable Rate Cards</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Register products and services with COGS cost tracking. Share your complete digital catalog or select specific models (curated lists) with prospective clients so they can browse specifications and request quotations before formal billing.
             </p>
             
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Registering Catalog Items:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Navigate to <strong>[04] Product Catalog</strong> and click <strong>+ Register Catalog Item</strong>.</li>
@@ -175,14 +175,15 @@ export default function PublicOperatorGuidePage() {
               </ol>
             </div>
 
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Sharing Curated Product Lists with Clients:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>On the Product Catalog table, <strong>check the boxes <code>[✓]</code></strong> next to the specific products you want to share (e.g. 5 specific All-in-One PC models).</li>
-                <li>In the top selection toolbar, click <strong>🔗 Share Selected (X)</strong> to copy a private, curated link (<code>/portal/catalog/[slug]?items=...</code>) containing only those models.</li>
+                <li>In the top selection toolbar, click <strong>🔗 Share Selected (X)</strong> to copy a compact, URL-safe token link (<code>/portal/catalog/[slug]?token=...</code>) containing only those models.</li>
                 <li>Click <strong>💬 WhatsApp</strong> to send a pre-filled invitation directly to the client.</li>
+                <li>Click <strong>📧 Email</strong> to send a styled quotation preview directly to the customer&apos;s email address.</li>
                 <li>Or click <strong>📄 PDF Selected</strong> to download a clean, branded PDF rate card containing only the chosen items.</li>
-                <li>When the client opens the link, they browse specifications and prices (cost margins remain hidden), pick quantities, and click <strong>&quot;Submit Quote Request&quot;</strong> — automatically creating a draft Quotation in your dashboard!</li>
+                <li>When the client opens the link, they browse specifications and prices (cost margins remain hidden), pick quantities, and click <strong>&quot;Submit Quote Request&quot;</strong> — automatically creating an ISSUED Quotation in your dashboard!</li>
               </ol>
             </div>
           </section>
@@ -192,18 +193,18 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-3" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 03]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Client &amp; Supplier Directory Management</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 03]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Client &amp; Supplier Directory Management</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Store client and supplier entities with KRA Tax PINs for statutory compliance. Walk-in sales don&apos;t require a registered client — use the POS terminal instead.
             </p>
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Open <strong>[03] Client Flow</strong> or <strong>[05] Supplier Network</strong>.</li>
                 <li>Click <strong>+ Register Client</strong> or <strong>+ Register Supplier</strong>.</li>
-                <li>Select the Entity Type: <strong>Individual</strong> (Personal PIN e.g. A...) or <strong>Corporate</strong> (Company PIN e.g. P...). No rigid PIN format constraints.</li>
+                <li>Select the Entity Type: <strong>Individual</strong> (Personal PIN e.g. A...) or <strong>Corporate</strong> (Company PIN e.g. P...).</li>
                 <li>Toggle <strong>Requires eTIMS</strong> if this entity needs KRA eTIMS CU serial numbers embedded on their documents.</li>
                 <li>From the client/supplier detail page, you can issue billing documents or procurement LPOs directly.</li>
               </ol>
@@ -215,13 +216,13 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-4" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 04]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Issuing Fiscal Invoices, Receipts, Taxes &amp; Credit Notes</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 04]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Issuing Fiscal Invoices, Receipts, Taxes &amp; Credit Notes</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Generate all outbound sales documents, procurement orders, and credit notes. Multi-rate tax (16% VAT, 0% Zero-Rated, Exempt) is handled per line item with dedicated VAT line display above Grand Total.
             </p>
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Click <strong>+ Issue Document</strong> from the Fiscal Ledgers stream or from a client/supplier profile page.</li>
@@ -240,13 +241,13 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-5" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 05]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Passwordless Client Portals &amp; Email Dispatch</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 05]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Passwordless Client Portals &amp; Email Dispatch</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Clients view documents via secure 64-character unguessable token links — no accounts or passwords required. Share via WhatsApp, email, or any messaging channel.
             </p>
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Open any document detail page.</li>
@@ -262,13 +263,13 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-6" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 06]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Recording Payment Channels &amp; Remittance Ref #</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 06]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Recording Payment Channels &amp; Remittance Ref #</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Record payment settlement destinations and transaction reference codes for full payment audit trails visible on the document, client portal, PDF, and email.
             </p>
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>In the Document Status Panel on any document detail page, locate the <strong>Mark as Paid</strong> section.</li>
@@ -284,13 +285,13 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-7" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 07]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Statutory KRA 20th Monthly VAT Return Tracker</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 07]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Statutory KRA 20th Monthly VAT Return Tracker</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               In Kenya, monthly VAT returns must be remitted on iTax before the <strong>20th of every month</strong>. Manna Books auto-aggregates all VAT figures for you.
             </p>
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Open <strong>[08] Analytics</strong> in the workspace sidebar.</li>
@@ -306,13 +307,13 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-8" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 08]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Financial Intelligence &amp; A/R Aging Matrix</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 08]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Financial Intelligence &amp; A/R Aging Matrix</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Real-time visibility into operating cash flows, profitability margins, overdue client receivables, product velocity, and client LTV ranking.
             </p>
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Open <strong>[08] Analytics</strong> in the workspace sidebar.</li>
@@ -330,13 +331,13 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-9" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 09]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Statutory Payroll &amp; Wage Compiler</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 09]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Statutory Payroll &amp; Wage Compiler</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Execute full Kenyan statutory payroll runs. Automatically computes PAYE, SHIF (2.75%), AHL (1.5%), and NSSF Tier I &amp; II. Generates official A4 Landscape PDF payroll vouchers.
             </p>
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Navigate to <strong>[06] Employee Directory</strong> and register all staff with their National ID and KRA PIN.</li>
@@ -354,13 +355,13 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-10" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 10]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Multi-Location Inventory &amp; Stock Transfers</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 10]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Multi-Location Inventory &amp; Stock Transfers</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Define multiple locations (stores, warehouses, branches) and move products between them with dual-step dispatch and receipt validation.
             </p>
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Create stock locations at <strong>Inventory &rarr; Locations</strong>. Mark one as the Default.</li>
@@ -377,20 +378,20 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-11" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 11]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Shared B2B Inbox &amp; Intercompany Routing</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 11]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Shared B2B Inbox &amp; Intercompany Routing</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Route invoices and procurement documents between workspaces (e.g. from parent to division) directly using strict KRA PIN and Email matching, skipping email downloads.
             </p>
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Ensure the target division/workspace is registered in your client or supplier directory with their matching KRA PIN and Business Email.</li>
                 <li>Create an invoice or LPO, and set the recipient.</li>
-                <li>In the document details page, click **Send via Manna Network** to route the document instantly.</li>
-                <li>The receiving division opens **Shared Inbox** in their workspace. The document will appear as a pending incoming item.</li>
-                <li>Click **Accept &amp; Convert to Expense** (for invoices) or **Convert to Sale** (for LPOs). The invoice fields populate automatically, and a read receipt is sent back to the sender.</li>
+                <li>In the document details page, click <strong>Send via Manna Network</strong> to route the document instantly.</li>
+                <li>The receiving division opens <strong>Shared Inbox</strong> in their workspace. The document will appear as a pending incoming item.</li>
+                <li>Click <strong>Accept &amp; Convert to Expense</strong> (for invoices) or <strong>Convert to Sale</strong> (for LPOs). The invoice fields populate automatically, and a read receipt is sent back to the sender.</li>
               </ol>
             </div>
           </section>
@@ -400,14 +401,14 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-12" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-emerald-700 text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 12]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">General Ledger, Operating Budgets &amp; Diagnostics</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 12]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">General Ledger, Operating Budgets &amp; Diagnostics</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Double-entry bookkeeping suite. Manage your chart of accounts, multi-month operating budgets, inspect accounting periods down to the journal entry, and perform clean slate factory resets with automated backup exports.
             </p>
             
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Budgets &amp; Month Cloning:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Navigate to <strong>Finance &rarr; Operating Budgets</strong>.</li>
@@ -416,7 +417,7 @@ export default function PublicOperatorGuidePage() {
               </ol>
             </div>
 
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Inspecting Monthly Accounting Periods:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Go to <strong>Finance &rarr; Accounting Periods</strong>.</li>
@@ -426,7 +427,7 @@ export default function PublicOperatorGuidePage() {
               </ol>
             </div>
 
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Clean Slate Reset &amp; Automated Backups:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Go to <strong>Settings &rarr; GL Diagnostics</strong> and scroll to <strong>Clean Slate &amp; Factory Reset</strong>.</li>
@@ -441,13 +442,13 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           <section id="module-13" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-black text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-sm shrink-0">[MODULE 13]</span>
-              <h2 className="text-xl font-bold uppercase font-sans">Installing the Standalone PWA Appliance</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 13]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Installing the Standalone PWA Appliance</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Install Manna Books directly to your Windows, Mac, Android, or iOS device as a standalone app with offline fallback resilience.
             </p>
-            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl">
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Installation Steps:</h4>
               <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li><strong>Chrome / Edge / Windows / Mac:</strong> Click the <strong>📲 Install App</strong> prompt in the bottom-right corner, or use the install icon in your browser address bar.</li>
@@ -461,10 +462,10 @@ export default function PublicOperatorGuidePage() {
           <div className="border-t border-zinc-200 pt-10 space-y-4 text-center">
             <p className="font-sans text-sm text-zinc-600">Ready to get started with Manna Books?</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center font-mono text-xs">
-              <Link href="/signup" className="btn-primary-modern px-8 py-3.5 font-bold uppercase tracking-wider">
+              <Link href="/signup" className="btn-primary-emerald px-8 py-3.5 font-bold uppercase tracking-wider">
                 Initialize Free Workspace →
               </Link>
-              <Link href="/features" className="btn-secondary-modern px-8 py-3.5 font-semibold uppercase tracking-wider">
+              <Link href="/features" className="btn-secondary-emerald px-8 py-3.5 font-semibold uppercase tracking-wider">
                 View All Features
               </Link>
             </div>
@@ -475,10 +476,12 @@ export default function PublicOperatorGuidePage() {
 
       {/* FOOTER */}
       <footer className="border-t border-zinc-200/80 px-6 py-8 flex flex-col sm:flex-row justify-between items-center bg-zinc-50 text-xs text-zinc-500 font-mono gap-4">
-        <p>© 2026 Manna Books LTD. All rights reserved. Powered by <Link href="https://corbantechnologies.org/" target="_blank" className="hover:underline text-black font-bold">Corban Technologies LTD</Link></p>
+        <p>© 2026 Manna Books LTD. All rights reserved. Powered by <Link href="https://corbantechnologies.org/" target="_blank" className="hover:underline text-[#064e3b] font-bold">Corban Technologies LTD</Link></p>
         <div className="flex gap-6">
-          <Link href="/terms" className="hover:underline hover:text-black">Terms</Link>
-          <Link href="/privacy" className="hover:underline hover:text-black">Privacy</Link>
+          <Link href="/features" className="hover:underline hover:text-[#064e3b]">Features</Link>
+          <Link href="/pricing" className="hover:underline hover:text-[#064e3b]">Pricing</Link>
+          <Link href="/terms" className="hover:underline hover:text-[#064e3b]">Terms</Link>
+          <Link href="/privacy" className="hover:underline hover:text-[#064e3b]">Privacy</Link>
         </div>
       </footer>
 

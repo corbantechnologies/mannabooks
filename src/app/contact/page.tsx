@@ -1,5 +1,6 @@
 // src/app/contact/page.tsx
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PublicNavbar } from "@/components/PublicNavbar";
 import { ContactForm } from "./ContactForm";
 
@@ -22,26 +23,26 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
     return (
-        <div className="flex-1 flex flex-col bg-white text-black selection:bg-black selection:text-white font-sans min-h-screen">
+        <div className="flex-1 flex flex-col bg-white text-black selection:bg-[#064e3b] selection:text-white font-sans min-h-screen">
             <PublicNavbar />
 
             <main className="flex-1 flex flex-col">
 
                 {/* HERO */}
-                <section className="border-b border-zinc-200/80 px-6 py-16 md:py-24 max-w-7xl mx-auto w-full">
+                <section className="border-b border-zinc-200/80 px-6 py-16 md:py-24 max-w-7xl mx-auto w-full bg-white">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
                         
                         {/* LEFT: COPY */}
                         <div className="space-y-6">
-                            <div className="inline-flex items-center gap-2 border border-zinc-300 px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest bg-zinc-50 rounded-full font-semibold text-zinc-600">
+                            <div className="inline-flex items-center gap-2 border border-emerald-200 px-3.5 py-1.5 text-[11px] font-mono uppercase tracking-widest bg-emerald-50 rounded-full font-semibold text-[#064e3b]">
                                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                                 Response within 1–2 business days
                             </div>
-                            <h1 className="text-4xl sm:text-5xl font-bold tracking-tighter leading-none uppercase">
+                            <h1 className="text-4xl sm:text-5xl font-bold tracking-tighter leading-none uppercase text-black">
                                 Let&apos;s talk<br />
-                                <span className="text-zinc-400">business.</span>
+                                <span className="gradient-text-emerald">business.</span>
                             </h1>
-                            <p className="text-base text-zinc-600 leading-relaxed max-w-lg">
+                            <p className="text-base text-zinc-600 leading-relaxed max-w-lg font-sans">
                                 Whether you&apos;re exploring Manna Books for your team, need a custom enterprise plan, or have a technical question — our team is ready to assist.
                             </p>
 
@@ -61,13 +62,13 @@ export default function ContactPage() {
                                         icon: "M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9",
                                     },
                                 ].map((item) => (
-                                    <a key={item.label} href={item.href} className="flex items-center gap-4 p-4 border border-zinc-200/80 rounded-xl hover:border-black hover:bg-zinc-50 transition-all group">
-                                        <div className="w-9 h-9 border border-zinc-200 rounded-lg flex items-center justify-center bg-white shrink-0 group-hover:border-black group-hover:bg-black transition-all">
-                                            <svg className="w-4 h-4 text-zinc-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d={item.icon}/></svg>
+                                    <a key={item.label} href={item.href} className="card-emerald-accent flex items-center gap-4 p-4 rounded-xl hover:border-emerald-300 transition-all group bg-white">
+                                        <div className="w-9 h-9 border border-emerald-200 rounded-lg flex items-center justify-center bg-emerald-50 shrink-0 group-hover:bg-[#064e3b] group-hover:border-[#064e3b] transition-all">
+                                            <svg className="w-4 h-4 text-[#064e3b] group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d={item.icon}/></svg>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 font-semibold">{item.label}</p>
-                                            <p className="text-sm font-semibold text-black">{item.value}</p>
+                                            <p className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">{item.label}</p>
+                                            <p className="text-sm font-semibold text-black group-hover:text-[#064e3b] transition-colors">{item.value}</p>
                                         </div>
                                     </a>
                                 ))}
@@ -77,8 +78,8 @@ export default function ContactPage() {
                             <div className="pt-4 border-t border-zinc-200/80 space-y-3">
                                 <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest font-semibold">What we can help with</p>
                                 <div className="flex flex-wrap gap-2">
-                                    {["Enterprise Onboarding", "Custom Integrations", "KRA eTIMS Questions", "Team & Pricing Plans", "Technical Support", "Partnership Inquiries"].map(t => (
-                                        <span key={t} className="border border-zinc-200 text-zinc-600 text-[10px] font-mono font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-zinc-50">
+                                    {["Enterprise Onboarding", "Custom Integrations", "Digital Product Catalogs", "KRA eTIMS Questions", "Team & Pricing Plans", "Technical Support", "Partnership Inquiries"].map(t => (
+                                        <span key={t} className="border border-emerald-200 text-[#064e3b] text-[10px] font-mono font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-50/50">
                                             {t}
                                         </span>
                                     ))}
@@ -95,10 +96,12 @@ export default function ContactPage() {
 
             {/* FOOTER */}
             <footer className="border-t border-zinc-200/80 px-6 py-8 flex flex-col sm:flex-row justify-between items-center bg-zinc-50 text-xs text-zinc-500 font-mono gap-4">
-                <p>© 2026 Manna Books LTD. All rights reserved. Powered by <a href="https://corbantechnologies.org/" target="_blank" className="hover:underline text-black font-semibold" rel="noreferrer">Corban Technologies LTD</a></p>
+                <p>© 2026 Manna Books LTD. All rights reserved. Powered by <Link href="https://corbantechnologies.org/" target="_blank" className="hover:underline text-[#064e3b] font-semibold" rel="noreferrer">Corban Technologies LTD</Link></p>
                 <div className="flex gap-6">
-                    <a href="/terms" className="hover:underline hover:text-black">Terms</a>
-                    <a href="/privacy" className="hover:underline hover:text-black">Privacy</a>
+                    <Link href="/features" className="hover:underline hover:text-[#064e3b]">Features</Link>
+                    <Link href="/pricing" className="hover:underline hover:text-[#064e3b]">Pricing</Link>
+                    <Link href="/terms" className="hover:underline hover:text-[#064e3b]">Terms</Link>
+                    <Link href="/privacy" className="hover:underline hover:text-[#064e3b]">Privacy</Link>
                 </div>
             </footer>
         </div>

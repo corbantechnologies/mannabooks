@@ -27,7 +27,7 @@ export function PublicNavbar({ activePage }: PublicNavbarProps) {
   }
 
   return (
-    <header className="border-b border-zinc-200/80 glass-panel sticky top-0 z-50">
+    <header className="border-b border-zinc-200/80 glass-panel sticky top-0 z-50 bg-white/95">
       {/* PRIMARY NAVIGATION ROW */}
       <div className="px-5 sm:px-6 py-4 flex justify-between items-center max-w-7xl mx-auto w-full">
         {/* BRAND LOGO */}
@@ -36,7 +36,7 @@ export function PublicNavbar({ activePage }: PublicNavbarProps) {
           <img
             src="/logo.png"
             alt="Manna Books"
-            className="w-7 h-7 object-contain border border-zinc-200 p-0.5 bg-white rounded"
+            className="w-7 h-7 object-contain border border-emerald-200 p-0.5 bg-white rounded shadow-sm"
           />
           <Link
             href="/"
@@ -52,10 +52,10 @@ export function PublicNavbar({ activePage }: PublicNavbarProps) {
             <Link
               key={link.href}
               href={link.href}
-              className={`hover:underline underline-offset-4 transition-colors ${
+              className={`transition-colors ${
                 isActive(link.href)
-                  ? "text-black font-bold underline underline-offset-4"
-                  : "text-zinc-500 hover:text-black"
+                  ? "text-[#064e3b] font-bold border-b-2 border-[#064e3b] pb-0.5"
+                  : "text-zinc-600 hover:text-[#064e3b]"
               }`}
             >
               {link.label}
@@ -63,7 +63,7 @@ export function PublicNavbar({ activePage }: PublicNavbarProps) {
           ))}
           <Link
             href="/signup"
-            className="btn-primary-modern px-4 py-2 text-xs ml-2"
+            className="btn-primary-emerald px-4 py-2 text-xs ml-2"
           >
             Get Started
           </Link>
@@ -73,14 +73,14 @@ export function PublicNavbar({ activePage }: PublicNavbarProps) {
         <div className="flex items-center gap-3 md:hidden">
           <Link
             href="/signup"
-            className="btn-primary-modern px-3 py-1.5 text-[11px] font-bold uppercase"
+            className="btn-primary-emerald px-3 py-1.5 text-[11px] font-bold uppercase"
           >
             Sign Up
           </Link>
           <button
             type="button"
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="border border-zinc-300 bg-white hover:bg-zinc-50 rounded-md px-2.5 py-2 font-mono text-xs font-bold uppercase transition-colors flex items-center gap-1.5 text-black"
+            className="border border-zinc-300 bg-white hover:bg-emerald-50 rounded-md px-2.5 py-2 font-mono text-xs font-bold uppercase transition-colors flex items-center gap-1.5 text-black"
             aria-label="Toggle navigation menu"
             aria-expanded={mobileOpen}
           >
@@ -108,8 +108,8 @@ export function PublicNavbar({ activePage }: PublicNavbarProps) {
                 onClick={() => setMobileOpen(false)}
                 className={`px-4 py-3 border rounded-lg transition-all block text-left ${
                   isActive(link.href)
-                    ? "border-black bg-black text-white"
-                    : "border-zinc-200 text-zinc-700 hover:border-black hover:bg-zinc-50"
+                    ? "border-[#064e3b] bg-emerald-50 text-[#064e3b] font-bold"
+                    : "border-zinc-200 text-zinc-700 hover:border-emerald-300 hover:bg-emerald-50/50"
                 }`}
               >
                 {link.label}
@@ -119,7 +119,7 @@ export function PublicNavbar({ activePage }: PublicNavbarProps) {
               <Link
                 href="/signup"
                 onClick={() => setMobileOpen(false)}
-                className="btn-primary-modern w-full py-3 text-xs font-bold uppercase tracking-wider text-center block"
+                className="btn-primary-emerald w-full py-3 text-xs font-bold uppercase tracking-wider text-center block"
               >
                 Get Started — Initialize Workspace
               </Link>

@@ -30,7 +30,9 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
   if (!doc) notFound();
 
   const party = doc.client || doc.supplier || {
-    name: "General Contact",
+    name: doc.type === "PAYROLL_VOUCHER"
+      ? "Internal Company Staff Payroll"
+      : (doc.type === "RECEIPT" ? "Walk-in Customer" : (doc.type === "PAYMENT_VOUCHER" ? "Direct Vendor" : "Walk-in Customer")),
     email: "—",
     phone: null,
     taxPin: null,

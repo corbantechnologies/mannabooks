@@ -452,7 +452,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         const isPayroll = doc.type === "PAYROLL_VOUCHER";
 
         const party = doc.client || doc.supplier || {
-            name: "Internal Company Staff Payroll",
+            name: isPayroll 
+                ? "Internal Company Staff Payroll" 
+                : (doc.type === "RECEIPT" ? "Walk-in Customer" : (doc.type === "PAYMENT_VOUCHER" ? "Direct Vendor" : "Walk-in Customer")),
             email: "—",
             phone: doc.shop?.phone || null,
             taxPin: doc.shop?.taxPin || null,

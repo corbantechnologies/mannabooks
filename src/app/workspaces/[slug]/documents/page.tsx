@@ -175,7 +175,7 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
                       {doc.supplier.name} ➔
                     </Link>
                   ) : (
-                    "General Contact"
+                    doc.type === "PAYROLL_VOUCHER" ? "Staff Payroll" : "Walk-in Customer"
                   )}
                 </td>
                 <td className="p-4 border-r border-zinc-200/80 text-zinc-500">

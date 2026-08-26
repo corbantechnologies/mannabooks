@@ -1,0 +1,305 @@
+// src/app/api/catalog/[slug]/pdf/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { getPublicCatalogData } from "@/lib/actions/catalog";
+import ReactPDF from "@react-pdf/renderer";
+import { formatCurrency } from "@/lib/utils";
+import React from "react";
+
+interface CatalogPdfProps {
+  shop: any;
+  products: any[];
+  searchQuery?: string;
+  generatedDate: string;
+}
+
+const CatalogPdfDocument = ({ shop, products, searchQuery, generatedDate }: CatalogPdfProps) => {
+  const primaryColor = shop.primaryColor || "#000000";
+
+  const styles = ReactPDF.StyleSheet.create({
+    page: {
+      padding: 32,
+      backgroundColor: "#ffffff",
+      fontFamily: "Helvetica",
+      fontSize: 8.5,
+      color: "#09090b",
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      borderBottomWidth: 1.5,
+      borderBottomColor: "#18181b",
+      paddingBottom: 12,
+      marginBottom: 14,
+    },
+    logoContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      maxWidth: "55%",
+    },
+    logoImage: {
+      width: 44,
+      height: 44,
+      objectFit: "contain",
+    },
+    shopName: {
+      fontSize: 14,
+      fontWeight: "bold",
+      textTransform: "uppercase",
+      color: "#000000",
+      letterSpacing: -0.2,
+    },
+    shopSubtitle: {
+      fontSize: 7.5,
+      color: "#71717a",
+      marginTop: 2,
+      textTransform: "uppercase",
+    },
+    contactBlock: {
+      textAlign: "right",
+      fontSize: 7.5,
+      color: "#3f3f46",
+      lineHeight: 1.35,
+    },
+    contactLine: {
+      marginBottom: 1,
+    },
+    docTitleBanner: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: "#f4f4f5",
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 4,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: "#e4e4e7",
+    },
+    docTitleText: {
+      fontSize: 9,
+      fontWeight: "bold",
+      textTransform: "uppercase",
+      color: "#18181b",
+      letterSpacing: 0.3,
+    },
+    docMetaText: {
+      fontSize: 7.5,
+      color: "#71717a",
+      fontFamily: "Helvetica",
+    },
+    tableHeader: {
+      flexDirection: "row",
+      backgroundColor: "#18181b",
+      paddingVertical: 5,
+      paddingHorizontal: 6,
+      fontWeight: "bold",
+      color: "#ffffff",
+      fontSize: 7.5,
+      borderRadius: 2,
+      marginBottom: 2,
+    },
+    tableRow: {
+      flexDirection: "row",
+      borderBottomWidth: 1,
+      borderBottomColor: "#f4f4f5",
+      paddingVertical: 5.5,
+      paddingHorizontal: 6,
+      alignItems: "center",
+      fontSize: 8,
+    },
+    tableRowAlt: {
+      backgroundColor: "#fafafa",
+    },
+    colIndex: { width: "5%", color: "#a1a1aa", fontSize: 7 },
+    colName: { width: "55%", paddingRight: 6 },
+    colSku: { width: "16%", color: "#71717a", fontSize: 7 },
+    colTax: { width: "10%", fontSize: 7, color: "#71717a" },
+    colPrice: { width: "14%", textAlign: "right", fontWeight: "bold", color: "#000000" },
+    productName: {
+      fontWeight: "bold",
+      color: "#09090b",
+      lineHeight: 1.25,
+      fontSize: 8,
+    },
+    productType: {
+      fontSize: 6.5,
+      color: "#71717a",
+      textTransform: "uppercase",
+      marginTop: 1,
+    },
+    footer: {
+      position: "absolute",
+      bottom: 24,
+      left: 32,
+      right: 32,
+      borderTopWidth: 1,
+      borderTopColor: "#e4e4e7",
+      paddingTop: 6,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      fontSize: 7,
+      color: "#71717a",
+    },
+  });
+
+  return React.createElement(
+    ReactPDF.Document,
+    null,
+    React.createElement(
+      ReactPDF.Page,
+      { size: "A4", style: styles.page },
+      
+      // HEADER
+      React.createElement(
+        ReactPDF.View,
+        { style: styles.header },
+        React.createElement(
+          ReactPDF.View,
+          { style: styles.logoContainer },
+          shop.logoUrl ? React.createElement(ReactPDF.Image, { src: shop.logoUrl, style: styles.logoImage }) : null,
+          React.createElement(
+            ReactPDF.View,
+            null,
+            React.createElement(ReactPDF.Text, { style: styles.shopName }, shop.name),
+            React.createElement(ReactPDF.Text, { style: styles.shopSubtitle }, "Commercial Product Catalog & Price Sheet")
+          )
+        ),
+        React.createElement(
+          ReactPDF.View,
+          { style: styles.contactBlock },
+          shop.phone ? React.createElement(ReactPDF.Text, { style: styles.contactLine }, `Tel: ${shop.phone}`) : null,
+          shop.email ? React.createElement(ReactPDF.Text, { style: styles.contactLine }, `Email: ${shop.email}`) : null,
+          shop.website ? React.createElement(ReactPDF.Text, { style: styles.contactLine }, `Web: ${shop.website}`) : null,
+          shop.taxPin ? React.createElement(ReactPDF.Text, { style: styles.contactLine }, `KRA PIN: ${shop.taxPin}`) : null
+        )
+      ),
+
+      // TITLE & META BANNER
+      React.createElement(
+        ReactPDF.View,
+        { style: styles.docTitleBanner },
+        React.createElement(
+          ReactPDF.Text,
+          { style: styles.docTitleText },
+          searchQuery ? `Product Catalog — "${searchQuery.toUpperCase()}"` : "Official Product Catalog & Price List"
+        ),
+        React.createElement(
+          ReactPDF.Text,
+          { style: styles.docMetaText },
+          `Date: ${generatedDate} • ${products.length} Items Listed`
+        )
+      ),
+
+      // TABLE HEADER
+      React.createElement(
+        ReactPDF.View,
+        { style: styles.tableHeader },
+        React.createElement(ReactPDF.Text, { style: styles.colIndex }, "#"),
+        React.createElement(ReactPDF.Text, { style: styles.colName }, "Product / Service Specification"),
+        React.createElement(ReactPDF.Text, { style: styles.colSku }, "Code / SKU"),
+        React.createElement(ReactPDF.Text, { style: styles.colTax }, "Tax"),
+        React.createElement(ReactPDF.Text, { style: styles.colPrice }, `Price (${shop.currency})`)
+      ),
+
+      // TABLE ROWS
+      products.map((p, idx) => {
+        return React.createElement(
+          ReactPDF.View,
+          {
+            key: p.id,
+            style: [styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}],
+          },
+          React.createElement(ReactPDF.Text, { style: styles.colIndex }, String(idx + 1)),
+          React.createElement(
+            ReactPDF.View,
+            { style: styles.colName },
+            React.createElement(ReactPDF.Text, { style: styles.productName }, p.name),
+            React.createElement(ReactPDF.Text, { style: styles.productType }, p.itemType)
+          ),
+          React.createElement(ReactPDF.Text, { style: styles.colSku }, p.sku || "—"),
+          React.createElement(
+            ReactPDF.Text,
+            { style: styles.colTax },
+            p.defaultTaxType === "V_16" ? "16% VAT" : "Exempt"
+          ),
+          React.createElement(
+            ReactPDF.Text,
+            { style: styles.colPrice },
+            formatCurrency(p.unitPrice, shop.currency)
+          )
+        );
+      }),
+
+      // FOOTER
+      React.createElement(
+        ReactPDF.View,
+        { style: styles.footer },
+        React.createElement(
+          ReactPDF.Text,
+          null,
+          `For official purchase inquiries or formal quotations, contact ${shop.email || shop.phone || shop.name}`
+        ),
+        React.createElement(
+          ReactPDF.Text,
+          null,
+          `Page 1 of 1 • Generated via Manna Books`
+        )
+      )
+    )
+  );
+};
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const { slug } = await params;
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search") || undefined;
+    const itemsParam = searchParams.get("items") || undefined;
+    const itemIds = itemsParam ? itemsParam.split(",").map((i) => i.trim()).filter(Boolean) : undefined;
+
+    const res = await getPublicCatalogData(slug, search, itemIds);
+    if (!res.success || !res.shop) {
+      return new NextResponse("Catalog not found.", { status: 404 });
+    }
+
+    const generatedDate = new Date().toLocaleDateString("en-KE", {
+      dateStyle: "medium",
+    });
+
+    const PDFElement: any = React.createElement(CatalogPdfDocument, {
+      shop: res.shop,
+      products: res.products || [],
+      searchQuery: search,
+      generatedDate,
+    });
+
+    const pdfStream = await ReactPDF.renderToStream(PDFElement);
+
+    // Convert stream to Buffer / Uint8Array
+    const chunks: Buffer[] = [];
+    for await (const chunk of pdfStream) {
+      chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+    }
+    const pdfBuffer = Buffer.concat(chunks);
+
+    const safeFilename = `catalog_${res.shop.slug}_${new Date().toISOString().split("T")[0]}.pdf`;
+
+    return new NextResponse(pdfBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `inline; filename="${safeFilename}"`,
+        "Cache-Control": "public, max-age=60, s-maxage=60",
+      },
+    });
+  } catch (error: any) {
+    console.error("Failed to generate catalog PDF:", error);
+    return new NextResponse("Failed to generate catalog PDF.", { status: 500 });
+  }
+}

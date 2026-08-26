@@ -5,6 +5,7 @@ import { shops, products, clients, documents } from "@/db/schema";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { createBillingDocument } from "./documents";
 import { revalidatePath } from "next/cache";
+import { Resend } from "resend";
 import zlib from "zlib";
 
 /**
@@ -270,5 +271,200 @@ export async function requestCatalogQuotationAction(input: CatalogQuoteRequestIn
     } catch (error: any) {
         console.error("Catalog quotation request error:", error);
         return { success: false, error: error.message || "Failed to process quote request." };
+    }
+}
+
+export interface SendCatalogEmailInput {
+    shopSlug: string;
+    recipientEmail: string;
+    recipientName?: string;
+    customMessage?: string;
+    productIds?: string[];
+    token?: string;
+}
+
+/**
+ * Dispatches a beautifully branded catalog email to a prospective or existing client via Resend.
+ */
+export async function sendCatalogEmailAction(input: SendCatalogEmailInput) {
+    try {
+        if (!input.recipientEmail || !input.recipientEmail.includes("@")) {
+            return { success: false, error: "Please provide a valid recipient email address." };
+        }
+
+        const shop = await db.query.shops.findFirst({
+            where: eq(shops.slug, input.shopSlug),
+        });
+
+        if (!shop) {
+            return { success: false, error: "Workspace not found." };
+        }
+
+        let itemIds = input.productIds;
+        let activeToken = input.token;
+
+        if (!itemIds && activeToken) {
+            itemIds = await decodeCatalogToken(activeToken);
+        } else if (itemIds && itemIds.length > 0 && !activeToken) {
+            activeToken = await encodeCatalogToken(itemIds);
+        }
+
+        let catalogProducts: any[] = [];
+        if (itemIds && itemIds.length > 0) {
+            catalogProducts = await db.query.products.findMany({
+                where: and(
+                    eq(products.shopId, shop.id),
+                    inArray(products.id, itemIds)
+                ),
+            });
+        } else {
+            catalogProducts = await db.query.products.findMany({
+                where: eq(products.shopId, shop.id),
+                orderBy: [desc(products.createdAt)],
+                limit: 12,
+            });
+        }
+
+        const isCurated = !!(itemIds && itemIds.length > 0);
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "https://www.mannabooks.co.ke";
+        const catalogLink = `${appUrl}/portal/catalog/${shop.slug}${activeToken ? `?token=${encodeURIComponent(activeToken)}` : ""}`;
+        const pdfLink = `${appUrl}/api/catalog/${shop.slug}/pdf${activeToken ? `?token=${encodeURIComponent(activeToken)}` : ""}`;
+
+        const brandColor = shop.primaryColor || "#000000";
+        const resend = new Resend(process.env.RESEND_API_KEY || "re_mock_key");
+        const fromAddress = process.env.RESEND_FROM_EMAIL || "Manna Books <billing@corbantechnologies.org>";
+
+        const clientSalutation = input.recipientName?.trim()
+            ? `Dear <strong>${input.recipientName.trim()}</strong>,`
+            : "Dear Valued Client,";
+
+        const subject = isCurated
+            ? `${shop.name} — Curated Product Selection & Pricing (${catalogProducts.length} Items)`
+            : `${shop.name} — Official Product Catalog & Price List`;
+
+        // Render preview table of items
+        const previewItems = catalogProducts.slice(0, 8);
+        const remainingCount = catalogProducts.length - previewItems.length;
+
+        const tableRowsHtml = previewItems
+            .map(
+                (prod, idx) => `
+            <tr style="border-bottom: 1px solid #e4e4e7;">
+                <td style="padding: 10px 8px; font-size: 13px; font-weight: bold; color: #18181b;">
+                    ${idx + 1}. ${prod.name}
+                    ${prod.sku ? `<div style="font-size: 11px; font-family: monospace; color: #71717a; font-weight: normal; margin-top: 2px;">SKU: ${prod.sku}</div>` : ""}
+                </td>
+                <td style="padding: 10px 8px; font-size: 13px; font-family: monospace; font-weight: bold; color: #000000; text-align: right; white-space: nowrap;">
+                    ${shop.currency} ${parseFloat(prod.unitPrice || "0").toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </td>
+            </tr>
+        `
+            )
+            .join("");
+
+        const html = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; background-color: #ffffff; color: #09090b; border: 1px solid #e4e4e7; border-radius: 8px;">
+                
+                <!-- HEADER BRANDING -->
+                <div style="border-bottom: 2px solid ${brandColor}; padding-bottom: 16px; margin-bottom: 24px;">
+                    <h1 style="font-size: 20px; font-weight: 800; text-transform: uppercase; margin: 0; color: ${brandColor}; letter-spacing: -0.03em;">
+                        ${shop.name}
+                    </h1>
+                    <p style="font-family: monospace; font-size: 11px; color: #71717a; margin: 4px 0 0 0; text-transform: uppercase;">
+                        ${isCurated ? `Curated Product Quotation Selection (${catalogProducts.length} Items)` : "Official Commercial Product Catalog"}
+                    </p>
+                </div>
+
+                <!-- SALUTATION & INTRO -->
+                <p style="font-size: 14px; margin-bottom: 16px; color: #18181b;">${clientSalutation}</p>
+                <p style="font-size: 14px; line-height: 1.5; color: #3f3f46; margin-bottom: 20px;">
+                    ${
+                        isCurated
+                            ? `Please find our official pricing and product specifications for the <strong>${catalogProducts.length} selected models</strong> below.`
+                            : `Please find our official product catalog, specifications, and commercial pricing below.`
+                    }
+                </p>
+
+                <!-- PERSONAL MESSAGE (IF PROVIDED) -->
+                ${
+                    input.customMessage?.trim()
+                        ? `
+                    <div style="background-color: #f8fafc; border-left: 3px solid ${brandColor}; padding: 14px 16px; margin-bottom: 24px; border-radius: 4px; font-size: 13px; color: #334155; font-style: italic; line-height: 1.5;">
+                        "${input.customMessage.trim()}"
+                    </div>
+                `
+                        : ""
+                }
+
+                <!-- PRODUCT PREVIEW TABLE -->
+                <div style="background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 6px; overflow: hidden; margin-bottom: 24px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #18181b; color: #ffffff;">
+                                <th style="padding: 8px 12px; font-size: 11px; font-family: monospace; text-transform: uppercase; text-align: left; font-weight: bold;">Product Specification</th>
+                                <th style="padding: 8px 12px; font-size: 11px; font-family: monospace; text-transform: uppercase; text-align: right; font-weight: bold;">Price (${shop.currency})</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRowsHtml}
+                        </tbody>
+                    </table>
+                    ${
+                        remainingCount > 0
+                            ? `
+                        <div style="padding: 8px 12px; font-size: 12px; color: #71717a; text-align: center; background-color: #f4f4f5; font-family: monospace;">
+                            + ${remainingCount} additional models listed in online catalog
+                        </div>
+                    `
+                            : ""
+                    }
+                </div>
+
+                <!-- PRIMARY ACTION CTA BUTTON -->
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <a href="${catalogLink}" target="_blank" style="display: inline-block; background-color: ${brandColor}; color: #ffffff; text-decoration: none; padding: 14px 28px; font-size: 13px; font-weight: bold; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        👉 Open Interactive Catalog &amp; Request Quote →
+                    </a>
+                </div>
+
+                <!-- PDF DOWNLOAD LINK -->
+                <div style="text-align: center; margin-bottom: 28px;">
+                    <a href="${pdfLink}" target="_blank" style="font-size: 12px; font-family: monospace; color: #52525b; text-decoration: underline;">
+                        📄 Or download printable PDF rate card
+                    </a>
+                </div>
+
+                <!-- FOOTER -->
+                <div style="border-top: 1px solid #e4e4e7; padding-top: 16px; font-size: 11px; color: #71717a; line-height: 1.5;">
+                    <p style="margin: 0 0 4px 0; font-weight: bold; color: #18181b;">${shop.name}</p>
+                    ${shop.phone ? `<p style="margin: 0 0 2px 0;">Tel: ${shop.phone}</p>` : ""}
+                    ${shop.email ? `<p style="margin: 0 0 2px 0;">Email: ${shop.email}</p>` : ""}
+                    ${shop.website ? `<p style="margin: 0 0 2px 0;">Website: ${shop.website}</p>` : ""}
+                    ${shop.taxPin ? `<p style="margin: 0 0 2px 0;">KRA PIN: ${shop.taxPin}</p>` : ""}
+                    <p style="margin: 12px 0 0 0; font-size: 10px; color: #a1a1aa; font-family: monospace;">
+                        Sent via Manna Books Financial Operations Platform
+                    </p>
+                </div>
+
+            </div>
+        `;
+
+        const { error: resendError } = await resend.emails.send({
+            from: fromAddress,
+            to: [input.recipientEmail.trim()],
+            replyTo: shop.email ? shop.email.trim() : undefined,
+            subject,
+            html,
+        });
+
+        if (resendError) {
+            console.error("Resend Catalog Dispatch Error:", resendError);
+            return { success: false, error: resendError.message || "Failed to dispatch catalog email." };
+        }
+
+        return { success: true, message: `Catalog email sent to ${input.recipientEmail.trim()}` };
+    } catch (error: any) {
+        console.error("Failed to send catalog email:", error);
+        return { success: false, error: error.message || "Internal server error dispatching email." };
     }
 }

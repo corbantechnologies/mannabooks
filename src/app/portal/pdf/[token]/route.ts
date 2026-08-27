@@ -41,11 +41,13 @@ const PayrollPdfDocumentStructure = ({ doc, shop, qrCodeDataUrl }: any) => {
 
     const styles = ReactPDF.StyleSheet.create({
         page: { padding: 28, backgroundColor: "#ffffff", fontFamily: "Helvetica", fontSize: 8, color: "#000000" },
-        header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottomWidth: 2, borderBottomColor: primaryColor, paddingBottom: 12, marginBottom: 16 },
-        logoContainer: { flexDirection: "row", alignItems: "center", gap: 10 },
-        logoImage: { width: 44, height: 44, objectFit: "contain" },
-        shopName: { fontSize: 16, fontWeight: "bold", textTransform: "uppercase", color: "#000000" },
-        docTitle: { fontSize: 16, fontWeight: "bold", textTransform: "uppercase", color: primaryColor, textAlign: "right" },
+        header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", borderBottomWidth: 2, borderBottomColor: primaryColor, paddingBottom: 12, marginBottom: 16 },
+        logoContainer: { width: "52%", flexDirection: "row", alignItems: "flex-start", gap: 8 },
+        logoImage: { width: 40, height: 40, objectFit: "contain" },
+        shopDetails: { flex: 1 },
+        headerRight: { width: "45%", alignItems: "flex-end" },
+        shopName: { fontSize: 13, fontWeight: "bold", textTransform: "uppercase", color: "#000000", marginBottom: 2 },
+        docTitle: { fontSize: 13, fontWeight: "bold", textTransform: "uppercase", color: primaryColor, textAlign: "right", marginBottom: 2 },
         metaRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 14, backgroundColor: "#f8fafc", padding: 10, borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 3 },
         metaCol: { width: "48%" },
         metaLabel: { color: "#64748b", fontSize: 7, fontWeight: "bold", marginBottom: 2, textTransform: "uppercase" },
@@ -88,7 +90,7 @@ const PayrollPdfDocumentStructure = ({ doc, shop, qrCodeDataUrl }: any) => {
                     shop.logoUrl && React.createElement(ReactPDF.Image, { src: shop.logoUrl, style: styles.logoImage }),
                     React.createElement(
                         ReactPDF.View,
-                        null,
+                        { style: styles.shopDetails },
                         React.createElement(ReactPDF.Text, { style: styles.shopName }, shop.shortName || shop.name),
                         shop.taxPin && React.createElement(ReactPDF.Text, { style: { fontSize: 8, color: "#475569", marginTop: 1 } }, "Tax PIN: " + shop.taxPin),
                         shop.phone && React.createElement(ReactPDF.Text, { style: { fontSize: 8, color: "#475569" } }, "Tel: " + shop.phone),
@@ -97,7 +99,7 @@ const PayrollPdfDocumentStructure = ({ doc, shop, qrCodeDataUrl }: any) => {
                 ),
                 React.createElement(
                     ReactPDF.View,
-                    null,
+                    { style: styles.headerRight },
                     React.createElement(ReactPDF.Text, { style: styles.docTitle }, `PAYROLL VOUCHER ${doc.docNumber}`),
                     React.createElement(ReactPDF.Text, { style: { textAlign: "right", fontSize: 8, color: "#475569", marginTop: 2 } }, "Issued Date: " + new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "long" })),
                     React.createElement(ReactPDF.Text, { style: { textAlign: "right", fontSize: 8, fontWeight: "bold", color: doc.status === "PAID" ? "#047857" : "#d97706", marginTop: 2 } }, `STATUS: ${doc.status}`)
@@ -216,12 +218,14 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
 
     const styles = ReactPDF.StyleSheet.create({
         page: { padding: 36, backgroundColor: "#ffffff", fontFamily: "Helvetica", fontSize: 9, color: "#000000" },
-        header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottomWidth: 2, borderBottomColor: primaryColor, paddingBottom: 16, marginBottom: 20 },
-        logoContainer: { flexDirection: "row", alignItems: "center", gap: 10 },
-        logoImage: { width: 44, height: 44, objectFit: "contain" },
-        shopName: { fontSize: 16, fontWeight: "bold", textTransform: "uppercase", color: "#000000" },
-        docTitle: { fontSize: 15, fontWeight: "bold", textTransform: "uppercase", color: primaryColor, textAlign: "right" },
-        metaRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 20, backgroundColor: "#f9f9f9", padding: 12, borderWidth: 1, borderColor: "#e4e4e7" },
+        header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", borderBottomWidth: 2, borderBottomColor: primaryColor, paddingBottom: 14, marginBottom: 18 },
+        logoContainer: { width: "50%", flexDirection: "row", alignItems: "flex-start", gap: 10 },
+        logoImage: { width: 40, height: 40, objectFit: "contain" },
+        shopDetails: { flex: 1 },
+        headerRight: { width: "48%", alignItems: "flex-end" },
+        shopName: { fontSize: 13, fontWeight: "bold", textTransform: "uppercase", color: "#000000", marginBottom: 2 },
+        docTitle: { fontSize: 13, fontWeight: "bold", textTransform: "uppercase", color: primaryColor, textAlign: "right", marginBottom: 2 },
+        metaRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 18, backgroundColor: "#f9f9f9", padding: 12, borderWidth: 1, borderColor: "#e4e4e7" },
         metaCol: { width: "48%" },
         metaLabel: { color: "#71717a", fontSize: 8, fontWeight: "bold", marginBottom: 3, textTransform: "uppercase" },
         metaVal: { fontSize: 10, fontWeight: "bold" },
@@ -255,7 +259,7 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
                     shop.logoUrl && React.createElement(ReactPDF.Image, { src: shop.logoUrl, style: styles.logoImage }),
                     React.createElement(
                         ReactPDF.View,
-                        null,
+                        { style: styles.shopDetails },
                         React.createElement(ReactPDF.Text, { style: styles.shopName }, shop.shortName || shop.name),
                         shop.taxPin && React.createElement(ReactPDF.Text, { style: { fontSize: 8, color: "#52525b", marginTop: 1 } }, "Tax PIN: " + shop.taxPin),
                         shop.vatNumber && React.createElement(ReactPDF.Text, { style: { fontSize: 8, color: "#52525b" } }, "VAT #: " + shop.vatNumber),
@@ -265,7 +269,7 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
                 ),
                 React.createElement(
                     ReactPDF.View,
-                    null,
+                    { style: styles.headerRight },
                     React.createElement(ReactPDF.Text, { style: styles.docTitle }, `${doc.type ? doc.type.replace(/_/g, " ") : ""} ${doc.docNumber}`),
                     doc.kraCuInvoiceNumber && React.createElement(ReactPDF.Text, { style: { textAlign: "right", fontSize: 8, fontWeight: "bold", color: "#000000", marginTop: 2 } }, "KRA eTIMS CU #: " + doc.kraCuInvoiceNumber),
                     doc.paymentChannel && React.createElement(ReactPDF.Text, { style: { textAlign: "right", fontSize: 8, fontWeight: "bold", color: "#047857", marginTop: 2 } }, "Paid via: " + doc.paymentChannel + (doc.paymentReference ? " (Ref: " + doc.paymentReference + ")" : "")),
@@ -280,9 +284,9 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
                 React.createElement(
                     ReactPDF.View,
                     { style: styles.metaCol },
-                    React.createElement(ReactPDF.Text, { style: styles.metaLabel }, "BILLED TO:"),
+                    React.createElement(ReactPDF.Text, { style: styles.metaLabel }, doc.supplier ? "SUPPLIER / VENDOR:" : "BILLED TO:"),
                     React.createElement(ReactPDF.Text, { style: styles.metaVal }, client.name),
-                    React.createElement(ReactPDF.Text, null, client.email),
+                    client.email && client.email !== "—" && React.createElement(ReactPDF.Text, null, client.email),
                     client.phone && React.createElement(ReactPDF.Text, null, "Tel: " + client.phone),
                     client.taxPin && React.createElement(ReactPDF.Text, null, "Tax PIN: " + client.taxPin)
                 ),
@@ -350,15 +354,15 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
                                             React.createElement(ReactPDF.Text, { style: { color: "#27272a", flex: 1, fontSize: 7 } }, val)
                                         );
                                     }
-                                    return React.createElement(
-                                        ReactPDF.Text,
-                                        { key: idx, style: { marginLeft: 4, color: "#27272a", fontSize: 7, marginTop: 1 } },
-                                        part
-                                    );
+                                    return React.createElement(ReactPDF.Text, { key: idx, style: { color: "#27272a", fontSize: 7, marginLeft: 4 } }, part);
                                 })
                             );
                         })
-                        : React.createElement(ReactPDF.Text, { style: { fontSize: 7.5, color: "#71717a" } }, "Contact merchant for settlement options.")
+                        : React.createElement(
+                            ReactPDF.Text,
+                            { style: { color: "#71717a", fontSize: 7.5 } },
+                            "No bank/payment methods configured in shop settings."
+                        )
                 ),
                 React.createElement(
                     ReactPDF.View,
@@ -369,17 +373,17 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
                         React.createElement(ReactPDF.Text, { style: { color: "#71717a" } }, "Subtotal:"),
                         React.createElement(ReactPDF.Text, null, formatCurrency(doc.subTotal, shop.currency))
                     ),
-                    React.createElement(
+                    parseFloat(doc.taxAmount) > 0 && React.createElement(
                         ReactPDF.View,
                         { style: styles.totalRow },
-                        React.createElement(ReactPDF.Text, { style: { color: "#71717a" } }, "VAT Amount:"),
+                        React.createElement(ReactPDF.Text, { style: { color: "#71717a" } }, "VAT (16%):"),
                         React.createElement(ReactPDF.Text, null, formatCurrency(doc.taxAmount, shop.currency))
                     ),
                     React.createElement(
                         ReactPDF.View,
                         { style: styles.grandTotalRow },
-                        React.createElement(ReactPDF.Text, null, "TOTAL DUE:"),
-                        React.createElement(ReactPDF.Text, null, formatCurrency(doc.grandTotal, shop.currency))
+                        React.createElement(ReactPDF.Text, null, "GRAND TOTAL:"),
+                        React.createElement(ReactPDF.Text, { style: { color: primaryColor } }, formatCurrency(doc.grandTotal, shop.currency))
                     )
                 )
             ),
@@ -387,25 +391,21 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
             React.createElement(
                 ReactPDF.View,
                 { style: { ...styles.legalFooter, flexDirection: "row", justifyContent: "space-between", alignItems: "center" } },
-                qrCodeDataUrl ? React.createElement(ReactPDF.Image, { src: qrCodeDataUrl, style: { width: 50, height: 50 } }) : React.createElement(ReactPDF.View, null),
-                React.createElement(
-                    ReactPDF.View,
-                    null,
-                    React.createElement(ReactPDF.Text, { style: { textAlign: "right" } }, `Generated via Manna Books Platform • Official Statutory Document for ${shop.name}`),
-                    React.createElement(ReactPDF.Text, { style: { textAlign: "right", marginTop: 2, fontSize: 7, color: "#a1a1aa" } }, "Scan the QR code to verify this document securely online.")
-                )
+                qrCodeDataUrl ? React.createElement(ReactPDF.Image, { src: qrCodeDataUrl, style: { width: 36, height: 36 } }) : React.createElement(ReactPDF.View, null),
+                React.createElement(ReactPDF.Text, null, "Generated via Manna Books Financial Platform • ETIMS Compliant Document Engine")
             )
         )
     );
 };
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+export async function GET(
+    request: NextRequest,
+    { params }: { params: Promise<{ token: string }> }
+) {
     try {
-        const resolvedParams = await params;
-        const token = resolvedParams.token;
+        const { token } = await params;
 
         let targetDocumentId: string | null = null;
-
         const tokenRecord = await db.query.documentTokens.findFirst({
             where: eq(documentTokens.token, token),
         });
@@ -432,7 +432,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         }
 
         if (!targetDocumentId) {
-            return new NextResponse("Document node missing parameter paths.", { status: 404 });
+            return new NextResponse("Document not found.", { status: 404 });
         }
 
         const doc = await db.query.documents.findFirst({
@@ -456,8 +456,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 ? "Internal Company Staff Payroll" 
                 : (doc.type === "RECEIPT" ? "Walk-in Customer" : (doc.type === "PAYMENT_VOUCHER" ? "Direct Vendor" : "Walk-in Customer")),
             email: "—",
-            phone: doc.shop?.phone || null,
-            taxPin: doc.shop?.taxPin || null,
+            phone: null,
+            taxPin: null,
         };
 
         const settlements = await db.query.paymentMethods.findMany({ where: eq(paymentMethods.shopId, doc.shop.id) });

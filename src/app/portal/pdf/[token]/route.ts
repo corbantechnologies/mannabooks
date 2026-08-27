@@ -9,27 +9,18 @@ import React from "react";
 import QRCode from "qrcode";
 import path from "path";
 
-// Register custom and fallback fonts for ReactPDF
+// Register standard built-in PDF fonts for all potential aliases
 try {
-    const regularFont = path.join(process.cwd(), "public", "fonts", "static", "GoogleSans-Regular.ttf");
-    const boldFont = path.join(process.cwd(), "public", "fonts", "static", "GoogleSans-Bold.ttf");
-    const italicFont = path.join(process.cwd(), "public", "fonts", "static", "GoogleSans-Italic.ttf");
-
-    const fontConfig = [
-        { src: regularFont, fontWeight: 400, fontStyle: "normal" as const },
-        { src: boldFont, fontWeight: 700, fontStyle: "normal" as const },
-        { src: regularFont, fontWeight: "normal" as const, fontStyle: "normal" as const },
-        { src: boldFont, fontWeight: "bold" as const, fontStyle: "normal" as const },
-        { src: italicFont, fontWeight: 400, fontStyle: "italic" as const },
-        { src: italicFont, fontWeight: "normal" as const, fontStyle: "italic" as const },
-        { src: boldFont, fontWeight: 700, fontStyle: "italic" as const },
-        { src: boldFont, fontWeight: "bold" as const, fontStyle: "italic" as const },
+    const standardBuiltInFonts = [
+        { src: 'Helvetica', fontStyle: 'normal' as const, fontWeight: 400 },
+        { src: 'Helvetica-Bold', fontStyle: 'normal' as const, fontWeight: 700 },
+        { src: 'Helvetica', fontStyle: 'normal' as const, fontWeight: 'normal' as const },
+        { src: 'Helvetica-Bold', fontStyle: 'normal' as const, fontWeight: 'bold' as const },
+        { src: 'Helvetica-Oblique', fontStyle: 'italic' as const, fontWeight: 400 },
+        { src: 'Helvetica-BoldOblique', fontStyle: 'italic' as const, fontWeight: 700 },
+        { src: 'Helvetica-Oblique', fontStyle: 'italic' as const, fontWeight: 'normal' as const },
+        { src: 'Helvetica-BoldOblique', fontStyle: 'italic' as const, fontWeight: 'bold' as const },
     ];
-
-    ReactPDF.Font.register({
-        family: "GoogleSans",
-        fonts: fontConfig,
-    });
 
     const fontAliases = [
         "'Space Grotesk', 'Inter', system-ui, sans-serif",
@@ -37,6 +28,7 @@ try {
         "Inter",
         "system-ui",
         "sans-serif",
+        "GoogleSans",
         "Google Sans",
         "var(--font-google-sans), sans-serif",
     ];
@@ -44,7 +36,7 @@ try {
     for (const alias of fontAliases) {
         ReactPDF.Font.register({
             family: alias,
-            fonts: fontConfig,
+            fonts: standardBuiltInFonts,
         });
     }
 

@@ -7,6 +7,46 @@ import ReactPDF from "@react-pdf/renderer";
 import { formatCurrency } from "@/lib/utils";
 import React from "react";
 import QRCode from "qrcode";
+import path from "path";
+
+// Register custom and fallback fonts for ReactPDF
+try {
+    const regularFont = path.join(process.cwd(), "public", "fonts", "static", "GoogleSans-Regular.ttf");
+    const boldFont = path.join(process.cwd(), "public", "fonts", "static", "GoogleSans-Bold.ttf");
+    const italicFont = path.join(process.cwd(), "public", "fonts", "static", "GoogleSans-Italic.ttf");
+
+    const fontConfig = [
+        { src: regularFont, fontWeight: "normal" as const },
+        { src: boldFont, fontWeight: "bold" as const },
+        { src: italicFont, fontStyle: "italic" as const },
+    ];
+
+    ReactPDF.Font.register({
+        family: "GoogleSans",
+        fonts: fontConfig,
+    });
+
+    const fontAliases = [
+        "'Space Grotesk', 'Inter', system-ui, sans-serif",
+        "Space Grotesk",
+        "Inter",
+        "system-ui",
+        "sans-serif",
+        "Google Sans",
+        "var(--font-google-sans), sans-serif",
+    ];
+
+    for (const alias of fontAliases) {
+        ReactPDF.Font.register({
+            family: alias,
+            fonts: fontConfig,
+        });
+    }
+
+    ReactPDF.Font.registerHyphenationCallback((word) => [word]);
+} catch (e) {
+    console.warn("Font registration warning:", e);
+}
 
 function parsePayrollDescription(description: string, fallbackUnitPrice: string) {
     const staffMatch = description.match(/Staff:\s*([^|]+)/i);

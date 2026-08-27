@@ -1,20 +1,21 @@
 import ReactPDF from "@react-pdf/renderer";
 
 /**
- * Registers common web font-family stack names as aliases pointing to the
- * built-in Helvetica PostScript font that @react-pdf/renderer ships with.
+ * Universal PDF Font Fallback & Auto-Resolution Engine for @react-pdf/renderer
  *
- * WHY THIS EXISTS:
- * @react-pdf/renderer is a PDF layout engine, not a browser. It cannot
- * auto-resolve CSS font stacks like 'Space Grotesk', 'Inter', system-ui, sans-serif.
- * When content from the database (terms, descriptions, shop data) contains
- * CSS font-family declarations — or when Next.js global styles bleed into the
- * @react-pdf StyleSheet registry — @react-pdf throws "Font family not registered".
- * We map all common web font names to Helvetica so they render cleanly.
+ * WHY THIS IS CRITICAL:
+ * @react-pdf/renderer is a PDF vector layout engine. It does not have browser-level
+ * CSS font fallback. If any database entity (SVG logo, copy-pasted terms, HTML descriptions,
+ * or custom workspace fonts) specifies an unregistered font-family or an unresolvable
+ * font weight/style, the layout engine throws:
+ *   - "Font family not registered: <family>"
+ *   - "Could not resolve font for <family>, fontWeight <weight>, fontStyle <style>"
  *
- * NOTE: No _registered guard — we always re-register because Next.js can
- * reload modules or spawn new workers where @react-pdf's FontStore is reset,
- * causing the guard to block re-registration when fonts are gone.
+ * This utility:
+ * 1. Registers all common web font stacks as Helvetica aliases.
+ * 2. Monkey-patches FontStore.getFont and FontFamily.prototype.resolve so that ANY
+ *    unknown font or unresolved weight/style automatically falls back to Helvetica
+ *    instead of throwing a 500 Server Engine Error.
  */
 
 interface PdfFontEntry {
@@ -43,29 +44,86 @@ function makeHelveticaFonts(): PdfFontEntry[] {
     return fonts;
 }
 
-// All font family names that could appear in database content, CSS stylesheets,
-// or Next.js global style registries — must all be resolvable by @react-pdf's font engine.
 const WEB_FONT_ALIASES = [
-    // Full CSS font stacks (appear verbatim when content is copy-pasted from web pages)
     "'Space Grotesk', 'Inter', system-ui, sans-serif",
     "Space Grotesk, Inter, system-ui, sans-serif",
     "'Space Grotesk', Inter, system-ui, sans-serif",
-    // Individual web font names
     "Space Grotesk",
     "Inter",
     "system-ui",
     "sans-serif",
     "serif",
     "monospace",
-    // Google Fonts / project-specific names
     "Google Sans",
     "GoogleSans",
-    // CSS variable-based font stacks (from Next.js / Tailwind projects)
     "var(--font-google-sans), sans-serif",
     "var(--font-sans)",
     "var(--font-mono)",
     "var(--font-heading)",
 ];
+
+let _patched = false;
+
+function applyGlobalFontFallback() {
+    if (_patched) return;
+    _patched = true;
+
+    try {
+        const fontStore: any = ReactPDF.Font;
+        if (!fontStore) return;
+
+        // 1. Patch FontFamily.prototype.resolve to never throw on weight/style mismatch
+        const helveticaFamily = fontStore.fontFamilies?.["Helvetica"];
+        const FontFamilyClass = helveticaFamily?.constructor;
+        if (FontFamilyClass?.prototype?.resolve) {
+            const origResolve = FontFamilyClass.prototype.resolve;
+            FontFamilyClass.prototype.resolve = function (descriptor: any) {
+                try {
+                    return origResolve.call(this, descriptor);
+                } catch {
+                    // Fallback to any source in this family, or standard Helvetica
+                    if (this.sources && this.sources.length > 0) {
+                        const styleMatch = this.sources.find((s: any) => s.fontStyle === descriptor?.fontStyle);
+                        return styleMatch || this.sources[0];
+                    }
+                    const globalHelvetica = fontStore.fontFamilies?.["Helvetica"];
+                    return globalHelvetica?.sources?.[0] || null;
+                }
+            };
+        }
+
+        // 2. Patch FontStore.getFont to never throw on unregistered font families
+        if (typeof fontStore.getFont === "function") {
+            const origGetFont = fontStore.getFont.bind(fontStore);
+            fontStore.getFont = function (descriptor: any) {
+                try {
+                    const family = descriptor?.fontFamily;
+                    if (!this.fontFamilies?.[family]) {
+                        // Unregistered font family -> delegate to Helvetica
+                        const helvetica = this.fontFamilies?.["Helvetica"];
+                        if (helvetica) {
+                            return helvetica.resolve(descriptor);
+                        }
+                    }
+                    return origGetFont(descriptor);
+                } catch {
+                    // Total safety fallback: return Helvetica source
+                    const helvetica = this.fontFamilies?.["Helvetica"];
+                    if (helvetica) {
+                        try {
+                            return helvetica.resolve(descriptor);
+                        } catch {
+                            return helvetica.sources?.[0] || null;
+                        }
+                    }
+                    return null;
+                }
+            };
+        }
+    } catch (err) {
+        console.warn("Failed to apply global PDF font fallback patch:", err);
+    }
+}
 
 export function registerPdfFonts() {
     const helveticaFonts = makeHelveticaFonts();
@@ -73,4 +131,5 @@ export function registerPdfFonts() {
         ReactPDF.Font.register({ family: alias, fonts: helveticaFonts });
     }
     ReactPDF.Font.registerHyphenationCallback((word) => [word]);
+    applyGlobalFontFallback();
 }

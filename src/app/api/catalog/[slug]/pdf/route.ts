@@ -491,6 +491,7 @@ export async function GET(
     });
 
     const pdfStream = await ReactPDF.renderToStream(PDFElement);
+    console.log("Catalog PDF generated for Shop:", res.shop?.name, "Products:", res.products?.length);
 
     // Convert stream to Buffer / Uint8Array
     const chunks: any[] = [];

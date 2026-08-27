@@ -471,6 +471,9 @@ export async function GET(
     { params }: { params: Promise<{ token: string }> }
 ) {
     try {
+        // Re-register fonts on every request — guards against Next.js worker reloads
+        // where @react-pdf's FontStore is reset but module-level registration is skipped.
+        registerPdfFonts();
         const { token } = await params;
 
         let targetDocumentId: string | null = null;

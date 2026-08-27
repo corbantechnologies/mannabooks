@@ -8,8 +8,13 @@ import ReactPDF from "@react-pdf/renderer";
  * @react-pdf/renderer is a PDF layout engine, not a browser. It cannot
  * auto-resolve CSS font stacks like 'Space Grotesk', 'Inter', system-ui, sans-serif.
  * When content from the database (terms, descriptions, shop data) contains
- * CSS font-family declarations, @react-pdf throws "Font family not registered".
+ * CSS font-family declarations — or when Next.js global styles bleed into the
+ * @react-pdf StyleSheet registry — @react-pdf throws "Font family not registered".
  * We map all common web font names to Helvetica so they render cleanly.
+ *
+ * NOTE: No _registered guard — we always re-register because Next.js can
+ * reload modules or spawn new workers where @react-pdf's FontStore is reset,
+ * causing the guard to block re-registration when fonts are gone.
  */
 
 interface PdfFontEntry {
@@ -38,12 +43,13 @@ function makeHelveticaFonts(): PdfFontEntry[] {
     return fonts;
 }
 
-// All font family names that could appear in database content or CSS stylesheets
-// and must be resolvable by @react-pdf/renderer's font engine.
+// All font family names that could appear in database content, CSS stylesheets,
+// or Next.js global style registries — must all be resolvable by @react-pdf's font engine.
 const WEB_FONT_ALIASES = [
-    // Full CSS font stacks (appear verbatim as fontFamily when content is copy-pasted)
+    // Full CSS font stacks (appear verbatim when content is copy-pasted from web pages)
     "'Space Grotesk', 'Inter', system-ui, sans-serif",
     "Space Grotesk, Inter, system-ui, sans-serif",
+    "'Space Grotesk', Inter, system-ui, sans-serif",
     // Individual web font names
     "Space Grotesk",
     "Inter",
@@ -54,19 +60,14 @@ const WEB_FONT_ALIASES = [
     // Google Fonts / project-specific names
     "Google Sans",
     "GoogleSans",
-    // CSS variable-based font stacks (from Next.js/Tailwind projects)
+    // CSS variable-based font stacks (from Next.js / Tailwind projects)
     "var(--font-google-sans), sans-serif",
     "var(--font-sans)",
     "var(--font-mono)",
     "var(--font-heading)",
 ];
 
-let _registered = false;
-
 export function registerPdfFonts() {
-    if (_registered) return;
-    _registered = true;
-
     const helveticaFonts = makeHelveticaFonts();
     for (const alias of WEB_FONT_ALIASES) {
         ReactPDF.Font.register({ family: alias, fonts: helveticaFonts });

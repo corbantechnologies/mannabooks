@@ -436,6 +436,9 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    // Re-register fonts on every request — guards against Next.js worker reloads
+    // where @react-pdf's FontStore is reset but module-level registration is skipped.
+    registerPdfFonts();
     const { slug } = await params;
     const { searchParams, origin } = new URL(request.url);
     const search = searchParams.get("search") || undefined;

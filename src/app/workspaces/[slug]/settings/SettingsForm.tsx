@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updateShopSettings } from "@/lib/actions/workspace";
 import { useAddPaymentMethod, useDeletePaymentMethod, useSetDefaultPaymentMethod, useUpdatePaymentMethod } from "@/hooks/usePayments";
+import { ShopTermItem } from "@/lib/actions/terms";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 
@@ -33,6 +34,7 @@ interface SettingsFormProps {
   initialFiscalYearStartMonth: number;
   initialCode?: string;
   paymentMethods: PaymentMethod[];
+  initialTerms?: ShopTermItem[];
 }
 
 const COLOR_PALETTES = [
@@ -62,6 +64,7 @@ export function SettingsForm({
   initialFiscalYearStartMonth = 1,
   initialCode = "",
   paymentMethods: initialMethods,
+  initialTerms = [],
 }: SettingsFormProps) {
   const router = useRouter();
 
@@ -986,6 +989,34 @@ export function SettingsForm({
             </button>
           </form>
         )}
+      </div>
+    </div>
+
+    {/* ── COMMERCIAL TERMS & CONDITIONS LINK ── */}
+    <div className="card-modern p-6 bg-white font-mono text-xs space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <div>
+          <h2 className="font-semibold uppercase tracking-wider text-sm text-black font-sans">
+            Commercial Terms &amp; Conditions
+          </h2>
+          <p className="text-[10px] text-zinc-400 uppercase mt-0.5">
+            Configure payment milestones, COD rules, 14-day validity &amp; catalog lead policies
+          </p>
+        </div>
+        <span className="px-2.5 py-1 text-[10px] font-semibold uppercase bg-zinc-100 text-zinc-700 rounded border border-zinc-200">
+          {initialTerms.length} Active Clause{initialTerms.length === 1 ? "" : "s"}
+        </span>
+      </div>
+      <div className="border-t border-zinc-200/80 pt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <p className="font-sans text-[11px] text-zinc-500 normal-case leading-normal max-w-xl">
+          Manage reusable commercial terms, milestone payment structures, and default scopes for manual invoices versus public catalog lead capture.
+        </p>
+        <Link
+          href={`/workspaces/${shopSlug}/settings/terms`}
+          className="btn-secondary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs border border-black hover:bg-black hover:text-white transition-colors shrink-0 no-underline text-black inline-block text-center font-bold"
+        >
+          Open Terms Library ➔
+        </Link>
       </div>
     </div>
 

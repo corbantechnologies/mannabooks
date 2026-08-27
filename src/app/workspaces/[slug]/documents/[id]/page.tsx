@@ -198,6 +198,40 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
         </div>
       </div>
 
+      {/* COMMERCIAL TERMS & CONDITIONS */}
+      {(() => {
+        let parsedTerms: string[] = [];
+        if (doc.termsAndConditions) {
+          try {
+            const parsed = JSON.parse(doc.termsAndConditions);
+            if (Array.isArray(parsed)) {
+              parsedTerms = parsed;
+            } else if (typeof parsed === "string") {
+              parsedTerms = [parsed];
+            }
+          } catch {
+            parsedTerms = [doc.termsAndConditions];
+          }
+        }
+        if (parsedTerms.length === 0) return null;
+        return (
+          <div className="border border-zinc-200 bg-zinc-50/70 p-4 rounded-lg space-y-2 font-mono text-xs">
+            <span className="text-black font-bold uppercase tracking-tight text-[11px] block border-b border-zinc-200 pb-1 flex items-center gap-1.5">
+              <span>📜</span>
+              <span>Commercial Terms &amp; Conditions Attached:</span>
+            </span>
+            <ul className="space-y-1 font-sans text-xs text-zinc-700">
+              {parsedTerms.map((term, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="text-black font-bold">•</span>
+                  <span>{term}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
+
       {/* STATUS + ACTIONS PANEL */}
       <DocumentStatusPanel
         documentId={doc.id}

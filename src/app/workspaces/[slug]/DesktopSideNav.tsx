@@ -83,6 +83,7 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
       children: [
         { href: `/workspaces/${slug}/team`, label: "Team Management" },
         { href: `/workspaces/${slug}/settings`, label: "Workspace Details", exact: true },
+        { href: `/workspaces/${slug}/settings/terms`, label: "Commercial Terms" },
         { href: `/workspaces/${slug}/settings/diagnostics`, label: "GL Diagnostics" },
         { href: `/workspaces/${slug}/guide`, label: "Operator Guide" },
       ]

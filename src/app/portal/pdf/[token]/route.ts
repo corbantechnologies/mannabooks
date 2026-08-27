@@ -257,8 +257,25 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
         totalBox: { width: "42%", padding: 8, borderWidth: 1, borderColor: primaryColor, backgroundColor: "#ffffff", borderRadius: 3 },
         totalRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 1.5 },
         grandTotalRow: { flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: primaryColor, paddingTop: 4, marginTop: 3, fontWeight: "bold", fontSize: 9 },
-        legalFooter: { marginTop: 24, paddingTop: 8, borderTopWidth: 1, borderTopColor: "#e4e4e7", textAlign: "center", color: "#a1a1aa", fontSize: 7.5 }
+        legalFooter: { marginTop: 24, paddingTop: 8, borderTopWidth: 1, borderTopColor: "#e4e4e7", textAlign: "center", color: "#a1a1aa", fontSize: 7.5 },
+        termsBox: { marginTop: 12, padding: 8, backgroundColor: "#fafafa", borderWidth: 1, borderColor: "#e4e4e7", borderRadius: 3 },
+        termsTitle: { fontSize: 7.5, fontWeight: "bold", textTransform: "uppercase", color: "#18181b", marginBottom: 3 },
+        termsItem: { fontSize: 7, color: "#3f3f46", marginBottom: 1.5, lineHeight: 1.2 },
     });
+
+    let parsedTerms: string[] = [];
+    if (doc.termsAndConditions) {
+        try {
+            const parsed = JSON.parse(doc.termsAndConditions);
+            if (Array.isArray(parsed)) {
+                parsedTerms = parsed;
+            } else if (typeof parsed === "string") {
+                parsedTerms = [parsed];
+            }
+        } catch {
+            parsedTerms = [doc.termsAndConditions];
+        }
+    }
 
     return React.createElement(
         ReactPDF.Document,
@@ -359,30 +376,27 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
                                 .filter(Boolean);
                             return React.createElement(
                                 ReactPDF.View,
-                                { key: s.id, style: { marginBottom: 3 } },
-                                React.createElement(ReactPDF.Text, { style: { fontWeight: "bold", fontSize: 7, color: "#18181b", marginBottom: 1 } }, s.name),
-                                parts.map((part: string, idx: number) => {
+                                { key: s.id, style: { marginBottom: 3.5 } },
+                                React.createElement(ReactPDF.Text, { style: { fontSize: 7.5, fontWeight: "bold", color: "#18181b", textTransform: "uppercase" } }, s.name),
+                                parts.map((part: string, pIdx: number) => {
                                     const colonIndex = part.indexOf(":");
                                     if (colonIndex > -1) {
                                         const key = part.slice(0, colonIndex).trim();
                                         const val = part.slice(colonIndex + 1).trim();
                                         return React.createElement(
                                             ReactPDF.View,
-                                            { key: idx, style: { flexDirection: "row", marginLeft: 3, marginTop: 0.5 } },
-                                            React.createElement(ReactPDF.Text, { style: { color: "#71717a", width: 55, fontSize: 6.5 } }, key + ":"),
-                                            React.createElement(ReactPDF.Text, { style: { color: "#27272a", flex: 1, fontSize: 6.5 } }, val)
+                                            { key: pIdx, style: { flexDirection: "row", marginTop: 1 } },
+                                            React.createElement(ReactPDF.Text, { style: { fontSize: 6.8, color: "#71717a", width: 55, textTransform: "uppercase" } }, `${key}:`),
+                                            React.createElement(ReactPDF.Text, { style: { fontSize: 6.8, color: "#27272a", fontWeight: "bold" } }, val)
                                         );
                                     }
-                                    return React.createElement(ReactPDF.Text, { key: idx, style: { color: "#27272a", fontSize: 6.5, marginLeft: 3 } }, part);
+                                    return React.createElement(ReactPDF.Text, { key: pIdx, style: { fontSize: 6.8, color: "#3f3f46", marginTop: 1 } }, part);
                                 })
                             );
                         })
-                        : React.createElement(
-                            ReactPDF.Text,
-                            { style: { color: "#71717a", fontSize: 7 } },
-                            "No bank/payment methods configured in shop settings."
-                        )
+                        : React.createElement(ReactPDF.Text, { style: { fontSize: 7, color: "#71717a", fontStyle: "italic" } }, "Direct bank transfers or cash payment. Contact supplier.")
                 ),
+
                 React.createElement(
                     ReactPDF.View,
                     { style: styles.totalBox },
@@ -403,6 +417,20 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
                         { style: styles.grandTotalRow },
                         React.createElement(ReactPDF.Text, null, "GRAND TOTAL:"),
                         React.createElement(ReactPDF.Text, { style: { color: primaryColor } }, formatCurrency(doc.grandTotal, shop.currency))
+                    )
+                )
+            ),
+
+            parsedTerms.length > 0 && React.createElement(
+                ReactPDF.View,
+                { style: styles.termsBox },
+                React.createElement(ReactPDF.Text, { style: styles.termsTitle }, "Commercial Terms & Conditions:"),
+                parsedTerms.map((t, idx) =>
+                    React.createElement(
+                        ReactPDF.View,
+                        { key: idx, style: { flexDirection: "row", alignItems: "flex-start", gap: 3 } },
+                        React.createElement(ReactPDF.Text, { style: { fontSize: 7, color: "#71717a" } }, "•"),
+                        React.createElement(ReactPDF.Text, { style: styles.termsItem }, t)
                     )
                 )
             ),

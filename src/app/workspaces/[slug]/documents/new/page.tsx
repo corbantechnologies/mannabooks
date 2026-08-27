@@ -1,7 +1,7 @@
 // src/app/workspaces/[slug]/documents/new/page.tsx
 import { db } from "@/db";
-import { clients, products, shops, suppliers } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { clients, products, shops, suppliers, shopTerms } from "@/db/schema";
+import { eq, desc, asc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { DocumentBuilderClientForm } from "./DocumentBuilderClientForm";
 import Link from "next/link";
@@ -40,6 +40,11 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
     orderBy: [desc(products.createdAt)],
   });
 
+  const termsRegistry = await db.query.shopTerms.findMany({
+    where: eq(shopTerms.shopId, shop.id),
+    orderBy: [asc(shopTerms.displayOrder), asc(shopTerms.createdAt)],
+  });
+
   return (
     <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white font-mono text-xs">
       
@@ -76,6 +81,7 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
           clients={clientRegistry}
           suppliers={supplierRegistry}
           products={productRegistry}
+          shopTerms={termsRegistry}
         />
       </Suspense>
     </div>

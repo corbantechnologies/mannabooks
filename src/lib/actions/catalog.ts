@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/db";
-import { shops, products, clients, documents, documentTokens } from "@/db/schema";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { shops, products, clients, documents, documentTokens, shopTerms } from "@/db/schema";
+import { eq, and, desc, asc, inArray } from "drizzle-orm";
 import { createBillingDocument } from "./documents";
 import { dispatchDocumentEmail } from "./email";
 import { revalidatePath } from "next/cache";
@@ -25,37 +25,23 @@ export async function encodeCatalogToken(productIds: string[]): Promise<string> 
 }
 
 /**
- * Decodes a compact catalog token back into an array of full UUID strings.
+ * Decodes a compact catalog token back into an array of product UUIDs.
  */
 export async function decodeCatalogToken(token: string): Promise<string[]> {
-    if (!token) return [];
-    if (token.includes(",")) {
-        return token.split(",").map((t) => t.trim()).filter(Boolean);
-    }
-    // If it's a raw 32-char hex string (e.g. concatenated UUIDs without hyphens)
-    if (/^[0-9a-fA-F]{32,}$/.test(token) && token.length % 32 === 0) {
-        const ids: string[] = [];
-        for (let i = 0; i < token.length; i += 32) {
-            const chunk = token.slice(i, i + 32);
-            ids.push(
-                `${chunk.slice(0, 8)}-${chunk.slice(8, 12)}-${chunk.slice(12, 16)}-${chunk.slice(16, 20)}-${chunk.slice(20, 32)}`
-            );
-        }
-        return ids;
-    }
+    if (!token || token.trim() === "") return [];
     try {
-        const compressed = Buffer.from(token, "base64url");
-        const decompressed = zlib.inflateRawSync(compressed);
+        const buf = Buffer.from(token, "base64url");
+        const decompressed = zlib.inflateRawSync(buf);
         const hex = decompressed.toString("hex");
-        const ids: string[] = [];
+        const productIds: string[] = [];
         for (let i = 0; i < hex.length; i += 32) {
-            const chunk = hex.slice(i, i + 32);
-            if (chunk.length === 32) {
-                const formatted = `${chunk.slice(0, 8)}-${chunk.slice(8, 12)}-${chunk.slice(12, 16)}-${chunk.slice(16, 20)}-${chunk.slice(20, 32)}`;
-                ids.push(formatted);
+            const h = hex.slice(i, i + 32);
+            if (h.length === 32) {
+                const uuid = `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+                productIds.push(uuid);
             }
         }
-        return ids.length > 0 ? ids : [token];
+        return productIds;
     } catch {
         return token.split(",").map((t) => t.trim()).filter(Boolean);
     }
@@ -85,6 +71,11 @@ export interface PublicShopProfile {
     primaryColor: string;
     taxPin: string | null;
     isVatRegistered: boolean;
+}
+
+export interface PublicShopTerm {
+    title: string;
+    content: string;
 }
 
 /**
@@ -146,10 +137,24 @@ export async function getPublicCatalogData(slug: string, search?: string, itemId
             isVatRegistered: shop.isVatRegistered,
         };
 
+        const activeCatalogTerms = await db.query.shopTerms.findMany({
+            where: and(
+                eq(shopTerms.shopId, shop.id),
+                eq(shopTerms.isDefaultCatalog, true)
+            ),
+            orderBy: [asc(shopTerms.displayOrder), asc(shopTerms.createdAt)],
+        });
+
+        const publicTerms: PublicShopTerm[] = activeCatalogTerms.map(t => ({
+            title: t.title,
+            content: t.content,
+        }));
+
         return {
             success: true,
             shop: publicShop,
             products: publicProducts,
+            terms: publicTerms,
         };
     } catch (error: any) {
         console.error("Public catalog fetch error:", error);
@@ -249,6 +254,18 @@ export async function requestCatalogQuotationAction(input: CatalogQuoteRequestIn
             ? `Customer Quote Request Note: ${input.customerNotes.trim()}`
             : "Requested via Public Digital Product Catalog";
 
+        const catalogTerms = await db.query.shopTerms.findMany({
+            where: and(
+                eq(shopTerms.shopId, input.shopId),
+                eq(shopTerms.isDefaultCatalog, true)
+            ),
+            orderBy: [asc(shopTerms.displayOrder), asc(shopTerms.createdAt)],
+        });
+
+        const termsAndConditions = catalogTerms.length > 0 
+            ? JSON.stringify(catalogTerms.map(t => `${t.title}: ${t.content}`))
+            : undefined;
+
         const res = await createBillingDocument({
             shopId: input.shopId,
             shopSlug: input.shopSlug,
@@ -256,6 +273,7 @@ export async function requestCatalogQuotationAction(input: CatalogQuoteRequestIn
             type: "QUOTATION",
             items: documentItems,
             notes: quoteNotes,
+            termsAndConditions,
             currency: shop.currency || "KES",
         });
 

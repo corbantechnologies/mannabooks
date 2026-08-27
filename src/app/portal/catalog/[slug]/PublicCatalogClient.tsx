@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useTransition } from "react";
-import { PublicCatalogItem, PublicShopProfile, requestCatalogQuotationAction } from "@/lib/actions/catalog";
+import { PublicCatalogItem, PublicShopProfile, PublicShopTerm, requestCatalogQuotationAction } from "@/lib/actions/catalog";
 import { formatCurrency } from "@/lib/utils";
 import { Spinner } from "@/components/Spinner";
 import { toast } from "react-hot-toast";
@@ -12,6 +12,7 @@ interface PublicCatalogClientProps {
   initialProducts: PublicCatalogItem[];
   initialSearch?: string;
   token?: string;
+  terms?: PublicShopTerm[];
 }
 
 interface SelectedItem {
@@ -25,6 +26,7 @@ export function PublicCatalogClient({
   initialProducts,
   initialSearch = "",
   token = "",
+  terms = [],
 }: PublicCatalogClientProps) {
   const [search, setSearch] = useState(initialSearch);
   const [selectedType, setSelectedType] = useState<string>("ALL");
@@ -665,6 +667,24 @@ export function PublicCatalogClient({
                     <span>{formatCurrency(estimatedTotal, shop.currency)}</span>
                   </div>
                 </div>
+
+                {/* COMMERCIAL TERMS PREVIEW */}
+                {terms && terms.length > 0 && (
+                  <div className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl space-y-1.5 font-mono text-[11px]">
+                    <div className="flex items-center gap-1.5 text-emerald-900 font-bold uppercase text-[10px]">
+                      <span>📜</span>
+                      <span>Commercial Payment Terms:</span>
+                    </div>
+                    <ul className="space-y-1 text-emerald-950 font-sans text-xs">
+                      {terms.map((t, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5">
+                          <span className="text-emerald-700 font-bold">•</span>
+                          <span><strong className="font-semibold text-emerald-900">{t.title}:</strong> {t.content}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 {/* CONTACT FORM */}
                 <form onSubmit={handleSubmitQuoteRequest} className="space-y-4">

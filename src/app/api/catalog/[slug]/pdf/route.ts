@@ -14,9 +14,14 @@ try {
   const italicFont = path.join(process.cwd(), "public", "fonts", "static", "GoogleSans-Italic.ttf");
 
   const fontConfig = [
-    { src: regularFont, fontWeight: "normal" as const },
-    { src: boldFont, fontWeight: "bold" as const },
-    { src: italicFont, fontStyle: "italic" as const },
+    { src: regularFont, fontWeight: 400, fontStyle: "normal" as const },
+    { src: boldFont, fontWeight: 700, fontStyle: "normal" as const },
+    { src: regularFont, fontWeight: "normal" as const, fontStyle: "normal" as const },
+    { src: boldFont, fontWeight: "bold" as const, fontStyle: "normal" as const },
+    { src: italicFont, fontWeight: 400, fontStyle: "italic" as const },
+    { src: italicFont, fontWeight: "normal" as const, fontStyle: "italic" as const },
+    { src: boldFont, fontWeight: 700, fontStyle: "italic" as const },
+    { src: boldFont, fontWeight: "bold" as const, fontStyle: "italic" as const },
   ];
 
   ReactPDF.Font.register({

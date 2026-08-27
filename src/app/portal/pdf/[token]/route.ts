@@ -5,8 +5,11 @@ import { documentTokens, documents, paymentMethods } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import ReactPDF from "@react-pdf/renderer";
 import { formatCurrency } from "@/lib/utils";
+import { registerPdfFonts } from "@/lib/pdf-fonts";
 import React from "react";
 import QRCode from "qrcode";
+
+registerPdfFonts();
 
 function parsePayrollDescription(description: string, fallbackUnitPrice: string) {
     const staffMatch = description.match(/Staff:\s*([^|]+)/i);

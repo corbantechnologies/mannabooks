@@ -260,34 +260,38 @@ const CatalogPdfDocument = ({
         React.createElement(ReactPDF.Text, { style: styles.colPrice }, `Price (${shop.currency})`)
       ),
 
-      // TABLE ROWS
-      products.map((p, idx) => {
-        return React.createElement(
-          ReactPDF.View,
-          {
-            key: p.id,
-            style: [styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}],
-          },
-          React.createElement(ReactPDF.Text, { style: styles.colIndex }, String(idx + 1)),
-          React.createElement(
+      // TABLE ROWS CONTAINER
+      React.createElement(
+        ReactPDF.View,
+        { style: { width: "100%" } },
+        products.map((p, idx) => {
+          return React.createElement(
             ReactPDF.View,
-            { style: styles.colName },
-            React.createElement(ReactPDF.Text, { style: styles.productName }, p.name),
-            React.createElement(ReactPDF.Text, { style: styles.productType }, p.itemType)
-          ),
-          React.createElement(ReactPDF.Text, { style: styles.colSku }, p.sku || "—"),
-          React.createElement(
-            ReactPDF.Text,
-            { style: styles.colTax },
-            p.defaultTaxType === "V_16" ? "16% VAT" : "Exempt"
-          ),
-          React.createElement(
-            ReactPDF.Text,
-            { style: styles.colPrice },
-            formatCurrency(p.unitPrice, shop.currency)
-          )
-        );
-      }),
+            {
+              key: p.id,
+              style: [styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}],
+            },
+            React.createElement(ReactPDF.Text, { style: styles.colIndex }, String(idx + 1)),
+            React.createElement(
+              ReactPDF.View,
+              { style: styles.colName },
+              React.createElement(ReactPDF.Text, { style: styles.productName }, p.name),
+              React.createElement(ReactPDF.Text, { style: styles.productType }, p.itemType)
+            ),
+            React.createElement(ReactPDF.Text, { style: styles.colSku }, p.sku || "—"),
+            React.createElement(
+              ReactPDF.Text,
+              { style: styles.colTax },
+              p.defaultTaxType === "V_16" ? "16% VAT" : "Exempt"
+            ),
+            React.createElement(
+              ReactPDF.Text,
+              { style: styles.colPrice },
+              formatCurrency(p.unitPrice, shop.currency)
+            )
+          );
+        })
+      ),
 
       // FOOTER WITH QR CODE & INTERACTIVE LINK
       React.createElement(

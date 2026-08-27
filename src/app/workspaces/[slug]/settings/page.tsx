@@ -1,6 +1,7 @@
 // src/app/workspaces/[slug]/settings/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { getShopPaymentMethods } from "@/lib/actions/payments";
+import { getShopTerms } from "@/lib/actions/terms";
 import { SettingsForm } from "./SettingsForm";
 
 interface SettingsPageProps {
@@ -13,6 +14,7 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
   // Fetch context server-side — avoids the client useEffect + redirect() issue
   const { shop } = await getActiveWorkspaceContext(slug);
   const paymentMethods = await getShopPaymentMethods(shop.id);
+  const shopTerms = await getShopTerms(shop.id);
 
   return (
     <div className="p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white">
@@ -38,6 +40,7 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
         initialCurrency={shop.currency}
         initialFiscalYearStartMonth={shop.fiscalYearStartMonth}
         paymentMethods={paymentMethods}
+        initialTerms={shopTerms}
       />
     </div>
   );

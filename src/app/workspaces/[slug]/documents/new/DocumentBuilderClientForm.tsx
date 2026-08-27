@@ -14,6 +14,7 @@ interface BuilderProps {
   clients: any[];
   suppliers?: any[];
   products: any[];
+  shopTerms?: any[];
   initialDocument?: any;
 }
 
@@ -26,7 +27,7 @@ interface UiRowItem {
   taxType: "V_16" | "V_0" | "EXEMPT";
 }
 
-export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers = [], products, initialDocument }: BuilderProps) {
+export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers = [], products, shopTerms = [], initialDocument }: BuilderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialClientId = searchParams.get("clientId") || (initialDocument?.clientId) || "";
@@ -55,6 +56,37 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
   const [recurringInterval, setRecurringInterval] = useState<"WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY">(
     initialDocument?.recurringInterval || "MONTHLY"
   );
+
+  // Commercial Terms & Conditions state
+  const [selectedTermIds, setSelectedTermIds] = useState<string[]>(() => {
+    if (initialDocument?.termsAndConditions) {
+      try {
+        const parsed = JSON.parse(initialDocument.termsAndConditions);
+        if (Array.isArray(parsed)) {
+          return shopTerms.filter(t => parsed.some((p: string) => p.includes(t.title))).map(t => t.id);
+        }
+      } catch {}
+    }
+    return shopTerms
+      .filter(t => (initialDocument?.type || docType) === "QUOTATION" ? t.isDefaultCatalog : t.isDefaultInvoice)
+      .map(t => t.id);
+  });
+  const [customTermsText, setCustomTermsText] = useState<string>(() => {
+    if (initialDocument?.termsAndConditions) {
+      try {
+        const parsed = JSON.parse(initialDocument.termsAndConditions);
+        if (Array.isArray(parsed)) {
+          const knownTitles = shopTerms.map(t => t.title);
+          const customOnes = parsed.filter((p: string) => !knownTitles.some(k => p.startsWith(k)));
+          return customOnes.join("\n");
+        }
+        return initialDocument.termsAndConditions;
+      } catch {
+        return initialDocument.termsAndConditions;
+      }
+    }
+    return "";
+  });
 
   // Automatically switch partyType when selecting Procurement documents (LPO, PO, GRN, PV)
   useEffect(() => {
@@ -175,6 +207,18 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
       taxType: r.taxType,
     }));
 
+    const combinedTerms: string[] = [];
+    for (const termId of selectedTermIds) {
+      const found = shopTerms.find((t: any) => t.id === termId);
+      if (found) {
+        combinedTerms.push(`${found.title}: ${found.content}`);
+      }
+    }
+    if (customTermsText.trim()) {
+      combinedTerms.push(customTermsText.trim());
+    }
+    const finalTermsSerialized = combinedTerms.length > 0 ? JSON.stringify(combinedTerms) : undefined;
+
     const res = initialDocument
       ? await updateBillingDocument({
           documentId: initialDocument.id,
@@ -187,6 +231,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
           requiresEtims,
           currency,
+          termsAndConditions: finalTermsSerialized,
           items: itemsPayload,
         })
       : await createBillingDocument({
@@ -201,6 +246,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           currency,
           isRecurring,
           recurringInterval: isRecurring ? recurringInterval : undefined,
+          termsAndConditions: finalTermsSerialized,
           items: itemsPayload,
         });
 
@@ -586,19 +632,91 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
       {/* FINANCIAL AGGREGATIONS & SUBMISSION SUMMARY CARD */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        <div className="lg:col-span-7 bg-zinc-50 border border-zinc-200/80 rounded-lg p-6 space-y-4 font-sans">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-black" />
-            <h3 className="font-bold text-xs uppercase tracking-tight text-black">Compliance &amp; System Notes</h3>
-          </div>
-          <p className="text-zinc-500 text-xs leading-relaxed font-mono text-[11px]">
-            &gt; Fiscal Verification Engine: Transactions are stored cleanly with frozen precision metrics. Draft documents can be updated or finalized at any time.
-          </p>
-          {requiresEtims && (
-            <div className="bg-emerald-50 border border-emerald-200 p-3 rounded text-[11px] font-semibold text-emerald-900 flex items-center gap-2">
-              <span>✓ Target entity requires eTIMS fiscal signing.</span>
+        <div className="lg:col-span-7 space-y-6">
+          {/* COMMERCIAL TERMS & CONDITIONS SELECTOR */}
+          <div className="bg-white border border-zinc-200/80 rounded-lg p-5 shadow-sm space-y-4 font-mono text-xs">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                <h3 className="font-sans text-xs font-bold uppercase tracking-tight text-black">
+                  Commercial Terms &amp; Conditions
+                </h3>
+              </div>
+              <span className="text-[10px] text-zinc-400 font-semibold uppercase">
+                {selectedTermIds.length} Selected
+              </span>
             </div>
-          )}
+
+            {/* SHOP TERMS CHECKLIST */}
+            {shopTerms.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-[10px] text-zinc-400 uppercase font-semibold">Select terms to apply to this {docType.toLowerCase()}:</p>
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                  {shopTerms.map((term: any) => {
+                    const isChecked = selectedTermIds.includes(term.id);
+                    return (
+                      <label
+                        key={term.id}
+                        className={`flex items-start gap-2.5 p-2.5 border rounded cursor-pointer transition-colors ${
+                          isChecked ? "border-black bg-zinc-50/80" : "border-zinc-200 bg-white hover:border-zinc-300"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedTermIds([...selectedTermIds, term.id]);
+                            } else {
+                              setSelectedTermIds(selectedTermIds.filter(id => id !== term.id));
+                            }
+                          }}
+                          className="w-4 h-4 accent-black rounded mt-0.5 cursor-pointer"
+                        />
+                        <div className="space-y-0.5 flex-1">
+                          <span className="font-bold text-black uppercase text-[11px] block font-sans">{term.title}</span>
+                          <span className="text-[10.5px] text-zinc-600 font-sans block leading-normal">{term.content}</span>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 border border-dashed border-zinc-200 rounded text-zinc-400 text-center font-sans text-xs">
+                No shop terms library created yet. You can configure reusable presets in Settings or type custom terms below.
+              </div>
+            )}
+
+            {/* CUSTOM DEAL / CLIENT OVERRIDE TEXTAREA */}
+            <div className="space-y-1.5 pt-2 border-t border-zinc-100">
+              <label className="text-[10px] text-zinc-400 uppercase font-semibold block">
+                + Custom Deal Terms / Special Client Adjustments (Optional)
+              </label>
+              <textarea
+                value={customTermsText}
+                onChange={(e) => setCustomTermsText(e.target.value)}
+                placeholder="e.g., Special agreement: 30-day grace period or waiver of delivery fee for VIP account."
+                className="w-full px-3 py-2 border border-zinc-300 bg-white rounded focus:outline-none focus:border-black text-xs font-sans h-16 resize-none"
+              ></textarea>
+            </div>
+          </div>
+
+          {/* COMPLIANCE NOTE */}
+          <div className="bg-zinc-50 border border-zinc-200/80 rounded-lg p-5 space-y-3 font-sans">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-black" />
+              <h3 className="font-bold text-xs uppercase tracking-tight text-black">Compliance &amp; System Notes</h3>
+            </div>
+            <p className="text-zinc-500 text-xs leading-relaxed font-mono text-[11px]">
+              &gt; Fiscal Verification Engine: Transactions are stored cleanly with frozen precision metrics. Draft documents can be updated or finalized at any time.
+            </p>
+            {requiresEtims && (
+              <div className="bg-emerald-50 border border-emerald-200 p-3 rounded text-[11px] font-semibold text-emerald-900 flex items-center gap-2">
+                <span>✓ Target entity requires eTIMS fiscal signing.</span>
+              </div>
+            )}
+          </div>
         </div>
         
         <div className="lg:col-span-5 bg-white border border-zinc-200/80 rounded-lg p-6 shadow-sm space-y-4 font-mono">

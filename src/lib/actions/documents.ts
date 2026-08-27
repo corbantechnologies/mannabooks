@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from "@/db";
-import { documents, documentItems, documentTokens, shops, clients, journalEntries, ledgerSnapshots } from "@/db/schema";
+import { documents, documentItems, documentTokens, shops, clients, journalEntries, ledgerSnapshots, shopTerms } from "@/db/schema";
 import { calculateLineItem, calculateDocumentTotals } from "@/lib/utils";
-import { eq, and, gte, lte, inArray, desc } from "drizzle-orm";
+import { eq, and, gte, lte, inArray, desc, asc } from "drizzle-orm";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { verifyAndGetSession } from "./auth";
@@ -46,6 +46,7 @@ interface CreateDocumentInput {
     parentDocumentId?: string;
     requiresEtims?: boolean;
     notes?: string;
+    termsAndConditions?: string;
     currency?: string;
     customerEmail?: string;
     sourceDocType?: DocumentType;
@@ -102,21 +103,35 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
 
             const isVatActive = shopProfile.isVatRegistered;
 
-            const fyStartMonth = shopProfile.fiscalYearStartMonth || 1;
-            const { start: fyStart, end: fyEnd } = getFiscalYearRange(fyStartMonth);
-            const fySuffix = getFyDocSuffix(fyStartMonth);
+            // 2. Resolve or generate standard human-readable document sequence (e.g., CORBA-INV-FY26-0001)
+            const fiscalYearRange = getFiscalYearRange(shopProfile.fiscalYearStartMonth || 1);
+            const fySuffix = getFyDocSuffix(shopProfile.fiscalYearStartMonth || 1);
 
-            // 2. Map serial numbers chronologically based on target document type in the current fiscal year
-            const activeTypeRecords = await tx.query.documents.findMany({
+            const latestDoc = await tx.query.documents.findFirst({
                 where: and(
                     eq(documents.shopId, input.shopId),
                     eq(documents.type, input.type),
-                    gte(documents.createdAt, fyStart),
-                    lte(documents.createdAt, fyEnd)
+                    gte(documents.issueDate, fiscalYearRange.start),
+                    lte(documents.issueDate, fiscalYearRange.end)
                 ),
+                orderBy: [desc(documents.createdAt)],
             });
 
-            const prefixMap: Record<DocumentType, string> = {
+            let nextSequence = 1;
+            if (latestDoc) {
+                const parts = latestDoc.docNumber.split("-");
+                const lastNum = parseInt(parts[parts.length - 1], 10);
+                if (!isNaN(lastNum)) {
+                    nextSequence = lastNum + 1;
+                }
+            }
+
+            const merchantPrefix = (shopProfile.code || shopProfile.shortName || shopProfile.name.slice(0, 5))
+                .replace(/[^a-zA-Z0-9]/g, "")
+                .toUpperCase()
+                .slice(0, 5);
+
+            const docTypeMap: Record<DocumentType, string> = {
                 QUOTATION: "QT",
                 INVOICE: "INV",
                 RECEIPT: "RCT",
@@ -124,35 +139,23 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 PO: "PO",
                 DELIVERY_NOTE: "DN",
                 CREDIT_NOTE: "CN",
-                DEBIT_NOTE: "DBN",
+                DEBIT_NOTE: "DN",
                 GOODS_RECEIVED_NOTE: "GRN",
                 PAYMENT_VOUCHER: "PV",
                 PAYROLL_VOUCHER: "PAY",
             };
-            const prefix = prefixMap[input.type] || "DOC";
+            const typeCode = docTypeMap[input.type] || "DOC";
+            const paddedSeq = String(nextSequence).padStart(4, "0");
+            const formattedSerial = `${merchantPrefix}-${typeCode}-${fySuffix}-${paddedSeq}`;
 
-            let nextSequence = 1;
-            if (activeTypeRecords.length > 0) {
-                let maxSeq = 0;
-                for (const doc of activeTypeRecords) {
-                    const parts = doc.docNumber.split("-");
-                    const lastPart = parts[parts.length - 1];
-                    const seqNum = parseInt(lastPart, 10);
-                    if (!isNaN(seqNum) && seqNum > maxSeq) {
-                        maxSeq = seqNum;
-                    }
-                }
-                nextSequence = maxSeq + 1;
-            }
-
-            const shopCode = shopProfile.code ? `${shopProfile.code}-` : "";
-            const formattedSerial = `${shopCode}${prefix}-${fySuffix}-${String(nextSequence).padStart(4, "0")}`;
-
-            // 3. Process walk-in customer email dynamically
+            // 3. Fallback Client resolution for Walk-In POS operations
             let finalClientId = input.clientId;
-            if (input.customerEmail && !finalClientId) {
+            if (!finalClientId && !input.supplierId) {
                 const existingWalkIn = await tx.query.clients.findFirst({
-                    where: and(eq(clients.shopId, input.shopId), eq(clients.email, input.customerEmail))
+                    where: and(
+                        eq(clients.shopId, input.shopId),
+                        eq(clients.clientType, "WALK_IN")
+                    )
                 });
                 if (existingWalkIn) {
                     finalClientId = existingWalkIn.id;
@@ -160,7 +163,7 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                     const [newClient] = await tx.insert(clients).values({
                         shopId: input.shopId,
                         name: "Walk-In Customer",
-                        email: input.customerEmail,
+                        email: input.customerEmail || `walkin_${Date.now()}@${input.shopSlug}.mannabooks.local`,
                         clientType: "WALK_IN"
                     }).returning();
                     finalClientId = newClient.id;
@@ -173,7 +176,23 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 isShopVatRegistered: isVatActive,
             });
 
-            // 5. Insert master header registry (The Document)
+            // 5. Resolve Commercial Terms & Conditions
+            let finalTerms = input.termsAndConditions;
+            if (finalTerms === undefined || finalTerms === null) {
+                const isCatalogQuote = input.type === "QUOTATION" && (input.notes?.includes("Public Digital Product Catalog") || input.sourceDocType === "QUOTATION");
+                const defaultTerms = await tx.query.shopTerms.findMany({
+                    where: and(
+                        eq(shopTerms.shopId, input.shopId),
+                        isCatalogQuote ? eq(shopTerms.isDefaultCatalog, true) : eq(shopTerms.isDefaultInvoice, true)
+                    ),
+                    orderBy: [asc(shopTerms.displayOrder), asc(shopTerms.createdAt)],
+                });
+                if (defaultTerms.length > 0) {
+                    finalTerms = JSON.stringify(defaultTerms.map(t => `${t.title}: ${t.content}`));
+                }
+            }
+
+            // 6. Insert master header registry (The Document)
             const [newDoc] = await tx.insert(documents).values({
                 shopId: input.shopId,
                 clientId: finalClientId || null,
@@ -185,6 +204,7 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 parentDocumentId: input.parentDocumentId || null,
                 requiresEtims: input.requiresEtims || false,
                 notes: input.notes || null,
+                termsAndConditions: finalTerms || null,
                 currency: input.currency || shopProfile.currency,
                 isRecurring: input.isRecurring || false,
                 recurringInterval: input.recurringInterval || null,
@@ -712,6 +732,7 @@ interface UpdateDocumentInput {
     kraCuInvoiceNumber?: string;
     requiresEtims?: boolean;
     notes?: string;
+    termsAndConditions?: string;
     currency?: string;
     items: UpdateDocumentItemInput[];
 }
@@ -765,6 +786,7 @@ export async function updateBillingDocument(input: UpdateDocumentInput) {
                     kraCuInvoiceNumber: input.kraCuInvoiceNumber || null,
                     requiresEtims: input.requiresEtims || false,
                     notes: input.notes || null,
+                    termsAndConditions: input.termsAndConditions !== undefined ? (input.termsAndConditions || null) : doc.termsAndConditions,
                     currency: input.currency || shopProfile.currency,
                     subTotal: calculatedTotals.subTotal.toString(),
                     taxAmount: calculatedTotals.taxAmount.toString(),

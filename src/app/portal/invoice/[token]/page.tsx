@@ -233,6 +233,40 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
           </div>
         </div>
 
+        {/* COMMERCIAL TERMS & CONDITIONS */}
+        {(() => {
+          let parsedTerms: string[] = [];
+          if (doc.termsAndConditions) {
+            try {
+              const parsed = JSON.parse(doc.termsAndConditions);
+              if (Array.isArray(parsed)) {
+                parsedTerms = parsed;
+              } else if (typeof parsed === "string") {
+                parsedTerms = [parsed];
+              }
+            } catch {
+              parsedTerms = [doc.termsAndConditions];
+            }
+          }
+          if (parsedTerms.length === 0) return null;
+          return (
+            <div className="border border-zinc-200 bg-zinc-50/70 p-5 rounded-lg space-y-3 font-mono text-xs">
+              <span className="text-black font-bold uppercase tracking-tight text-[11px] block border-b border-zinc-200 pb-1.5 flex items-center gap-1.5">
+                <span>📜</span>
+                <span>Commercial Terms &amp; Conditions</span>
+              </span>
+              <ul className="space-y-1.5 font-sans text-xs text-zinc-700">
+                {parsedTerms.map((term, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-black font-bold">•</span>
+                    <span>{term}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })()}
+
         {/* SUMMATION BALANCE SNAPSHOT */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-4">
           <div className="md:col-span-6 space-y-4 border border-black p-4 bg-zinc-50">

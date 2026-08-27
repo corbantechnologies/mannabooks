@@ -43,6 +43,7 @@ export default async function PublicCatalogPage({ params, searchParams }: Public
         initialProducts={res.products || []}
         initialSearch={search || ""}
         token={rawToken || ""}
+        terms={res.terms || []}
       />
     </div>
   );

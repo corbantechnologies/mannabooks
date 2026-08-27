@@ -10,6 +10,7 @@ import { Spinner } from "@/components/Spinner";
 
 import { DocumentActionsPopover } from "./DocumentActionsPopover";
 import { updateDocumentKraCuNumberAction, DocumentType } from "@/lib/actions/documents";
+import { isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 
 interface DocumentItem {
@@ -386,7 +387,7 @@ export function DocumentStatusPanel({
       <div className="border border-zinc-200/80 p-4 bg-zinc-50/50 rounded space-y-2">
         <div className="flex justify-between items-center">
           <span className="text-[10px] font-semibold uppercase text-black">Statutory KRA eTIMS CU Serial Number</span>
-          {requiresEtims && !cuNumber ? (
+          {isFiscalDocType(docType) && requiresEtims && !cuNumber ? (
             <span className="border border-amber-300 bg-amber-100 text-amber-900 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-tight rounded">
               ⚠️ eTIMS CU Serial Pending
             </span>

@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { documents, shops } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 
 import { clients } from "@/db/schema";
@@ -194,7 +194,7 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
                     }`}>
                       {doc.status}
                     </span>
-                    {doc.requiresEtims && !doc.kraCuInvoiceNumber && (
+                    {isFiscalDocType(doc.type) && doc.requiresEtims && !doc.kraCuInvoiceNumber && (
                       <span className="border border-amber-300 bg-amber-50 text-amber-900 px-1.5 py-0.5 text-[9px] font-semibold tracking-tight uppercase whitespace-nowrap rounded">
                         ⚠️ eTIMS CU Pending
                       </span>

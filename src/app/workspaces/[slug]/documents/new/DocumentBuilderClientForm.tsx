@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { calculateLineItem, calculateDocumentTotals, formatCurrency } from "@/lib/utils";
+import { calculateLineItem, calculateDocumentTotals, formatCurrency, isFiscalDocType } from "@/lib/utils";
 import { createBillingDocument, updateBillingDocument, DocumentType } from "@/lib/actions/documents";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
@@ -98,16 +98,16 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
     }
   }, [docType, partyType, initialSupplierId]);
 
-  // Update eTIMS preference when selecting target client or supplier
+  // Update eTIMS preference when selecting target client or supplier (only for fiscal documents)
   useEffect(() => {
     if (targetId) {
       const list = partyType === "CLIENT" ? clients : suppliers;
       const selected = list.find((p) => p.id === targetId);
-      if (selected && selected.requiresEtims) {
+      if (selected && selected.requiresEtims && isFiscalDocType(docType)) {
         setRequiresEtims(true);
       }
     }
-  }, [targetId, partyType, clients, suppliers]);
+  }, [targetId, partyType, clients, suppliers, docType]);
 
   // Dynamic Ledger Item Rows
   const [rows, setRows] = useState<UiRowItem[]>(
@@ -229,7 +229,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           type: docType,
           dueDate: dueDate ? new Date(dueDate) : undefined,
           kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
-          requiresEtims,
+          requiresEtims: isFiscalDocType(docType) ? requiresEtims : false,
           currency,
           termsAndConditions: finalTermsSerialized,
           items: itemsPayload,
@@ -242,7 +242,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           type: docType,
           dueDate: dueDate ? new Date(dueDate) : undefined,
           kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
-          requiresEtims,
+          requiresEtims: isFiscalDocType(docType) ? requiresEtims : false,
           currency,
           isRecurring,
           recurringInterval: isRecurring ? recurringInterval : undefined,
@@ -358,14 +358,19 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           <div className="flex flex-col justify-end">
             <div className="h-7 flex items-end justify-between mb-1.5">
               <label className="text-[10px] text-zinc-400 uppercase font-semibold">KRA eTIMS CU Serial #</label>
-              <span className="text-[9px] text-zinc-400 italic">Optional</span>
+              <span className="text-[9px] text-zinc-400 italic">
+                {isFiscalDocType(docType) ? "Optional" : "N/A for Non-Fiscal"}
+              </span>
             </div>
             <input
               type="text"
               value={kraCuInvoiceNumber}
               onChange={(e) => setKraCuInvoiceNumber(e.target.value)}
-              placeholder="e.g. CU0123456789/2026"
-              className="w-full px-3 py-2.5 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-mono text-xs uppercase h-10"
+              disabled={!isFiscalDocType(docType)}
+              placeholder={isFiscalDocType(docType) ? "e.g. CU0123456789/2026" : "Not applicable"}
+              className={`w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-mono text-xs uppercase h-10 ${
+                isFiscalDocType(docType) ? "border-zinc-300 bg-white" : "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed"
+              }`}
             />
           </div>
 

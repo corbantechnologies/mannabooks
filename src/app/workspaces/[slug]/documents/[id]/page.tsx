@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { documents, documentTokens, shops } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 import { DocumentStatusPanel } from "./DocumentStatusPanel";
 
@@ -136,7 +136,7 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
             <p className="font-mono text-[10px] font-bold text-black border-t border-zinc-200 pt-1 mt-1">
               KRA eTIMS CU #: {doc.kraCuInvoiceNumber}
             </p>
-          ) : doc.requiresEtims ? (
+          ) : isFiscalDocType(doc.type) && doc.requiresEtims ? (
             <div className="border-t border-zinc-200 pt-1 mt-1">
               <span className="inline-block border border-amber-400 bg-amber-50 text-amber-900 text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-tight">
                 ⚠️ eTIMS CU Serial Pending

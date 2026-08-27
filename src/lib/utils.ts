@@ -26,6 +26,16 @@ export function formatCurrency(amount: string | number, currency = "KES"): strin
     }).format(value).replace("Ksh", "KES"); // Forces flat modern notation
 }
 
+/**
+ * Returns true if the document type is a statutory fiscal document (Invoices, Receipts, Credit/Debit Notes)
+ * that requires KRA eTIMS transmission and CU serial numbers.
+ * Non-fiscal documents (Quotations, Proformas, LPOs, Delivery Notes, Vouchers) do NOT require eTIMS.
+ */
+export function isFiscalDocType(type: string | null | undefined): boolean {
+    if (!type) return false;
+    return type === "INVOICE" || type === "RECEIPT" || type === "CREDIT_NOTE" || type === "DEBIT_NOTE";
+}
+
 export interface LineItemCalculationInput {
     quantity: number;
     unitPrice: number;

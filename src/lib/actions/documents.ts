@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { documents, documentItems, documentTokens, shops, clients, journalEntries, ledgerSnapshots, shopTerms } from "@/db/schema";
-import { calculateLineItem, calculateDocumentTotals } from "@/lib/utils";
+import { calculateLineItem, calculateDocumentTotals, isFiscalDocType } from "@/lib/utils";
 import { eq, and, gte, lte, inArray, desc, asc } from "drizzle-orm";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
@@ -202,7 +202,7 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 status: determineDefaultStatus(input.type, input.sourceDocType),
                 kraCuInvoiceNumber: input.kraCuInvoiceNumber || null,
                 parentDocumentId: input.parentDocumentId || null,
-                requiresEtims: input.requiresEtims || false,
+                requiresEtims: isFiscalDocType(input.type) ? (input.requiresEtims || false) : false,
                 notes: input.notes || null,
                 termsAndConditions: finalTerms || null,
                 currency: input.currency || shopProfile.currency,
@@ -784,7 +784,7 @@ export async function updateBillingDocument(input: UpdateDocumentInput) {
                     type: input.type,
                     dueDate: input.dueDate || null,
                     kraCuInvoiceNumber: input.kraCuInvoiceNumber || null,
-                    requiresEtims: input.requiresEtims || false,
+                    requiresEtims: isFiscalDocType(input.type) ? (input.requiresEtims || false) : false,
                     notes: input.notes || null,
                     termsAndConditions: input.termsAndConditions !== undefined ? (input.termsAndConditions || null) : doc.termsAndConditions,
                     currency: input.currency || shopProfile.currency,

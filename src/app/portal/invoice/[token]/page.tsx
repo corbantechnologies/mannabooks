@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { documentTokens, documents, shops, paymentMethods } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import crypto from "crypto";
 import QRCode from "react-qr-code";
 
@@ -114,13 +114,13 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
         }
       `}</style>
       
-      {doc.requiresEtims && !doc.kraCuInvoiceNumber && (
+      {isFiscalDocType(doc.type) && doc.requiresEtims && !doc.kraCuInvoiceNumber && (
         <div className="max-w-3xl mx-auto mb-6 bg-amber-50 border border-amber-300 rounded-lg p-4 shadow-sm animate-in fade-in slide-in-from-top-4">
           <h3 className="font-bold text-amber-900 uppercase text-xs flex items-center gap-2">
             <span>⚠️</span> KRA eTIMS CU Pending
           </h3>
           <p className="text-amber-800 text-[11px] font-sans mt-1">
-            This receipt is provisional. Your finalized KRA tax control number is being processed and will appear here shortly. Please check back later to download your finalized statutory PDF.
+            This document is provisional. Your finalized KRA tax control number is being processed and will appear here shortly. Please check back later to download your finalized statutory PDF.
           </p>
         </div>
       )}
@@ -155,7 +155,7 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
               <p className="text-[10px] font-semibold text-black border border-zinc-300 px-1.5 py-0.5 bg-zinc-50 inline-block rounded">
                 KRA eTIMS CU #: {doc.kraCuInvoiceNumber}
               </p>
-            ) : doc.requiresEtims ? (
+            ) : isFiscalDocType(doc.type) && doc.requiresEtims ? (
               <p className="text-[10px] font-semibold text-amber-900 border border-amber-300 bg-amber-50 px-1.5 py-0.5 inline-block rounded">
                 ⚠️ eTIMS CU Serial Pending
               </p>

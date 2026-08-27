@@ -99,6 +99,18 @@ export const paymentMethods = pgTable('payment_methods', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// SHOP TERMS & CONDITIONS TABLE (Commercial payment, validity & delivery terms library)
+export const shopTerms = pgTable('shop_terms', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    title: varchar('title', { length: 100 }).notNull(), // e.g., "100% Upfront Payment", "Payment on Delivery (COD)"
+    content: text('content').notNull(), // Clause details
+    isDefaultInvoice: boolean('is_default_invoice').default(false).notNull(), // Auto-attached to manual invoices/quotes
+    isDefaultCatalog: boolean('is_default_catalog').default(false).notNull(), // Auto-attached to catalog/online inquiries
+    displayOrder: integer('display_order').default(0).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // PRODUCTS/SERVICES CATALOG TABLE
 export const products = pgTable('products', {
     id: uuid('id').defaultRandom().primaryKey(),
@@ -158,6 +170,7 @@ export const documents = pgTable('documents', {
     parentDocumentId: uuid('parent_document_id'), // Self-reference link for conversions & credit notes
     requiresEtims: boolean('requires_etims').default(false).notNull(),
     notes: text('notes'),
+    termsAndConditions: text('terms_and_conditions'), // Serialized JSON array or formatted string of applied commercial terms
 
     // Optional Settlement Confirmation Details
     paymentChannel: varchar('payment_channel', { length: 50 }), // e.g. BANK, MPESA, CASH, CHEQUE, OTHER
@@ -493,6 +506,7 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     owner: one(users, { fields: [shops.ownerId], references: [users.id] }),
     members: many(shopMembers),
     paymentMethods: many(paymentMethods),
+    terms: many(shopTerms),
     products: many(products),
     clients: many(clients),
     suppliers: many(suppliers),
@@ -579,6 +593,14 @@ export const incomesRelations = relations(incomes, ({ one }) => ({
 
 export const employeesRelations = relations(employees, ({ one }) => ({
     shop: one(shops, { fields: [employees.shopId], references: [shops.id] }),
+}));
+
+export const paymentMethodsRelations = relations(paymentMethods, ({ one }) => ({
+    shop: one(shops, { fields: [paymentMethods.shopId], references: [shops.id] }),
+}));
+
+export const shopTermsRelations = relations(shopTerms, ({ one }) => ({
+    shop: one(shops, { fields: [shopTerms.shopId], references: [shops.id] }),
 }));
 
 export const shopInvitationsRelations = relations(shopInvitations, ({ one }) => ({

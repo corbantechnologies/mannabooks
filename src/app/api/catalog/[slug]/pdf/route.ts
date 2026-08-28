@@ -199,8 +199,8 @@ const CatalogPdfDocument = ({
       width: "70%",
     },
     qrCode: {
-      width: 40,
-      height: 40,
+      width: 44,
+      height: 44,
     },
     footerTextGroup: {
       flex: 1,
@@ -460,17 +460,25 @@ export async function GET(
 
     const isCurated = !!(itemIds && itemIds.length > 0);
 
-    // Build the live interactive web portal URL
-    const baseUrl = process.env.NEXTAUTH_URL || origin || "https://www.mannabooks.co.ke";
-    const livePortalUrl = `${baseUrl}/portal/catalog/${slug}${
+    // Build the live interactive web portal URL (ensuring canonical https://mannabooks.co.ke)
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "https://mannabooks.co.ke")
+      .replace(/\/+$/, "")
+      .replace("www.mannabooks.co.ke", "mannabooks.co.ke");
+
+    const livePortalUrl = `${appUrl}/portal/catalog/${slug}${
       rawToken ? `?token=${encodeURIComponent(rawToken)}` : search ? `?search=${encodeURIComponent(search)}` : ""
     }`;
 
     let qrCodeDataUrl = "";
     try {
       qrCodeDataUrl = await QRCode.toDataURL(livePortalUrl, {
-        errorCorrectionLevel: "M",
-        margin: 1,
+        errorCorrectionLevel: "H",
+        margin: 2,
+        width: 300,
+        color: {
+          dark: "#000000",
+          light: "#ffffff",
+        },
       });
     } catch (e) {
       console.warn("Failed to generate QR code for catalog PDF:", e);

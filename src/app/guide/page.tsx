@@ -182,7 +182,7 @@ export default function PublicOperatorGuidePage() {
                 <li>In the top selection toolbar, click <strong>🔗 Share Selected (X)</strong> to copy a compact, URL-safe token link (<code>/portal/catalog/[slug]?token=...</code>) containing only those models.</li>
                 <li>Click <strong>💬 WhatsApp</strong> to send a pre-filled invitation directly to the client.</li>
                 <li>Click <strong>📧 Email</strong> to send a styled quotation preview directly to the customer&apos;s email address.</li>
-                <li>Or click <strong>📄 PDF Selected</strong> to download a clean, branded PDF rate card containing only the chosen items.</li>
+                <li>Or click <strong>📄 Download PDF Price Card</strong> inside the Share modal to download a clean, branded PDF rate card containing only the chosen items.</li>
                 <li>When the client opens the link, they browse specifications and prices (cost margins remain hidden), pick quantities, and click <strong>&quot;Submit Quote Request&quot;</strong> — automatically creating an ISSUED Quotation in your dashboard!</li>
               </ol>
             </div>

@@ -62,17 +62,6 @@ export function ProductsTableClient({
               className="bg-white hover:bg-zinc-100 text-black px-4 py-2 font-mono text-xs font-bold uppercase rounded-lg transition-all shadow-sm flex items-center gap-1.5"
             />
 
-            {/* Curated PDF Export */}
-            <a
-              href={`/api/catalog/${shopSlug}/pdf?token=${selectedIds.map((id) => id.replace(/-/g, "")).join("")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border border-zinc-700 hover:border-zinc-500 bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 font-mono text-xs font-semibold uppercase rounded-lg transition-colors flex items-center gap-1.5"
-            >
-              <span>📄</span>
-              <span>PDF Selected</span>
-            </a>
-
             {/* Clear Selection */}
             <button
               type="button"

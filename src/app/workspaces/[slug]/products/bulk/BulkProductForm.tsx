@@ -91,11 +91,11 @@ export function BulkProductForm({ shopId, shopSlug }: BulkProductFormProps) {
       });
 
       if (res.success) {
-        toast.success(`Successfully imported ${res.count} items.`, { id: toastId });
+        toast.success(`Successfully imported ${'count' in res ? res.count : 0} items.`, { id: toastId });
         router.refresh();
         router.push(`/workspaces/${shopSlug}/products`);
       } else {
-        toast.error(res.error || "Failed to process bulk import.", { id: toastId });
+        toast.error(('error' in res ? res.error : undefined) || "Failed to process bulk import.", { id: toastId });
       }
     } catch (err) {
       toast.error("A critical error occurred.", { id: toastId });

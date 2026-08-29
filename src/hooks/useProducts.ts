@@ -19,9 +19,10 @@ export function useCreateProduct(shopId: string, shopSlug: string) {
       trackStock?: boolean;
       stockQuantity?: number;
       reorderThreshold?: number;
+      locationId?: string;
     }) => {
       const res = await createProductItem({ shopId, shopSlug, ...data });
-      if (!res.success) throw new Error(res.error || "Failed to create catalog item.");
+      if (!res.success) throw new Error(('error' in res ? res.error : undefined) || "Failed to create catalog item.");
       return res;
     },
     onSuccess: (data, variables) => {
@@ -49,9 +50,10 @@ export function useUpdateProduct(shopId: string, shopSlug: string) {
       trackStock?: boolean;
       stockQuantity?: number;
       reorderThreshold?: number;
+      locationId?: string;
     }) => {
       const res = await updateProductItem({ shopId, shopSlug, ...data });
-      if (!res.success) throw new Error(res.error || "Failed to update catalog item.");
+      if (!res.success) throw new Error(('error' in res ? res.error : undefined) || "Failed to update catalog item.");
       return res;
     },
     onSuccess: () => {

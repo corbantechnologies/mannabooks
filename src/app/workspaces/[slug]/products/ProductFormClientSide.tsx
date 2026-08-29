@@ -5,11 +5,26 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCreateProduct } from "@/hooks/useProducts";
 import { toast } from "react-hot-toast";
+import Link from "next/link";
 
-export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
+interface StockLocation {
+  id: string;
+  name: string;
+  code: string | null;
+  isDefault: boolean;
+}
+
+export function ProductFormClientSide({
+  shopId,
+  shopSlug,
+  locations = [],
+}: {
+  shopId: string;
+  shopSlug: string;
+  locations?: StockLocation[];
+}) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [itemType, setItemType] = useState<"PRODUCT" | "SERVICE">("PRODUCT");
   const [trackStock, setTrackStock] = useState(false);
@@ -28,6 +43,7 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
     const defaultTaxType = formData.get("defaultTaxType") as "V_16" | "V_0" | "EXEMPT";
     const stockQuantity = parseFloat(formData.get("stockQuantity") as string || "0");
     const reorderThreshold = parseFloat(formData.get("reorderThreshold") as string || "5");
+    const locationId = formData.get("locationId") as string | null;
 
     if (!name || isNaN(unitPrice) || unitPrice < 0) {
       const msg = "Item parameters or tracking values are invalid.";
@@ -37,7 +53,18 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
     }
 
     createProductMutation.mutate(
-      { name, sku: sku || undefined, itemType, unitPrice, costPrice, defaultTaxType, trackStock, stockQuantity, reorderThreshold },
+      {
+        name,
+        sku: sku || undefined,
+        itemType,
+        unitPrice,
+        costPrice,
+        defaultTaxType,
+        trackStock,
+        stockQuantity,
+        reorderThreshold,
+        locationId: locationId || undefined,
+      },
       {
         onSuccess: () => {
           setIsOpen(false);
@@ -206,28 +233,64 @@ export function ProductFormClientSide({ shopId, shopSlug }: { shopId: string; sh
                   </label>
 
                   {trackStock && (
-                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-zinc-200">
+                    <div className="space-y-3 pt-3 border-t border-zinc-200">
+                      {/* LOCATION SELECTOR */}
                       <div className="space-y-1">
-                        <label className="text-zinc-500 uppercase block text-[10px] font-semibold">Opening Stock Qty</label>
-                        <input
-                          type="number"
-                          name="stockQuantity"
-                          step="1"
-                          min="0"
-                          defaultValue="0"
-                          className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded-md text-xs font-semibold h-9"
-                        />
+                        <label className="text-zinc-500 uppercase block text-[10px] font-semibold">
+                          Stock Location
+                          <span className="ml-1 normal-case text-zinc-400 font-normal">(where this stock is held)</span>
+                        </label>
+                        {locations.length > 0 ? (
+                          <select
+                            name="locationId"
+                            className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded-md text-xs font-semibold h-9"
+                          >
+                            {locations.map((loc) => (
+                              <option key={loc.id} value={loc.id}>
+                                {loc.name}{loc.code ? ` (${loc.code})` : ""}{loc.isDefault ? " — Default" : ""}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                            <span className="text-amber-800 text-[10px] font-semibold uppercase">
+                              No locations configured — "General Store" will be auto-created
+                            </span>
+                            <Link
+                              href={`/workspaces/${shopSlug}/inventory/locations`}
+                              className="text-[10px] underline text-amber-700 hover:text-amber-900 whitespace-nowrap ml-2"
+                              target="_blank"
+                            >
+                              Setup →
+                            </Link>
+                          </div>
+                        )}
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-zinc-500 uppercase block text-[10px] font-semibold">Low Stock Alert Limit</label>
-                        <input
-                          type="number"
-                          name="reorderThreshold"
-                          step="1"
-                          min="1"
-                          defaultValue="5"
-                          className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded-md text-xs font-semibold h-9"
-                        />
+
+                      {/* STOCK QTY + REORDER */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-zinc-500 uppercase block text-[10px] font-semibold">Opening Stock Qty</label>
+                          <input
+                            type="number"
+                            name="stockQuantity"
+                            step="1"
+                            min="0"
+                            defaultValue="0"
+                            className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded-md text-xs font-semibold h-9"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-zinc-500 uppercase block text-[10px] font-semibold">Low Stock Alert Limit</label>
+                          <input
+                            type="number"
+                            name="reorderThreshold"
+                            step="1"
+                            min="1"
+                            defaultValue="5"
+                            className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded-md text-xs font-semibold h-9"
+                          />
+                        </div>
                       </div>
                     </div>
                   )}

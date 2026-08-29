@@ -1,13 +1,12 @@
 // src/app/workspaces/[slug]/products/page.tsx
 import { db } from "@/db";
-import { products, shops } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { products, shops, stockLocations } from "@/db/schema";
+import { eq, desc, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { ProductFormClientSide } from "./ProductFormClientSide";
 import { EditProductModal } from "./EditProductModal";
 
-import { and } from "drizzle-orm";
 import { ProductFilterBar } from "./ProductFilterBar";
 import { ShareCatalogModal } from "./ShareCatalogModal";
 import { ProductsTableClient } from "./ProductsTableClient";
@@ -41,15 +40,23 @@ export default async function WorkspaceProductsPage({ params, searchParams }: Pr
     conditions.push(eq(products.defaultTaxType, taxType as any));
   }
 
-  let catalogList = await db.query.products.findMany({
-    where: and(...conditions),
-    orderBy: [desc(products.createdAt)],
-  });
+  // 4. Fetch products and active stock locations in parallel
+  const [catalogList, locationList] = await Promise.all([
+    db.query.products.findMany({
+      where: and(...conditions),
+      orderBy: [desc(products.createdAt)],
+    }),
+    db.query.stockLocations.findMany({
+      where: and(eq(stockLocations.shopId, shop.id), eq(stockLocations.isActive, true)),
+      orderBy: [desc(stockLocations.isDefault), desc(stockLocations.createdAt)],
+    }),
+  ]);
 
   // Client-side text search filter
+  let filteredList = catalogList;
   if (search && search.trim() !== "") {
     const q = search.toLowerCase().trim();
-    catalogList = catalogList.filter(
+    filteredList = catalogList.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         (p.sku && p.sku.toLowerCase().includes(q))
@@ -62,7 +69,7 @@ export default async function WorkspaceProductsPage({ params, searchParams }: Pr
       {/* ACTION BLOCK TOP BAR */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Products & Inventory</span>
+          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Products &amp; Inventory</span>
           <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Product Catalog</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -87,8 +94,8 @@ export default async function WorkspaceProductsPage({ params, searchParams }: Pr
             Bulk Import
           </Link>
 
-          {/* Inject interactive creation portal block */}
-          <ProductFormClientSide shopId={shop.id} shopSlug={slug} />
+          {/* Inject interactive creation portal block — with locations for stock assignment */}
+          <ProductFormClientSide shopId={shop.id} shopSlug={slug} locations={locationList} />
         </div>
       </div>
 
@@ -97,9 +104,10 @@ export default async function WorkspaceProductsPage({ params, searchParams }: Pr
 
       {/* INTERACTIVE DATA LEDGER GRID WITH SELECTION */}
       <ProductsTableClient
-        catalogList={catalogList}
+        catalogList={filteredList}
         shop={shop}
         shopSlug={slug}
+        locations={locationList}
       />
 
     </div>

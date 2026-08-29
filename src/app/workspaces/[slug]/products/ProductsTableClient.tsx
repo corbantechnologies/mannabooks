@@ -10,12 +10,14 @@ interface ProductsTableClientProps {
   catalogList: any[];
   shop: any;
   shopSlug: string;
+  locations?: any[];
 }
 
 export function ProductsTableClient({
   catalogList,
   shop,
   shopSlug,
+  locations = [],
 }: ProductsTableClientProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -184,7 +186,7 @@ export function ProductsTableClient({
                     </span>
                   </td>
                   <td className="p-4 text-center">
-                    <EditProductModal product={p} shopId={shop.id} shopSlug={shopSlug} />
+                    <EditProductModal product={p} shopId={shop.id} shopSlug={shopSlug} locations={locations} />
                   </td>
                 </tr>
               );

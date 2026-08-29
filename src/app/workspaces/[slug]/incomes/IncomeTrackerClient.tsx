@@ -5,6 +5,7 @@ import { createIncome, deleteIncome, IncomeCategory } from "@/lib/actions/income
 import { formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 type Income = {
     id: string;
@@ -32,6 +33,22 @@ export default function IncomeTrackerClient({ shopId, currency, initialIncomes }
     const [status, setStatus] = useState<"IDLE" | "LOADING" | "ERROR">("IDLE");
     const [isUploading, setIsUploading] = useState(false);
     const [deletingIncomeId, setDeletingIncomeId] = useState<string | null>(null);
+    const [incomeToDelete, setIncomeToDelete] = useState<Income | null>(null);
+
+    async function handleConfirmDelete() {
+        if (!incomeToDelete) return;
+        setDeletingIncomeId(incomeToDelete.id);
+        const toastId = toast.loading("Deleting income record...");
+        const res = await deleteIncome(shopId, incomeToDelete.id);
+        setDeletingIncomeId(null);
+        setIncomeToDelete(null);
+
+        if (res.success) {
+            toast.success("Income deleted successfully.", { id: toastId });
+        } else {
+            toast.error(res.error || "Failed to delete income.", { id: toastId });
+        }
+    }
 
     async function handleCloudinaryUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
@@ -112,18 +129,9 @@ export default function IncomeTrackerClient({ shopId, currency, initialIncomes }
         }
     }
 
-    async function handleDelete(incomeId: string) {
-        if (!confirm("Are you sure you want to delete this income record? This action cannot be undone.")) return;
-        
-        setDeletingIncomeId(incomeId);
-        const res = await deleteIncome(shopId, incomeId);
-        
-        if (res.success) {
-            toast.success("Income deleted successfully.");
-        } else {
-            toast.error(res.error || "Failed to delete income.");
-        }
-        setDeletingIncomeId(null);
+    function handleDelete(incomeId: string) {
+        const income = initialIncomes.find((i) => i.id === incomeId);
+        if (income) setIncomeToDelete(income);
     }
 
     return (
@@ -369,6 +377,18 @@ export default function IncomeTrackerClient({ shopId, currency, initialIncomes }
                     </div>
                 </div>
             )}
+
+            {/* CONFIRM DELETE MODAL */}
+            <ConfirmModal
+                isOpen={!!incomeToDelete}
+                onClose={() => setIncomeToDelete(null)}
+                onConfirm={handleConfirmDelete}
+                title="Delete Income Record"
+                message={`Are you sure you want to delete the income record for "${incomeToDelete?.description}" (${incomeToDelete ? formatCurrency(incomeToDelete.amount, incomeToDelete.currency) : ""})? This action cannot be undone.`}
+                confirmLabel="Delete Record"
+                variant="danger"
+                isLoading={deletingIncomeId !== null}
+            />
         </div>
     );
 }

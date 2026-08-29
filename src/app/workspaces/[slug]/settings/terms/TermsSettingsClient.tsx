@@ -6,6 +6,7 @@ import { useCreateShopTerm, useUpdateShopTerm, useDeleteShopTerm, useSeedDefault
 import { Spinner } from "@/components/Spinner";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 interface ShopTermItem {
   id: string;
@@ -82,6 +83,7 @@ export function TermsSettingsClient({
   const updateTermMutation = useUpdateShopTerm(shopId, shopSlug);
   const deleteTermMutation = useDeleteShopTerm(shopId, shopSlug);
   const seedTermsMutation = useSeedDefaultTerms(shopId, shopSlug);
+  const [termToDelete, setTermToDelete] = useState<ShopTermItem | null>(null);
 
   function handleSelectPreset(preset: typeof KENYAN_TERM_PRESETS[0]) {
     setEditingTermId(null);
@@ -388,13 +390,9 @@ export function TermsSettingsClient({
                   <span className="text-zinc-300">•</span>
                   <button
                     type="button"
-                    onClick={() => {
-                      if (confirm(`Are you sure you want to delete "${term.title}"?`)) {
-                        deleteTermMutation.mutate(term.id, { onSuccess: () => router.refresh() });
-                      }
-                    }}
+                    onClick={() => setTermToDelete(term)}
                     disabled={deleteTermMutation.isPending}
-                    className="text-rose-600 hover:text-rose-800 font-bold transition-colors"
+                    className="text-rose-600 hover:text-rose-800 font-bold transition-colors cursor-pointer"
                   >
                     Delete
                   </button>
@@ -404,6 +402,27 @@ export function TermsSettingsClient({
           </div>
         )}
       </div>
+
+      {/* CONFIRM DELETE MODAL */}
+      <ConfirmModal
+        isOpen={!!termToDelete}
+        onClose={() => setTermToDelete(null)}
+        onConfirm={() => {
+          if (termToDelete) {
+            deleteTermMutation.mutate(termToDelete.id, {
+              onSuccess: () => {
+                setTermToDelete(null);
+                router.refresh();
+              },
+            });
+          }
+        }}
+        title="Delete Commercial Term"
+        message={`Are you sure you want to delete "${termToDelete?.title}"? This term clause will no longer be available for document footers.`}
+        confirmLabel="Delete Clause"
+        variant="danger"
+        isLoading={deleteTermMutation.isPending}
+      />
     </div>
   );
 }

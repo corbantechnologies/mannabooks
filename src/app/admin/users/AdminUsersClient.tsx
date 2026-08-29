@@ -241,37 +241,33 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
                       {/* USER SUBSCRIPTION TIER & BADGES */}
                       <td className="py-3.5 px-4">
                         <div className="flex flex-col gap-1 items-start">
-                          {u.isSuperAdmin && (
-                            <span className="inline-flex items-center gap-1 bg-black text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded shadow-2xs">
+                          {u.isSuperAdmin ? (
+                            <span className="inline-flex items-center gap-1 bg-black text-white text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md shadow-2xs tracking-wider">
                               <span>👑</span>
                               <span>SUPER ADMIN (ROOT)</span>
                             </span>
-                          )}
-
-                          {u.isLifetimePro && !u.isSuperAdmin && (
-                            <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300 text-[9px] font-mono font-bold px-2 py-0.5 rounded shadow-2xs">
+                          ) : u.isLifetimePro ? (
+                            <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-950 border border-amber-300 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md shadow-2xs tracking-wider">
                               <span>⭐</span>
-                              <span>LIFETIME PRO USER</span>
+                              <span>LIFETIME PRO</span>
                             </span>
-                          )}
-
-                          {!isLifetime && (
-                            <div className="flex items-center gap-1.5">
+                          ) : (
+                            <div className="flex items-center gap-2">
                               <span
-                                className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase ${
+                                className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md uppercase border tracking-wider ${
                                   u.plan === "ENTERPRISE"
-                                    ? "bg-purple-100 text-purple-900 border border-purple-300"
+                                    ? "bg-purple-50 text-purple-900 border-purple-300"
                                     : u.plan === "PRO"
-                                    ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                                    ? "bg-emerald-50 text-emerald-900 border-emerald-300"
                                     : u.plan === "BASIC"
-                                    ? "bg-blue-100 text-blue-900 border border-blue-300"
-                                    : "bg-zinc-100 text-zinc-600 border border-zinc-200"
+                                    ? "bg-blue-50 text-blue-900 border-blue-200"
+                                    : "bg-zinc-100 text-zinc-700 border-zinc-200"
                                 }`}
                               >
                                 {u.plan || "FREE"}
                               </span>
                               {u.subscriptionExpiresAt && (
-                                <span className="text-[9px] text-zinc-400 font-mono">
+                                <span className="text-[10px] text-zinc-400 font-mono">
                                   Exp: {new Date(u.subscriptionExpiresAt).toLocaleDateString("en-KE")}
                                 </span>
                               )}
@@ -285,12 +281,12 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
                         {u.ownedShops.length === 0 ? (
                           <span className="text-zinc-400 text-[10px]">None</span>
                         ) : (
-                          <div className="flex flex-wrap gap-1 max-w-[220px]">
+                          <div className="flex flex-wrap gap-1.5 max-w-[220px]">
                             {u.ownedShops.map((s) => (
                               <Link
                                 key={s.id}
                                 href={`/admin/workspaces/${s.id}`}
-                                className="bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-black px-1.5 py-0.5 rounded text-[10px] font-sans no-underline font-semibold"
+                                className="bg-zinc-50 hover:bg-zinc-100 hover:border-zinc-300 border border-zinc-200 text-black px-2 py-0.5 rounded-md text-[10px] font-sans no-underline font-semibold transition-colors"
                               >
                                 {s.name}
                               </Link>
@@ -300,7 +296,7 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
                       </td>
 
                       {/* MEMBERSHIP COUNT */}
-                      <td className="py-3.5 px-4 font-mono text-zinc-600">
+                      <td className="py-3.5 px-4 font-mono text-zinc-600 text-xs">
                         {u.membershipsCount} workspace{u.membershipsCount !== 1 ? "s" : ""}
                       </td>
 
@@ -311,15 +307,16 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
 
                       {/* GOVERNANCE ACTIONS */}
                       <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="inline-flex items-center justify-end gap-1.5">
                           
                           {/* UPGRADE / CHANGE PLAN BUTTON */}
                           <button
                             type="button"
                             onClick={() => openPlanModal(u)}
-                            className="bg-black hover:bg-zinc-800 text-white font-mono text-[10px] font-bold uppercase px-2.5 py-1.5 rounded transition-colors shadow-2xs cursor-pointer"
+                            className="inline-flex items-center gap-1.5 h-7.5 px-3 rounded-lg bg-zinc-900 hover:bg-black text-white font-mono text-[11px] font-bold uppercase shadow-2xs transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap cursor-pointer"
                           >
-                            ⚡ Upgrade Plan
+                            <span className="text-amber-400 text-xs">⚡</span>
+                            <span>Plan</span>
                           </button>
 
                           {/* TOGGLE LIFETIME PRO BUTTON */}
@@ -329,13 +326,14 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
                               setTargetUser(u);
                               setModalAction("LIFETIME_PRO");
                             }}
-                            className={`font-mono text-[10px] font-bold uppercase px-2.5 py-1.5 rounded transition-colors cursor-pointer ${
+                            className={`inline-flex items-center gap-1.5 h-7.5 px-3 rounded-lg font-mono text-[11px] font-bold uppercase transition-all whitespace-nowrap cursor-pointer ${
                               u.isLifetimePro
-                                ? "bg-amber-100 text-amber-900 border border-amber-400 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300"
-                                : "bg-amber-500 hover:bg-amber-600 text-white shadow-2xs"
+                                ? "bg-amber-100 text-amber-950 border border-amber-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300"
+                                : "bg-white border border-amber-300/80 text-amber-900 hover:bg-amber-500 hover:text-white hover:border-amber-500 shadow-2xs"
                             }`}
                           >
-                            {u.isLifetimePro ? "Revoke Lifetime" : "👑 Lifetime"}
+                            <span>👑</span>
+                            <span>{u.isLifetimePro ? "Revoke VIP" : "Lifetime"}</span>
                           </button>
 
                           {/* TOGGLE SUPER ADMIN BUTTON */}
@@ -345,11 +343,12 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
                               setTargetUser(u);
                               setModalAction("ADMIN");
                             }}
-                            className={`font-mono text-[10px] font-bold uppercase px-2.5 py-1.5 rounded transition-colors cursor-pointer ${
+                            className={`inline-flex items-center h-7.5 px-2.5 rounded-lg font-mono text-[11px] font-semibold transition-all border whitespace-nowrap cursor-pointer ${
                               u.isSuperAdmin
-                                ? "bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-600 hover:text-white"
-                                : "border border-zinc-300 hover:border-black text-zinc-700 hover:text-black"
+                                ? "bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-600 hover:text-white hover:border-rose-600"
+                                : "bg-white border-zinc-200 text-zinc-600 hover:border-zinc-400 hover:text-black hover:bg-zinc-50"
                             }`}
+                            title={u.isSuperAdmin ? "Revoke Super Admin Rights" : "Elevate to Super Admin"}
                           >
                             {u.isSuperAdmin ? "Revoke Admin" : "Make Admin"}
                           </button>

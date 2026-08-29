@@ -212,6 +212,10 @@ export interface ShopPlanDetails {
     isSuspended: boolean;
     subscriptionStatus: string;
     isExpired: boolean;
+    inGracePeriod: boolean;
+    graceDaysRemaining: number | null;
+    gracePeriodEndsAt: Date | null;
+    isSoftLocked: boolean;
     daysRemaining: number | null;
     expiresAt: Date | null;
     currentMembersCount: number;
@@ -256,11 +260,33 @@ export async function getShopPlanDetails(shopId: string): Promise<ShopPlanDetail
     const baseSpec = dynamicSpecs[effectivePlanKey] || PLAN_SPECS[effectivePlanKey] || PLAN_SPECS.FREE;
 
     const rawExpiry = shop.owner?.subscriptionExpiresAt || shop.subscriptionExpiresAt;
+    const rawGraceExpiry = shop.owner?.gracePeriodEndsAt || shop.gracePeriodEndsAt;
     const expiresAt = rawExpiry ? new Date(rawExpiry) : null;
-    const isExpired = !isLifetimePro && expiresAt !== null && Date.now() > expiresAt.getTime();
+    const nowMs = Date.now();
 
-    const daysRemaining = expiresAt
-        ? Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    // Check expiration and grace period (5 days grace window)
+    let inGracePeriod = false;
+    let isExpired = false;
+    let graceDaysRemaining: number | null = null;
+    let effectiveGraceEndsAt: Date | null = null;
+
+    if (!isLifetimePro && expiresAt !== null && nowMs > expiresAt.getTime()) {
+        const graceEndMs = rawGraceExpiry
+            ? new Date(rawGraceExpiry).getTime()
+            : expiresAt.getTime() + (5 * 24 * 60 * 60 * 1000);
+        
+        effectiveGraceEndsAt = new Date(graceEndMs);
+
+        if (nowMs < graceEndMs) {
+            inGracePeriod = true;
+            graceDaysRemaining = Math.max(0, Math.ceil((graceEndMs - nowMs) / (1000 * 60 * 60 * 24)));
+        } else {
+            isExpired = true;
+        }
+    }
+
+    const daysRemaining = (expiresAt && !isExpired && !inGracePeriod)
+        ? Math.max(0, Math.ceil((expiresAt.getTime() - nowMs) / (1000 * 60 * 60 * 24)))
         : null;
 
     // Count active members and locations
@@ -274,7 +300,16 @@ export async function getShopPlanDetails(shopId: string): Promise<ShopPlanDetail
 
     const enterpriseSpec = dynamicSpecs.ENTERPRISE || PLAN_SPECS.ENTERPRISE;
     const freeSpec = dynamicSpecs.FREE || PLAN_SPECS.FREE;
+    
+    // During grace period, full plan features remain unlocked! Only when isExpired (soft-locked) do limits revert to free.
     const planSpec = isLifetimePro ? enterpriseSpec : (isExpired ? freeSpec : baseSpec);
+    const subscriptionStatus = isLifetimePro
+        ? "LIFETIME_FREE"
+        : inGracePeriod
+        ? "GRACE_PERIOD"
+        : isExpired
+        ? "EXPIRED"
+        : (shop.subscriptionStatus || "ACTIVE");
 
     return {
         shopId: shop.id,
@@ -284,8 +319,12 @@ export async function getShopPlanDetails(shopId: string): Promise<ShopPlanDetail
         planSpec,
         isLifetimePro,
         isSuspended: shop.isSuspended,
-        subscriptionStatus: isLifetimePro ? "LIFETIME_FREE" : (isExpired ? "EXPIRED" : (shop.subscriptionStatus || "ACTIVE")),
+        subscriptionStatus,
         isExpired,
+        inGracePeriod,
+        graceDaysRemaining,
+        gracePeriodEndsAt: effectiveGraceEndsAt,
+        isSoftLocked: isExpired,
         daysRemaining,
         expiresAt,
         currentMembersCount,

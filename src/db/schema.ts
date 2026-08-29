@@ -43,8 +43,12 @@ export const users = pgTable('users', {
     passwordHash: text('password_hash').notNull(),
     isSuperAdmin: boolean('is_super_admin').default(false).notNull(),
     plan: varchar('plan', { length: 30 }).default('FREE').notNull(), // 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE'
-    subscriptionStatus: varchar('subscription_status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'TRIAL' | 'EXPIRED' | 'LIFETIME_FREE'
+    subscriptionStatus: varchar('subscription_status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'GRACE_PERIOD' | 'EXPIRED' | 'LIFETIME_FREE'
     subscriptionExpiresAt: timestamp('subscription_expires_at'),
+    gracePeriodEndsAt: timestamp('grace_period_ends_at'),
+    autoRenewEnabled: boolean('auto_renew_enabled').default(true).notNull(),
+    autoRenewPhone: varchar('auto_renew_phone', { length: 30 }),
+    lastRenewalPromptAt: timestamp('last_renewal_prompt_at'),
     isLifetimePro: boolean('is_lifetime_pro').default(false).notNull(), // When true, all workspaces owned by this user inherit Lifetime PRO
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -79,12 +83,13 @@ export const shops = pgTable('shops', {
     estimatedAnnualProfit: numeric('estimated_annual_profit', { precision: 15, scale: 2 }).default('0.00').notNull(),
     // Subscription & Plan Governance
     plan: varchar('plan', { length: 30 }).default('FREE').notNull(), // 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE'
-    subscriptionStatus: varchar('subscription_status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'TRIAL' | 'EXPIRED' | 'CANCELLED' | 'LIFETIME_FREE'
+    subscriptionStatus: varchar('subscription_status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'GRACE_PERIOD' | 'EXPIRED' | 'CANCELLED' | 'LIFETIME_FREE'
     isLifetimePro: boolean('is_lifetime_pro').default(false).notNull(), // Exempt from billing / owner shop flag
     isSuspended: boolean('is_suspended').default(false).notNull(), // Administrative lockout flag
     suspendedReason: text('suspended_reason'),
     trialEndsAt: timestamp('trial_ends_at'),
     subscriptionExpiresAt: timestamp('subscription_expires_at'),
+    gracePeriodEndsAt: timestamp('grace_period_ends_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

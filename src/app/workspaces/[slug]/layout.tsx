@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { fiscalYears } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
+import { GracePeriodBanner } from "@/components/GracePeriodBanner";
 import { MobileNavDrawer } from "./MobileNavDrawer";
 import { DesktopSideNav } from "./DesktopSideNav";
 
@@ -230,6 +231,7 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
         </header>
 
         <div className="flex-1 overflow-y-auto">
+          {planDetails && <GracePeriodBanner slug={slug} planDetails={planDetails} />}
           {!hasFiscalYear && (
             <div className="bg-amber-50 border-b border-amber-200/80 p-4 font-sans text-sm text-amber-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                <div>

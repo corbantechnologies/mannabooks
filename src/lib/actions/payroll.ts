@@ -394,7 +394,11 @@ export async function emailPayslipsAction(voucherId: string, shopId: string, sho
             where: eq(employees.shopId, shopId),
         });
 
-        const fromAddress = process.env.RESEND_FROM_EMAIL || "Manna Books <billing@corbantechnologies.org>";
+        const rawFrom = process.env.RESEND_FROM_EMAIL || "Manna Books <billing@corbantechnologies.org>";
+        const emailMatch = rawFrom.match(/<([^>]+)>/);
+        const emailOnly = emailMatch ? emailMatch[1] : (rawFrom.includes("@") ? rawFrom.trim() : "billing@corbantechnologies.org");
+        const cleanShopName = (voucher.shop?.name || "Manna Books").replace(/[<>"']/g, "").trim();
+        const fromAddress = `${cleanShopName} <${emailOnly}>`;
         let countSent = 0;
         let countSkipped = 0;
 

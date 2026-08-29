@@ -98,8 +98,11 @@ export default function FeaturesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
                 { title: "Rapid Product Catalog", body: "Search and add catalog items by name or SKU code. Cart indicator badges show quantities already added. Blocked-out items when stock runs out." },
-                { title: "Multi-Method Payment", body: "Accept M-Pesa (with transaction reference), Cash (with change calculator), or Bank/Card payments. All logged against the receipt for audit trails." },
+                { title: "Multi-Method Payment & Change", body: "Accept M-Pesa (with transaction reference), Cash (with change calculator), or Bank/Card payments. All logged against the receipt for audit trails." },
                 { title: "Instant Receipt & Stock", body: "One-tap checkout generates an official PAID receipt and automatically decrements tracked inventory levels in real-time. Walk-in or assigned client." },
+                { title: "58mm & 80mm Thermal Printing", body: "Continuous thermal ticket formatting for ESC/POS roll printers. Monospaced lines, store header, KRA PIN, itemized tax codes, and eTIMS CU QR verification." },
+                { title: "Zero-Click Kiosk Silent Mode", body: "Supports Chrome/Edge kiosk printing (--kiosk-printing) for high-traffic retail counters — prints and cuts receipts instantly with zero popup dialogs." },
+                { title: "1-Click Receipt Reprint", body: "Reprint 58mm or 80mm thermal slips at any time directly from the Document Status Panel or Fiscal Ledgers stream." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
                   <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
@@ -238,22 +241,26 @@ export default function FeaturesPage() {
             </div>
           </div>
 
-          {/* MODULE 6: VECTOR PDF ENGINE */}
+          {/* MODULE 6: VECTOR PDF & THERMAL TICKET ENGINE */}
           <div id="pdf-engine" className="space-y-6 scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
               <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 06</span>
               <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
-                A4 Vector PDF Engine &amp; Rate Cards
+                Vector PDF Engine &amp; Thermal Receipt Slips
               </h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
-              Powered by @react-pdf/renderer. Every document generates a professional, print-ready vector PDF with embedded logos, tax PINs, payment references, and line-item breakdowns.
+              Powered by @react-pdf/renderer and continuous ESC/POS formatting. Every document generates a professional vector PDF or a 58mm/80mm thermal ticket with embedded logos, tax PINs, payment references, and eTIMS verification QR codes.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
                 {
                   title: "A4 Vector Invoices & Receipts",
                   body: "Generate pixel-perfect A4 invoice and receipt PDFs instantly, optimized for digital sharing, WhatsApp, or physical printing."
+                },
+                {
+                  title: "58mm & 80mm Thermal Slips",
+                  body: "Optimized continuous-roll ticket layouts with dashed separators, tax breakdowns, tendered change, and official KRA eTIMS QR verification."
                 },
                 {
                   title: "Product Rate Card PDFs",
@@ -436,11 +443,14 @@ export default function FeaturesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
                 { title: "Standardized Chart of Accounts", body: "Configurable double-entry accounts mapped across Assets, Liabilities, Equity, Revenue, Cost of Sales, and Operating Expenses with immutable journal trails." },
+                { title: "Statement of Financial Position", body: "Complete Balance Sheet reporting tracking Current & Fixed Assets, Liabilities, and Shareholder Equity with real-time A = L + E validation." },
+                { title: "Bank & M-Pesa Reconciliation", body: "Upload bank statements or Safaricom M-Pesa CSV exports to auto-match settlement entries against GL Account 1200 with live variance tracking." },
+                { title: "Client Statement of Account", body: "Dedicated A/R running balance ledgers for clients with date-range filters, debit/credit entries, running balances, and instant CSV/PDF export." },
                 { title: "Operating Budgets & Cloning", body: "Track budget vs actuals across past and future calendar months. 1-click 'Copy Last Month's Budget' feature to carry forward expense allocations effortlessly." },
                 { title: "Period Detail Inspector", body: "Inspect monthly gross revenue, expenses, net income, and double-entry balance check (DR = CR) alongside a real-time stream of all journal entries." },
                 { title: "Clean Slate & Auto-Backup", body: "Wipe transactions to start afresh with 0001 sequences (Fresh Accounting Reset) or full factory wipe, with automated JSON backup downloads before any purge." },
                 { title: "Closing Accounting Periods", body: "Close monthly accounting periods to lock down transactions and prevent backdating. Grant custom roles specific override permissions to reopen when necessary." },
-                { title: "Real-time Financial Statements", body: "Dynamic Profit & Loss, Balance Sheet, and Trial Balance reports compiled instantly from ledger postings for board or compliance audits." },
+                { title: "Real-time Financial Statements", body: "Dynamic Profit & Loss, Balance Sheet, Cash Flow, and Trial Balance reports compiled instantly from ledger postings for board or compliance audits." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
                   <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>

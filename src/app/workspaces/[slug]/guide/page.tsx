@@ -23,7 +23,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
       
       {/* HEADER BAR */}
       <div className="border-b border-zinc-200/80 pb-6 space-y-2">
-        <span className="text-[10px] text-zinc-400 uppercase font-semibold">DOCUMENTATION // IN_APP_OPERATOR_GUIDE</span>
+        <span className="text-[10px] text-zinc-400 uppercase font-semibold">DOCUMENTATION</span>
         <h1 className="text-xl font-semibold uppercase tracking-tight font-sans text-black">{shop.name} Operator Manual</h1>
         <p className="font-sans text-xs text-zinc-600">
           Comprehensive step-by-step operating guide for managing billing ledgers, eTIMS tax returns, payment channels, and financial analytics.
@@ -33,6 +33,28 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
       {/* MODULE CARDS */}
       <div className="grid grid-cols-1 gap-6 max-w-4xl">
         
+        {/* MODULE 0 */}
+        <div className="card-modern p-6 space-y-3">
+          <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-2">
+            <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[00] WALK-IN POS &amp; THERMAL RECEIPT PRINTING</span>
+          </div>
+          <p className="font-sans text-xs text-zinc-600 leading-relaxed">
+            Rapid point-of-sale register for walk-in counter sales. Supports M-Pesa, Cash (with change calculator), and instant 58mm/80mm continuous thermal ticket printing with KRA eTIMS CU verification QR codes.
+          </p>
+          <div className="bg-zinc-50 border border-zinc-200 p-3 rounded text-[11px] font-sans text-zinc-700 space-y-1">
+            <p className="font-bold text-black font-mono text-[10px] uppercase">⚡ Zero-Click Silent Kiosk Printing Setup:</p>
+            <p>To print receipts silently without a popup confirmation on retail counters, set your thermal printer as the default in Windows/Mac and launch Google Chrome with the <code className="bg-zinc-200 px-1 py-0.5 rounded font-mono text-[10px]">--kiosk-printing</code> flag.</p>
+          </div>
+          <div className="pt-2">
+            <Link
+              href={`/workspaces/${slug}/pos`}
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
+            >
+              Open POS Register -&gt;
+            </Link>
+          </div>
+        </div>
+
         {/* MODULE 1 */}
         <div className="card-modern p-6 space-y-3">
           <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-2">
@@ -57,7 +79,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
             <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[02] CLIENT FLOW &amp; SUPPLIER NETWORK</span>
           </div>
           <p className="font-sans text-xs text-zinc-600">
-            Register clients and suppliers with tax PINs for statutory eTIMS compliance. Generate invoices or LPOs directly from client/supplier detail pages.
+            Register clients and suppliers with tax PINs for statutory eTIMS compliance (email is optional for walk-in accounts). Generate invoices or LPOs directly from client/supplier detail pages, or inspect their complete running Statement of Account.
           </p>
           <div className="flex gap-3 pt-2">
             <Link
@@ -81,7 +103,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
             <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[03] FISCAL LEDGERS &amp; KRA eTIMS TAXES</span>
           </div>
           <p className="font-sans text-xs text-zinc-600">
-            Issue Invoices, Receipts, Quotations, LPOs, and Credit Notes. Assign row-level tax rates (16% VAT, 0% Zero-Rated, Exempt) and enter eTIMS CU serial numbers.
+            Issue Invoices, Receipts, Quotations, LPOs, and Credit Notes. Assign row-level tax rates (16% VAT, 0% Zero-Rated, Exempt), enter eTIMS CU serial numbers, and print A4 vector PDFs or 58mm/80mm thermal slips.
           </p>
           <div className="pt-2">
             <Link
@@ -159,6 +181,36 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
               className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
               Go to Shared Inbox -&gt;
+            </Link>
+          </div>
+        </div>
+
+        {/* MODULE 8 */}
+        <div className="card-modern p-6 space-y-3">
+          <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-2">
+            <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase text-[10px] rounded">[08] GENERAL LEDGER, BALANCE SHEET &amp; BANK RECONCILIATION</span>
+          </div>
+          <p className="font-sans text-xs text-zinc-600 leading-relaxed">
+            Full 5-class double-entry accounting suite. Generate Balance Sheets (Statement of Financial Position), perform automated Bank &amp; M-Pesa CSV reconciliations, plan monthly operating budgets, and inspect journal ledgers.
+          </p>
+          <div className="flex flex-wrap gap-3 pt-2">
+            <Link
+              href={`/workspaces/${slug}/finance/reports/balance-sheet`}
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
+            >
+              Balance Sheet -&gt;
+            </Link>
+            <Link
+              href={`/workspaces/${slug}/finance/reconciliation`}
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
+            >
+              Bank Reconciliation -&gt;
+            </Link>
+            <Link
+              href={`/workspaces/${slug}/finance/ledger`}
+              className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
+            >
+              General Ledger -&gt;
             </Link>
           </div>
         </div>

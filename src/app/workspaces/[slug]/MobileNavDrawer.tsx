@@ -20,9 +20,11 @@ interface MobileNavDrawerProps {
     name: string;
     isSuperAdmin?: boolean;
   };
+  planName?: string;
+  isLifetime?: boolean;
 }
 
-export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
+export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetime = false }: MobileNavDrawerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
@@ -246,7 +248,20 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
             <div className="flex justify-between items-center">
               <div>
                 <span className="text-zinc-400 block text-[9px] uppercase">OPERATOR</span>
-                <span className="font-bold text-black uppercase">{user.name}</span>
+                <span className="font-bold text-black uppercase block">{user.name}</span>
+                <Link
+                  href={`/workspaces/${slug}/settings/billing`}
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-center gap-1 font-mono text-[9px] font-bold px-2 py-0.5 rounded border mt-1 no-underline"
+                  style={{
+                    backgroundColor: isLifetime ? "#fef3c7" : planName === "PRO" ? "#ecfdf5" : "#f4f4f5",
+                    borderColor: isLifetime ? "#fcd34d" : planName === "PRO" ? "#a7f3d0" : "#e4e4e7",
+                    color: isLifetime ? "#78350f" : planName === "PRO" ? "#065f46" : "#3f3f46",
+                  }}
+                >
+                  <span>{isLifetime ? "👑" : "⚡"}</span>
+                  <span>{planName}</span>
+                </Link>
               </div>
 
               <form action={logoutAction}>

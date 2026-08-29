@@ -1,6 +1,7 @@
 // src/app/workspaces/[slug]/layout.tsx
 import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { logoutAction } from "@/lib/actions/logout";
+import { getShopPlanDetails } from "@/lib/paywall";
 import Link from "next/link";
 import { db } from "@/db";
 import { fiscalYears } from "@/db/schema";
@@ -19,7 +20,10 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
   const { slug } = await params;
 
   // 2. Authenticate session and fetch multi-tenant profile fields entirely on the server
-  const { shop, user } = await getActiveWorkspaceContext(slug);
+  const [{ shop, user }, planDetails] = await Promise.all([
+    getActiveWorkspaceContext(slug),
+    getActiveWorkspaceContext(slug).then(ctx => getShopPlanDetails(ctx.shop.id)),
+  ]);
 
   // 3. Check if GL is enabled and at least one fiscal year is declared
   const hasFiscalYear = !shop.isGlEnabled || (await db.query.fiscalYears.findFirst({
@@ -27,6 +31,8 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
   })) !== undefined;
 
   const brandColor = shop.primaryColor || "#000000";
+  const isLifetime = Boolean(planDetails?.isLifetimePro || user.isSuperAdmin);
+  const planName = isLifetime ? "LIFETIME PRO" : (planDetails?.planSpec.name || planDetails?.plan || "FREE").toUpperCase();
 
   return (
     <div
@@ -65,7 +71,7 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
       `}</style>
 
       {/* MOBILE TOP NAVIGATION BAR WITH SLIDE DRAWER (< 1024px) */}
-      <MobileNavDrawer slug={slug} shop={shop} user={user} />
+      <MobileNavDrawer slug={slug} shop={shop} user={user} planName={planName} isLifetime={isLifetime} />
 
       {/* GLOBAL MINIMAL EDITORIAL SIDEBAR (1024px+) */}
       <aside className="hidden lg:flex w-64 border-r border-zinc-200/80 flex-col justify-between bg-white h-screen sticky top-0 shrink-0">
@@ -136,9 +142,27 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
             </Link>
           )}
 
-          <div className="truncate">
+          <div className="space-y-1">
             <span className="text-zinc-400 block text-[10px] uppercase font-bold">Active Operator</span>
-            <span className="font-semibold text-black">{user.name}</span>
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-black truncate">{user.name}</span>
+            </div>
+            {/* PLAN SUBSCRIPTION BADGE */}
+            <div className="pt-1">
+              <Link
+                href={`/workspaces/${slug}/settings/billing`}
+                className="inline-flex items-center gap-1 font-mono text-[9px] font-bold px-2 py-0.5 rounded border transition-all no-underline"
+                style={{
+                  backgroundColor: isLifetime ? "#fef3c7" : planName === "PRO" ? "#ecfdf5" : "#f4f4f5",
+                  borderColor: isLifetime ? "#fcd34d" : planName === "PRO" ? "#a7f3d0" : "#e4e4e7",
+                  color: isLifetime ? "#78350f" : planName === "PRO" ? "#065f46" : "#3f3f46",
+                }}
+              >
+                <span>{isLifetime ? "👑" : "⚡"}</span>
+                <span>{planName}</span>
+                <span className="text-[8px] opacity-70">→</span>
+              </Link>
+            </div>
           </div>
           <div className="text-[10px] text-zinc-400 border-t border-zinc-200/80 pt-2 flex justify-between items-center">
             <span>Manna v2026.4</span>
@@ -166,7 +190,7 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
               </span>
             )}
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             {user.isSuperAdmin && (
               <Link
                 href="/admin"
@@ -176,6 +200,21 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
                 <span>Platform Admin</span>
               </Link>
             )}
+
+            {/* HEADER PLAN BADGE */}
+            <Link
+              href={`/workspaces/${slug}/settings/billing`}
+              className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2.5 py-1 rounded-md border transition-all no-underline shadow-2xs hover:opacity-80"
+              style={{
+                backgroundColor: isLifetime ? "#fef3c7" : planName === "PRO" ? "#ecfdf5" : "#f4f4f5",
+                borderColor: isLifetime ? "#fcd34d" : planName === "PRO" ? "#a7f3d0" : "#e4e4e7",
+                color: isLifetime ? "#78350f" : planName === "PRO" ? "#065f46" : "#3f3f46",
+              }}
+            >
+              <span>{isLifetime ? "👑" : "⚡"}</span>
+              <span>{planName}</span>
+            </Link>
+
             <div className="flex items-center gap-1.5 font-sans text-xs text-zinc-500">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>Operator:</span>

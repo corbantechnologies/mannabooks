@@ -1,4 +1,5 @@
 import { getAdminUsersList } from "@/lib/actions/admin";
+import { getAdminPlatformPlans } from "@/lib/actions/admin-pricing";
 import { AdminUsersClient } from "./AdminUsersClient";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,10 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
   const params = await searchParams;
   const search = params.search || "";
 
-  const res = await getAdminUsersList(search);
+  const [res, plansRes] = await Promise.all([
+    getAdminUsersList(search),
+    getAdminPlatformPlans(),
+  ]);
 
   if (!res.success || !res.users) {
     return (
@@ -26,5 +30,5 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
     );
   }
 
-  return <AdminUsersClient initialUsers={res.users} />;
+  return <AdminUsersClient initialUsers={res.users} availablePlans={plansRes.plans || []} />;
 }

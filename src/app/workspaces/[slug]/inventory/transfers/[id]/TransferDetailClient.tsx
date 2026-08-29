@@ -7,6 +7,7 @@ import { dispatchStockTransfer, receiveStockTransfer, cancelStockTransfer } from
 import { formatCurrency } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 const STATUS_STYLES: Record<string, string> = {
   DRAFT: "bg-zinc-100 text-zinc-700 border-zinc-300",
@@ -33,47 +34,86 @@ export function TransferDetailClient({ transfer, shopSlug, shopCurrency }: Props
     ]))
   );
 
-  async function handleDispatch() {
-    if (!confirm("Dispatch this transfer? This will immediately deduct stock from the source location.")) return;
+  const [confirmAction, setConfirmAction] = useState<{
+    type: "dispatch" | "receive" | "cancel";
+    title: string;
+    message: string;
+    confirmLabel: string;
+    variant: "primary" | "warning" | "danger";
+  } | null>(null);
+
+  async function executeConfirmAction() {
+    if (!confirmAction) return;
     setLoading(true);
-    const res = await dispatchStockTransfer(transfer.id, shopSlug);
-    setLoading(false);
-    if (res.success) {
-      toast.success("Transfer dispatched — stock deducted from source.");
-      router.refresh();
-    } else {
-      toast.error(res.error || "Dispatch failed.");
+
+    if (confirmAction.type === "dispatch") {
+      const toastId = toast.loading("Dispatching transfer...");
+      const res = await dispatchStockTransfer(transfer.id, shopSlug);
+      setLoading(false);
+      setConfirmAction(null);
+      if (res.success) {
+        toast.success("Transfer dispatched — stock deducted from source.", { id: toastId });
+        router.refresh();
+      } else {
+        toast.error(res.error || "Dispatch failed.", { id: toastId });
+      }
+    } else if (confirmAction.type === "receive") {
+      const toastId = toast.loading("Confirming transfer receipt...");
+      const receivedItems = transfer.items.map((item: any) => ({
+        transferItemId: item.id,
+        quantityReceived: receivedQtys[item.id] ?? parseFloat(item.quantityRequested),
+      }));
+      const res = await receiveStockTransfer(transfer.id, shopSlug, receivedItems);
+      setLoading(false);
+      setConfirmAction(null);
+      if (res.success) {
+        toast.success("Transfer received — stock credited to destination.", { id: toastId });
+        router.refresh();
+      } else {
+        toast.error(res.error || "Receive failed.", { id: toastId });
+      }
+    } else if (confirmAction.type === "cancel") {
+      const toastId = toast.loading("Cancelling transfer...");
+      const res = await cancelStockTransfer(transfer.id, shopSlug);
+      setLoading(false);
+      setConfirmAction(null);
+      if (res.success) {
+        toast.success("Transfer cancelled.", { id: toastId });
+        router.refresh();
+      } else {
+        toast.error(res.error || "Cancellation failed.", { id: toastId });
+      }
     }
+  }
+
+  function handleDispatch() {
+    setConfirmAction({
+      type: "dispatch",
+      title: "Dispatch Stock Transfer",
+      message: `Dispatch transfer from "${transfer.fromLocation?.name}" to "${transfer.toLocation?.name}"? This will immediately deduct stock units from the source location.`,
+      confirmLabel: "Dispatch Transfer",
+      variant: "primary",
+    });
   }
 
   async function handleReceive() {
-    if (!confirm("Mark this transfer as received? Stock will be credited to the destination location.")) return;
-    setLoading(true);
-    const receivedItems = transfer.items.map((item: any) => ({
-      transferItemId: item.id,
-      quantityReceived: receivedQtys[item.id] ?? parseFloat(item.quantityRequested),
-    }));
-    const res = await receiveStockTransfer(transfer.id, shopSlug, receivedItems);
-    setLoading(false);
-    if (res.success) {
-      toast.success("Transfer received — stock credited to destination.");
-      router.refresh();
-    } else {
-      toast.error(res.error || "Receive failed.");
-    }
+    setConfirmAction({
+      type: "receive",
+      title: "Receive Stock Transfer",
+      message: `Confirm receipt at "${transfer.toLocation?.name}"? Stock units will be credited directly to the destination inventory ledger.`,
+      confirmLabel: "Confirm Receipt",
+      variant: "primary",
+    });
   }
 
   async function handleCancel() {
-    if (!confirm("Cancel this transfer? If dispatched, stock will be restored to the source location.")) return;
-    setLoading(true);
-    const res = await cancelStockTransfer(transfer.id, shopSlug);
-    setLoading(false);
-    if (res.success) {
-      toast.success("Transfer cancelled.");
-      router.refresh();
-    } else {
-      toast.error(res.error || "Cancellation failed.");
-    }
+    setConfirmAction({
+      type: "cancel",
+      title: "Cancel Stock Transfer",
+      message: "Are you sure you want to cancel this transfer? If stock was already in transit, all items will be restored to the source location.",
+      confirmLabel: "Cancel Transfer",
+      variant: "danger",
+    });
   }
 
   return (
@@ -246,6 +286,18 @@ export function TransferDetailClient({ transfer, shopSlug, shopCurrency }: Props
           )}
         </div>
       </div>
+
+      {/* CONFIRM ACTION MODAL */}
+      <ConfirmModal
+        isOpen={!!confirmAction}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={executeConfirmAction}
+        title={confirmAction?.title || "Confirm"}
+        message={confirmAction?.message || ""}
+        confirmLabel={confirmAction?.confirmLabel || "Confirm"}
+        variant={confirmAction?.variant || "primary"}
+        isLoading={loading}
+      />
     </div>
   );
 }

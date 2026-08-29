@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { updateStockLocation, deleteStockLocation } from "@/lib/actions/inventory";
 import { toast } from "react-hot-toast";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 interface StockItem {
   productId: string;
@@ -118,14 +119,20 @@ export function LocationDetailClientView({
     setLoading(false);
   }
 
-  async function handleDelete() {
-    if (!confirm(`Delete location "${location.name}"? This cannot be undone.`)) return;
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  async function handleConfirmDelete() {
+    setIsDeleting(true);
+    const toastId = toast.loading(`Deleting location "${location.name}"...`);
     const res = await deleteStockLocation(location.id, shopSlug);
+    setIsDeleting(false);
     if (res.success) {
-      toast.success("Location deleted.");
+      toast.success("Location deleted.", { id: toastId });
+      setShowDeleteConfirm(false);
       router.push(`/workspaces/${shopSlug}/inventory/locations`);
     } else {
-      toast.error(res.error || "Delete failed.");
+      toast.error(res.error || "Delete failed.", { id: toastId });
     }
   }
 
@@ -207,7 +214,7 @@ export function LocationDetailClientView({
             </button>
             {!location.isDefault && (
               <button
-                onClick={handleDelete}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-2 font-mono text-xs font-semibold uppercase rounded transition-colors"
               >
                 Delete
@@ -610,6 +617,18 @@ export function LocationDetailClientView({
           </div>
         </div>
       )}
+
+      {/* CONFIRM DELETE MODAL */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Stock Location"
+        message={`Are you sure you want to delete "${location.name}"? Past historical stock movements will be preserved, but this location will no longer be available for transactions or transfers.`}
+        confirmLabel="Delete Location"
+        variant="danger"
+        isLoading={isDeleting}
+      />
 
     </div>
   );

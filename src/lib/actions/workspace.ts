@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { shops, shopMembers } from "@/db/schema";
+import { shops, shopMembers, users } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { verifyAndGetSession } from "./auth";
@@ -117,6 +117,8 @@ export async function createAdditionalShop(input: { userId: string; businessName
     const finalSlug = existingSlug ? `${baseSlug}-${Date.now().toString().slice(-4)}` : baseSlug;
 
     const shopCode = await generateUniqueShopCode(db);
+    const user = await db.query.users.findFirst({ where: eq(users.id, input.userId) });
+    const isLifetime = Boolean(user?.isLifetimePro || user?.isSuperAdmin);
 
     const [newShop] = await db.insert(shops).values({
         ownerId: input.userId,
@@ -126,6 +128,9 @@ export async function createAdditionalShop(input: { userId: string; businessName
         currency: input.currency,
         primaryColor: "#000000",
         isVatRegistered: false,
+        isLifetimePro: isLifetime,
+        plan: isLifetime ? "PRO" : "FREE",
+        subscriptionStatus: isLifetime ? "LIFETIME_FREE" : "ACTIVE",
     }).returning();
 
     await db.insert(shopMembers).values({

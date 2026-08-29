@@ -315,15 +315,15 @@ export function AdminWorkspacesClient({ initialWorkspaces, totalCount }: AdminWo
 
                     {/* ADMIN ACTIONS */}
                     <td className="py-3.5 px-4 text-right">
-                      <div className="flex justify-end items-center gap-1.5 font-mono text-[10px]">
+                      <div className="inline-flex items-center justify-end gap-1.5 font-mono text-[11px]">
                         <button
                           type="button"
                           onClick={() => {
                             setEditingShop(shop);
-                            setSelectedPlan(shop.plan || "PRO");
+                            setSelectedPlan(shop.plan || "FREE");
                             setIsLifetimePro(shop.isLifetimePro || false);
                           }}
-                          className="bg-zinc-100 hover:bg-black hover:text-white border border-zinc-300 px-2.5 py-1 rounded transition-colors font-bold uppercase"
+                          className="h-7.5 px-2.5 bg-white hover:bg-black hover:text-white border border-zinc-200 hover:border-black rounded-lg transition-all font-bold uppercase shadow-2xs cursor-pointer"
                           title="Manage Plan & Lifetime PRO"
                         >
                           Plan
@@ -335,10 +335,10 @@ export function AdminWorkspacesClient({ initialWorkspaces, totalCount }: AdminWo
                             setSuspendingShop(shop);
                             setSuspendReason(shop.suspendedReason || "");
                           }}
-                          className={`border px-2 py-1 rounded transition-colors font-bold uppercase ${
+                          className={`h-7.5 px-2.5 border rounded-lg transition-all font-bold uppercase cursor-pointer ${
                             shop.isSuspended
                               ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-600 hover:text-white"
-                              : "bg-rose-50 text-rose-800 border-rose-300 hover:bg-rose-600 hover:text-white"
+                              : "bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-600 hover:text-white"
                           }`}
                           title={shop.isSuspended ? "Activate Shop" : "Suspend Shop"}
                         >
@@ -347,7 +347,7 @@ export function AdminWorkspacesClient({ initialWorkspaces, totalCount }: AdminWo
 
                         <Link
                           href={`/admin/workspaces/${shop.id}`}
-                          className="bg-white hover:bg-zinc-100 border border-zinc-300 px-2.5 py-1 rounded transition-colors font-bold uppercase no-underline text-black"
+                          className="h-7.5 px-2.5 inline-flex items-center bg-white hover:bg-zinc-100 border border-zinc-200 hover:border-zinc-300 rounded-lg transition-all font-bold uppercase no-underline text-zinc-800 shadow-2xs"
                           title="Deep Inspection"
                         >
                           Inspect
@@ -356,7 +356,7 @@ export function AdminWorkspacesClient({ initialWorkspaces, totalCount }: AdminWo
                         <Link
                           href={`/workspaces/${shop.slug}`}
                           target="_blank"
-                          className="bg-zinc-900 hover:bg-black text-white px-2.5 py-1 rounded transition-colors font-bold uppercase no-underline flex items-center gap-1"
+                          className="h-7.5 px-2.5 inline-flex items-center gap-1 bg-zinc-900 hover:bg-black text-white rounded-lg transition-all font-bold uppercase no-underline shadow-2xs hover:scale-[1.02] active:scale-95"
                           title="Open workspace in new tab as support"
                         >
                           <span>🚀</span>

@@ -12,6 +12,11 @@ export default async function DashboardProxyPage() {
     redirect("/login");
   }
 
+  // 1. If the logged in account is a Super Admin (ROOT), land directly on the platform terminal
+  if (session.user?.isSuperAdmin) {
+    redirect("/admin");
+  }
+
   // Fetch all active memberships for this user
   const memberships = await db.query.shopMembers.findMany({
     where: and(

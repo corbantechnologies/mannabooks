@@ -13,6 +13,7 @@ import {
 } from "@/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { verifyAndGetSession } from "@/lib/actions/auth";
+import { assertCanTransferStock } from "@/lib/paywall";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 
@@ -36,6 +37,12 @@ export async function createStockTransfer(formData: {
 }) {
     const session = await verifyAndGetSession();
     if (!session) return { success: false, error: "Unauthorized." };
+
+    try {
+        await assertCanTransferStock(formData.shopId);
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
 
     if (formData.fromLocationId === formData.toLocationId) {
         return { success: false, error: "Source and destination locations cannot be the same." };

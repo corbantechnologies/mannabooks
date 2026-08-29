@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import { createStockLocation, updateStockLocation, deleteStockLocation } from "@/lib/actions/inventory";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import Link from "next/link";
 
 interface LocationWithStats {
@@ -95,14 +96,21 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
     setLoading(false);
   }
 
-  async function handleDelete(loc: LocationWithStats) {
-    if (!confirm(`Delete location "${loc.name}"? This cannot be undone.`)) return;
-    const res = await deleteStockLocation(loc.id, shopSlug);
+  const [locationToDelete, setLocationToDelete] = useState<LocationWithStats | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  async function handleConfirmDelete() {
+    if (!locationToDelete) return;
+    setIsDeleting(true);
+    const toastId = toast.loading(`Deleting location "${locationToDelete.name}"...`);
+    const res = await deleteStockLocation(locationToDelete.id, shopSlug);
+    setIsDeleting(false);
     if (res.success) {
-      toast.success("Location deleted.");
+      toast.success("Location deleted.", { id: toastId });
+      setLocationToDelete(null);
       router.refresh();
     } else {
-      toast.error(res.error || "Delete failed.");
+      toast.error(res.error || "Delete failed.", { id: toastId });
     }
   }
 
@@ -301,7 +309,7 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
                     </button>
                     {!loc.isDefault && (
                       <button
-                        onClick={() => handleDelete(loc)}
+                        onClick={() => setLocationToDelete(loc)}
                         className="border border-rose-200 text-rose-600 px-3 py-1 text-[10px] font-semibold uppercase rounded hover:bg-rose-50 transition-colors"
                       >
                         Delete
@@ -322,6 +330,18 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
           </tbody>
         </table>
       </div>
+
+      {/* CONFIRM DELETE MODAL */}
+      <ConfirmModal
+        isOpen={!!locationToDelete}
+        onClose={() => setLocationToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Stock Location"
+        message={`Are you sure you want to delete "${locationToDelete?.name}"? Any past historical ledger movements will be preserved, but this location will be permanently removed from active selection.`}
+        confirmLabel="Delete Location"
+        variant="danger"
+        isLoading={isDeleting}
+      />
 
       {/* INFO BOX */}
       <div className="border border-zinc-200 bg-zinc-50/60 rounded-xl p-5">

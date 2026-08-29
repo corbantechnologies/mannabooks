@@ -42,6 +42,14 @@ export const users = pgTable('users', {
     email: text('email').notNull().unique(),
     passwordHash: text('password_hash').notNull(),
     isSuperAdmin: boolean('is_super_admin').default(false).notNull(),
+    plan: varchar('plan', { length: 30 }).default('FREE').notNull(), // 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE'
+    subscriptionStatus: varchar('subscription_status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'GRACE_PERIOD' | 'EXPIRED' | 'LIFETIME_FREE'
+    subscriptionExpiresAt: timestamp('subscription_expires_at'),
+    gracePeriodEndsAt: timestamp('grace_period_ends_at'),
+    autoRenewEnabled: boolean('auto_renew_enabled').default(true).notNull(),
+    autoRenewPhone: varchar('auto_renew_phone', { length: 30 }),
+    lastRenewalPromptAt: timestamp('last_renewal_prompt_at'),
+    isLifetimePro: boolean('is_lifetime_pro').default(false).notNull(), // When true, all workspaces owned by this user inherit Lifetime PRO
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -74,13 +82,14 @@ export const shops = pgTable('shops', {
     citRate: numeric('cit_rate', { precision: 5, scale: 2 }).default('30.00').notNull(),
     estimatedAnnualProfit: numeric('estimated_annual_profit', { precision: 15, scale: 2 }).default('0.00').notNull(),
     // Subscription & Plan Governance
-    plan: varchar('plan', { length: 30 }).default('PRO').notNull(), // 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE'
-    subscriptionStatus: varchar('subscription_status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'TRIAL' | 'EXPIRED' | 'CANCELLED' | 'LIFETIME_FREE'
+    plan: varchar('plan', { length: 30 }).default('FREE').notNull(), // 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE'
+    subscriptionStatus: varchar('subscription_status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'GRACE_PERIOD' | 'EXPIRED' | 'CANCELLED' | 'LIFETIME_FREE'
     isLifetimePro: boolean('is_lifetime_pro').default(false).notNull(), // Exempt from billing / owner shop flag
     isSuspended: boolean('is_suspended').default(false).notNull(), // Administrative lockout flag
     suspendedReason: text('suspended_reason'),
     trialEndsAt: timestamp('trial_ends_at'),
     subscriptionExpiresAt: timestamp('subscription_expires_at'),
+    gracePeriodEndsAt: timestamp('grace_period_ends_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -517,6 +526,61 @@ export const productLocationStock = pgTable('product_location_stock', {
     unique('unique_product_location').on(table.productId, table.locationId),
 ]);
 
+// SUBSCRIPTIONS TABLE (Tenancy Subscription Ledger)
+export const subscriptions = pgTable('subscriptions', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    plan: varchar('plan', { length: 30 }).notNull(), // 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE'
+    status: varchar('status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'TRIAL' | 'EXPIRED' | 'CANCELLED' | 'LIFETIME_FREE'
+    amount: numeric('amount', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    currency: varchar('currency', { length: 3 }).default('KES').notNull(),
+    billingInterval: varchar('billing_interval', { length: 20 }).default('MONTHLY').notNull(), // 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY'
+    startDate: timestamp('start_date').defaultNow().notNull(),
+    endDate: timestamp('end_date').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// BILLING TRANSACTIONS TABLE (M-Pesa STK Push Audit Trail)
+export const billingTransactions = pgTable('billing_transactions', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    checkoutRequestId: varchar('checkout_request_id', { length: 100 }).notNull().unique(),
+    merchantRequestId: varchar('merchant_request_id', { length: 100 }),
+    phoneNumber: varchar('phone_number', { length: 30 }).notNull(),
+    amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+    mpesaReceiptNumber: varchar('mpesa_receipt_number', { length: 50 }),
+    status: varchar('status', { length: 30 }).default('PENDING').notNull(), // 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
+    resultCode: integer('result_code'),
+    resultDesc: text('result_desc'),
+    targetPlan: varchar('target_plan', { length: 30 }).notNull(), // Plan upgraded to
+    billingMonths: integer('billing_months').default(1).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    completedAt: timestamp('completed_at'),
+});
+
+// PLATFORM PLANS TABLE (Dynamic Pricing & Quota Management)
+export const platformPlans = pgTable('platform_plans', {
+    id: varchar('id', { length: 30 }).primaryKey(), // 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE'
+    name: varchar('name', { length: 100 }).notNull(),
+    tagline: text('tagline').notNull(),
+    priceKesMonthly: integer('price_kes_monthly').default(0).notNull(),
+    priceKesAnnually: integer('price_kes_annually').default(0).notNull(),
+    annualDiscountPercent: integer('annual_discount_percent').default(20).notNull(),
+    maxMembers: integer('max_members').default(1).notNull(), // -1 = Unlimited
+    maxLocations: integer('max_locations').default(1).notNull(), // -1 = Unlimited
+    canTransferStock: boolean('can_transfer_stock').default(false).notNull(),
+    hasGeneralLedger: boolean('has_general_ledger').default(false).notNull(),
+    hasReconciliation: boolean('has_reconciliation').default(false).notNull(),
+    hasStatutoryPayroll: boolean('has_statutory_payroll').default(false).notNull(),
+    hasApiAccess: boolean('has_api_access').default(false).notNull(),
+    badge: varchar('badge', { length: 50 }), // e.g. 'Most Popular', 'Best Value'
+    isHighlighted: boolean('is_highlighted').default(false).notNull(),
+    featuresJson: text('features_json').notNull(), // JSON stringified array of feature bullets
+    isActive: boolean('is_active').default(true).notNull(),
+    displayOrder: integer('display_order').default(0).notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // ==========================================
 // 3. RELATIONS (For ORM Querying)
 // ==========================================
@@ -549,6 +613,8 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     stockLocations: many(stockLocations),
     stockTransfers: many(stockTransfers),
     stockLedger: many(stockLedger),
+    subscriptions: many(subscriptions),
+    billingTransactions: many(billingTransactions),
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({

@@ -15,7 +15,7 @@ interface AdminWorkspaceDetailClientProps {
 
 export function AdminWorkspaceDetailClient({ shop, docStats, recentDocs }: AdminWorkspaceDetailClientProps) {
   const router = useRouter();
-  const [currentPlan, setCurrentPlan] = useState<string>(shop.plan || "PRO");
+  const [currentPlan, setCurrentPlan] = useState<string>(shop.plan || "FREE");
   const [isLifetimePro, setIsLifetimePro] = useState<boolean>(shop.isLifetimePro || false);
   const [isSuspended, setIsSuspended] = useState<boolean>(shop.isSuspended || false);
   const [suspendedReason, setSuspendedReason] = useState<string>(shop.suspendedReason || "");

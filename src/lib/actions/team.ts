@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { shopMembers, users, shopInvitations, shops } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { enforcePermission } from "./rbac";
+import { assertCanAddMember } from "@/lib/paywall";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { Resend } from "resend";
@@ -18,6 +19,7 @@ export async function inviteTeamMember(
 ) {
     try {
         await enforcePermission(shopId, "manage_team");
+        await assertCanAddMember(shopId);
 
         const normalizedEmail = email.toLowerCase().trim();
 

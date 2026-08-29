@@ -173,9 +173,13 @@ export async function getAdminWorkspacesList(input?: GetAdminWorkspacesInput) {
                     website: shop.website,
                     isVatRegistered: shop.isVatRegistered,
                     isGlEnabled: shop.isGlEnabled,
-                    plan: shop.plan || "PRO",
-                    subscriptionStatus: shop.subscriptionStatus || "ACTIVE",
-                    isLifetimePro: shop.isLifetimePro || false,
+                    plan: (shop.owner?.isLifetimePro || shop.owner?.isSuperAdmin || shop.isLifetimePro)
+                        ? "PRO"
+                        : (shop.owner?.plan || shop.plan || "FREE"),
+                    subscriptionStatus: (shop.owner?.isLifetimePro || shop.owner?.isSuperAdmin || shop.isLifetimePro)
+                        ? "LIFETIME_FREE"
+                        : (shop.owner?.subscriptionStatus || shop.subscriptionStatus || "ACTIVE"),
+                    isLifetimePro: Boolean(shop.owner?.isLifetimePro || shop.owner?.isSuperAdmin || shop.isLifetimePro),
                     isSuspended: shop.isSuspended || false,
                     suspendedReason: shop.suspendedReason,
                     createdAt: shop.createdAt,
@@ -183,6 +187,8 @@ export async function getAdminWorkspacesList(input?: GetAdminWorkspacesInput) {
                         id: shop.owner.id,
                         name: shop.owner.name,
                         email: shop.owner.email,
+                        plan: shop.owner.plan || "FREE",
+                        isLifetimePro: shop.owner.isLifetimePro,
                         isSuperAdmin: shop.owner.isSuperAdmin,
                     } : null,
                     memberCount: shop.members?.length || 1,
@@ -383,6 +389,10 @@ export async function getAdminUsersList(searchQuery?: string) {
             name: u.name,
             email: u.email,
             isSuperAdmin: u.isSuperAdmin,
+            isLifetimePro: u.isLifetimePro,
+            plan: u.plan || "FREE",
+            subscriptionStatus: u.subscriptionStatus || "ACTIVE",
+            subscriptionExpiresAt: u.subscriptionExpiresAt,
             createdAt: u.createdAt,
             ownedShopsCount: u.ownedShops?.length || 0,
             membershipsCount: u.memberships?.length || 0,
@@ -396,6 +406,88 @@ export async function getAdminUsersList(searchQuery?: string) {
     } catch (error) {
         console.error("Failed to fetch user list:", error);
         return { success: false, error: "Failed to list platform users." };
+    }
+}
+
+/**
+ * Updates a user's subscription tier, expiry, or lifetime status.
+ */
+export async function updateUserSubscriptionAction({
+    userId,
+    plan,
+    isLifetimePro,
+    subscriptionExpiresAt,
+}: {
+    userId: string;
+    plan: string;
+    isLifetimePro: boolean;
+    subscriptionExpiresAt: Date | null;
+}) {
+    const currentAdmin = await enforceSuperAdmin();
+    if (!currentAdmin) {
+        return { success: false, error: "Access Denied. Super Admin privileges required." };
+    }
+
+    try {
+        const [updated] = await db.update(users).set({
+            plan,
+            isLifetimePro,
+            subscriptionStatus: isLifetimePro ? "LIFETIME_FREE" : "ACTIVE",
+            subscriptionExpiresAt,
+        }).where(eq(users.id, userId)).returning();
+
+        revalidatePath("/admin");
+        revalidatePath("/admin/users");
+        revalidatePath("/admin/workspaces");
+        revalidatePath("/workspaces");
+
+        return {
+            success: true,
+            message: `👑 User ${updated?.email} subscription updated to ${isLifetimePro ? "LIFETIME PRO" : plan}!`
+        };
+    } catch (error) {
+        console.error("Failed to update user subscription:", error);
+        return { success: false, error: "Failed to update user subscription." };
+    }
+}
+
+/**
+ * Grants or revokes Lifetime PRO access for a user account, cascading to all owned workspaces.
+ */
+export async function toggleUserLifetimeProAction({ userId, isLifetimePro }: { userId: string; isLifetimePro: boolean }) {
+    const currentAdmin = await enforceSuperAdmin();
+    if (!currentAdmin) {
+        return { success: false, error: "Access Denied. Super Admin privileges required." };
+    }
+
+    try {
+        const [updated] = await db.update(users).set({
+            isLifetimePro,
+            plan: isLifetimePro ? "PRO" : "FREE",
+            subscriptionStatus: isLifetimePro ? "LIFETIME_FREE" : "ACTIVE",
+        }).where(eq(users.id, userId)).returning();
+
+        // Cascade to all current workspaces owned by this user
+        await db.update(shops).set({
+            isLifetimePro,
+            subscriptionStatus: isLifetimePro ? "LIFETIME_FREE" : "ACTIVE",
+            plan: isLifetimePro ? "PRO" : "FREE",
+        }).where(eq(shops.ownerId, userId));
+
+        revalidatePath("/admin");
+        revalidatePath("/admin/users");
+        revalidatePath("/admin/workspaces");
+        revalidatePath("/workspaces");
+
+        return {
+            success: true,
+            message: isLifetimePro
+                ? `👑 Lifetime PRO granted to ${updated?.email}! All current and future workspaces owned by this account are permanently upgraded.`
+                : `Lifetime PRO revoked for ${updated?.email}.`
+        };
+    } catch (error) {
+        console.error("Failed to toggle user lifetime pro status:", error);
+        return { success: false, error: "Failed to update user lifetime status." };
     }
 }
 

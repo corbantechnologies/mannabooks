@@ -558,11 +558,14 @@ export async function convertDocumentAction(
             kraCuInvoiceNumber: sourceDoc.kraCuInvoiceNumber || undefined,
             requiresEtims: sourceDoc.requiresEtims,
             dueDate: sourceDoc.dueDate || undefined,
+            termsAndConditions: sourceDoc.termsAndConditions || undefined,
             items: sourceDoc.items.map((item) => ({
+                productId: item.productId || undefined,
                 description: item.description,
                 quantity: parseFloat(item.quantity),
                 unitPrice: parseFloat(item.unitPrice),
                 taxType: item.taxType,
+                notes: item.notes || undefined,
             })),
         });
 
@@ -574,6 +577,20 @@ export async function convertDocumentAction(
                     shopSlug,
                     status: "PAID",
                     paymentChannel: "RECEIPT_ISSUED",
+                });
+            } else if (targetType === "INVOICE" && sourceDoc.type === "QUOTATION") {
+                await updateDocumentStatus({
+                    documentId: sourceDoc.id,
+                    shopId,
+                    shopSlug,
+                    status: "ISSUED",
+                });
+            } else if (targetType === "GOODS_RECEIVED_NOTE" && (sourceDoc.type === "PO" || sourceDoc.type === "LPO")) {
+                await updateDocumentStatus({
+                    documentId: sourceDoc.id,
+                    shopId,
+                    shopSlug,
+                    status: "RECEIVED",
                 });
             }
             revalidatePath(`/workspaces/${shopSlug}/documents`);

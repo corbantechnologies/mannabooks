@@ -250,8 +250,36 @@ export function DocumentActionsPopover({
             </>
           )}
 
+          {/* GOODS RECEIVED NOTE CONVERSIONS */}
+          {docType === "GOODS_RECEIVED_NOTE" && (
+            <button
+              onClick={() => handleConvert("PAYMENT_VOUCHER")}
+              className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
+            >
+              ➔ Issue Payment Voucher
+            </button>
+          )}
+
+          {/* DELIVERY NOTE CONVERSIONS */}
+          {docType === "DELIVERY_NOTE" && (
+            <>
+              <button
+                onClick={() => handleConvert("INVOICE")}
+                className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
+              >
+                ➔ Issue Invoice
+              </button>
+              <button
+                onClick={() => handleConvert("RECEIPT")}
+                className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
+              >
+                ➔ Issue Official Receipt
+              </button>
+            </>
+          )}
+
           {/* GENERIC FALLBACK CONVERSIONS */}
-          {docType !== "QUOTATION" && docType !== "INVOICE" && docType !== "LPO" && docType !== "PO" && (
+          {docType !== "QUOTATION" && docType !== "INVOICE" && docType !== "LPO" && docType !== "PO" && docType !== "GOODS_RECEIVED_NOTE" && docType !== "DELIVERY_NOTE" && (
             <button
               onClick={() => handleConvert("INVOICE")}
               className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"

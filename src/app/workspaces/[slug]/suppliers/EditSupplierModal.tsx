@@ -107,13 +107,13 @@ export function EditSupplierModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Email</label>
+                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Email <span className="font-normal">(Optional)</span></label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    placeholder="orders@vendor.com (optional)"
                     className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
-                    required
                   />
                 </div>
                 <div className="space-y-1">

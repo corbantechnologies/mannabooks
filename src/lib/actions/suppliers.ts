@@ -10,7 +10,7 @@ export interface CreateSupplierInput {
   shopId: string;
   shopSlug: string;
   name: string;
-  email: string;
+  email?: string;
   phone?: string;
   supplierType: "WALK_IN" | "INDIVIDUAL" | "CORPORATE";
   taxPin?: string;
@@ -24,7 +24,7 @@ export interface CreateSupplierInput {
  */
 export async function createSupplierProfile(input: CreateSupplierInput) {
   try {
-    const cleanEmail = input.email.toLowerCase().trim();
+    const cleanEmail = input.email ? input.email.toLowerCase().trim() : "";
     const cleanName = input.name.trim();
     const cleanPin = input.taxPin?.toUpperCase().trim() || null;
 

@@ -1,11 +1,9 @@
-// src/app/workspaces/[slug]/pos/WalkInSalesTerminal.tsx
-"use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency, calculateDocumentTotals } from "@/lib/utils";
 import { createBillingDocument } from "@/lib/actions/documents";
 import { toast } from "react-hot-toast";
+import { ThermalReceiptModal, type ThermalReceiptData } from "@/components/ThermalReceiptModal";
 
 interface WalkInSalesTerminalProps {
   shop: any;
@@ -33,6 +31,8 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
   const [amountTendered, setAmountTendered] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [mobileView, setMobileView] = useState<"catalog" | "basket">("catalog");
+  const [completedReceipt, setCompletedReceipt] = useState<ThermalReceiptData | null>(null);
+  const [showReceiptModal, setShowReceiptModal] = useState<boolean>(false);
 
   // Basket Items
   const [basket, setBasket] = useState<PosBasketItem[]>([]);
@@ -128,7 +128,43 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
       toast.error(res.error || "Failed to complete walk-in sale.", { id: toastId });
     } else {
       toast.success(`⚡ Walk-in Sale Completed! (${res.serial})`, { id: toastId });
-      router.push(`/workspaces/${shopSlug}/documents/${res.documentId}`);
+      setCompletedReceipt({
+        shopName: shop.name,
+        shopShortName: shop.shortName,
+        shopPhone: shop.phone,
+        shopEmail: shop.email,
+        shopWebsite: shop.website,
+        shopTaxPin: shop.taxPin,
+        shopVatNumber: shop.vatNumber,
+        currency: shop.currency || "KES",
+        docNumber: res.serial || "RCT-001",
+        docType: "RECEIPT",
+        issueDate: new Date(),
+        customerName: customerEmail.trim() || "Walk-in Customer",
+        items: basket.map((item) => ({
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          itemTotal: item.quantity * item.unitPrice,
+          taxType: item.taxType,
+        })),
+        subTotal: totals.subTotal,
+        taxAmount: totals.taxAmount,
+        grandTotal: totals.grandTotal,
+        paymentChannel: paymentChannel,
+        paymentReference: paymentReference.trim() || undefined,
+        amountTendered: tenderedNum > 0 ? tenderedNum : totals.grandTotal,
+        changeDue: changeDue,
+        kraCuInvoiceNumber: undefined,
+        cashierName: "Cashier Terminal",
+        footerNote: "THANK YOU FOR SHOPPING WITH US!",
+      });
+      setShowReceiptModal(true);
+      setBasket([]);
+      setAmountTendered("");
+      setPaymentReference("");
+      setCustomerNote("");
+      setCustomerEmail("");
     }
   }
 
@@ -463,6 +499,14 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
           </div>
         </div>
       </div>
+      {/* THERMAL RECEIPT MODAL */}
+      {completedReceipt && (
+        <ThermalReceiptModal
+          receipt={completedReceipt}
+          isOpen={showReceiptModal}
+          onClose={() => setShowReceiptModal(false)}
+        />
+      )}
     </div>
   );
 }

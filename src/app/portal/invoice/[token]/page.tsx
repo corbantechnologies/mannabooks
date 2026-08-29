@@ -327,7 +327,7 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
                 <span className="text-[9px] text-zinc-400 font-bold uppercase">KRA eTIMS VERIFICATION QR</span>
                 <div className="bg-white p-2 border border-black flex justify-center items-center">
                   <QRCode
-                    value={`https://etims.kra.go.ke/query/invoice/verify?invoiceNo=${doc.kraCuInvoiceNumber}`}
+                    value={`https://itax.kra.go.ke/KRA-Portal/invoiceVerification.htm?invoiceNo=${encodeURIComponent(doc.kraCuInvoiceNumber)}`}
                     size={100}
                     style={{ height: "auto", maxWidth: "100%", width: "100%" }}
                   />

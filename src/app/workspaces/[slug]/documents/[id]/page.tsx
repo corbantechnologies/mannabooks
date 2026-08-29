@@ -254,6 +254,20 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
         initialPaymentChannel={doc.paymentChannel}
         initialPaymentReference={doc.paymentReference}
         parentDocument={parentDoc ? { id: parentDoc.id, docNumber: parentDoc.docNumber, type: parentDoc.type } : null}
+        shopName={shop.name}
+        shopShortName={shop.shortName}
+        shopPhone={shop.phone}
+        shopEmail={shop.email}
+        shopTaxPin={shop.taxPin}
+        shopVatNumber={shop.vatNumber}
+        currency={shop.currency || "KES"}
+        subTotal={doc.subTotal}
+        taxAmount={doc.taxAmount}
+        grandTotal={doc.grandTotal}
+        partyName={party.name}
+        partyPhone={party.phone}
+        partyTaxPin={party.taxPin}
+        issueDate={doc.issueDate}
       />
 
     </div>

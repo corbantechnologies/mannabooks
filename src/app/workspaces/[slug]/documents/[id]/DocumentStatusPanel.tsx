@@ -12,6 +12,7 @@ import { DocumentActionsPopover } from "./DocumentActionsPopover";
 import { updateDocumentKraCuNumberAction, DocumentType } from "@/lib/actions/documents";
 import { isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
+import { ThermalReceiptModal, type ThermalReceiptData } from "@/components/ThermalReceiptModal";
 
 interface DocumentItem {
   id: string;
@@ -36,6 +37,20 @@ interface DocumentStatusPanelProps {
   initialPaymentChannel?: string | null;
   initialPaymentReference?: string | null;
   parentDocument?: { id: string; docNumber: string; type: string } | null;
+  shopName?: string;
+  shopShortName?: string | null;
+  shopPhone?: string | null;
+  shopEmail?: string | null;
+  shopTaxPin?: string | null;
+  shopVatNumber?: string | null;
+  currency?: string;
+  subTotal?: string | number;
+  taxAmount?: string | number;
+  grandTotal?: string | number;
+  partyName?: string;
+  partyPhone?: string | null;
+  partyTaxPin?: string | null;
+  issueDate?: string | Date;
 }
 
 const STATUS_OPTIONS = [
@@ -61,6 +76,20 @@ export function DocumentStatusPanel({
   initialPaymentChannel = "",
   initialPaymentReference = "",
   parentDocument,
+  shopName,
+  shopShortName,
+  shopPhone,
+  shopEmail,
+  shopTaxPin,
+  shopVatNumber,
+  currency,
+  subTotal,
+  taxAmount,
+  grandTotal,
+  partyName,
+  partyPhone,
+  partyTaxPin,
+  issueDate,
 }: DocumentStatusPanelProps) {
   const router = useRouter();
   const [status, setStatus] = useState<"DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED" | "CANCELLED">(currentStatus as any);
@@ -72,6 +101,7 @@ export function DocumentStatusPanel({
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showThermalModal, setShowThermalModal] = useState(false);
 
   const updateStatusMutation = useUpdateDocumentStatus(shopId, shopSlug);
   const duplicateDocMutation = useDuplicateDocument(shopId, shopSlug);
@@ -299,6 +329,15 @@ export function DocumentStatusPanel({
 
           <button
             type="button"
+            onClick={() => setShowThermalModal(true)}
+            className="border border-black bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-black hover:text-white transition-colors rounded-none flex items-center gap-1.5"
+          >
+            <span>🖨️</span>
+            <span>Thermal Slip</span>
+          </button>
+
+          <button
+            type="button"
             disabled={duplicateDocMutation.isPending}
             onClick={() => {
               duplicateDocMutation.mutate(documentId, {
@@ -486,6 +525,42 @@ export function DocumentStatusPanel({
           />
         </div>
       </div>
+
+      {/* THERMAL RECEIPT MODAL */}
+      <ThermalReceiptModal
+        isOpen={showThermalModal}
+        onClose={() => setShowThermalModal(false)}
+        receipt={{
+          shopName: shopName || "Business Tenant",
+          shopShortName: shopShortName,
+          shopPhone: shopPhone,
+          shopEmail: shopEmail,
+          shopWebsite: undefined,
+          shopTaxPin: shopTaxPin,
+          shopVatNumber: shopVatNumber,
+          currency: currency || "KES",
+          docNumber: docNumber,
+          docType: docType,
+          issueDate: issueDate || new Date(),
+          customerName: partyName,
+          customerPhone: partyPhone,
+          customerTaxPin: partyTaxPin,
+          items: items.map((i) => ({
+            description: i.description,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            itemTotal: i.itemTotal,
+          })),
+          subTotal: subTotal || "0.00",
+          taxAmount: taxAmount || "0.00",
+          grandTotal: grandTotal || "0.00",
+          paymentChannel: paymentChannel,
+          paymentReference: paymentReference,
+          kraCuInvoiceNumber: cuNumber || kraCuInvoiceNumber,
+          cashierName: "System Operator",
+          footerNote: "THANK YOU FOR YOUR BUSINESS!",
+        }}
+      />
     </div>
   );
 }

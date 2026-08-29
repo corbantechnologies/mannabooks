@@ -91,13 +91,13 @@ export function EditClientModal({ client, shopId, shopSlug, redirectToDirectoryA
               </div>
 
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block font-semibold">Account Email</label>
+                <label className="text-zinc-400 uppercase block font-semibold">Account Email <span className="text-[9px] text-zinc-400 font-normal">(Optional)</span></label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@domain.com (optional)"
                   className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
-                  required
                 />
               </div>
 

@@ -12,6 +12,7 @@ import {
 } from "@/db/schema";
 import { eq, and, or, desc, sql, sum, gt, isNull } from "drizzle-orm";
 import { verifyAndGetSession } from "@/lib/actions/auth";
+import { assertCanAddLocation } from "@/lib/paywall";
 import { revalidatePath } from "next/cache";
 
 // ================================================================
@@ -234,6 +235,8 @@ export async function createStockLocation(formData: {
     if (!session) return { success: false, error: "Unauthorized." };
 
     try {
+        await assertCanAddLocation(formData.shopId);
+
         // If this is the first location or isDefault requested, clear other defaults
         if (formData.isDefault) {
             await db

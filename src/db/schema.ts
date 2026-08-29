@@ -517,6 +517,38 @@ export const productLocationStock = pgTable('product_location_stock', {
     unique('unique_product_location').on(table.productId, table.locationId),
 ]);
 
+// SUBSCRIPTIONS TABLE (Tenancy Subscription Ledger)
+export const subscriptions = pgTable('subscriptions', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    plan: varchar('plan', { length: 30 }).notNull(), // 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE'
+    status: varchar('status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'TRIAL' | 'EXPIRED' | 'CANCELLED' | 'LIFETIME_FREE'
+    amount: numeric('amount', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    currency: varchar('currency', { length: 3 }).default('KES').notNull(),
+    billingInterval: varchar('billing_interval', { length: 20 }).default('MONTHLY').notNull(), // 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY'
+    startDate: timestamp('start_date').defaultNow().notNull(),
+    endDate: timestamp('end_date').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// BILLING TRANSACTIONS TABLE (M-Pesa STK Push Audit Trail)
+export const billingTransactions = pgTable('billing_transactions', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    checkoutRequestId: varchar('checkout_request_id', { length: 100 }).notNull().unique(),
+    merchantRequestId: varchar('merchant_request_id', { length: 100 }),
+    phoneNumber: varchar('phone_number', { length: 30 }).notNull(),
+    amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+    mpesaReceiptNumber: varchar('mpesa_receipt_number', { length: 50 }),
+    status: varchar('status', { length: 30 }).default('PENDING').notNull(), // 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
+    resultCode: integer('result_code'),
+    resultDesc: text('result_desc'),
+    targetPlan: varchar('target_plan', { length: 30 }).notNull(), // Plan upgraded to
+    billingMonths: integer('billing_months').default(1).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    completedAt: timestamp('completed_at'),
+});
+
 // ==========================================
 // 3. RELATIONS (For ORM Querying)
 // ==========================================
@@ -549,6 +581,8 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     stockLocations: many(stockLocations),
     stockTransfers: many(stockTransfers),
     stockLedger: many(stockLedger),
+    subscriptions: many(subscriptions),
+    billingTransactions: many(billingTransactions),
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({

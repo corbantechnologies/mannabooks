@@ -3,12 +3,35 @@ import { shops } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getBankReconciliationData } from "@/lib/actions/reconciliation";
+import { getShopPlanDetails } from "@/lib/paywall";
+import { PaywallLockedCard } from "@/components/PaywallLockedCard";
 import ReconciliationClient from "./ReconciliationClient";
 
 export default async function BankReconciliationPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
     const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
     if (!shop) redirect("/dashboard");
+
+    const planDetails = await getShopPlanDetails(shop.id);
+
+    if (planDetails && !planDetails.canAccessReconciliation) {
+        return (
+            <div className="p-4 sm:p-8">
+                <PaywallLockedCard
+                    shopSlug={slug}
+                    featureName="Bank & M-Pesa Cash Account Reconciliation"
+                    requiredPlan="PRO"
+                    description="Automate matching of NCBA, Equity, KCB, or M-Pesa Till CSV statements directly against internal double-entry GL Cash & Bank Account 1200 with live variance tracking."
+                    benefits={[
+                        "CSV Statement Parser for Kenyan Banks & M-Pesa Statements",
+                        "One-click Auto-Matching Engine against GL Account 1200",
+                        "Side-by-side External vs. Internal GL Reconciliation Matrix",
+                        "Audit Trail & CSV Export of Reconciled Ledgers",
+                    ]}
+                />
+            </div>
+        );
+    }
 
     const result = await getBankReconciliationData(shop.id);
     const data = result.success ? result.data : null;

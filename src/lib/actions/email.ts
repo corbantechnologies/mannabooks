@@ -41,8 +41,12 @@ export async function dispatchDocumentEmail({ documentId, isReminder = false }: 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://mannabooks.co.ke";
         const publicSecureLink = `${appUrl}/portal/invoice/${matchToken.token}`;
 
-        // Use verified corbantechnologies.org domain address
-        const fromAddress = process.env.RESEND_FROM_EMAIL || "Manna Books <billing@corbantechnologies.org>";
+        // Use verified domain email with the dynamic Shop Name as sender
+        const rawFrom = process.env.RESEND_FROM_EMAIL || "Manna Books <billing@corbantechnologies.org>";
+        const emailMatch = rawFrom.match(/<([^>]+)>/);
+        const emailOnly = emailMatch ? emailMatch[1] : (rawFrom.includes("@") ? rawFrom.trim() : "billing@corbantechnologies.org");
+        const cleanShopName = (doc.shop?.name || "Manna Books").replace(/[<>"']/g, "").trim();
+        const fromAddress = `${cleanShopName} <${emailOnly}>`;
 
         const isPaidOrReceipt = doc.type === "RECEIPT" || doc.status === "PAID";
         const amountLabel = isPaidOrReceipt ? "AMOUNT SETTLED:" : "AMOUNT DUE:";

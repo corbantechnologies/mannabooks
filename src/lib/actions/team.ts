@@ -51,8 +51,14 @@ export async function inviteTeamMember(
             // Optional: Send them an email letting them know they were added to a new workspace
             const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
             if (shop && process.env.RESEND_FROM_EMAIL) {
+                const rawFrom = process.env.RESEND_FROM_EMAIL;
+                const emailMatch = rawFrom.match(/<([^>]+)>/);
+                const emailOnly = emailMatch ? emailMatch[1] : (rawFrom.includes("@") ? rawFrom.trim() : "billing@corbantechnologies.org");
+                const cleanShopName = (shop.name || "Manna Books").replace(/[<>"']/g, "").trim();
+                const fromAddress = `${cleanShopName} via Manna Books <${emailOnly}>`;
+
                 await resend.emails.send({
-                    from: process.env.RESEND_FROM_EMAIL,
+                    from: fromAddress,
                     to: normalizedEmail,
                     subject: `You've been added to ${shop.name} on Manna Books`,
                     html: `<p>Hello!</p><p>You have been added to the workspace <b>${shop.name}</b> with the role of <b>${role}</b>.</p><p>Log in to your Manna Books account and use the workspace switcher to access it.</p>`
@@ -90,9 +96,15 @@ export async function inviteTeamMember(
             // Send invite email
             const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
             if (shop && process.env.RESEND_FROM_EMAIL) {
+                const rawFrom = process.env.RESEND_FROM_EMAIL;
+                const emailMatch = rawFrom.match(/<([^>]+)>/);
+                const emailOnly = emailMatch ? emailMatch[1] : (rawFrom.includes("@") ? rawFrom.trim() : "billing@corbantechnologies.org");
+                const cleanShopName = (shop.name || "Manna Books").replace(/[<>"']/g, "").trim();
+                const fromAddress = `${cleanShopName} via Manna Books <${emailOnly}>`;
+
                 const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/register?invite=${token}`;
                 await resend.emails.send({
-                    from: process.env.RESEND_FROM_EMAIL,
+                    from: fromAddress,
                     to: normalizedEmail,
                     subject: `You've been invited to join ${shop.name} on Manna Books`,
                     html: `<p>Hello!</p><p>You have been invited to join the workspace <b>${shop.name}</b> on Manna Books.</p><p><a href="${inviteUrl}">Click here to create your account and accept the invitation</a>.</p>`

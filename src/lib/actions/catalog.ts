@@ -463,7 +463,11 @@ export async function sendCatalogEmailAction(input: SendCatalogEmailInput) {
 
         const brandColor = shop.primaryColor || "#000000";
         const resend = new Resend(process.env.RESEND_API_KEY || "re_mock_key");
-        const fromAddress = process.env.RESEND_FROM_EMAIL || "Manna Books <billing@corbantechnologies.org>";
+        const rawFrom = process.env.RESEND_FROM_EMAIL || "Manna Books <billing@corbantechnologies.org>";
+        const emailMatch = rawFrom.match(/<([^>]+)>/);
+        const emailOnly = emailMatch ? emailMatch[1] : (rawFrom.includes("@") ? rawFrom.trim() : "billing@corbantechnologies.org");
+        const cleanShopName = (shop?.name || "Manna Books").replace(/[<>"']/g, "").trim();
+        const fromAddress = `${cleanShopName} <${emailOnly}>`;
 
         const clientSalutation = input.recipientName?.trim()
             ? `Dear <strong>${input.recipientName.trim()}</strong>,`

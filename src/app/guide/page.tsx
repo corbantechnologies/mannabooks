@@ -119,12 +119,37 @@ export default function PublicOperatorGuidePage() {
                 <li>Use the <strong>Catalog Quick Picker</strong> to search items by name or SKU. Click an item to add it to the basket — a badge shows the quantity already added.</li>
                 <li>Adjust quantities using the <strong>+ / −</strong> buttons or type directly into the quantity field in the basket panel.</li>
                 <li>Select the payment method: <strong>M-Pesa</strong> (enter transaction ref), <strong>Cash</strong> (enter amount received for change calculation), or <strong>Bank/Card</strong>.</li>
-                <li>Click <strong>⚡ Complete Sale &amp; Print Receipt</strong>. An official PAID receipt is generated, stock is decremented automatically, and you are redirected to the receipt detail page.</li>
+                <li>Click <strong>⚡ Complete Sale &amp; Print Receipt</strong>. An official PAID receipt is generated, stock is decremented in real-time, and the <strong>POS Thermal Slip Modal</strong> opens immediately.</li>
+                <li>Choose your roll width (<strong>58mm</strong> for 2-inch mini printers or <strong>80mm</strong> for standard 3-inch POS printers) and click <strong>🖨️ Print Ticket</strong>.</li>
+                <li>You can also reprint thermal slips at any time from any Receipt or Invoice by opening the document and clicking <strong>🖨️ Thermal Slip</strong> in the Document Status Panel.</li>
               </ol>
             </div>
-            <div className="bg-zinc-950 border border-emerald-900/60 text-white p-4 rounded-xl font-mono text-[10px] space-y-1">
-              <div className="text-emerald-300 font-bold uppercase">IMPORTANT</div>
-              <p>Out-of-stock items are automatically blocked (dimmed and disabled) in the catalog. The basket also warns if quantity exceeds available stock levels.</p>
+
+            {/* THERMAL PRINTER & SILENT KIOSK PRINTING SETUP */}
+            <div className="bg-zinc-950 border border-emerald-900/60 text-white p-5 rounded-xl font-mono text-[11px] space-y-3">
+              <div className="text-emerald-300 font-bold uppercase text-xs flex items-center gap-1.5">
+                <span>🖨️</span>
+                <span>Thermal Printer Setup &amp; Zero-Click Silent Kiosk Printing</span>
+              </div>
+              <div className="text-zinc-300 font-sans text-xs space-y-2 leading-relaxed">
+                <p>
+                  <strong>Standard Browser Printing:</strong> When you click <em>Print Ticket</em> for the first time, your browser (Chrome/Edge) will prompt you to select your thermal printer (e.g. <em>Xprinter 80mm</em>, <em>Epson TM-T20</em>, <em>POS-58</em>). The browser remembers your choice for all future sales so you can print with 1 keystroke.
+                </p>
+                <p>
+                  <strong>Retail Zero-Click Silent Printing (Kiosk Mode):</strong> For high-traffic retail counters where receipts must print immediately without any confirmation dialog:
+                </p>
+                <ol className="list-decimal list-inside space-y-1 text-zinc-400 font-mono text-[10px] pl-2">
+                  <li>Set your thermal printer as the <strong>Default Printer</strong> in Windows/Mac settings.</li>
+                  <li>Right-click your Google Chrome desktop shortcut &rarr; select <strong>Properties</strong>.</li>
+                  <li>In the <strong>Target</strong> field, add <code>--kiosk-printing</code> to the end (e.g. <code>chrome.exe --kiosk-printing</code>).</li>
+                  <li>Launch Chrome using this shortcut. All receipt print commands will now fire directly and silently to the printer with zero popups!</li>
+                </ol>
+              </div>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-700 text-white p-4 rounded-xl font-mono text-[10px] space-y-1">
+              <div className="text-amber-300 font-bold uppercase">STOCK LOCKOUT SAFETY</div>
+              <p>Out-of-stock items are automatically blocked (dimmed and disabled) in the catalog picker. The basket also prevents checking out if the requested quantity exceeds physical inventory on hand.</p>
             </div>
           </section>
 

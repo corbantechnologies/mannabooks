@@ -9,7 +9,7 @@ interface CreateClientInput {
     shopId: string; // The active shop isolation token from the user session
     shopSlug: string; // For accurate cache revalidation
     name: string;
-    email: string;
+    email?: string;
     phone?: string;
     clientType: "WALK_IN" | "INDIVIDUAL" | "CORPORATE";
     taxPin?: string;
@@ -22,7 +22,7 @@ interface CreateClientInput {
 export async function createClientProfile(input: CreateClientInput) {
     try {
         // 1. Structural Validation based on compliance selections
-        const cleanEmail = input.email.toLowerCase().trim();
+        const cleanEmail = input.email ? input.email.toLowerCase().trim() : "";
         const cleanName = input.name.trim();
         const cleanPin = input.taxPin?.toUpperCase().trim() || null;
 

@@ -1,10 +1,10 @@
 // src/app/workspaces/[slug]/inventory/page.tsx
 import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { shops, stockLedger } from "@/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
-import { getInventoryOverview, migrateCatalogToStockLedger } from "@/lib/actions/inventory";
+import { getInventoryOverview, migrateCatalogToStockLedger, backfillLedgerLocations } from "@/lib/actions/inventory";
 import Link from "next/link";
 
 interface InventoryPageProps {
@@ -54,6 +54,12 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
   if (!shop) notFound();
 
   const overview = await getInventoryOverview(shop.id);
+
+  // Count ledger entries with missing location (for backfill prompt)
+  const nullLocationCount = await db.$count(
+    stockLedger,
+    and(eq(stockLedger.shopId, shop.id), isNull(stockLedger.locationId))
+  );
 
   return (
     <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-mono text-xs">
@@ -209,6 +215,29 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
               className="bg-black hover:bg-zinc-800 text-white font-mono text-[10px] uppercase font-bold px-4 py-2 rounded transition-colors shrink-0"
             >
               Initialize Ledger &rarr;
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* BACKFILL PROMPT — if existing ledger entries have no location */}
+      {nullLocationCount > 0 && (
+        <div className="border border-blue-200 bg-blue-50/60 rounded-xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <p className="font-sans font-bold text-blue-900 uppercase text-xs tracking-wide">🔧 Fix Historical Location Data</p>
+            <p className="font-sans text-xs text-blue-800 mt-1">
+              {nullLocationCount} stock movement{nullLocationCount !== 1 ? "s" : ""} have no location assigned. Backfilling assigns them to your default location and updates per-location stock levels.
+            </p>
+          </div>
+          <form action={async () => {
+            "use server";
+            await backfillLedgerLocations(shop.id, slug);
+          }}>
+            <button
+              type="submit"
+              className="bg-blue-700 hover:bg-blue-800 text-white font-mono text-[10px] uppercase font-bold px-4 py-2 rounded transition-colors shrink-0"
+            >
+              Fix Location Data →
             </button>
           </form>
         </div>

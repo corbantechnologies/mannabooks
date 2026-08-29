@@ -7,9 +7,10 @@ import {
     stockLedger,
     products,
     shops,
-    users,
+    productLocationStock,
+    stockTransfers,
 } from "@/db/schema";
-import { eq, and, desc, sql, sum, gt } from "drizzle-orm";
+import { eq, and, or, desc, sql, sum, gt, isNull } from "drizzle-orm";
 import { verifyAndGetSession } from "@/lib/actions/auth";
 import { revalidatePath } from "next/cache";
 
@@ -28,6 +29,198 @@ export async function getStockLocations(shopId: string) {
         ),
         orderBy: [desc(stockLocations.isDefault), desc(stockLocations.createdAt)],
     });
+}
+
+export async function getStockLocationsWithStats(shopId: string) {
+    const session = await verifyAndGetSession();
+    if (!session) return [];
+
+    const locations = await db.query.stockLocations.findMany({
+        where: and(
+            eq(stockLocations.shopId, shopId),
+            eq(stockLocations.isActive, true)
+        ),
+        orderBy: [desc(stockLocations.isDefault), desc(stockLocations.createdAt)],
+    });
+
+    const [locStocks, allProducts] = await Promise.all([
+        db.query.productLocationStock.findMany({
+            where: eq(productLocationStock.shopId, shopId),
+            with: { product: true },
+        }),
+        db.query.products.findMany({
+            where: and(eq(products.shopId, shopId), eq(products.trackStock, true)),
+        }),
+    ]);
+
+    return locations.map((loc) => {
+        const rows = locStocks.filter((s) => s.locationId === loc.id && s.product);
+        const productIdsWithJunction = new Set(rows.map((r) => r.productId));
+
+        const legacyProducts = allProducts.filter(
+            (p) => p.defaultLocationId === loc.id && !productIdsWithJunction.has(p.id)
+        );
+
+        let totalProducts = rows.length + legacyProducts.length;
+        let totalUnits = 0;
+        let totalValuation = 0;
+        let lowStockCount = 0;
+
+        for (const row of rows) {
+            const qty = parseFloat(row.quantity || "0");
+            const cost = parseFloat(row.product.costPrice || "0");
+            const threshold = parseFloat(row.product.reorderThreshold || "5");
+            totalUnits += qty;
+            totalValuation += qty * cost;
+            if (qty <= threshold) lowStockCount++;
+        }
+
+        for (const lp of legacyProducts) {
+            const qty = parseFloat(lp.stockQuantity || "0");
+            const cost = parseFloat(lp.costPrice || "0");
+            const threshold = parseFloat(lp.reorderThreshold || "5");
+            totalUnits += qty;
+            totalValuation += qty * cost;
+            if (qty <= threshold) lowStockCount++;
+        }
+
+        return {
+            ...loc,
+            totalProducts,
+            totalUnits,
+            totalValuation,
+            lowStockCount,
+        };
+    });
+}
+
+export async function getStockLocationDetail(shopId: string, locationId: string) {
+    const session = await verifyAndGetSession();
+    if (!session) return null;
+
+    const location = await db.query.stockLocations.findFirst({
+        where: and(
+            eq(stockLocations.id, locationId),
+            eq(stockLocations.shopId, shopId)
+        ),
+    });
+
+    if (!location) return null;
+
+    const [locStocks, allTrackedProducts, recentMovements, transfers] = await Promise.all([
+        db.query.productLocationStock.findMany({
+            where: and(
+                eq(productLocationStock.shopId, shopId),
+                eq(productLocationStock.locationId, locationId)
+            ),
+            with: { product: true },
+        }),
+        db.query.products.findMany({
+            where: and(eq(products.shopId, shopId), eq(products.trackStock, true)),
+        }),
+        db.query.stockLedger.findMany({
+            where: and(
+                eq(stockLedger.shopId, shopId),
+                eq(stockLedger.locationId, locationId)
+            ),
+            with: { product: true, createdBy: true, sourceDocument: true },
+            orderBy: [desc(stockLedger.createdAt)],
+            limit: 100,
+        }),
+        db.query.stockTransfers.findMany({
+            where: and(
+                eq(stockTransfers.shopId, shopId),
+                or(
+                    eq(stockTransfers.fromLocationId, locationId),
+                    eq(stockTransfers.toLocationId, locationId)
+                )
+            ),
+            with: {
+                fromLocation: true,
+                toLocation: true,
+                requestedBy: true,
+                items: { with: { product: true } },
+            },
+            orderBy: [desc(stockTransfers.createdAt)],
+            limit: 30,
+        }),
+    ]);
+
+    const productIdsInJunction = new Set(locStocks.map(s => s.productId));
+    const items: Array<{
+        productId: string;
+        name: string;
+        sku: string | null;
+        unitPrice: number;
+        costPrice: number;
+        quantity: number;
+        reorderThreshold: number;
+        totalValue: number;
+        isLowStock: boolean;
+        isOutOfStock: boolean;
+    }> = [];
+
+    for (const row of locStocks) {
+        if (!row.product) continue;
+        const qty = parseFloat(row.quantity || "0");
+        const cost = parseFloat(row.product.costPrice || "0");
+        const threshold = parseFloat(row.product.reorderThreshold || "5");
+        items.push({
+            productId: row.productId,
+            name: row.product.name,
+            sku: row.product.sku,
+            unitPrice: parseFloat(row.product.unitPrice || "0"),
+            costPrice: cost,
+            quantity: qty,
+            reorderThreshold: threshold,
+            totalValue: qty * cost,
+            isLowStock: qty > 0 && qty <= threshold,
+            isOutOfStock: qty <= 0,
+        });
+    }
+
+    for (const p of allTrackedProducts) {
+        if (p.defaultLocationId === locationId && !productIdsInJunction.has(p.id)) {
+            const qty = parseFloat(p.stockQuantity || "0");
+            const cost = parseFloat(p.costPrice || "0");
+            const threshold = parseFloat(p.reorderThreshold || "5");
+            items.push({
+                productId: p.id,
+                name: p.name,
+                sku: p.sku,
+                unitPrice: parseFloat(p.unitPrice || "0"),
+                costPrice: cost,
+                quantity: qty,
+                reorderThreshold: threshold,
+                totalValue: qty * cost,
+                isLowStock: qty > 0 && qty <= threshold,
+                isOutOfStock: qty <= 0,
+            });
+        }
+    }
+
+    items.sort((a, b) => b.totalValue - a.totalValue);
+
+    const totalUnits = items.reduce((sum, item) => sum + item.quantity, 0);
+    const totalValuation = items.reduce((sum, item) => sum + item.totalValue, 0);
+    const lowStockCount = items.filter(item => item.isLowStock).length;
+    const outOfStockCount = items.filter(item => item.isOutOfStock).length;
+
+    return {
+        location,
+        metrics: {
+            totalProducts: items.length,
+            totalUnits,
+            totalValuation,
+            lowStockCount,
+            outOfStockCount,
+            movementsCount: recentMovements.length,
+            transfersCount: transfers.length,
+        },
+        items,
+        recentMovements,
+        transfers,
+    };
 }
 
 export async function createStockLocation(formData: {
@@ -187,6 +380,24 @@ export async function recordStockAdjustment(formData: {
                 .update(products)
                 .set({ stockQuantity: newStock.toString() })
                 .where(eq(products.id, formData.productId));
+
+            // 3. Upsert per-location quantity in junction table
+            const locationQtyDelta = formData.direction === "IN" ? qty : -qty;
+            await tx
+                .insert(productLocationStock)
+                .values({
+                    shopId: formData.shopId,
+                    productId: formData.productId,
+                    locationId: formData.locationId,
+                    quantity: Math.max(0, locationQtyDelta).toString(),
+                })
+                .onConflictDoUpdate({
+                    target: [productLocationStock.productId, productLocationStock.locationId],
+                    set: {
+                        quantity: sql`GREATEST(0, ${productLocationStock.quantity} + ${locationQtyDelta})`,
+                        updatedAt: new Date(),
+                    },
+                });
         });
 
         revalidatePath(`/workspaces/${formData.shopSlug}/inventory`);
@@ -226,6 +437,23 @@ export async function recordOpeningBalance(formData: {
                 .update(products)
                 .set({ stockQuantity: formData.quantity.toString() })
                 .where(eq(products.id, formData.productId));
+
+            // Upsert per-location quantity
+            await tx
+                .insert(productLocationStock)
+                .values({
+                    shopId: formData.shopId,
+                    productId: formData.productId,
+                    locationId: formData.locationId,
+                    quantity: formData.quantity.toString(),
+                })
+                .onConflictDoUpdate({
+                    target: [productLocationStock.productId, productLocationStock.locationId],
+                    set: {
+                        quantity: formData.quantity.toString(),
+                        updatedAt: new Date(),
+                    },
+                });
         });
 
         revalidatePath(`/workspaces/${formData.shopSlug}/inventory`);
@@ -561,6 +789,29 @@ export async function migrateCatalogToStockLedger(shopId: string, shopSlug: stri
                         notes: "Auto-migrated from product catalog opening stock",
                         createdById: session.userId,
                     });
+
+                    // Upsert junction table
+                    await tx
+                        .insert(productLocationStock)
+                        .values({
+                            shopId,
+                            productId: p.id,
+                            locationId: defaultLocation.id,
+                            quantity: qty.toString(),
+                        })
+                        .onConflictDoUpdate({
+                            target: [productLocationStock.productId, productLocationStock.locationId],
+                            set: { quantity: qty.toString(), updatedAt: new Date() },
+                        });
+
+                    // Ensure product has defaultLocationId set
+                    if (!p.defaultLocationId) {
+                        await tx
+                            .update(products)
+                            .set({ defaultLocationId: defaultLocation.id })
+                            .where(eq(products.id, p.id));
+                    }
+
                     migratedCount++;
                 }
             }
@@ -574,3 +825,98 @@ export async function migrateCatalogToStockLedger(shopId: string, shopSlug: stri
     }
 }
 
+// ================================================================
+// BACKFILL: Fix existing ledger entries that have locationId = null
+// Assigns the first available location (or creates General Store).
+// Also populates defaultLocationId on the product if missing.
+// ================================================================
+
+export async function backfillLedgerLocations(shopId: string, shopSlug: string) {
+    const session = await verifyAndGetSession();
+    if (!session) return { success: false, error: "Unauthorized." };
+
+    try {
+        // 1. Resolve location: prefer default, then any, then create General Store
+        let targetLocation = await db.query.stockLocations.findFirst({
+            where: and(eq(stockLocations.shopId, shopId), eq(stockLocations.isDefault, true)),
+        });
+
+        if (!targetLocation) {
+            targetLocation = await db.query.stockLocations.findFirst({
+                where: and(eq(stockLocations.shopId, shopId), eq(stockLocations.isActive, true)),
+            });
+        }
+
+        if (!targetLocation) {
+            const [newLoc] = await db.insert(stockLocations).values({
+                shopId,
+                name: "General Store",
+                code: "MAIN",
+                isDefault: true,
+            }).returning();
+            targetLocation = newLoc;
+        }
+
+        // 2. Find all ledger entries for this shop with no location
+        const nullEntries = await db.query.stockLedger.findMany({
+            where: and(
+                eq(stockLedger.shopId, shopId),
+                isNull(stockLedger.locationId)
+            ),
+            with: { product: true },
+        });
+
+        if (nullEntries.length === 0) {
+            return { success: true, patchedCount: 0 };
+        }
+
+        await db.transaction(async (tx) => {
+            // 3. Patch all null-location ledger entries
+            for (const entry of nullEntries) {
+                await tx
+                    .update(stockLedger)
+                    .set({ locationId: targetLocation!.id })
+                    .where(eq(stockLedger.id, entry.id));
+            }
+
+            // 4. Fix products that have no defaultLocationId
+            const trackedProductIds = [...new Set(nullEntries
+                .filter(e => e.product?.trackStock)
+                .map(e => e.productId))];
+
+            for (const productId of trackedProductIds) {
+                const p = await tx.query.products.findFirst({ where: eq(products.id, productId) });
+                if (!p) continue;
+
+                if (!p.defaultLocationId) {
+                    await tx
+                        .update(products)
+                        .set({ defaultLocationId: targetLocation!.id })
+                        .where(eq(products.id, productId));
+                }
+
+                // Upsert junction table with current stockQuantity
+                const qty = parseFloat(p.stockQuantity || "0");
+                await tx
+                    .insert(productLocationStock)
+                    .values({
+                        shopId,
+                        productId,
+                        locationId: targetLocation!.id,
+                        quantity: qty.toString(),
+                    })
+                    .onConflictDoUpdate({
+                        target: [productLocationStock.productId, productLocationStock.locationId],
+                        set: { quantity: qty.toString(), updatedAt: new Date() },
+                    });
+            }
+        });
+
+        revalidatePath(`/workspaces/${shopSlug}/inventory`);
+        revalidatePath(`/workspaces/${shopSlug}/products`);
+        return { success: true, patchedCount: nullEntries.length };
+    } catch (error: any) {
+        console.error("Backfill failed:", error);
+        return { success: false, error: error.message || "Backfill failed." };
+    }
+}

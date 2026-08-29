@@ -73,6 +73,14 @@ export const shops = pgTable('shops', {
     isTotActive: boolean('is_tot_active').default(false).notNull(),
     citRate: numeric('cit_rate', { precision: 5, scale: 2 }).default('30.00').notNull(),
     estimatedAnnualProfit: numeric('estimated_annual_profit', { precision: 15, scale: 2 }).default('0.00').notNull(),
+    // Subscription & Plan Governance
+    plan: varchar('plan', { length: 30 }).default('PRO').notNull(), // 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE'
+    subscriptionStatus: varchar('subscription_status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'TRIAL' | 'EXPIRED' | 'CANCELLED' | 'LIFETIME_FREE'
+    isLifetimePro: boolean('is_lifetime_pro').default(false).notNull(), // Exempt from billing / owner shop flag
+    isSuspended: boolean('is_suspended').default(false).notNull(), // Administrative lockout flag
+    suspendedReason: text('suspended_reason'),
+    trialEndsAt: timestamp('trial_ends_at'),
+    subscriptionExpiresAt: timestamp('subscription_expires_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -494,10 +502,26 @@ export const stockTransferItems = pgTable('stock_transfer_items', {
     notes: text('notes'),
 });
 
+// PRODUCT LOCATION STOCK TABLE
+// Authoritative per-location quantity for each tracked product.
+// Replaces the need to SUM the full ledger for current stock at a given location.
+// products.stockQuantity is a denormalized total (SUM of all location quantities).
+export const productLocationStock = pgTable('product_location_stock', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    productId: uuid('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+    locationId: uuid('location_id').references(() => stockLocations.id, { onDelete: 'cascade' }).notNull(),
+    quantity: numeric('quantity', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_product_location').on(table.productId, table.locationId),
+]);
+
 // ==========================================
 // 3. RELATIONS (For ORM Querying)
 // ==========================================
 export const usersRelations = relations(users, ({ many }) => ({
+    ownedShops: many(shops),
     memberships: many(shopMembers),
     sessions: many(sessions),
 }));
@@ -677,6 +701,7 @@ export const stockLocationsRelations = relations(stockLocations, ({ one, many })
     ledgerEntries: many(stockLedger),
     transfersFrom: many(stockTransfers, { relationName: 'from_location' }),
     transfersTo: many(stockTransfers, { relationName: 'to_location' }),
+    locationStock: many(productLocationStock),
 }));
 
 export const stockLedgerRelations = relations(stockLedger, ({ one }) => ({
@@ -706,4 +731,12 @@ export const productsRelations = relations(products, ({ one, many }) => ({
     defaultLocation: one(stockLocations, { fields: [products.defaultLocationId], references: [stockLocations.id] }),
     stockLedger: many(stockLedger),
     transferItems: many(stockTransferItems),
+    locationStock: many(productLocationStock),
+}));
+
+// PRODUCT LOCATION STOCK RELATIONS
+export const productLocationStockRelations = relations(productLocationStock, ({ one }) => ({
+    shop: one(shops, { fields: [productLocationStock.shopId], references: [shops.id] }),
+    product: one(products, { fields: [productLocationStock.productId], references: [products.id] }),
+    location: one(stockLocations, { fields: [productLocationStock.locationId], references: [stockLocations.id] }),
 }));

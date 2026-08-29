@@ -1,9 +1,10 @@
 "use server";
 
 import { db } from "@/db";
-import { documents, expenses, incomes, shops } from "@/db/schema";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { documents, documentItems, expenses, incomes, shops, clients, fixedAssets, productLocationStock, products } from "@/db/schema";
+import { eq, and, gte, lte, desc, sum } from "drizzle-orm";
 import { getFiscalYearRange } from "@/lib/fiscalYear";
+
 
 export type ReportPeriod = "THIS_MONTH" | "LAST_MONTH" | "THIS_QUARTER" | "THIS_YEAR" | "CUSTOM";
 
@@ -328,5 +329,307 @@ export async function getCashFlowStatement(
     } catch (error: any) {
         console.error("Cash flow error:", error);
         return { success: false, error: "Failed to generate cash flow statement." };
+    }
+}
+
+// ================================================================
+// BALANCE SHEET (STATEMENT OF FINANCIAL POSITION)
+// ================================================================
+
+export interface BalanceSheetData {
+    asOfDate: string;
+    currency: string;
+    // Current Assets
+    cashAndBank: number;
+    accountsReceivable: number;
+    inventoryValuation: number;
+    totalCurrentAssets: number;
+    // Non-Current Assets
+    fixedAssetsWdv: number;
+    totalNonCurrentAssets: number;
+    totalAssets: number;
+    // Current Liabilities
+    accountsPayable: number;
+    taxPayable: number;
+    totalCurrentLiabilities: number;
+    totalLiabilities: number;
+    // Equity
+    openingBalanceEquity: number;
+    retainedEarnings: number;
+    currentPeriodNetProfit: number;
+    totalEquity: number;
+    // Validation
+    isBalanced: boolean;
+    difference: number;
+}
+
+export async function getBalanceSheet(
+    shopId: string,
+    asOfDate?: Date
+): Promise<{ success: true; data: BalanceSheetData } | { success: false; error: string }> {
+    try {
+        const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
+        if (!shop) return { success: false, error: "Workspace not found." };
+
+        const cutoff = asOfDate || new Date();
+        const displayDate = cutoff.toLocaleDateString("en-KE", { dateStyle: "long" });
+
+        // --- GL-based account balances ---
+        const { journalEntries: je } = await import("@/db/schema");
+        const allEntries = await db.query.journalEntries.findMany({
+            where: and(
+                eq(je.shopId, shopId),
+                lte(je.entryDate, cutoff)
+            ),
+            with: { debitAccount: true, creditAccount: true },
+        });
+
+        // Build net balance map per account code: positive = net debit balance
+        const netMap: Record<string, number> = {};
+        for (const e of allEntries) {
+            const amt = parseFloat(e.amount || "0");
+            const dCode = e.debitAccount?.code;
+            const cCode = e.creditAccount?.code;
+            if (dCode) netMap[dCode] = (netMap[dCode] || 0) + amt;
+            if (cCode) netMap[cCode] = (netMap[cCode] || 0) - amt;
+        }
+
+        const getBalance = (code: string) => netMap[code] || 0;
+
+        // Assets
+        const cashAndBank = getBalance("1200");
+        const accountsReceivable = Math.max(0, getBalance("1100"));
+
+        // Inventory valuation from junction table (qty × cost price)
+        const locStocks = await db.query.productLocationStock.findMany({
+            where: eq(productLocationStock.shopId, shopId),
+            with: { product: true },
+        });
+        let inventoryValuation = 0;
+        for (const row of locStocks) {
+            if (!row.product) continue;
+            const qty = parseFloat(row.quantity || "0");
+            const cost = parseFloat(row.product.costPrice || "0");
+            inventoryValuation += qty * cost;
+        }
+        // Also include products without junction table entries (defaultLocationId-based)
+        const allTracked = await db.query.products.findMany({
+            where: and(eq(products.shopId, shopId), eq(products.trackStock, true)),
+        });
+        const junctionProductIds = new Set(locStocks.map(s => s.productId));
+        for (const p of allTracked) {
+            if (!junctionProductIds.has(p.id)) {
+                inventoryValuation += parseFloat(p.stockQuantity || "0") * parseFloat(p.costPrice || "0");
+            }
+        }
+
+        // Fixed Assets Net WDV
+        const fixedAssetRows = await db.query.fixedAssets.findMany({
+            where: and(eq(fixedAssets.shopId, shopId), eq(fixedAssets.isDisposed, false)),
+        });
+        const fixedAssetsWdv = fixedAssetRows.reduce((s, a) => s + parseFloat(a.taxWdv || "0"), 0);
+
+        const totalCurrentAssets = cashAndBank + accountsReceivable + inventoryValuation;
+        const totalNonCurrentAssets = fixedAssetsWdv;
+        const totalAssets = totalCurrentAssets + totalNonCurrentAssets;
+
+        // Liabilities
+        const accountsPayable = Math.abs(Math.min(0, getBalance("2100")));
+        const taxPayable = Math.abs(Math.min(0, getBalance("2200")));
+        const totalCurrentLiabilities = accountsPayable + taxPayable;
+        const totalLiabilities = totalCurrentLiabilities;
+
+        // Equity
+        const openingBalanceEquity = Math.abs(Math.min(0, getBalance("3100")));
+        const retainedEarnings = Math.abs(Math.min(0, getBalance("3200")));
+
+        // Current period net profit from P&L (same fiscal year)
+        const { start: fyStart } = getFiscalYearRange(shop.fiscalYearStartMonth || 1);
+        const plResult = await getPLStatement(shopId, "THIS_YEAR");
+        const currentPeriodNetProfit = plResult.success ? plResult.data.netIncome : 0;
+
+        const totalEquity = openingBalanceEquity + retainedEarnings + currentPeriodNetProfit;
+
+        const difference = totalAssets - (totalLiabilities + totalEquity);
+        const isBalanced = Math.abs(difference) < 1.00; // Allow <1 unit rounding tolerance
+
+        return {
+            success: true,
+            data: {
+                asOfDate: displayDate,
+                currency: shop.currency || "KES",
+                cashAndBank,
+                accountsReceivable,
+                inventoryValuation,
+                totalCurrentAssets,
+                fixedAssetsWdv,
+                totalNonCurrentAssets,
+                totalAssets,
+                accountsPayable,
+                taxPayable,
+                totalCurrentLiabilities,
+                totalLiabilities,
+                openingBalanceEquity,
+                retainedEarnings,
+                currentPeriodNetProfit,
+                totalEquity,
+                isBalanced,
+                difference,
+            },
+        };
+    } catch (error: any) {
+        console.error("Balance sheet error:", error);
+        return { success: false, error: "Failed to generate balance sheet." };
+    }
+}
+
+// ================================================================
+// CLIENT STATEMENT OF ACCOUNT (A/R LEDGER)
+// ================================================================
+
+export interface StatementLine {
+    date: string;
+    reference: string;
+    docType: string;
+    description: string;
+    debit: number;
+    credit: number;
+    runningBalance: number;
+    status: string;
+    docId: string;
+}
+
+export interface ClientStatementData {
+    clientName: string;
+    clientEmail: string;
+    clientPhone: string | null;
+    taxPin: string | null;
+    currency: string;
+    shopName: string;
+    periodLabel: string;
+    lines: StatementLine[];
+    totalDebits: number;
+    totalCredits: number;
+    closingBalance: number;
+}
+
+export async function getClientStatement(
+    shopId: string,
+    clientId: string,
+    startDate?: Date,
+    endDate?: Date
+): Promise<{ success: true; data: ClientStatementData } | { success: false; error: string }> {
+    try {
+        const [shop, client] = await Promise.all([
+            db.query.shops.findFirst({ where: eq(shops.id, shopId) }),
+            db.query.clients.findFirst({
+                where: and(eq(clients.id, clientId), eq(clients.shopId, shopId)),
+            }),
+        ]);
+
+        if (!shop) return { success: false, error: "Workspace not found." };
+        if (!client) return { success: false, error: "Client not found." };
+
+        const start = startDate || new Date(new Date().getFullYear(), 0, 1);
+        const end = endDate || new Date();
+
+        const periodLabel = `${start.toLocaleDateString("en-KE", { dateStyle: "medium" })} – ${end.toLocaleDateString("en-KE", { dateStyle: "medium" })}`;
+
+        // Fetch all documents for this client in the period
+        const clientDocs = await db.query.documents.findMany({
+            where: and(
+                eq(documents.shopId, shopId),
+                eq(documents.clientId, clientId),
+                gte(documents.issueDate, start),
+                lte(documents.issueDate, end)
+            ),
+            orderBy: [desc(documents.issueDate)],
+        });
+
+        // Sort ascending for running balance calculation
+        const sorted = [...clientDocs].sort(
+            (a, b) => new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime()
+        );
+
+        let runningBalance = 0;
+        let totalDebits = 0;
+        let totalCredits = 0;
+
+        const lines: StatementLine[] = sorted.map(doc => {
+            const amount = parseFloat(doc.grandTotal || "0");
+            let debit = 0;
+            let credit = 0;
+
+            if (doc.type === "INVOICE" || doc.type === "DEBIT_NOTE") {
+                // Invoice billed = amount owed by client (debit their account)
+                if (doc.status !== "CANCELLED") {
+                    debit = amount;
+                    runningBalance += amount;
+                    totalDebits += amount;
+                }
+            } else if (doc.type === "RECEIPT") {
+                // Payment received = credits client account
+                if (!doc.parentDocumentId) {
+                    // Standalone receipt (POS)
+                    debit = amount;
+                    runningBalance += amount;
+                    totalDebits += amount;
+                } else {
+                    // Receipt settling an invoice
+                    credit = amount;
+                    runningBalance -= amount;
+                    totalCredits += amount;
+                }
+            } else if (doc.type === "CREDIT_NOTE") {
+                credit = amount;
+                runningBalance -= amount;
+                totalCredits += amount;
+            } else if (doc.type === "QUOTATION" || doc.type === "DELIVERY_NOTE") {
+                // Informational only — no financial impact
+                debit = 0;
+                credit = 0;
+            }
+
+            const docTypeLabel: Record<string, string> = {
+                INVOICE: "Invoice",
+                RECEIPT: "Payment Receipt",
+                CREDIT_NOTE: "Credit Note",
+                DEBIT_NOTE: "Debit Note",
+                QUOTATION: "Quotation",
+                DELIVERY_NOTE: "Delivery Note",
+            };
+
+            return {
+                date: new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" }),
+                reference: doc.docNumber,
+                docType: doc.type,
+                description: docTypeLabel[doc.type] || doc.type,
+                debit,
+                credit,
+                runningBalance,
+                status: doc.status,
+                docId: doc.id,
+            };
+        });
+
+        return {
+            success: true,
+            data: {
+                clientName: client.name,
+                clientEmail: client.email,
+                clientPhone: client.phone,
+                taxPin: client.taxPin,
+                currency: shop.currency || "KES",
+                shopName: shop.name,
+                periodLabel,
+                lines,
+                totalDebits,
+                totalCredits,
+                closingBalance: runningBalance,
+            },
+        };
+    } catch (error: any) {
+        console.error("Client statement error:", error);
+        return { success: false, error: "Failed to generate client statement." };
     }
 }

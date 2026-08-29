@@ -6,6 +6,14 @@ import { useRouter } from "next/navigation";
 import { useUpdateProduct, useDeleteProduct } from "@/hooks/useProducts";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
+import Link from "next/link";
+
+interface StockLocation {
+  id: string;
+  name: string;
+  code: string | null;
+  isDefault: boolean;
+}
 
 interface EditProductModalProps {
   product: {
@@ -19,12 +27,14 @@ interface EditProductModalProps {
     trackStock?: boolean;
     stockQuantity?: string;
     reorderThreshold?: string;
+    defaultLocationId?: string | null;
   };
   shopId: string;
   shopSlug: string;
+  locations?: StockLocation[];
 }
 
-export function EditProductModal({ product, shopId, shopSlug }: EditProductModalProps) {
+export function EditProductModal({ product, shopId, shopSlug, locations = [] }: EditProductModalProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -37,6 +47,10 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
   const [trackStock, setTrackStock] = useState(product.trackStock || false);
   const [stockQuantity, setStockQuantity] = useState(product.stockQuantity || "0");
   const [reorderThreshold, setReorderThreshold] = useState(product.reorderThreshold || "5");
+  const [locationId, setLocationId] = useState<string>(
+    product.defaultLocationId || locations.find(l => l.isDefault)?.id || locations[0]?.id || ""
+  );
+  const wasAlreadyTracking = product.trackStock || false;
 
   const updateProductMutation = useUpdateProduct(shopId, shopSlug);
   const deleteProductMutation = useDeleteProduct(shopId, shopSlug);
@@ -56,6 +70,7 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
         trackStock,
         stockQuantity: parseFloat(stockQuantity),
         reorderThreshold: parseFloat(reorderThreshold),
+        locationId: locationId || undefined,
       },
       {
         onSuccess: () => {
@@ -188,28 +203,66 @@ export function EditProductModal({ product, shopId, shopSlug }: EditProductModal
                 </label>
 
                 {trackStock && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-zinc-200">
-                    <div className="space-y-1">
-                      <label className="text-zinc-500 uppercase block text-[10px] font-semibold">Available Stock Quantity</label>
-                      <input
-                        type="number"
-                        step="1"
-                        min="0"
-                        value={stockQuantity}
-                        onChange={(e) => setStockQuantity(e.target.value)}
-                        className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold h-9"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-zinc-500 uppercase block text-[10px] font-semibold">Low Stock Alert Limit</label>
-                      <input
-                        type="number"
-                        step="1"
-                        min="1"
-                        value={reorderThreshold}
-                        onChange={(e) => setReorderThreshold(e.target.value)}
-                        className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold h-9"
-                      />
+                  <div className="space-y-3 pt-2 border-t border-zinc-200">
+                    {/* Location selector — only shown when enabling tracking for the first time */}
+                    {!wasAlreadyTracking && (
+                      <div className="space-y-1">
+                        <label className="text-zinc-500 uppercase block text-[10px] font-semibold">
+                          Stock Location
+                          <span className="ml-1 normal-case text-zinc-400 font-normal">(for opening balance)</span>
+                        </label>
+                        {locations.length > 0 ? (
+                          <select
+                            value={locationId}
+                            onChange={(e) => setLocationId(e.target.value)}
+                            className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold h-9"
+                          >
+                            {locations.map((loc) => (
+                              <option key={loc.id} value={loc.id}>
+                                {loc.name}{loc.code ? ` (${loc.code})` : ""}{loc.isDefault ? " — Default" : ""}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                            <span className="text-amber-800 text-[10px] font-semibold uppercase">
+                              Auto-creates "General Store" location
+                            </span>
+                            <Link
+                              href={`/workspaces/${shopSlug}/inventory/locations`}
+                              className="text-[10px] underline text-amber-700 hover:text-amber-900 whitespace-nowrap ml-2"
+                              target="_blank"
+                            >
+                              Setup →
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-zinc-500 uppercase block text-[10px] font-semibold">Available Stock Quantity</label>
+                        <input
+                          type="number"
+                          step="1"
+                          min="0"
+                          value={stockQuantity}
+                          onChange={(e) => setStockQuantity(e.target.value)}
+                          className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold h-9"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-zinc-500 uppercase block text-[10px] font-semibold">Low Stock Alert Limit</label>
+                        <input
+                          type="number"
+                          step="1"
+                          min="1"
+                          value={reorderThreshold}
+                          onChange={(e) => setReorderThreshold(e.target.value)}
+                          className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold h-9"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}

@@ -5,27 +5,33 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { createStockLocation, updateStockLocation, deleteStockLocation } from "@/lib/actions/inventory";
 import { useRouter } from "next/navigation";
+import { formatCurrency } from "@/lib/utils";
+import Link from "next/link";
 
-interface Location {
+interface LocationWithStats {
   id: string;
   name: string;
   code: string | null;
   isDefault: boolean;
   isActive: boolean;
   createdAt: Date;
+  totalProducts: number;
+  totalUnits: number;
+  totalValuation: number;
+  lowStockCount: number;
 }
 
 interface Props {
   shopId: string;
   shopSlug: string;
   shopCurrency: string;
-  initialLocations: Location[];
+  initialLocations: LocationWithStats[];
 }
 
-export function LocationsClientView({ shopId, shopSlug, initialLocations }: Props) {
+export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLocations }: Props) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
-  const [editingLocation, setEditingLocation] = useState<Location | null>(null);
+  const [editingLocation, setEditingLocation] = useState<LocationWithStats | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Form fields
@@ -41,7 +47,7 @@ export function LocationsClientView({ shopId, shopSlug, initialLocations }: Prop
     setShowForm(true);
   }
 
-  function openEdit(loc: Location) {
+  function openEdit(loc: LocationWithStats) {
     setEditingLocation(loc);
     setName(loc.name);
     setCode(loc.code || "");
@@ -89,7 +95,7 @@ export function LocationsClientView({ shopId, shopSlug, initialLocations }: Prop
     setLoading(false);
   }
 
-  async function handleDelete(loc: Location) {
+  async function handleDelete(loc: LocationWithStats) {
     if (!confirm(`Delete location "${loc.name}"? This cannot be undone.`)) return;
     const res = await deleteStockLocation(loc.id, shopSlug);
     if (res.success) {
@@ -100,6 +106,9 @@ export function LocationsClientView({ shopId, shopSlug, initialLocations }: Prop
     }
   }
 
+  const totalAllUnits = initialLocations.reduce((sum, l) => sum + l.totalUnits, 0);
+  const totalAllValuation = initialLocations.reduce((sum, l) => sum + l.totalValuation, 0);
+
   return (
     <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-mono text-xs">
 
@@ -109,7 +118,7 @@ export function LocationsClientView({ shopId, shopSlug, initialLocations }: Prop
           <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Inventory / Locations</span>
           <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Stock Locations</h1>
           <p className="font-sans text-xs text-zinc-600 mt-1">
-            Define physical storage nodes — warehouses, branches, shop floors — within this workspace.
+            Physical storage nodes — warehouses, branches, shop floors. Click any location to view its stock inventory, valuation, and movements.
           </p>
         </div>
         <button
@@ -118,6 +127,32 @@ export function LocationsClientView({ shopId, shopSlug, initialLocations }: Prop
         >
           + Add Location
         </button>
+      </div>
+
+      {/* SUMMARY STATS */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="card-modern p-5 space-y-1">
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Active Locations</p>
+          <p className="text-xl font-semibold font-mono text-black">{initialLocations.length}</p>
+          <p className="text-[10px] text-zinc-500">storage nodes</p>
+        </div>
+        <div className="card-modern p-5 space-y-1">
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Total Stock Units</p>
+          <p className="text-xl font-semibold font-mono text-black">{totalAllUnits.toLocaleString()}</p>
+          <p className="text-[10px] text-zinc-500">across all locations</p>
+        </div>
+        <div className="card-modern p-5 space-y-1">
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Total Location Value</p>
+          <p className="text-xl font-semibold font-mono text-emerald-700">{formatCurrency(totalAllValuation, shopCurrency)}</p>
+          <p className="text-[10px] text-zinc-500">combined inventory valuation</p>
+        </div>
+        <div className="card-modern p-5 space-y-1">
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Default Node</p>
+          <p className="text-sm font-semibold font-sans text-black truncate">
+            {initialLocations.find(l => l.isDefault)?.name || "None"}
+          </p>
+          <p className="text-[10px] text-zinc-500">primary fulfillment hub</p>
+        </div>
       </div>
 
       {/* CREATE / EDIT MODAL */}
@@ -196,20 +231,45 @@ export function LocationsClientView({ shopId, shopSlug, initialLocations }: Prop
             <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
               <th className="p-4 border-r border-zinc-200">Location Name</th>
               <th className="p-4 border-r border-zinc-200">Code</th>
+              <th className="p-4 border-r border-zinc-200 text-right">Products</th>
+              <th className="p-4 border-r border-zinc-200 text-right">On-Hand Units</th>
+              <th className="p-4 border-r border-zinc-200 text-right">Stock Value</th>
               <th className="p-4 border-r border-zinc-200 text-center">Default</th>
               <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-              <th className="p-4 border-r border-zinc-200">Created</th>
               <th className="p-4 text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200/80 bg-white">
             {initialLocations.map((loc) => (
-              <tr key={loc.id} className="hover:bg-zinc-50/80 transition-colors">
-                <td className="p-4 border-r border-zinc-200/80 font-sans font-semibold text-black text-sm">
-                  {loc.name}
+              <tr key={loc.id} className="hover:bg-zinc-50/80 transition-colors group">
+                <td className="p-4 border-r border-zinc-200/80">
+                  <Link
+                    href={`/workspaces/${shopSlug}/inventory/locations/${loc.id}`}
+                    className="font-sans font-bold text-black text-sm hover:underline flex items-center gap-1.5"
+                  >
+                    <span>🏢 {loc.name}</span>
+                    <span className="text-[10px] text-zinc-400 group-hover:text-black font-mono">→</span>
+                  </Link>
+                  <span className="block text-[10px] text-zinc-400 mt-0.5">
+                    Added {new Date(loc.createdAt).toLocaleDateString("en-KE", { dateStyle: "medium" })}
+                  </span>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-600 uppercase tracking-wider">
+                <td className="p-4 border-r border-zinc-200/80 text-zinc-600 uppercase tracking-wider font-semibold">
                   {loc.code || <span className="text-zinc-300 italic font-normal lowercase">unassigned</span>}
+                </td>
+                <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-black">
+                  {loc.totalProducts} items
+                  {loc.lowStockCount > 0 && (
+                    <span className="block text-[10px] text-amber-700 font-normal">
+                      ⚠️ {loc.lowStockCount} low stock
+                    </span>
+                  )}
+                </td>
+                <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-black">
+                  {loc.totalUnits.toFixed(2)}
+                </td>
+                <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-emerald-700">
+                  {formatCurrency(loc.totalValuation, shopCurrency)}
                 </td>
                 <td className="p-4 border-r border-zinc-200/80 text-center">
                   {loc.isDefault ? (
@@ -225,11 +285,14 @@ export function LocationsClientView({ shopId, shopSlug, initialLocations }: Prop
                     {loc.isActive ? "ACTIVE" : "ARCHIVED"}
                   </span>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
-                  {new Date(loc.createdAt).toLocaleDateString("en-KE", { dateStyle: "medium" })}
-                </td>
                 <td className="p-4 text-center">
                   <div className="flex items-center justify-center gap-2">
+                    <Link
+                      href={`/workspaces/${shopSlug}/inventory/locations/${loc.id}`}
+                      className="bg-black text-white px-3 py-1 text-[10px] font-semibold uppercase rounded hover:bg-zinc-800 transition-colors"
+                    >
+                      View Details →
+                    </Link>
                     <button
                       onClick={() => openEdit(loc)}
                       className="border border-zinc-300 px-3 py-1 text-[10px] font-semibold uppercase rounded hover:border-black hover:bg-zinc-50 transition-colors"
@@ -251,7 +314,7 @@ export function LocationsClientView({ shopId, shopSlug, initialLocations }: Prop
 
             {initialLocations.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-12 text-center text-zinc-400 italic">
+                <td colSpan={8} className="p-12 text-center text-zinc-400 italic">
                   &gt; NO LOCATIONS CONFIGURED YET. CLICK "+ ADD LOCATION" TO CREATE YOUR FIRST STOCK NODE.
                 </td>
               </tr>

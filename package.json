@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "make:admin": "ts-node --transpile-only scripts/make-admin.ts"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",

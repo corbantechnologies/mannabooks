@@ -9,8 +9,9 @@ import {
     stockLocations,
     products,
     shops,
+    productLocationStock,
 } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { verifyAndGetSession } from "@/lib/actions/auth";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
@@ -130,6 +131,23 @@ export async function dispatchStockTransfer(transferId: string, shopSlug: string
                 await tx.update(products)
                     .set({ stockQuantity: newStock.toString() })
                     .where(eq(products.id, item.productId));
+
+                // Deduct from source location in junction table
+                await tx
+                    .insert(productLocationStock)
+                    .values({
+                        shopId: transfer.shopId,
+                        productId: item.productId,
+                        locationId: transfer.fromLocationId,
+                        quantity: "0",
+                    })
+                    .onConflictDoUpdate({
+                        target: [productLocationStock.productId, productLocationStock.locationId],
+                        set: {
+                            quantity: sql`GREATEST(0, ${productLocationStock.quantity} - ${qty})`,
+                            updatedAt: new Date(),
+                        },
+                    });
             }
 
             // Mark transfer as IN_TRANSIT
@@ -208,6 +226,23 @@ export async function receiveStockTransfer(
                 await tx.update(stockTransferItems)
                     .set({ quantityReceived: qty.toString() })
                     .where(eq(stockTransferItems.id, received.transferItemId));
+
+                // Credit destination location in junction table
+                await tx
+                    .insert(productLocationStock)
+                    .values({
+                        shopId: transfer.shopId,
+                        productId: line.productId,
+                        locationId: transfer.toLocationId,
+                        quantity: qty.toString(),
+                    })
+                    .onConflictDoUpdate({
+                        target: [productLocationStock.productId, productLocationStock.locationId],
+                        set: {
+                            quantity: sql`${productLocationStock.quantity} + ${qty}`,
+                            updatedAt: new Date(),
+                        },
+                    });
             }
 
             // Mark transfer as COMPLETED
@@ -270,6 +305,23 @@ export async function cancelStockTransfer(transferId: string, shopSlug: string) 
                     await tx.update(products)
                         .set({ stockQuantity: restoredStock.toString() })
                         .where(eq(products.id, item.productId));
+
+                    // Restore source location in junction table
+                    await tx
+                        .insert(productLocationStock)
+                        .values({
+                            shopId: transfer.shopId,
+                            productId: item.productId,
+                            locationId: transfer.fromLocationId,
+                            quantity: qty.toString(),
+                        })
+                        .onConflictDoUpdate({
+                            target: [productLocationStock.productId, productLocationStock.locationId],
+                            set: {
+                                quantity: sql`${productLocationStock.quantity} + ${qty}`,
+                                updatedAt: new Date(),
+                            },
+                        });
                 }
             }
 

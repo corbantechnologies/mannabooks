@@ -1,11 +1,11 @@
 "use server";
 
 import { db } from "@/db";
-import { shops, subscriptions, billingTransactions } from "@/db/schema";
+import { shops, users, subscriptions, billingTransactions } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { verifyAndGetSession } from "./auth";
 import { PLAN_SPECS, getShopPlanDetails, getDynamicPlanSpecs } from "@/lib/paywall";
-import { sendMpesaStkPush, formatMpesaPhoneNumber } from "@/lib/services/mpesa";
+import { sendMpesaStkPush, formatMpesaPhoneNumber, queryMpesaStkPushStatus } from "@/lib/services/mpesa";
 import { revalidatePath } from "next/cache";
 
 export interface InitiatePaymentInput {
@@ -84,7 +84,6 @@ export async function initiateSubscriptionPaymentAction(input: InitiatePaymentIn
             checkoutRequestId: stkRes.checkoutRequestId,
             customerMessage: stkRes.customerMessage,
             amount,
-            isSimulated: stkRes.isSimulated || false,
         };
     } catch (error: any) {
         console.error("Failed to initiate subscription payment:", error);
@@ -94,7 +93,7 @@ export async function initiateSubscriptionPaymentAction(input: InitiatePaymentIn
 
 /**
  * Checks the status of an ongoing M-Pesa STK Push transaction.
- * Automatically resolves simulated transactions in development environments.
+ * Live queries Safaricom Daraja STK Query endpoint if callback is delayed.
  */
 export async function checkPaymentStatusAction(transactionId: string) {
     const session = await verifyAndGetSession();
@@ -111,28 +110,39 @@ export async function checkPaymentStatusAction(transactionId: string) {
             return { success: false, error: "Transaction record not found." };
         }
 
-        // If completed already
+        // If completed already via webhook callback
         if (tx.status === "COMPLETED") {
             return {
                 success: true,
                 status: "COMPLETED",
-                mpesaReceipt: tx.mpesaReceiptNumber,
+                mpesaReceipt: tx.mpesaReceiptNumber || "CONFIRMED",
                 targetPlan: tx.targetPlan,
             };
         }
 
-        // If simulated in test mode, complete after 4 seconds automatically
-        if (tx.checkoutRequestId.includes("SIM") && tx.status === "PENDING") {
-            const ageMs = Date.now() - new Date(tx.createdAt).getTime();
-            if (ageMs > 3500) {
-                const mockReceipt = `SIM${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
-                
+        // If already failed or cancelled
+        if (tx.status === "FAILED" || tx.status === "CANCELLED") {
+            return {
+                success: false,
+                status: tx.status,
+                error: tx.resultDesc || "Payment was cancelled or failed on the phone.",
+            };
+        }
+
+        // Proactively query Daraja STK query endpoint to verify status
+        if (tx.status === "PENDING" && tx.checkoutRequestId) {
+            const queryRes = await queryMpesaStkPushStatus(tx.checkoutRequestId);
+
+            if (queryRes.success && queryRes.resultCode === 0) {
+                // PIN entered successfully!
+                const receipt = tx.mpesaReceiptNumber || `MP${Date.now()}`;
+
                 await db.transaction(async (trx) => {
                     await trx.update(billingTransactions).set({
                         status: "COMPLETED",
                         resultCode: 0,
-                        resultDesc: "The service request is processed successfully.",
-                        mpesaReceiptNumber: mockReceipt,
+                        resultDesc: queryRes.resultDesc || "The service request is processed successfully.",
+                        mpesaReceiptNumber: receipt,
                         completedAt: new Date(),
                     }).where(eq(billingTransactions.id, tx.id));
 
@@ -145,11 +155,26 @@ export async function checkPaymentStatusAction(transactionId: string) {
                     const newExpiry = new Date(baseDate);
                     newExpiry.setDate(newExpiry.getDate() + (tx.billingMonths * 30));
 
-                    await trx.update(shops).set({
-                        plan: tx.targetPlan,
-                        subscriptionStatus: "ACTIVE",
-                        subscriptionExpiresAt: newExpiry,
-                    }).where(eq(shops.id, tx.shopId));
+                    // Upgrade User & Owned Workspaces
+                    if (shop?.ownerId) {
+                        await trx.update(users).set({
+                            plan: tx.targetPlan,
+                            subscriptionStatus: "ACTIVE",
+                            subscriptionExpiresAt: newExpiry,
+                        }).where(eq(users.id, shop.ownerId));
+
+                        await trx.update(shops).set({
+                            plan: tx.targetPlan,
+                            subscriptionStatus: "ACTIVE",
+                            subscriptionExpiresAt: newExpiry,
+                        }).where(eq(shops.ownerId, shop.ownerId));
+                    } else {
+                        await trx.update(shops).set({
+                            plan: tx.targetPlan,
+                            subscriptionStatus: "ACTIVE",
+                            subscriptionExpiresAt: newExpiry,
+                        }).where(eq(shops.id, tx.shopId));
+                    }
 
                     await trx.insert(subscriptions).values({
                         shopId: tx.shopId,
@@ -165,11 +190,47 @@ export async function checkPaymentStatusAction(transactionId: string) {
 
                 revalidatePath("/admin");
                 revalidatePath("/admin/workspaces");
+                revalidatePath("/workspaces");
+
                 return {
                     success: true,
                     status: "COMPLETED",
-                    mpesaReceipt: mockReceipt,
+                    mpesaReceipt: receipt,
                     targetPlan: tx.targetPlan,
+                };
+            } else if (queryRes.resultCode === 1032) {
+                // Customer cancelled prompt
+                await db.update(billingTransactions).set({
+                    status: "CANCELLED",
+                    resultCode: 1032,
+                    resultDesc: "Payment prompt was cancelled on the phone.",
+                    completedAt: new Date(),
+                }).where(eq(billingTransactions.id, tx.id));
+
+                return {
+                    success: false,
+                    status: "CANCELLED",
+                    error: "Payment prompt was cancelled on your phone.",
+                };
+            } else if (queryRes.resultCode === 1037) {
+                // Timeout / no response
+                await db.update(billingTransactions).set({
+                    status: "FAILED",
+                    resultCode: 1037,
+                    resultDesc: "Payment prompt timed out on the phone.",
+                    completedAt: new Date(),
+                }).where(eq(billingTransactions.id, tx.id));
+
+                return {
+                    success: false,
+                    status: "FAILED",
+                    error: "Payment prompt timed out. M-Pesa PIN was not entered in time.",
+                };
+            } else if (queryRes.isPending) {
+                return {
+                    success: true,
+                    status: "PENDING",
+                    resultDesc: "Waiting for M-Pesa PIN entry on your phone...",
                 };
             }
         }
@@ -177,7 +238,7 @@ export async function checkPaymentStatusAction(transactionId: string) {
         return {
             success: true,
             status: tx.status,
-            resultDesc: tx.resultDesc,
+            resultDesc: tx.resultDesc || "Processing transaction...",
         };
     } catch (error: any) {
         console.error("Failed to check payment status:", error);
@@ -195,33 +256,28 @@ export async function getShopBillingData(shopId: string) {
     }
 
     try {
-        const [planDetails, transactions, activeSubscription, dynamicSpecs] = await Promise.all([
-            getShopPlanDetails(shopId),
-            db.query.billingTransactions.findMany({
-                where: eq(billingTransactions.shopId, shopId),
-                orderBy: [desc(billingTransactions.createdAt)],
-                limit: 20,
-            }),
-            db.query.subscriptions.findFirst({
-                where: eq(subscriptions.shopId, shopId),
-                orderBy: [desc(subscriptions.createdAt)],
-            }),
-            getDynamicPlanSpecs(),
-        ]);
+        const details = await getShopPlanDetails(shopId);
+        const dynamicSpecs = await getDynamicPlanSpecs();
 
-        if (!planDetails) {
-            return { success: false, error: "Workspace not found." };
-        }
+        // Fetch recent billing transactions
+        const history = await db.query.billingTransactions.findMany({
+            where: eq(billingTransactions.shopId, shopId),
+            orderBy: [desc(billingTransactions.createdAt)],
+            limit: 10,
+        });
 
         return {
             success: true,
-            planDetails,
-            transactions,
-            activeSubscription,
+            planDetails: details,
             availablePlans: Object.values(dynamicSpecs),
+            transactions: history,
         };
-    } catch (error) {
-        console.error("Failed to get shop billing data:", error);
-        return { success: false, error: "Failed to retrieve billing records." };
+    } catch (error: any) {
+        console.error("Failed to fetch billing data:", error);
+        return { success: false, error: error.message || "Failed to load billing details." };
     }
+}
+
+export async function getShopBillingOverviewAction(shopId: string) {
+    return getShopBillingData(shopId);
 }

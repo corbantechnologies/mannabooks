@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { shops, subscriptions, billingTransactions } from "@/db/schema";
+import { shops, users, subscriptions, billingTransactions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
@@ -72,12 +72,26 @@ export async function POST(req: NextRequest) {
             const newExpiry = new Date(baseDate);
             newExpiry.setDate(newExpiry.getDate() + (tx.billingMonths * 30));
 
-            // 3. Upgrade shop plan
-            await trx.update(shops).set({
-                plan: tx.targetPlan,
-                subscriptionStatus: "ACTIVE",
-                subscriptionExpiresAt: newExpiry,
-            }).where(eq(shops.id, tx.shopId));
+            // 3. Upgrade user account and all owned shops (User-Centric Model)
+            if (shop?.ownerId) {
+                await trx.update(users).set({
+                    plan: tx.targetPlan,
+                    subscriptionStatus: "ACTIVE",
+                    subscriptionExpiresAt: newExpiry,
+                }).where(eq(users.id, shop.ownerId));
+
+                await trx.update(shops).set({
+                    plan: tx.targetPlan,
+                    subscriptionStatus: "ACTIVE",
+                    subscriptionExpiresAt: newExpiry,
+                }).where(eq(shops.ownerId, shop.ownerId));
+            } else {
+                await trx.update(shops).set({
+                    plan: tx.targetPlan,
+                    subscriptionStatus: "ACTIVE",
+                    subscriptionExpiresAt: newExpiry,
+                }).where(eq(shops.id, tx.shopId));
+            }
 
             // 4. Create active subscription record
             await trx.insert(subscriptions).values({
@@ -92,7 +106,7 @@ export async function POST(req: NextRequest) {
             });
         });
 
-        console.log(`✅ M-Pesa STK Push Success: Upgraded Shop ${tx.shopId} to ${tx.targetPlan} (Receipt: ${receiptNumber})`);
+        console.log(`✅ M-Pesa STK Push Success: Upgraded User/Shop ${tx.shopId} to ${tx.targetPlan} (Receipt: ${receiptNumber})`);
         return NextResponse.json({ ResultCode: 0, ResultDesc: "Success" });
     } catch (error: any) {
         console.error("Fatal error processing Daraja M-Pesa callback:", error);

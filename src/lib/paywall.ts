@@ -239,18 +239,24 @@ export async function getShopPlanDetails(shopId: string): Promise<ShopPlanDetail
 
     const dynamicSpecs = await getDynamicPlanSpecs();
 
-    // In User-Centric Billing: the plan tier and expiration are governed by the Owner User Account
+    // In User-Centric Billing: the plan tier and expiration are governed by the Owner User Account (with shop fallback)
     const isLifetimePro = Boolean(
         shop.owner?.isLifetimePro ||
         shop.owner?.isSuperAdmin ||
         shop.isLifetimePro
     );
 
-    const rawPlan = isLifetimePro ? "PRO" : ((shop.owner?.plan || "FREE").toUpperCase());
+    const userPlan = (shop.owner?.plan || "").toUpperCase();
+    const shopPlan = (shop.plan || "").toUpperCase();
+    const rawPlan = isLifetimePro
+        ? "PRO"
+        : (userPlan && userPlan !== "FREE" ? userPlan : (shopPlan && shopPlan !== "FREE" ? shopPlan : "FREE"));
+
     const effectivePlanKey = (rawPlan in dynamicSpecs) ? rawPlan : "FREE";
     const baseSpec = dynamicSpecs[effectivePlanKey] || PLAN_SPECS[effectivePlanKey] || PLAN_SPECS.FREE;
 
-    const expiresAt = shop.owner?.subscriptionExpiresAt ? new Date(shop.owner.subscriptionExpiresAt) : null;
+    const rawExpiry = shop.owner?.subscriptionExpiresAt || shop.subscriptionExpiresAt;
+    const expiresAt = rawExpiry ? new Date(rawExpiry) : null;
     const isExpired = !isLifetimePro && expiresAt !== null && Date.now() > expiresAt.getTime();
 
     const daysRemaining = expiresAt

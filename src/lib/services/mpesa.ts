@@ -2,15 +2,35 @@
  * Safaricom Daraja API Lipa Na M-Pesa Online (STK Push) Integration Service
  */
 
-const MPESA_ENV = process.env.MPESA_ENV || "sandbox";
-const DARAJA_BASE_URL = MPESA_ENV === "production"
-    ? "https://api.safaricom.co.ke"
-    : "https://sandbox.safaricom.co.ke";
+export interface DarajaConfig {
+    env: "sandbox" | "production";
+    baseUrl: string;
+    consumerKey: string;
+    consumerSecret: string;
+    passkey: string;
+    shortcode: string;
+}
 
-const CONSUMER_KEY = process.env.MPESA_CONSUMER_KEY || "";
-const CONSUMER_SECRET = process.env.MPESA_CONSUMER_SECRET || "";
-const PASSKEY = process.env.MPESA_PASSKEY || "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"; // Standard Daraja sandbox passkey
-const SHORTCODE = process.env.MPESA_SHORTCODE || "174379"; // Standard Daraja sandbox shortcode
+export function getDarajaConfig(): DarajaConfig {
+    const env = (process.env.MPESA_ENV === "production" ? "production" : "sandbox") as "sandbox" | "production";
+    const baseUrl = env === "production"
+        ? "https://api.safaricom.co.ke"
+        : "https://sandbox.safaricom.co.ke";
+
+    const consumerKey = (process.env.MPESA_CONSUMER_KEY || "").trim();
+    const consumerSecret = (process.env.MPESA_CONSUMER_SECRET || "").trim();
+    const passkey = (process.env.MPESA_PASSKEY || "").trim();
+    const shortcode = (process.env.MPESA_SHORTCODE || "174379").trim();
+
+    return {
+        env,
+        baseUrl,
+        consumerKey,
+        consumerSecret,
+        passkey,
+        shortcode,
+    };
+}
 
 /**
  * Normalizes Kenyan mobile numbers to the 2547XXXXXXXX / 2541XXXXXXXX format required by Daraja.
@@ -37,14 +57,16 @@ export async function getDarajaAccessToken(): Promise<string | null> {
         return cachedToken.token;
     }
 
-    if (!CONSUMER_KEY || !CONSUMER_SECRET) {
-        console.warn("⚠️ Daraja credentials (MPESA_CONSUMER_KEY / MPESA_CONSUMER_SECRET) not set. Operating in Simulation Mode.");
+    const config = getDarajaConfig();
+
+    if (!config.consumerKey || !config.consumerSecret) {
+        console.error("❌ Daraja credentials (MPESA_CONSUMER_KEY / MPESA_CONSUMER_SECRET) missing from environment.");
         return null;
     }
 
     try {
-        const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString("base64");
-        const response = await fetch(`${DARAJA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials`, {
+        const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString("base64");
+        const response = await fetch(`${config.baseUrl}/oauth/v1/generate?grant_type=client_credentials`, {
             method: "GET",
             headers: {
                 Authorization: `Basic ${auth}`,
@@ -53,7 +75,8 @@ export async function getDarajaAccessToken(): Promise<string | null> {
         });
 
         if (!response.ok) {
-            console.error("Daraja OAuth Failed:", response.status, await response.text());
+            const errText = await response.text();
+            console.error("Daraja OAuth Failed:", response.status, errText);
             return null;
         }
 
@@ -97,22 +120,16 @@ export async function sendMpesaStkPush(params: StkPushParams): Promise<StkPushRe
         return { success: false, error: "Invalid Kenyan phone number format. Please provide a valid 07... or 01... number." };
     }
 
+    const config = getDarajaConfig();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.mannabooks.co.ke";
     const callbackUrl = `${appUrl}/api/billing/mpesa-callback`;
 
     const token = await getDarajaAccessToken();
 
-    // If Daraja credentials are not configured in environment, provide seamless Simulation Mode
     if (!token) {
-        const simulatedCheckoutId = `ws_CO_SIM_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-        console.log(`[Daraja Simulation] Sent simulated STK Push to ${formattedPhone} for KES ${params.amount}. Checkout ID: ${simulatedCheckoutId}`);
         return {
-            success: true,
-            checkoutRequestId: simulatedCheckoutId,
-            merchantRequestId: `SIM_MR_${Date.now()}`,
-            responseCode: "0",
-            customerMessage: "Success. Request accepted for processing in simulation mode.",
-            isSimulated: true,
+            success: false,
+            error: "Unable to authenticate with Safaricom M-Pesa gateway. Please check Daraja API credentials in environment.",
         };
     }
 
@@ -126,23 +143,23 @@ export async function sendMpesaStkPush(params: StkPushParams): Promise<StkPushRe
         const seconds = String(now.getSeconds()).padStart(2, "0");
         const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
 
-        const password = Buffer.from(`${SHORTCODE}${PASSKEY}${timestamp}`).toString("base64");
+        const password = Buffer.from(`${config.shortcode}${config.passkey}${timestamp}`).toString("base64");
 
         const payload = {
-            BusinessShortCode: SHORTCODE,
+            BusinessShortCode: config.shortcode,
             Password: password,
             Timestamp: timestamp,
             TransactionType: "CustomerPayBillOnline",
-            Amount: Math.round(params.amount),
+            Amount: Math.max(1, Math.round(params.amount)),
             PartyA: formattedPhone,
-            PartyB: SHORTCODE,
+            PartyB: config.shortcode,
             PhoneNumber: formattedPhone,
             CallBackURL: callbackUrl,
             AccountReference: params.accountReference.substring(0, 12),
             TransactionDesc: params.transactionDesc.substring(0, 13),
         };
 
-        const response = await fetch(`${DARAJA_BASE_URL}/mpesa/stkpush/v1/processrequest`, {
+        const response = await fetch(`${config.baseUrl}/mpesa/stkpush/v1/processrequest`, {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -159,14 +176,14 @@ export async function sendMpesaStkPush(params: StkPushParams): Promise<StkPushRe
                 checkoutRequestId: data.CheckoutRequestID,
                 merchantRequestId: data.MerchantRequestID,
                 responseCode: data.ResponseCode,
-                customerMessage: data.CustomerMessage || "Please check your phone and enter your M-Pesa PIN.",
+                customerMessage: data.CustomerMessage || "Please check your phone and enter your M-Pesa PIN to complete payment.",
                 isSimulated: false,
             };
         } else {
             console.error("Daraja STK Push Error:", data);
             return {
                 success: false,
-                error: data.errorMessage || data.ResponseDescription || "Failed to initiate STK Push.",
+                error: data.errorMessage || data.ResponseDescription || "Safaricom rejected the payment request.",
             };
         }
     } catch (error: any) {
@@ -175,5 +192,82 @@ export async function sendMpesaStkPush(params: StkPushParams): Promise<StkPushRe
             success: false,
             error: error.message || "Failed to connect to Safaricom Daraja gateway.",
         };
+    }
+}
+
+export interface StkQueryResult {
+    success: boolean;
+    resultCode?: number;
+    resultDesc?: string;
+    isPending?: boolean;
+    error?: string;
+}
+
+/**
+ * Queries Safaricom Daraja to check if the STK Push transaction completed, cancelled, or is pending.
+ */
+export async function queryMpesaStkPushStatus(checkoutRequestId: string): Promise<StkQueryResult> {
+    const config = getDarajaConfig();
+    const token = await getDarajaAccessToken();
+
+    if (!token) {
+        return { success: false, error: "Failed to authenticate with Daraja gateway." };
+    }
+
+    try {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        const seconds = String(now.getSeconds()).padStart(2, "0");
+        const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
+
+        const password = Buffer.from(`${config.shortcode}${config.passkey}${timestamp}`).toString("base64");
+
+        const payload = {
+            BusinessShortCode: config.shortcode,
+            Password: password,
+            Timestamp: timestamp,
+            CheckoutRequestID: checkoutRequestId,
+        };
+
+        const response = await fetch(`${config.baseUrl}/mpesa/stkpushquery/v1/query`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (data.ResponseCode === "0") {
+            const resCode = parseInt(data.ResultCode, 10);
+            return {
+                success: resCode === 0,
+                resultCode: resCode,
+                resultDesc: data.ResultDesc || "Processed",
+                isPending: false,
+            };
+        } else if (data.errorCode === "500.001.1001" || data.errorMessage?.includes("ongoing")) {
+            // Transaction is still being processed on customer phone
+            return {
+                success: false,
+                isPending: true,
+                resultDesc: "Payment prompt is still pending on user's device...",
+            };
+        } else {
+            return {
+                success: false,
+                resultDesc: data.errorMessage || data.ResponseDescription,
+                isPending: false,
+            };
+        }
+    } catch (err: any) {
+        console.error("Daraja Query Error:", err);
+        return { success: false, error: err.message || "Failed to query transaction status." };
     }
 }

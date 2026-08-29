@@ -28,11 +28,22 @@ async function main() {
         process.exit(1);
     }
 
+    const { shops } = await import("../src/db/schema");
+
     await db.update(users).set({
         isSuperAdmin: true,
+        isLifetimePro: true,
     }).where(eq(users.id, user.id));
 
-    console.log(`👑 SUCCESS! ${user.name || user.email} (${user.email}) has been elevated to Super Admin (ROOT).`);
+    // Automatically grant Lifetime PRO to all shops owned by this user
+    await db.update(shops).set({
+        isLifetimePro: true,
+        subscriptionStatus: "LIFETIME_FREE",
+        plan: "PRO",
+    }).where(eq(shops.ownerId, user.id));
+
+    console.log(`👑 SUCCESS! ${user.name || user.email} (${user.email}) has been elevated to Super Admin (ROOT) & Lifetime PRO.`);
+    console.log(`All workspaces owned by this account have been automatically granted Lifetime PRO access.`);
     console.log(`Access the administrative terminal directly at: http://localhost:3000/admin or https://www.mannabooks.co.ke/admin`);
     process.exit(0);
 }

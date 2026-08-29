@@ -143,6 +143,9 @@ export async function registerOwnerAccount(input: RegisterOwnerInput) {
                 currency: "KES", // Default baseline currency
                 primaryColor: "#000000", // Stark sleek default
                 isVatRegistered: false,  // Default to non-VAT until configured
+                plan: "FREE",
+                subscriptionStatus: "ACTIVE",
+                isLifetimePro: false,
             }).returning();
 
             // 6. Create the Bridge Membership Record linking User to Shop as OWNER

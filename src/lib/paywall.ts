@@ -3,7 +3,7 @@ import { shops, shopMembers, stockLocations, platformPlans } from "@/db/schema";
 import { count, eq, asc } from "drizzle-orm";
 
 export interface PlanDefinition {
-    id: "FREE" | "BASIC" | "PRO" | "ENTERPRISE";
+    id: string; // 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE' | custom tier ID
     name: string;
     tagline: string;
     priceKesMonthly: number;
@@ -230,6 +230,9 @@ export interface ShopPlanDetails {
 export async function getShopPlanDetails(shopId: string): Promise<ShopPlanDetails | null> {
     const shop = await db.query.shops.findFirst({
         where: eq(shops.id, shopId),
+        with: {
+            owner: true,
+        },
     });
 
     if (!shop) return null;
@@ -237,12 +240,16 @@ export async function getShopPlanDetails(shopId: string): Promise<ShopPlanDetail
     const dynamicSpecs = await getDynamicPlanSpecs();
 
     // Determine effective plan tier
-    const rawPlan = (shop.plan || "PRO").toUpperCase();
-    const effectivePlanKey = (rawPlan in dynamicSpecs) ? rawPlan : "PRO";
-    const baseSpec = dynamicSpecs[effectivePlanKey] || PLAN_SPECS[effectivePlanKey] || PLAN_SPECS.PRO;
+    const rawPlan = (shop.plan || "FREE").toUpperCase();
+    const effectivePlanKey = (rawPlan in dynamicSpecs) ? rawPlan : "FREE";
+    const baseSpec = dynamicSpecs[effectivePlanKey] || PLAN_SPECS[effectivePlanKey] || PLAN_SPECS.FREE;
 
-    // Lifetime PRO automatically gets Enterprise limits with no expiration
-    const isLifetimePro = Boolean(shop.isLifetimePro);
+    // Lifetime PRO is inherited if the shop itself is flagged OR the owner account is Lifetime PRO / Super Admin
+    const isLifetimePro = Boolean(
+        shop.isLifetimePro ||
+        shop.owner?.isLifetimePro ||
+        shop.owner?.isSuperAdmin
+    );
 
     const expiresAt = shop.subscriptionExpiresAt ? new Date(shop.subscriptionExpiresAt) : null;
     const isExpired = !isLifetimePro && expiresAt !== null && Date.now() > expiresAt.getTime();

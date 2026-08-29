@@ -42,6 +42,7 @@ export const users = pgTable('users', {
     email: text('email').notNull().unique(),
     passwordHash: text('password_hash').notNull(),
     isSuperAdmin: boolean('is_super_admin').default(false).notNull(),
+    isLifetimePro: boolean('is_lifetime_pro').default(false).notNull(), // When true, all workspaces owned by this user inherit Lifetime PRO
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -74,7 +75,7 @@ export const shops = pgTable('shops', {
     citRate: numeric('cit_rate', { precision: 5, scale: 2 }).default('30.00').notNull(),
     estimatedAnnualProfit: numeric('estimated_annual_profit', { precision: 15, scale: 2 }).default('0.00').notNull(),
     // Subscription & Plan Governance
-    plan: varchar('plan', { length: 30 }).default('PRO').notNull(), // 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE'
+    plan: varchar('plan', { length: 30 }).default('FREE').notNull(), // 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE'
     subscriptionStatus: varchar('subscription_status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'TRIAL' | 'EXPIRED' | 'CANCELLED' | 'LIFETIME_FREE'
     isLifetimePro: boolean('is_lifetime_pro').default(false).notNull(), // Exempt from billing / owner shop flag
     isSuspended: boolean('is_suspended').default(false).notNull(), // Administrative lockout flag

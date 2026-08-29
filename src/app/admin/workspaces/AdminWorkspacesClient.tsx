@@ -320,7 +320,7 @@ export function AdminWorkspacesClient({ initialWorkspaces, totalCount }: AdminWo
                           type="button"
                           onClick={() => {
                             setEditingShop(shop);
-                            setSelectedPlan(shop.plan || "PRO");
+                            setSelectedPlan(shop.plan || "FREE");
                             setIsLifetimePro(shop.isLifetimePro || false);
                           }}
                           className="bg-zinc-100 hover:bg-black hover:text-white border border-zinc-300 px-2.5 py-1 rounded transition-colors font-bold uppercase"

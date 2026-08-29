@@ -81,7 +81,7 @@ export function PricingClientView({ plans }: PricingClientViewProps) {
 
       {/* PRICING CARDS */}
       <section className="px-6 py-16 max-w-7xl mx-auto w-full bg-white">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
           {plans.map((plan) => {
             const isHighlight = Boolean(plan.isHighlighted);
             const displayPrice = isAnnual ? plan.priceKesAnnually : plan.priceKesMonthly;

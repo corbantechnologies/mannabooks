@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, shops } from "@/db/schema";
 import { eq, count } from "drizzle-orm";
 import { verifyAndGetSession } from "@/lib/actions/auth";
 
@@ -63,11 +63,18 @@ async function elevateUser(email: string) {
 
     await db.update(users).set({
         isSuperAdmin: true,
+        isLifetimePro: true,
     }).where(eq(users.id, user.id));
+
+    await db.update(shops).set({
+        isLifetimePro: true,
+        subscriptionStatus: "LIFETIME_FREE",
+        plan: "PRO",
+    }).where(eq(shops.ownerId, user.id));
 
     return NextResponse.json({
         success: true,
-        message: `👑 Account "${user.email}" (${user.name || "Admin"}) has been elevated to Super Admin (ROOT).`,
+        message: `👑 Account "${user.email}" (${user.name || "Admin"}) has been elevated to Super Admin (ROOT) & Lifetime PRO. All owned workspaces have been upgraded.`,
         adminUrl: "/admin",
         instructions: "Log in and navigate to /admin to access the Platform Super Admin Terminal."
     });

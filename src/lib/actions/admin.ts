@@ -173,7 +173,7 @@ export async function getAdminWorkspacesList(input?: GetAdminWorkspacesInput) {
                     website: shop.website,
                     isVatRegistered: shop.isVatRegistered,
                     isGlEnabled: shop.isGlEnabled,
-                    plan: shop.plan || "PRO",
+                    plan: shop.plan || "FREE",
                     subscriptionStatus: shop.subscriptionStatus || "ACTIVE",
                     isLifetimePro: shop.isLifetimePro || false,
                     isSuspended: shop.isSuspended || false,
@@ -383,6 +383,7 @@ export async function getAdminUsersList(searchQuery?: string) {
             name: u.name,
             email: u.email,
             isSuperAdmin: u.isSuperAdmin,
+            isLifetimePro: u.isLifetimePro,
             createdAt: u.createdAt,
             ownedShopsCount: u.ownedShops?.length || 0,
             membershipsCount: u.memberships?.length || 0,
@@ -396,6 +397,44 @@ export async function getAdminUsersList(searchQuery?: string) {
     } catch (error) {
         console.error("Failed to fetch user list:", error);
         return { success: false, error: "Failed to list platform users." };
+    }
+}
+
+/**
+ * Grants or revokes Lifetime PRO access for a user account, cascading to all owned workspaces.
+ */
+export async function toggleUserLifetimeProAction({ userId, isLifetimePro }: { userId: string; isLifetimePro: boolean }) {
+    const currentAdmin = await enforceSuperAdmin();
+    if (!currentAdmin) {
+        return { success: false, error: "Access Denied. Super Admin privileges required." };
+    }
+
+    try {
+        const [updated] = await db.update(users).set({
+            isLifetimePro,
+        }).where(eq(users.id, userId)).returning();
+
+        // Cascade to all current workspaces owned by this user
+        await db.update(shops).set({
+            isLifetimePro,
+            subscriptionStatus: isLifetimePro ? "LIFETIME_FREE" : "ACTIVE",
+            plan: isLifetimePro ? "PRO" : "FREE",
+        }).where(eq(shops.ownerId, userId));
+
+        revalidatePath("/admin");
+        revalidatePath("/admin/users");
+        revalidatePath("/admin/workspaces");
+        revalidatePath("/workspaces");
+
+        return {
+            success: true,
+            message: isLifetimePro
+                ? `👑 Lifetime PRO granted to ${updated?.email}! All current and future workspaces owned by this account are permanently upgraded.`
+                : `Lifetime PRO revoked for ${updated?.email}.`
+        };
+    } catch (error) {
+        console.error("Failed to toggle user lifetime pro status:", error);
+        return { success: false, error: "Failed to update user lifetime status." };
     }
 }
 

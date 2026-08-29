@@ -18,23 +18,25 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <header className="bg-black text-white border-b border-zinc-800 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center shadow-sm">
-                            <span className="text-black font-black text-xs">M_</span>
-                        </div>
-                        <div className="flex flex-col">
-                            <h1 className="font-bold text-sm leading-tight tracking-tight">MANNA BOOKS SYSTEM</h1>
-                            <span className="text-[10px] text-zinc-400 font-mono tracking-wider uppercase">Global Administrative Terminal</span>
-                        </div>
+                        <Link href="/admin" className="flex items-center gap-3 no-underline text-white">
+                            <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center shadow-sm">
+                                <span className="text-black font-black text-xs">M_</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <h1 className="font-bold text-sm leading-tight tracking-tight">MANNA BOOKS ROOT</h1>
+                                <span className="text-[10px] text-zinc-400 font-mono tracking-wider uppercase">Global Administrative Terminal</span>
+                            </div>
+                        </Link>
                     </div>
                     
                     <div className="flex items-center gap-6">
                         <div className="hidden md:flex items-center gap-2 text-xs">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span className="font-mono text-zinc-300">Logged in as {adminUser.email} (ROOT)</span>
+                            <span className="font-mono text-zinc-300">ROOT: {adminUser.email}</span>
                         </div>
                         
                         <form action={logoutAction}>
-                            <button className="text-xs font-semibold text-zinc-300 hover:text-white uppercase tracking-wider transition-colors border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 rounded">
+                            <button className="text-xs font-semibold text-zinc-300 hover:text-white uppercase tracking-wider transition-colors border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 rounded cursor-pointer">
                                 Terminate Session
                             </button>
                         </form>
@@ -44,40 +46,62 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
             <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row gap-8">
                 
-                {/* Admin Sidebar */}
+                {/* Admin Sidebar Navigation */}
                 <aside className="w-full md:w-64 shrink-0">
-                    <nav className="space-y-1 bg-white border border-zinc-200/80 rounded-xl p-3 shadow-sm">
-                        <Link 
-                            href="/admin" 
-                            className="flex items-center gap-3 px-3 py-2.5 bg-black text-white rounded-lg text-sm font-bold shadow-sm"
-                        >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="14" width="7" height="7"></rect>
-                                <rect x="3" y="14" width="7" height="7"></rect>
-                            </svg>
-                            Platform Metrics
-                        </Link>
-                        
-                        <div className="pt-4 mt-4 border-t border-zinc-100">
+                    <div className="sticky top-24 space-y-4">
+                        <nav className="space-y-1.5 bg-white border border-zinc-200/80 rounded-xl p-3 shadow-xs font-mono text-xs">
+                            <div className="px-3 py-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                                Platform Navigation
+                            </div>
+                            
                             <Link 
-                                href="/dashboard" 
-                                className="flex items-center gap-3 px-3 py-2 text-zinc-600 hover:text-black hover:bg-zinc-50 rounded-lg text-sm font-semibold transition-colors"
+                                href="/admin" 
+                                className="flex items-center gap-2.5 px-3 py-2 text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg font-semibold transition-colors no-underline"
                             >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                                    <polyline points="16 17 21 12 16 7"></polyline>
-                                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                                </svg>
-                                Return to Workspaces
+                                <span>📊</span>
+                                <span>Platform Metrics</span>
                             </Link>
+
+                            <Link 
+                                href="/admin/workspaces" 
+                                className="flex items-center gap-2.5 px-3 py-2 text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg font-semibold transition-colors no-underline"
+                            >
+                                <span>🏢</span>
+                                <span>Tenant Workspaces</span>
+                            </Link>
+
+                            <Link 
+                                href="/admin/users" 
+                                className="flex items-center gap-2.5 px-3 py-2 text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg font-semibold transition-colors no-underline"
+                            >
+                                <span>👥</span>
+                                <span>User Accounts &amp; Roles</span>
+                            </Link>
+                            
+                            <div className="pt-3 mt-3 border-t border-zinc-100">
+                                <Link 
+                                    href="/dashboard" 
+                                    className="flex items-center gap-2.5 px-3 py-2 text-zinc-500 hover:text-black hover:bg-zinc-100 rounded-lg font-semibold transition-colors no-underline"
+                                >
+                                    <span>🔄</span>
+                                    <span>Return to Workspaces</span>
+                                </Link>
+                            </div>
+                        </nav>
+
+                        {/* SYSTEM HEALTH WIDGET */}
+                        <div className="bg-zinc-950 border border-zinc-800 text-white rounded-xl p-4 font-mono text-[10px] space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-zinc-400 uppercase font-bold">SYSTEM ENGINE</span>
+                                <span className="text-emerald-400 font-bold">ONLINE</span>
+                            </div>
+                            <p className="text-zinc-400">Multi-tenant isolation active with PostgreSQL Row Security.</p>
                         </div>
-                    </nav>
+                    </div>
                 </aside>
 
                 {/* Main Content Area */}
-                <main className="flex-1">
+                <main className="flex-1 min-w-0">
                     {children}
                 </main>
             </div>

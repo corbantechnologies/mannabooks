@@ -73,6 +73,14 @@ export const shops = pgTable('shops', {
     isTotActive: boolean('is_tot_active').default(false).notNull(),
     citRate: numeric('cit_rate', { precision: 5, scale: 2 }).default('30.00').notNull(),
     estimatedAnnualProfit: numeric('estimated_annual_profit', { precision: 15, scale: 2 }).default('0.00').notNull(),
+    // Subscription & Plan Governance
+    plan: varchar('plan', { length: 30 }).default('PRO').notNull(), // 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE'
+    subscriptionStatus: varchar('subscription_status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'TRIAL' | 'EXPIRED' | 'CANCELLED' | 'LIFETIME_FREE'
+    isLifetimePro: boolean('is_lifetime_pro').default(false).notNull(), // Exempt from billing / owner shop flag
+    isSuspended: boolean('is_suspended').default(false).notNull(), // Administrative lockout flag
+    suspendedReason: text('suspended_reason'),
+    trialEndsAt: timestamp('trial_ends_at'),
+    subscriptionExpiresAt: timestamp('subscription_expires_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -513,6 +521,7 @@ export const productLocationStock = pgTable('product_location_stock', {
 // 3. RELATIONS (For ORM Querying)
 // ==========================================
 export const usersRelations = relations(users, ({ many }) => ({
+    ownedShops: many(shops),
     memberships: many(shopMembers),
     sessions: many(sessions),
 }));

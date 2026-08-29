@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { toggleSuperAdminAction, toggleUserLifetimeProAction, updateUserSubscriptionAction } from "@/lib/actions/admin";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { type PlanDefinition } from "@/lib/paywall";
+import { formatCurrency } from "@/lib/utils";
 
 interface AdminUserSummary {
   id: string;
@@ -24,24 +26,50 @@ interface AdminUserSummary {
 
 interface AdminUsersClientProps {
   initialUsers: AdminUserSummary[];
+  availablePlans?: PlanDefinition[];
 }
 
-export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
+export function AdminUsersClient({ initialUsers, availablePlans = [] }: AdminUsersClientProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState<AdminUserSummary[]>(initialUsers);
 
-  // Change Plan Modal State
-  const [planEditingUser, setPlanEditingUser] = useState<AdminUserSummary | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<string>("FREE");
-  const [isPlanLifetime, setIsPlanLifetime] = useState<boolean>(false);
-  const [expiryMonths, setExpiryMonths] = useState<number>(1);
-  const [isSavingPlan, setIsSavingPlan] = useState<boolean>(false);
+  // Upgrade Popover State (Anchored to specific user row)
+  const [popoverUserId, setPopoverUserId] = useState<string | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("FREE");
+  const [isLifetimeSelection, setIsLifetimeSelection] = useState<boolean>(false);
+  const [selectedMonths, setSelectedMonths] = useState<number>(1);
+  const [isSavingSubscription, setIsSavingSubscription] = useState<boolean>(false);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
 
   // Confirmation Modal States
   const [targetUser, setTargetUser] = useState<AdminUserSummary | null>(null);
   const [modalAction, setModalAction] = useState<"ADMIN" | "LIFETIME_PRO" | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Close popover on outside click or escape
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setPopoverUserId(null);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setPopoverUserId(null);
+      }
+    }
+
+    if (popoverUserId) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [popoverUserId]);
 
   const filtered = users.filter((u) => {
     if (!search.trim()) return true;
@@ -53,51 +81,125 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
     );
   });
 
-  function openPlanModal(user: AdminUserSummary) {
-    setPlanEditingUser(user);
-    setSelectedPlan(user.plan || "FREE");
-    setIsPlanLifetime(user.isLifetimePro || false);
-    setExpiryMonths(1);
+  // Default fallback plans if dynamic plans array is empty
+  const planTiers: PlanDefinition[] = availablePlans.length > 0
+    ? availablePlans
+    : [
+        {
+          id: "FREE",
+          name: "Free",
+          tagline: "Essential starter suite",
+          priceKesMonthly: 0,
+          priceKesAnnually: 0,
+          annualDiscountPercent: 0,
+          maxMembers: 1,
+          maxLocations: 1,
+          canTransferStock: false,
+          hasGeneralLedger: false,
+          hasReconciliation: false,
+          hasStatutoryPayroll: false,
+          hasApiAccess: false,
+          features: ["1 Team Member", "1 Stock Location"],
+        },
+        {
+          id: "BASIC",
+          name: "Basic",
+          tagline: "Growing small business",
+          priceKesMonthly: 1200,
+          priceKesAnnually: 11500,
+          annualDiscountPercent: 20,
+          maxMembers: 3,
+          maxLocations: 2,
+          canTransferStock: true,
+          hasGeneralLedger: false,
+          hasReconciliation: false,
+          hasStatutoryPayroll: false,
+          hasApiAccess: false,
+          features: ["3 Team Members", "2 Stock Locations", "Stock Transfers"],
+        },
+        {
+          id: "PRO",
+          name: "Professional",
+          tagline: "Full Financial & Inventory Suite",
+          priceKesMonthly: 3500,
+          priceKesAnnually: 33600,
+          annualDiscountPercent: 20,
+          maxMembers: 10,
+          maxLocations: 5,
+          canTransferStock: true,
+          hasGeneralLedger: true,
+          hasReconciliation: true,
+          hasStatutoryPayroll: true,
+          hasApiAccess: false,
+          badge: "Most Popular",
+          isHighlighted: true,
+          features: ["10 Team Members", "5 Stock Locations", "Full General Ledger", "Statutory Payroll"],
+        },
+        {
+          id: "ENTERPRISE",
+          name: "Enterprise",
+          tagline: "Multi-branch retail & commercial",
+          priceKesMonthly: 8500,
+          priceKesAnnually: 81600,
+          annualDiscountPercent: 20,
+          maxMembers: Infinity,
+          maxLocations: Infinity,
+          canTransferStock: true,
+          hasGeneralLedger: true,
+          hasReconciliation: true,
+          hasStatutoryPayroll: true,
+          hasApiAccess: true,
+          badge: "Unlimited",
+          features: ["Unlimited Members", "Unlimited Locations", "Dedicated Support", "Full API Access"],
+        },
+      ];
+
+  function toggleUpgradePopover(user: AdminUserSummary) {
+    if (popoverUserId === user.id) {
+      setPopoverUserId(null);
+    } else {
+      setPopoverUserId(user.id);
+      setSelectedPlanId(user.plan || "FREE");
+      setIsLifetimeSelection(user.isLifetimePro || false);
+      setSelectedMonths(1);
+    }
   }
 
-  async function handleSaveUserPlan(e: React.FormEvent) {
-    e.preventDefault();
-    if (!planEditingUser) return;
-
-    setIsSavingPlan(true);
-    const toastId = toast.loading(`Updating subscription for ${planEditingUser.email}...`);
+  async function handleApplyUpgrade(user: AdminUserSummary) {
+    setIsSavingSubscription(true);
+    const toastId = toast.loading(`Updating subscription for ${user.email}...`);
 
     let expiryDate: Date | null = null;
-    if (!isPlanLifetime && selectedPlan !== "FREE") {
+    if (!isLifetimeSelection && selectedPlanId !== "FREE") {
       const d = new Date();
-      d.setDate(d.getDate() + expiryMonths * 30);
+      d.setDate(d.getDate() + selectedMonths * 30);
       expiryDate = d;
     }
 
     const res = await updateUserSubscriptionAction({
-      userId: planEditingUser.id,
-      plan: isPlanLifetime ? "PRO" : selectedPlan,
-      isLifetimePro: isPlanLifetime,
+      userId: user.id,
+      plan: isLifetimeSelection ? "PRO" : selectedPlanId,
+      isLifetimePro: isLifetimeSelection,
       subscriptionExpiresAt: expiryDate,
     });
 
-    setIsSavingPlan(false);
+    setIsSavingSubscription(false);
 
     if (res.success) {
       toast.success(res.message || "User subscription updated!", { id: toastId });
       setUsers((prev) =>
         prev.map((item) =>
-          item.id === planEditingUser.id
+          item.id === user.id
             ? {
                 ...item,
-                plan: isPlanLifetime ? "PRO" : selectedPlan,
-                isLifetimePro: isPlanLifetime,
+                plan: isLifetimeSelection ? "PRO" : selectedPlanId,
+                isLifetimePro: isLifetimeSelection,
                 subscriptionExpiresAt: expiryDate,
               }
             : item
         )
       );
-      setPlanEditingUser(null);
+      setPopoverUserId(null);
       router.refresh();
     } else {
       toast.error(res.error || "Failed to update subscription.", { id: toastId });
@@ -176,7 +278,7 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
             Platform Users ({users.length})
           </h2>
           <p className="text-xs text-zinc-500 font-mono mt-1">
-            Manage user subscriptions, plan tiers, and Lifetime PRO privileges. All workspaces created by a user operate under their user subscription tier.
+            Grant any subscription plan tier, duration upgrades, or Lifetime PRO access to user accounts. All workspaces created by a user operate under their user tier.
           </p>
         </div>
       </div>
@@ -202,8 +304,8 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
       </div>
 
       {/* USERS TABLE */}
-      <div className="bg-white border border-zinc-200/80 rounded-xl shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white border border-zinc-200/80 rounded-xl shadow-xs overflow-visible">
+        <div className="overflow-x-auto overflow-y-visible">
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50 text-[10px] text-zinc-400 uppercase font-bold tracking-wider">
@@ -225,10 +327,10 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
               ) : (
                 filtered.map((u) => {
                   const isLifetime = u.isLifetimePro || u.isSuperAdmin;
-                  const displayPlan = isLifetime ? "LIFETIME PRO" : u.plan.toUpperCase();
+                  const isPopoverOpen = popoverUserId === u.id;
 
                   return (
-                    <tr key={u.id} className="hover:bg-zinc-50/80 transition-colors">
+                    <tr key={u.id} className="hover:bg-zinc-50/80 transition-colors relative">
                       
                       {/* NAME & EMAIL */}
                       <td className="py-3.5 px-4 font-sans">
@@ -305,21 +407,183 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
                         {new Date(u.createdAt).toLocaleDateString("en-KE")}
                       </td>
 
-                      {/* GOVERNANCE ACTIONS */}
-                      <td className="py-3.5 px-4 text-right">
+                      {/* GOVERNANCE ACTIONS (POPOVER TRIGGER & BUTTONS) */}
+                      <td className="py-3.5 px-4 text-right relative">
                         <div className="inline-flex items-center justify-end gap-1.5">
                           
-                          {/* UPGRADE / CHANGE PLAN BUTTON */}
-                          <button
-                            type="button"
-                            onClick={() => openPlanModal(u)}
-                            className="inline-flex items-center gap-1.5 h-7.5 px-3 rounded-lg bg-zinc-900 hover:bg-black text-white font-mono text-[11px] font-bold uppercase shadow-2xs transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap cursor-pointer"
-                          >
-                            <span className="text-amber-400 text-xs">⚡</span>
-                            <span>Plan</span>
-                          </button>
+                          {/* POPOVER TRIGGER BUTTON */}
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => toggleUpgradePopover(u)}
+                              className={`inline-flex items-center gap-1.5 h-7.5 px-3 rounded-lg font-mono text-[11px] font-bold uppercase transition-all shadow-2xs cursor-pointer ${
+                                isPopoverOpen
+                                  ? "bg-amber-500 text-white shadow-md ring-2 ring-amber-400/40"
+                                  : "bg-zinc-900 hover:bg-black text-white hover:scale-[1.02] active:scale-95"
+                              }`}
+                            >
+                              <span className={isPopoverOpen ? "text-white" : "text-amber-400"}>⚡</span>
+                              <span>Upgrade Tier</span>
+                              <span className="text-[9px] opacity-70">▾</span>
+                            </button>
 
-                          {/* TOGGLE LIFETIME PRO BUTTON */}
+                            {/* UPGRADE POPOVER FLYOUT */}
+                            {isPopoverOpen && (
+                              <div
+                                ref={popoverRef}
+                                className="absolute right-0 top-full mt-2 w-88 sm:w-96 bg-white border border-zinc-300/80 rounded-2xl shadow-2xl p-5 space-y-4 z-50 text-left animate-in fade-in zoom-in-95 font-sans"
+                              >
+                                {/* POPOVER HEADER */}
+                                <div className="flex justify-between items-start border-b border-zinc-100 pb-3">
+                                  <div>
+                                    <span className="font-mono text-[9px] text-zinc-400 uppercase font-bold tracking-widest block">
+                                      Grant Plan &amp; Upgrades
+                                    </span>
+                                    <div className="font-bold text-black text-sm mt-0.5">{u.name}</div>
+                                    <div className="font-mono text-[10px] text-zinc-500">{u.email}</div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setPopoverUserId(null)}
+                                    className="text-zinc-400 hover:text-black p-1 text-xs font-bold cursor-pointer"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+
+                                {/* PLAN TIER PICKER */}
+                                <div className="space-y-2">
+                                  <label className="font-mono text-[10px] font-bold text-zinc-700 uppercase tracking-wider block">
+                                    1. Choose Plan Tier
+                                  </label>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {planTiers.map((p) => {
+                                      const isSelected = selectedPlanId === p.id && !isLifetimeSelection;
+                                      return (
+                                        <button
+                                          key={p.id}
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedPlanId(p.id);
+                                            setIsLifetimeSelection(false);
+                                          }}
+                                          className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                                            isSelected
+                                              ? "border-black bg-zinc-900 text-white shadow-xs"
+                                              : "border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-800"
+                                          }`}
+                                        >
+                                          <div className="flex justify-between items-center">
+                                            <span className="font-mono text-xs font-black uppercase">{p.name}</span>
+                                            {p.badge && (
+                                              <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded uppercase ${
+                                                isSelected ? "bg-amber-400 text-black" : "bg-zinc-200 text-zinc-700"
+                                              }`}>
+                                                {p.badge}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div className={`font-mono text-[10px] mt-0.5 ${isSelected ? "text-zinc-300" : "text-zinc-500"}`}>
+                                            {p.priceKesMonthly === 0 ? "Free" : `${formatCurrency(p.priceKesMonthly, "KES")}/mo`}
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                {/* LIFETIME TOGGLE */}
+                                <div className="bg-amber-50 border border-amber-200/80 p-3 rounded-xl">
+                                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                                    <input
+                                      type="checkbox"
+                                      checked={isLifetimeSelection}
+                                      onChange={(e) => {
+                                        setIsLifetimeSelection(e.target.checked);
+                                        if (e.target.checked) setSelectedPlanId("PRO");
+                                      }}
+                                      className="w-4 h-4 accent-amber-600 rounded"
+                                    />
+                                    <div>
+                                      <span className="text-amber-950 font-bold text-xs font-mono block">
+                                        ⭐ Grant Lifetime Access (VIP)
+                                      </span>
+                                      <span className="text-[10px] text-amber-800 font-sans leading-tight block">
+                                        Permanent unlimited capacity with zero subscription expiration.
+                                      </span>
+                                    </div>
+                                  </label>
+                                </div>
+
+                                {/* DURATION SELECTION (IF NOT LIFETIME OR FREE) */}
+                                {!isLifetimeSelection && selectedPlanId !== "FREE" && (
+                                  <div className="space-y-2">
+                                    <label className="font-mono text-[10px] font-bold text-zinc-700 uppercase tracking-wider block">
+                                      2. Grant Duration
+                                    </label>
+                                    <div className="grid grid-cols-4 gap-1.5 font-mono text-[10px] font-bold">
+                                      {[
+                                        { months: 1, label: "1 Mo" },
+                                        { months: 3, label: "3 Mo" },
+                                        { months: 6, label: "6 Mo" },
+                                        { months: 12, label: "1 Year" },
+                                      ].map((d) => (
+                                        <button
+                                          key={d.months}
+                                          type="button"
+                                          onClick={() => setSelectedMonths(d.months)}
+                                          className={`py-1.5 rounded-lg border transition-all cursor-pointer text-center ${
+                                            selectedMonths === d.months
+                                              ? "bg-black text-white border-black font-black"
+                                              : "bg-white text-zinc-700 border-zinc-200 hover:border-zinc-400"
+                                          }`}
+                                        >
+                                          {d.label}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* PREVIEW EXPIRATION */}
+                                <div className="bg-zinc-50 border border-zinc-200 p-2.5 rounded-lg font-mono text-[10px] text-zinc-600 flex justify-between items-center">
+                                  <span className="text-zinc-500">Effective Expiry:</span>
+                                  <span className="font-bold text-black">
+                                    {isLifetimeSelection
+                                      ? "Never (Lifetime ∞)"
+                                      : selectedPlanId === "FREE"
+                                      ? "Standard Free Tier"
+                                      : `${new Date(Date.now() + selectedMonths * 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-KE")} (+${selectedMonths} mo)`}
+                                  </span>
+                                </div>
+
+                                {/* ACTION BUTTONS */}
+                                <div className="pt-2 flex items-center justify-end gap-2 border-t border-zinc-100">
+                                  <button
+                                    type="button"
+                                    onClick={() => setPopoverUserId(null)}
+                                    className="px-3.5 py-1.5 border border-zinc-200 hover:bg-zinc-100 rounded-lg text-xs font-mono font-bold uppercase cursor-pointer"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleApplyUpgrade(u)}
+                                    disabled={isSavingSubscription}
+                                    className="px-4 py-1.5 bg-black hover:bg-zinc-800 text-white rounded-lg text-xs font-mono font-bold uppercase shadow-sm disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    {isSavingSubscription && (
+                                      <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                    )}
+                                    <span>Apply Upgrade</span>
+                                  </button>
+                                </div>
+
+                              </div>
+                            )}
+                          </div>
+
+                          {/* QUICK TOGGLE LIFETIME PRO BUTTON */}
                           <button
                             type="button"
                             onClick={() => {
@@ -363,123 +627,6 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
           </table>
         </div>
       </div>
-
-      {/* PLAN UPGRADE MODAL */}
-      {planEditingUser && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-2xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-zinc-200 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5 animate-in zoom-in-95 font-sans">
-            <div className="flex justify-between items-start border-b border-zinc-200 pb-3">
-              <div>
-                <span className="font-mono text-[10px] text-zinc-400 uppercase font-bold tracking-widest">
-                  User Subscription Governance
-                </span>
-                <h3 className="text-lg font-black text-black uppercase">
-                  Upgrade {planEditingUser.name}
-                </h3>
-                <span className="text-xs text-zinc-500 font-mono">{planEditingUser.email}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPlanEditingUser(null)}
-                className="text-zinc-400 hover:text-black font-bold p-1 text-base cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveUserPlan} className="space-y-4 font-mono text-xs">
-              
-              {/* SELECT PLAN TIER */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-zinc-700 uppercase block">Select Plan Tier</label>
-                <select
-                  value={selectedPlan}
-                  onChange={(e) => setSelectedPlan(e.target.value)}
-                  disabled={isPlanLifetime}
-                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs font-mono font-bold focus:outline-none focus:border-black bg-white"
-                >
-                  <option value="FREE">FREE - Base Quota (1 User, 1 Branch)</option>
-                  <option value="BASIC">BASIC - Growing Small Business</option>
-                  <option value="PRO">PRO - Full General Ledger &amp; Transfers</option>
-                  <option value="ENTERPRISE">ENTERPRISE - Unlimited Capacity</option>
-                </select>
-              </div>
-
-              {/* LIFETIME PRO TOGGLE */}
-              <div className="bg-amber-50/70 border border-amber-200 p-3 rounded-xl space-y-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={isPlanLifetime}
-                    onChange={(e) => setIsPlanLifetime(e.target.checked)}
-                    className="w-4 h-4 accent-amber-600 rounded"
-                  />
-                  <span className="text-amber-950 font-bold text-xs">⭐ Grant Lifetime PRO (No Expiry)</span>
-                </label>
-                <p className="text-[10px] text-amber-700 font-sans leading-tight pl-6">
-                  Permanently exempts this user and all their current &amp; future workspaces from billing.
-                </p>
-              </div>
-
-              {/* DURATION (IF NOT LIFETIME OR FREE) */}
-              {!isPlanLifetime && selectedPlan !== "FREE" && (
-                <div className="space-y-1.5 bg-zinc-50 p-3 rounded-xl border border-zinc-200">
-                  <label className="text-[11px] font-bold text-zinc-700 uppercase block">Subscription Duration</label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setExpiryMonths(1)}
-                      className={`flex-1 py-1.5 rounded-lg border text-xs font-bold ${
-                        expiryMonths === 1 ? "bg-black text-white border-black" : "bg-white text-zinc-700 border-zinc-300"
-                      }`}
-                    >
-                      1 Month
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setExpiryMonths(3)}
-                      className={`flex-1 py-1.5 rounded-lg border text-xs font-bold ${
-                        expiryMonths === 3 ? "bg-black text-white border-black" : "bg-white text-zinc-700 border-zinc-300"
-                      }`}
-                    >
-                      3 Months
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setExpiryMonths(12)}
-                      className={`flex-1 py-1.5 rounded-lg border text-xs font-bold ${
-                        expiryMonths === 12 ? "bg-black text-white border-black" : "bg-white text-zinc-700 border-zinc-300"
-                      }`}
-                    >
-                      1 Year (Annual)
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* SUBMIT BUTTONS */}
-              <div className="pt-3 border-t border-zinc-200 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPlanEditingUser(null)}
-                  className="px-4 py-2 border border-zinc-300 hover:bg-zinc-100 font-bold uppercase text-[11px] rounded-lg cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSavingPlan}
-                  className="bg-black hover:bg-zinc-800 text-white font-bold uppercase text-[11px] px-5 py-2 rounded-lg shadow-sm disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
-                >
-                  {isSavingPlan && <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>}
-                  <span>Apply Subscription</span>
-                </button>
-              </div>
-
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* CONFIRMATION MODAL */}
       <ConfirmModal

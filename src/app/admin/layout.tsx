@@ -85,6 +85,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                                 <span>💳</span>
                                 <span>Pricing &amp; Plan Tiers</span>
                             </Link>
+
+                            <Link 
+                                href="/admin/guide" 
+                                className="flex items-center gap-2.5 px-3 py-2 text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg font-semibold transition-colors no-underline"
+                            >
+                                <span>📖</span>
+                                <span>Admin Operations Guide</span>
+                            </Link>
                             
                             <div className="pt-3 mt-3 border-t border-zinc-100">
                                 <Link 

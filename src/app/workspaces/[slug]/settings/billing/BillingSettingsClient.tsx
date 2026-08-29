@@ -15,6 +15,13 @@ interface BillingSettingsClientProps {
   transactions: any[];
 }
 
+const PLAN_RANK_MAP: Record<string, number> = {
+  FREE: 0,
+  BASIC: 1,
+  PRO: 2,
+  ENTERPRISE: 3,
+};
+
 export function BillingSettingsClient({
   shop,
   planDetails,
@@ -267,7 +274,11 @@ export function BillingSettingsClient({
         {/* PRICING CARDS MATRIX */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {availablePlans.filter(p => p.id !== "ENTERPRISE").map((plan) => {
-            const isCurrent = planDetails.plan === plan.id && !planDetails.isLifetimePro;
+            const currentRank = PLAN_RANK_MAP[planDetails.plan.toUpperCase()] ?? 0;
+            const targetRank = PLAN_RANK_MAP[plan.id.toUpperCase()] ?? 0;
+            const isUpgrade = targetRank > currentRank;
+            const isDowngrade = targetRank < currentRank;
+            const isCurrent = planDetails.plan.toUpperCase() === plan.id.toUpperCase() && !planDetails.isLifetimePro;
             const calculatedTotal = (selectedDuration >= 12 && plan.priceKesAnnually > 0)
               ? plan.priceKesAnnually
               : Math.round(plan.priceKesMonthly * selectedDuration * discountMultiplier);
@@ -347,6 +358,20 @@ export function BillingSettingsClient({
                       className="w-full bg-zinc-100 text-zinc-400 font-mono font-bold text-xs uppercase py-2.5 rounded-lg cursor-default border border-zinc-200"
                     >
                       Included
+                    </button>
+                  ) : isDowngrade ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTargetPlan(plan);
+                        setPhoneNumber(shop.phone || "");
+                        setPaymentSuccessReceipt(null);
+                        setActiveTxId(null);
+                      }}
+                      className="w-full bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border border-zinc-300 font-mono font-bold text-xs uppercase py-2.5 rounded-lg shadow-2xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <span>🔻</span>
+                      <span>Downgrade with M-Pesa</span>
                     </button>
                   ) : (
                     <button
@@ -446,7 +471,11 @@ export function BillingSettingsClient({
               <div>
                 <span className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Lipa Na M-Pesa Online</span>
                 <h3 className="text-lg font-black text-black uppercase">
-                  Upgrade to {targetPlan.name}
+                  {((PLAN_RANK_MAP[targetPlan.id.toUpperCase()] ?? 0) < (PLAN_RANK_MAP[planDetails.plan.toUpperCase()] ?? 0))
+                    ? `Downgrade to ${targetPlan.name}`
+                    : ((PLAN_RANK_MAP[targetPlan.id.toUpperCase()] ?? 0) > (PLAN_RANK_MAP[planDetails.plan.toUpperCase()] ?? 0))
+                    ? `Upgrade to ${targetPlan.name}`
+                    : `Renew ${targetPlan.name}`}
                 </h3>
               </div>
               <button
@@ -470,7 +499,9 @@ export function BillingSettingsClient({
                     Receipt Ref: <strong className="text-black">{paymentSuccessReceipt}</strong>
                   </p>
                   <p className="text-xs text-emerald-700 font-bold mt-2">
-                    Your workspace has been upgraded to {targetPlan.name}. All features are now unlocked!
+                    {((PLAN_RANK_MAP[targetPlan.id.toUpperCase()] ?? 0) < (PLAN_RANK_MAP[planDetails.plan.toUpperCase()] ?? 0))
+                      ? `Your workspace plan has been switched to ${targetPlan.name}.`
+                      : `Your workspace has been upgraded to ${targetPlan.name}. All features are now unlocked!`}
                   </p>
                 </div>
                 <button

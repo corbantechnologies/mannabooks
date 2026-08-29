@@ -133,6 +133,12 @@ export default async function ClientProfileLedgerPage({ params, searchParams }: 
               </span>
             )}
             <Link
+              href={`/workspaces/${slug}/clients/${clientRecord.id}/statement`}
+              className="border border-black bg-black text-white px-3 py-1 font-semibold uppercase tracking-wider text-[11px] rounded hover:bg-zinc-800 transition-colors"
+            >
+              📜 Statement of Account
+            </Link>
+            <Link
               href={`/workspaces/${slug}/documents/new?clientId=${clientRecord.id}`}
               className="btn-primary-modern px-3 py-1 font-semibold uppercase tracking-wider text-[11px]"
             >

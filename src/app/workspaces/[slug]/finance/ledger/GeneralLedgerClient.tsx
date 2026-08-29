@@ -112,6 +112,37 @@ export default function GeneralLedgerClient({ shopId, shopSlug, glOnboardingMode
 
     const totalAmount = filtered.reduce((s, e) => s + parseFloat(e.amount || "0"), 0);
 
+    function handleCsvExport() {
+        const rows = [
+            ["GENERAL LEDGER JOURNAL ENTRIES"],
+            ["Shop:", shopSlug],
+            ["Export Date:", new Date().toLocaleDateString("en-KE", { dateStyle: "long" })],
+            [],
+            ["Date", "Description", "Debit Account Code", "Debit Account Name", "Credit Account Code", "Credit Account Name", "Amount (KES)", "Source Type", "Backdated?", "Created By"],
+            ...filtered.map(e => [
+                new Date(e.entryDate).toLocaleDateString("en-KE", { dateStyle: "medium" }),
+                `"${e.description.replace(/"/g, '""')}"`,
+                e.debitAccountCode,
+                `"${e.debitAccountName}"`,
+                e.creditAccountCode,
+                `"${e.creditAccountName}"`,
+                e.amount,
+                e.sourceType,
+                e.isBackdated ? "YES" : "NO",
+                `"${e.createdByName || "System"}"`,
+            ]),
+            [],
+            ["TOTAL VALUATION", "", "", "", "", "", totalAmount.toFixed(2), "", "", ""],
+        ];
+        const csv = rows.map(r => r.join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `GeneralLedger_${shopSlug}_${new Date().toISOString().split("T")[0]}.csv`;
+        a.click();
+    }
+
     return (
         <div className="space-y-5">
             {message && (
@@ -134,6 +165,10 @@ export default function GeneralLedgerClient({ shopId, shopSlug, glOnboardingMode
                     <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
                         placeholder="Search entries..."
                         className="border border-zinc-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-black w-48" />
+                    <button onClick={handleCsvExport}
+                        className="px-3.5 py-2 rounded-lg font-mono text-xs uppercase font-bold border border-zinc-200 bg-white hover:border-zinc-400 transition-colors">
+                        Export CSV
+                    </button>
                     <button onClick={() => setShowForm(v => !v)}
                         className="bg-black text-white px-4 py-2 rounded-lg font-mono text-xs uppercase font-bold hover:bg-zinc-800 transition-colors">
                         + Manual Entry

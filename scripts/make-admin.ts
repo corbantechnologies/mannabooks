@@ -1,8 +1,4 @@
-import { db } from "../src/db";
-import { users } from "../src/db/schema";
-import { eq } from "drizzle-orm";
 import * as dotenv from "dotenv";
-
 dotenv.config({ path: ".env.local" });
 dotenv.config();
 
@@ -11,9 +7,14 @@ async function main() {
 
     if (!targetEmail) {
         console.error("❌ Please provide an email address.");
-        console.log("Usage: npx ts-node scripts/make-admin.ts <email@domain.com>");
+        console.log("Usage: npm run make:admin <email@domain.com>");
         process.exit(1);
     }
+
+    // Dynamically import db after dotenv has populated process.env.DATABASE_URL
+    const { db } = await import("../src/db");
+    const { users } = await import("../src/db/schema");
+    const { eq } = await import("drizzle-orm");
 
     console.log(`🔍 Searching for account: ${targetEmail}...`);
 
@@ -23,6 +24,7 @@ async function main() {
 
     if (!user) {
         console.error(`❌ No user found with email: ${targetEmail}`);
+        console.log("Please ensure this user has registered/signed up on MannaBooks first.");
         process.exit(1);
     }
 
@@ -30,8 +32,8 @@ async function main() {
         isSuperAdmin: true,
     }).where(eq(users.id, user.id));
 
-    console.log(`👑 SUCCESS! ${user.name} (${user.email}) has been elevated to Super Admin (ROOT).`);
-    console.log(`You can now log in and access the administrative terminal at /admin`);
+    console.log(`👑 SUCCESS! ${user.name || user.email} (${user.email}) has been elevated to Super Admin (ROOT).`);
+    console.log(`Access the administrative terminal directly at: http://localhost:3000/admin or https://www.mannabooks.co.ke/admin`);
     process.exit(0);
 }
 

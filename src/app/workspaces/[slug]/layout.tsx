@@ -123,6 +123,19 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
 
         {/* FOOTER USER MANAGEMENT COMPONENT */}
         <div className="p-6 border-t border-zinc-200/80 bg-zinc-50/50 flex flex-col gap-2 font-sans text-xs">
+          {user.isSuperAdmin && (
+            <Link
+              href="/admin"
+              className="bg-black hover:bg-zinc-800 text-amber-300 border border-amber-500/40 px-3 py-2 rounded-lg font-mono text-[10px] font-bold uppercase tracking-wider flex items-center justify-between no-underline transition-all shadow-xs mb-1"
+            >
+              <span className="flex items-center gap-1.5">
+                <span>👑</span>
+                <span>Super Admin</span>
+              </span>
+              <span>Terminal &rarr;</span>
+            </Link>
+          )}
+
           <div className="truncate">
             <span className="text-zinc-400 block text-[10px] uppercase font-bold">Active Operator</span>
             <span className="font-semibold text-black">{user.name}</span>
@@ -154,6 +167,15 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
             )}
           </div>
           <div className="flex items-center gap-6">
+            {user.isSuperAdmin && (
+              <Link
+                href="/admin"
+                className="bg-black hover:bg-zinc-800 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 no-underline transition-all shadow-xs"
+              >
+                <span>👑</span>
+                <span>Platform Admin</span>
+              </Link>
+            )}
             <div className="flex items-center gap-1.5 font-sans text-xs text-zinc-500">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>Operator:</span>

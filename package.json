@@ -9,7 +9,7 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "make:admin": "ts-node --transpile-only scripts/make-admin.ts"
+    "make:admin": "npx tsx scripts/make-admin.ts"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",

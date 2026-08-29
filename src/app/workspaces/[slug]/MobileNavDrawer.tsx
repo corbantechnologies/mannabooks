@@ -18,6 +18,7 @@ interface MobileNavDrawerProps {
   };
   user: {
     name: string;
+    isSuperAdmin?: boolean;
   };
 }
 
@@ -230,20 +231,33 @@ export function MobileNavDrawer({ slug, shop, user }: MobileNavDrawerProps) {
           </div>
 
           {/* USER FOOTER & LOGOUT */}
-          <div className="pt-4 border-t border-black flex justify-between items-center bg-zinc-50 p-4">
-            <div>
-              <span className="text-zinc-400 block text-[9px] uppercase">OPERATOR</span>
-              <span className="font-bold text-black uppercase">{user.name}</span>
-            </div>
-
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                className="border border-black bg-black text-white px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-zinc-800 transition-colors"
+          <div className="pt-4 border-t border-black space-y-3 bg-zinc-50 p-4">
+            {user.isSuperAdmin && (
+              <Link
+                href="/admin"
+                onClick={() => setIsOpen(false)}
+                className="bg-black text-amber-300 border border-amber-500/40 px-3 py-2 rounded-lg font-mono text-[10px] font-bold uppercase tracking-wider flex items-center justify-between no-underline"
               >
-                Logout
-              </button>
-            </form>
+                <span>👑 Super Admin Terminal</span>
+                <span>&rarr;</span>
+              </Link>
+            )}
+
+            <div className="flex justify-between items-center">
+              <div>
+                <span className="text-zinc-400 block text-[9px] uppercase">OPERATOR</span>
+                <span className="font-bold text-black uppercase">{user.name}</span>
+              </div>
+
+              <form action={logoutAction}>
+                <button
+                  type="submit"
+                  className="border border-black bg-black text-white px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-zinc-800 transition-colors"
+                >
+                  Logout
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}

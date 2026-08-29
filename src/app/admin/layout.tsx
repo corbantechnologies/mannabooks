@@ -16,7 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             
             {/* Platform Super Admin Header */}
             <header className="bg-black text-white border-b border-zinc-800 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div className="w-full px-6 lg:px-10 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link href="/admin" className="flex items-center gap-3 no-underline text-white">
                             <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center shadow-sm">
@@ -44,7 +44,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 </div>
             </header>
 
-            <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row gap-8">
+            <div className="flex-1 w-full px-6 lg:px-10 py-8 flex flex-col md:flex-row gap-8 min-w-0">
                 
                 {/* Admin Sidebar Navigation */}
                 <aside className="w-full md:w-64 shrink-0">
@@ -76,6 +76,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                             >
                                 <span>👥</span>
                                 <span>User Accounts &amp; Roles</span>
+                            </Link>
+
+                            <Link 
+                                href="/admin/pricing" 
+                                className="flex items-center gap-2.5 px-3 py-2 text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg font-semibold transition-colors no-underline"
+                            >
+                                <span>💳</span>
+                                <span>Pricing &amp; Plan Tiers</span>
                             </Link>
                             
                             <div className="pt-3 mt-3 border-t border-zinc-100">

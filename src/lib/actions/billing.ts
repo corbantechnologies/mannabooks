@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { shops, subscriptions, billingTransactions } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { verifyAndGetSession } from "./auth";
-import { PLAN_SPECS, getShopPlanDetails } from "@/lib/paywall";
+import { PLAN_SPECS, getShopPlanDetails, getDynamicPlanSpecs } from "@/lib/paywall";
 import { sendMpesaStkPush, formatMpesaPhoneNumber } from "@/lib/services/mpesa";
 import { revalidatePath } from "next/cache";
 
@@ -26,15 +26,20 @@ export async function initiateSubscriptionPaymentAction(input: InitiatePaymentIn
 
     try {
         const targetPlan = input.plan.toUpperCase();
-        const planSpec = PLAN_SPECS[targetPlan];
+        const dynamicSpecs = await getDynamicPlanSpecs();
+        const planSpec = dynamicSpecs[targetPlan] || PLAN_SPECS[targetPlan];
         if (!planSpec) {
             return { success: false, error: "Invalid subscription plan selected." };
         }
 
         const months = Math.max(1, input.months || 1);
-        // Apply 10% discount for 3 months, 20% discount for 12 months
-        const discountMultiplier = months >= 12 ? 0.8 : (months >= 3 ? 0.9 : 1.0);
-        const amount = Math.round(planSpec.priceKesMonthly * months * discountMultiplier);
+        let amount = 0;
+        if (months >= 12 && planSpec.priceKesAnnually > 0) {
+            amount = planSpec.priceKesAnnually;
+        } else {
+            const discountMultiplier = months >= 12 ? 0.8 : (months >= 3 ? 0.9 : 1.0);
+            amount = Math.round(planSpec.priceKesMonthly * months * discountMultiplier);
+        }
 
         const shop = await db.query.shops.findFirst({
             where: eq(shops.id, input.shopId),
@@ -190,7 +195,7 @@ export async function getShopBillingData(shopId: string) {
     }
 
     try {
-        const [planDetails, transactions, activeSubscription] = await Promise.all([
+        const [planDetails, transactions, activeSubscription, dynamicSpecs] = await Promise.all([
             getShopPlanDetails(shopId),
             db.query.billingTransactions.findMany({
                 where: eq(billingTransactions.shopId, shopId),
@@ -201,6 +206,7 @@ export async function getShopBillingData(shopId: string) {
                 where: eq(subscriptions.shopId, shopId),
                 orderBy: [desc(subscriptions.createdAt)],
             }),
+            getDynamicPlanSpecs(),
         ]);
 
         if (!planDetails) {
@@ -212,7 +218,7 @@ export async function getShopBillingData(shopId: string) {
             planDetails,
             transactions,
             activeSubscription,
-            availablePlans: Object.values(PLAN_SPECS),
+            availablePlans: Object.values(dynamicSpecs),
         };
     } catch (error) {
         console.error("Failed to get shop billing data:", error);

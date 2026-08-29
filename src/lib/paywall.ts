@@ -1,12 +1,14 @@
 import { db } from "@/db";
-import { shops, shopMembers, stockLocations } from "@/db/schema";
-import { count, eq } from "drizzle-orm";
+import { shops, shopMembers, stockLocations, platformPlans } from "@/db/schema";
+import { count, eq, asc } from "drizzle-orm";
 
 export interface PlanDefinition {
     id: "FREE" | "BASIC" | "PRO" | "ENTERPRISE";
     name: string;
     tagline: string;
     priceKesMonthly: number;
+    priceKesAnnually: number;
+    annualDiscountPercent: number;
     maxMembers: number;
     maxLocations: number;
     canTransferStock: boolean;
@@ -14,6 +16,8 @@ export interface PlanDefinition {
     hasReconciliation: boolean;
     hasStatutoryPayroll: boolean;
     hasApiAccess: boolean;
+    badge?: string | null;
+    isHighlighted?: boolean;
     features: string[];
 }
 
@@ -23,6 +27,8 @@ export const PLAN_SPECS: Record<string, PlanDefinition> = {
         name: "Free Starter",
         tagline: "Essential walk-in invoicing & POS for sole operators",
         priceKesMonthly: 0,
+        priceKesAnnually: 0,
+        annualDiscountPercent: 0,
         maxMembers: 1,
         maxLocations: 1,
         canTransferStock: false,
@@ -30,6 +36,8 @@ export const PLAN_SPECS: Record<string, PlanDefinition> = {
         hasReconciliation: false,
         hasStatutoryPayroll: false,
         hasApiAccess: false,
+        badge: null,
+        isHighlighted: false,
         features: [
             "1 Workspace & 1 Team Member (Owner)",
             "Single Stock Location (Main Store)",
@@ -44,6 +52,8 @@ export const PLAN_SPECS: Record<string, PlanDefinition> = {
         name: "Basic",
         tagline: "Team collaboration & multi-node stock for growing retail shops",
         priceKesMonthly: 1500,
+        priceKesAnnually: 14400, // 20% discount: 1500 * 12 * 0.8 = 14,400 (equiv to 1,200/mo)
+        annualDiscountPercent: 20,
         maxMembers: 3,
         maxLocations: 3,
         canTransferStock: true,
@@ -51,6 +61,8 @@ export const PLAN_SPECS: Record<string, PlanDefinition> = {
         hasReconciliation: false,
         hasStatutoryPayroll: true,
         hasApiAccess: false,
+        badge: null,
+        isHighlighted: false,
         features: [
             "Everything in Free Starter",
             "Up to 3 Team Members with Granular Roles",
@@ -66,6 +78,8 @@ export const PLAN_SPECS: Record<string, PlanDefinition> = {
         name: "Professional",
         tagline: "Full double-entry general ledger & unlimited warehouse inventory",
         priceKesMonthly: 3500,
+        priceKesAnnually: 33600, // 20% discount: 3500 * 12 * 0.8 = 33,600 (equiv to 2,800/mo)
+        annualDiscountPercent: 20,
         maxMembers: 10,
         maxLocations: Infinity,
         canTransferStock: true,
@@ -73,6 +87,8 @@ export const PLAN_SPECS: Record<string, PlanDefinition> = {
         hasReconciliation: true,
         hasStatutoryPayroll: true,
         hasApiAccess: false,
+        badge: "Most Popular",
+        isHighlighted: true,
         features: [
             "Everything in Basic",
             "Up to 10 Team Members across Workspaces",
@@ -90,6 +106,8 @@ export const PLAN_SPECS: Record<string, PlanDefinition> = {
         name: "Enterprise",
         tagline: "Unlimited high-volume capacity & custom integrations",
         priceKesMonthly: 10000,
+        priceKesAnnually: 96000, // 20% discount
+        annualDiscountPercent: 20,
         maxMembers: Infinity,
         maxLocations: Infinity,
         canTransferStock: true,
@@ -97,6 +115,8 @@ export const PLAN_SPECS: Record<string, PlanDefinition> = {
         hasReconciliation: true,
         hasStatutoryPayroll: true,
         hasApiAccess: true,
+        badge: "Custom SLA",
+        isHighlighted: false,
         features: [
             "Everything in Professional",
             "Unlimited Team Members & Locations",
@@ -106,6 +126,81 @@ export const PLAN_SPECS: Record<string, PlanDefinition> = {
         ],
     },
 };
+
+/**
+ * Retrieves dynamically configured plans from the database.
+ * Auto-seeds default tiers if table is empty.
+ */
+export async function getDynamicPlanSpecs(): Promise<Record<string, PlanDefinition>> {
+    try {
+        const rows = await db.query.platformPlans.findMany({
+            orderBy: [asc(platformPlans.displayOrder)],
+        });
+
+        if (rows.length === 0) {
+            // Auto-seed default plans into database
+            await Promise.all(
+                Object.values(PLAN_SPECS).map((p, idx) =>
+                    db.insert(platformPlans).values({
+                        id: p.id,
+                        name: p.name,
+                        tagline: p.tagline,
+                        priceKesMonthly: p.priceKesMonthly,
+                        priceKesAnnually: p.priceKesAnnually,
+                        annualDiscountPercent: p.annualDiscountPercent,
+                        maxMembers: p.maxMembers === Infinity ? -1 : p.maxMembers,
+                        maxLocations: p.maxLocations === Infinity ? -1 : p.maxLocations,
+                        canTransferStock: p.canTransferStock,
+                        hasGeneralLedger: p.hasGeneralLedger,
+                        hasReconciliation: p.hasReconciliation,
+                        hasStatutoryPayroll: p.hasStatutoryPayroll,
+                        hasApiAccess: p.hasApiAccess,
+                        badge: p.badge,
+                        isHighlighted: p.isHighlighted || false,
+                        featuresJson: JSON.stringify(p.features),
+                        isActive: true,
+                        displayOrder: idx,
+                    }).onConflictDoNothing()
+                )
+            );
+            return PLAN_SPECS;
+        }
+
+        const map: Record<string, PlanDefinition> = {};
+        for (const row of rows) {
+            let features: string[] = [];
+            try {
+                features = JSON.parse(row.featuresJson);
+            } catch {
+                features = [];
+            }
+
+            map[row.id] = {
+                id: row.id as any,
+                name: row.name,
+                tagline: row.tagline,
+                priceKesMonthly: row.priceKesMonthly,
+                priceKesAnnually: row.priceKesAnnually,
+                annualDiscountPercent: row.annualDiscountPercent,
+                maxMembers: row.maxMembers === -1 ? Infinity : row.maxMembers,
+                maxLocations: row.maxLocations === -1 ? Infinity : row.maxLocations,
+                canTransferStock: row.canTransferStock,
+                hasGeneralLedger: row.hasGeneralLedger,
+                hasReconciliation: row.hasReconciliation,
+                hasStatutoryPayroll: row.hasStatutoryPayroll,
+                hasApiAccess: row.hasApiAccess,
+                badge: row.badge,
+                isHighlighted: row.isHighlighted,
+                features,
+            };
+        }
+
+        return map;
+    } catch (error) {
+        console.error("Error fetching dynamic plan specs, falling back to static specs:", error);
+        return PLAN_SPECS;
+    }
+}
 
 export interface ShopPlanDetails {
     shopId: string;
@@ -139,10 +234,12 @@ export async function getShopPlanDetails(shopId: string): Promise<ShopPlanDetail
 
     if (!shop) return null;
 
+    const dynamicSpecs = await getDynamicPlanSpecs();
+
     // Determine effective plan tier
     const rawPlan = (shop.plan || "PRO").toUpperCase();
-    const effectivePlanKey = (rawPlan in PLAN_SPECS) ? rawPlan : "PRO";
-    const baseSpec = PLAN_SPECS[effectivePlanKey];
+    const effectivePlanKey = (rawPlan in dynamicSpecs) ? rawPlan : "PRO";
+    const baseSpec = dynamicSpecs[effectivePlanKey] || PLAN_SPECS[effectivePlanKey] || PLAN_SPECS.PRO;
 
     // Lifetime PRO automatically gets Enterprise limits with no expiration
     const isLifetimePro = Boolean(shop.isLifetimePro);
@@ -163,7 +260,9 @@ export async function getShopPlanDetails(shopId: string): Promise<ShopPlanDetail
     const currentMembersCount = memberCountRes[0]?.value || 1;
     const currentLocationsCount = locationCountRes[0]?.value || 1;
 
-    const planSpec = isLifetimePro ? PLAN_SPECS.ENTERPRISE : (isExpired ? PLAN_SPECS.FREE : baseSpec);
+    const enterpriseSpec = dynamicSpecs.ENTERPRISE || PLAN_SPECS.ENTERPRISE;
+    const freeSpec = dynamicSpecs.FREE || PLAN_SPECS.FREE;
+    const planSpec = isLifetimePro ? enterpriseSpec : (isExpired ? freeSpec : baseSpec);
 
     return {
         shopId: shop.id,
@@ -190,7 +289,6 @@ export async function getShopPlanDetails(shopId: string): Promise<ShopPlanDetail
 
 /**
  * Asserts that the shop tenant can invite or add another team member.
- * Throws an Error if the quota limit is reached.
  */
 export async function assertCanAddMember(shopId: string) {
     const details = await getShopPlanDetails(shopId);
@@ -205,7 +303,6 @@ export async function assertCanAddMember(shopId: string) {
 
 /**
  * Asserts that the shop tenant can create an additional physical stock location.
- * Throws an Error if the quota limit is reached.
  */
 export async function assertCanAddLocation(shopId: string) {
     const details = await getShopPlanDetails(shopId);

@@ -268,7 +268,9 @@ export function BillingSettingsClient({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {availablePlans.filter(p => p.id !== "ENTERPRISE").map((plan) => {
             const isCurrent = planDetails.plan === plan.id && !planDetails.isLifetimePro;
-            const calculatedTotal = Math.round(plan.priceKesMonthly * selectedDuration * discountMultiplier);
+            const calculatedTotal = (selectedDuration >= 12 && plan.priceKesAnnually > 0)
+              ? plan.priceKesAnnually
+              : Math.round(plan.priceKesMonthly * selectedDuration * discountMultiplier);
 
             return (
               <div
@@ -486,7 +488,7 @@ export function BillingSettingsClient({
                 <div className="space-y-1">
                   <h4 className="text-base font-bold font-sans text-black uppercase">Check Your Phone</h4>
                   <p className="text-xs text-zinc-600">
-                    An M-Pesa STK push prompt for <strong>{formatCurrency(Math.round(targetPlan.priceKesMonthly * selectedDuration * discountMultiplier), "KES")}</strong> was dispatched to <strong>{phoneNumber}</strong>.
+                    An M-Pesa STK push prompt for <strong>{formatCurrency((selectedDuration >= 12 && targetPlan.priceKesAnnually > 0) ? targetPlan.priceKesAnnually : Math.round(targetPlan.priceKesMonthly * selectedDuration * discountMultiplier), "KES")}</strong> was dispatched to <strong>{phoneNumber}</strong>.
                   </p>
                   <p className="text-xs text-zinc-400 pt-2">
                     Please enter your 4-digit M-Pesa PIN on your phone to authorize.
@@ -520,7 +522,7 @@ export function BillingSettingsClient({
                   <div className="flex justify-between border-t border-zinc-200 pt-2 text-sm">
                     <span className="font-bold text-black">Total Amount:</span>
                     <span className="font-black text-emerald-900">
-                      {formatCurrency(Math.round(targetPlan.priceKesMonthly * selectedDuration * discountMultiplier), "KES")}
+                      {formatCurrency((selectedDuration >= 12 && targetPlan.priceKesAnnually > 0) ? targetPlan.priceKesAnnually : Math.round(targetPlan.priceKesMonthly * selectedDuration * discountMultiplier), "KES")}
                     </span>
                   </div>
                 </div>

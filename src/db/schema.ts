@@ -549,6 +549,29 @@ export const billingTransactions = pgTable('billing_transactions', {
     completedAt: timestamp('completed_at'),
 });
 
+// PLATFORM PLANS TABLE (Dynamic Pricing & Quota Management)
+export const platformPlans = pgTable('platform_plans', {
+    id: varchar('id', { length: 30 }).primaryKey(), // 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE'
+    name: varchar('name', { length: 100 }).notNull(),
+    tagline: text('tagline').notNull(),
+    priceKesMonthly: integer('price_kes_monthly').default(0).notNull(),
+    priceKesAnnually: integer('price_kes_annually').default(0).notNull(),
+    annualDiscountPercent: integer('annual_discount_percent').default(20).notNull(),
+    maxMembers: integer('max_members').default(1).notNull(), // -1 = Unlimited
+    maxLocations: integer('max_locations').default(1).notNull(), // -1 = Unlimited
+    canTransferStock: boolean('can_transfer_stock').default(false).notNull(),
+    hasGeneralLedger: boolean('has_general_ledger').default(false).notNull(),
+    hasReconciliation: boolean('has_reconciliation').default(false).notNull(),
+    hasStatutoryPayroll: boolean('has_statutory_payroll').default(false).notNull(),
+    hasApiAccess: boolean('has_api_access').default(false).notNull(),
+    badge: varchar('badge', { length: 50 }), // e.g. 'Most Popular', 'Best Value'
+    isHighlighted: boolean('is_highlighted').default(false).notNull(),
+    featuresJson: text('features_json').notNull(), // JSON stringified array of feature bullets
+    isActive: boolean('is_active').default(true).notNull(),
+    displayOrder: integer('display_order').default(0).notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // ==========================================
 // 3. RELATIONS (For ORM Querying)
 // ==========================================

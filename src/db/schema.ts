@@ -42,6 +42,9 @@ export const users = pgTable('users', {
     email: text('email').notNull().unique(),
     passwordHash: text('password_hash').notNull(),
     isSuperAdmin: boolean('is_super_admin').default(false).notNull(),
+    plan: varchar('plan', { length: 30 }).default('FREE').notNull(), // 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE'
+    subscriptionStatus: varchar('subscription_status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'TRIAL' | 'EXPIRED' | 'LIFETIME_FREE'
+    subscriptionExpiresAt: timestamp('subscription_expires_at'),
     isLifetimePro: boolean('is_lifetime_pro').default(false).notNull(), // When true, all workspaces owned by this user inherit Lifetime PRO
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });

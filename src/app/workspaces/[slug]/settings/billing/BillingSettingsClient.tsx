@@ -306,12 +306,12 @@ export function BillingSettingsClient({
 
                   {/* PRICE DISPLAY */}
                   <div className="border-y border-zinc-100 py-4 space-y-1">
-                    <div className="flex items-baseline gap-1 font-mono">
-                      <span className="text-2xl sm:text-3xl font-black text-black">
+                    <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 font-mono">
+                      <span className="text-xl sm:text-2xl font-black text-black">
                         {plan.priceKesMonthly === 0 ? "FREE" : formatCurrency(calculatedTotal, "KES")}
                       </span>
                       {plan.priceKesMonthly > 0 && (
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-xs text-zinc-500 whitespace-nowrap">
                           / {selectedDuration === 1 ? "mo" : `${selectedDuration} mos`}
                         </span>
                       )}

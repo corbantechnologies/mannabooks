@@ -110,12 +110,12 @@ export function PricingClientView({ plans }: PricingClientViewProps) {
                     {plan.name}
                   </h2>
                   
-                  <div className="flex items-baseline gap-1.5 mb-1">
-                    <span className="text-3xl sm:text-4xl font-black tracking-tighter">
+                  <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 mb-1">
+                    <span className="text-2xl sm:text-3xl font-black tracking-tight">
                       {displayPrice === 0 ? "Free" : formatCurrency(displayPrice, "KES")}
                     </span>
                     {displayPrice > 0 && (
-                      <span className={`text-xs font-mono ${isHighlight ? "text-emerald-200" : "text-zinc-400"}`}>
+                      <span className={`text-xs font-mono font-medium whitespace-nowrap ${isHighlight ? "text-emerald-200" : "text-zinc-500"}`}>
                         {isAnnual ? "/ year" : "/ month"}
                       </span>
                     )}

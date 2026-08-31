@@ -107,8 +107,8 @@ export default async function TransfersListPage({ params }: TransfersPageProps) 
 
             {transfers.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-12 text-center text-zinc-400 italic">
-                  &gt; NO STOCK TRANSFERS RECORDED YET. CREATE YOUR FIRST TRANSFER TO MOVE STOCK BETWEEN LOCATIONS.
+                <td colSpan={7} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                  No stock transfers recorded yet.
                 </td>
               </tr>
             )}

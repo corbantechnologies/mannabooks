@@ -109,7 +109,7 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
                   </span>
                 </td>
                 <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-widest">
-                  {c.taxPin || <span className="text-zinc-300 font-normal italic lowercase">&gt; unassigned</span>}
+                  {c.taxPin || <span className="text-zinc-300 font-normal italic">None</span>}
                   {c.requiresEtims && (
                     <span className="ml-2 border border-zinc-300 px-1.5 py-0.5 text-[8px] bg-zinc-50 font-semibold uppercase rounded">
                       eTIMS
@@ -124,8 +124,8 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
 
             {clientList.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-12 text-center text-zinc-400 italic">
-                  &gt; REGISTRY EMPTY. NO ACTIVE CONTACT NODES LOCATED.
+                <td colSpan={5} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                  No clients found matching your search.
                 </td>
               </tr>
             )}

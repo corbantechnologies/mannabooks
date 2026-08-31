@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { documents, documentItems, documentTokens, shops, clients, journalEntries, ledgerSnapshots, shopTerms } from "@/db/schema";
+import { documents, documentItems, documentTokens, documentPayments, documentNotes, shops, clients, journalEntries, ledgerSnapshots, shopTerms } from "@/db/schema";
 import { calculateLineItem, calculateDocumentTotals, isFiscalDocType } from "@/lib/utils";
 import { eq, and, gte, lte, inArray, desc, asc } from "drizzle-orm";
 import crypto from "crypto";
@@ -48,6 +48,7 @@ interface CreateDocumentInput {
     notes?: string;
     termsAndConditions?: string;
     currency?: string;
+    exchangeRate?: number;
     customerEmail?: string;
     sourceDocType?: DocumentType;
     isRecurring?: boolean;
@@ -192,6 +193,11 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 }
             }
 
+            const docCurrency = input.currency || shopProfile.currency || "KES";
+            const rateVal = input.exchangeRate && input.exchangeRate > 0 ? input.exchangeRate : 1.0;
+            const baseCurr = shopProfile.currency || "KES";
+            const baseTotalVal = (calculatedTotals.grandTotal * rateVal).toFixed(2);
+
             // 6. Insert master header registry (The Document)
             const [newDoc] = await tx.insert(documents).values({
                 shopId: input.shopId,
@@ -205,7 +211,10 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 requiresEtims: isFiscalDocType(input.type) ? (input.requiresEtims || false) : false,
                 notes: input.notes || null,
                 termsAndConditions: finalTerms || null,
-                currency: input.currency || shopProfile.currency,
+                currency: docCurrency,
+                exchangeRate: rateVal.toFixed(4),
+                baseCurrency: baseCurr,
+                baseGrandTotal: baseTotalVal,
                 isRecurring: input.isRecurring || false,
                 recurringInterval: input.recurringInterval || null,
                 nextRecurringDate: input.isRecurring ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : null, // Default to next month if recurring
@@ -751,6 +760,7 @@ interface UpdateDocumentInput {
     notes?: string;
     termsAndConditions?: string;
     currency?: string;
+    exchangeRate?: number;
     items: UpdateDocumentItemInput[];
 }
 
@@ -793,6 +803,11 @@ export async function updateBillingDocument(input: UpdateDocumentInput) {
                 isShopVatRegistered: isVatActive,
             });
 
+            const docCurrency = input.currency || shopProfile.currency || "KES";
+            const rateVal = input.exchangeRate && input.exchangeRate > 0 ? input.exchangeRate : 1.0;
+            const baseCurr = shopProfile.currency || "KES";
+            const baseTotalVal = (calculatedTotals.grandTotal * rateVal).toFixed(2);
+
             // Update master header
             await tx.update(documents)
                 .set({
@@ -804,7 +819,10 @@ export async function updateBillingDocument(input: UpdateDocumentInput) {
                     requiresEtims: isFiscalDocType(input.type) ? (input.requiresEtims || false) : false,
                     notes: input.notes || null,
                     termsAndConditions: input.termsAndConditions !== undefined ? (input.termsAndConditions || null) : doc.termsAndConditions,
-                    currency: input.currency || shopProfile.currency,
+                    currency: docCurrency,
+                    exchangeRate: rateVal.toFixed(4),
+                    baseCurrency: baseCurr,
+                    baseGrandTotal: baseTotalVal,
                     subTotal: calculatedTotals.subTotal.toString(),
                     taxAmount: calculatedTotals.taxAmount.toString(),
                     grandTotal: calculatedTotals.grandTotal.toString(),
@@ -1217,3 +1235,189 @@ export async function purgeLedgerAction(
         return { success: false, error: error.message || "Failed to purge ledger." };
     }
 }
+
+/**
+ * Action: Record an installment or partial payment against a document (Invoice).
+ * Automatically updates the document status to PARTIALLY_PAID or PAID based on cumulative payments.
+ */
+export async function recordDocumentPaymentAction(input: {
+    documentId: string;
+    shopId: string;
+    shopSlug: string;
+    amount: number;
+    paymentChannel: string;
+    paymentReference?: string;
+    paymentDate?: Date;
+    notes?: string;
+}): Promise<{ success: boolean; error?: string; status?: string; remainingBalance?: number }> {
+    try {
+        const session = await verifyAndGetSession();
+        if (!session) {
+            return { success: false, error: "Unauthorized. Please log in." };
+        }
+        await enforcePermission(input.shopId, "manage_documents");
+
+        if (input.amount <= 0 || isNaN(input.amount)) {
+            return { success: false, error: "Payment amount must be greater than zero." };
+        }
+
+        const doc = await db.query.documents.findFirst({
+            where: and(eq(documents.id, input.documentId), eq(documents.shopId, input.shopId)),
+            with: { payments: true },
+        });
+
+        if (!doc) {
+            return { success: false, error: "Target document could not be found." };
+        }
+
+        const grandTotal = parseFloat(doc.grandTotal || "0");
+        const priorPaymentsSum = (doc.payments || []).reduce((acc, p) => acc + parseFloat(p.amount || "0"), 0);
+        const newTotalPaid = priorPaymentsSum + input.amount;
+        const remainingBalance = Math.max(0, grandTotal - newTotalPaid);
+
+        let nextStatus: "PAID" | "PARTIALLY_PAID" | "ISSUED" = doc.status as any;
+        if (newTotalPaid >= grandTotal - 0.01) {
+            nextStatus = "PAID";
+        } else if (newTotalPaid > 0) {
+            nextStatus = "PARTIALLY_PAID";
+        }
+
+        // Insert payment entry & update document status atomically
+        await db.transaction(async (tx) => {
+            await tx.insert(documentPayments).values({
+                documentId: input.documentId,
+                shopId: input.shopId,
+                amount: input.amount.toFixed(2),
+                paymentDate: input.paymentDate || new Date(),
+                paymentChannel: input.paymentChannel,
+                paymentReference: input.paymentReference?.trim() || null,
+                notes: input.notes?.trim() || null,
+                recordedByUserId: session.userId,
+            });
+
+            await tx.update(documents)
+                .set({
+                    status: nextStatus,
+                    paymentChannel: input.paymentChannel,
+                    paymentReference: input.paymentReference?.trim() || doc.paymentReference,
+                })
+                .where(eq(documents.id, input.documentId));
+        });
+
+        revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.documentId}`);
+        revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+        revalidatePath(`/workspaces/${input.shopSlug}`);
+
+        return { success: true, status: nextStatus, remainingBalance };
+    } catch (error: any) {
+        console.error("Failed to record document payment:", error);
+        return { success: false, error: error.message || "Failed to record payment." };
+    }
+}
+
+/**
+ * Action: Delete a recorded document payment installment and recalculate document status.
+ */
+export async function deleteDocumentPaymentAction(input: {
+    paymentId: string;
+    documentId: string;
+    shopId: string;
+    shopSlug: string;
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        await enforcePermission(input.shopId, "manage_documents");
+
+        await db.delete(documentPayments).where(
+            and(eq(documentPayments.id, input.paymentId), eq(documentPayments.documentId, input.documentId))
+        );
+
+        // Recalculate status
+        const doc = await db.query.documents.findFirst({
+            where: and(eq(documents.id, input.documentId), eq(documents.shopId, input.shopId)),
+            with: { payments: true },
+        });
+
+        if (doc) {
+            const grandTotal = parseFloat(doc.grandTotal || "0");
+            const paymentsSum = (doc.payments || []).reduce((acc, p) => acc + parseFloat(p.amount || "0"), 0);
+
+            let nextStatus: "PAID" | "PARTIALLY_PAID" | "ISSUED" | "OVERDUE" = "ISSUED";
+            if (paymentsSum >= grandTotal - 0.01) {
+                nextStatus = "PAID";
+            } else if (paymentsSum > 0) {
+                nextStatus = "PARTIALLY_PAID";
+            } else if (doc.dueDate && new Date(doc.dueDate) < new Date()) {
+                nextStatus = "OVERDUE";
+            }
+
+            await db.update(documents)
+                .set({ status: nextStatus })
+                .where(eq(documents.id, input.documentId));
+        }
+
+        revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.documentId}`);
+        revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+        revalidatePath(`/workspaces/${input.shopSlug}`);
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to delete document payment:", error);
+        return { success: false, error: error.message || "Failed to delete payment." };
+    }
+}
+
+/**
+ * Action: Add an internal note to a document (Operator / Internal Audit Trail).
+ */
+export async function addDocumentNoteAction(input: {
+    documentId: string;
+    shopId: string;
+    shopSlug: string;
+    note: string;
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const session = await verifyAndGetSession();
+        if (!session) {
+            return { success: false, error: "Unauthorized. Please log in." };
+        }
+        if (!input.note || input.note.trim() === "") {
+            return { success: false, error: "Note cannot be empty." };
+        }
+
+        await db.insert(documentNotes).values({
+            documentId: input.documentId,
+            shopId: input.shopId,
+            userId: session.userId,
+            note: input.note.trim(),
+        });
+
+        revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.documentId}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to add document note:", error);
+        return { success: false, error: error.message || "Failed to add internal note." };
+    }
+}
+
+/**
+ * Action: Delete an internal note from a document.
+ */
+export async function deleteDocumentNoteAction(input: {
+    noteId: string;
+    documentId: string;
+    shopId: string;
+    shopSlug: string;
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        await verifyAndGetSession();
+        await db.delete(documentNotes).where(
+            and(eq(documentNotes.id, input.noteId), eq(documentNotes.documentId, input.documentId))
+        );
+
+        revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.documentId}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to delete document note:", error);
+        return { success: false, error: error.message || "Failed to delete note." };
+    }
+}

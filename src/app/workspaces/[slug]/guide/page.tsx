@@ -50,7 +50,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
               href={`/workspaces/${slug}/pos`}
               className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
-              Open POS Register -&gt;
+              Open POS Register →
             </Link>
           </div>
         </div>
@@ -68,7 +68,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
               href={`/workspaces/${slug}/settings`}
               className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
-              Go to System Settings -&gt;
+              Go to System Settings →
             </Link>
           </div>
         </div>
@@ -86,13 +86,13 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
               href={`/workspaces/${slug}/clients`}
               className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
-              Go to Client Directory -&gt;
+              Go to Client Directory →
             </Link>
             <Link
               href={`/workspaces/${slug}/suppliers`}
               className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
-              Go to Supplier Network -&gt;
+              Go to Supplier Network →
             </Link>
           </div>
         </div>
@@ -110,7 +110,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
               href={`/workspaces/${slug}/documents`}
               className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
-              Go to Fiscal Ledgers -&gt;
+              Go to Fiscal Ledgers →
             </Link>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
               href={`/workspaces/${slug}/analytics`}
               className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
-              Go to Financial Analytics -&gt;
+              Go to Financial Analytics →
             </Link>
           </div>
         </div>
@@ -156,13 +156,13 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
               href={`/workspaces/${slug}/inventory`}
               className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
-              Go to Stock Overview -&gt;
+              Go to Stock Overview →
             </Link>
             <Link
               href={`/workspaces/${slug}/inventory/transfers`}
               className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
-              Go to Stock Transfers -&gt;
+              Go to Stock Transfers →
             </Link>
           </div>
         </div>
@@ -180,7 +180,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
               href={`/workspaces/${slug}/inbox`}
               className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
-              Go to Shared Inbox -&gt;
+              Go to Shared Inbox →
             </Link>
           </div>
         </div>
@@ -198,19 +198,19 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
               href={`/workspaces/${slug}/finance/reports/balance-sheet`}
               className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
-              Balance Sheet -&gt;
+              Balance Sheet →
             </Link>
             <Link
               href={`/workspaces/${slug}/finance/reconciliation`}
               className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
-              Bank Reconciliation -&gt;
+              Bank Reconciliation →
             </Link>
             <Link
               href={`/workspaces/${slug}/finance/ledger`}
               className="btn-secondary-modern px-3 py-1.5 font-semibold uppercase text-[10px] inline-block"
             >
-              General Ledger -&gt;
+              General Ledger →
             </Link>
           </div>
         </div>

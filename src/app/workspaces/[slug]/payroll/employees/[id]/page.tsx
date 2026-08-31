@@ -75,7 +75,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
             <span className={`px-2.5 py-1 font-semibold uppercase tracking-wide rounded ${
               employeeData.isActive ? "bg-emerald-50 text-emerald-900 border border-emerald-300" : "bg-zinc-100 text-zinc-500 border border-zinc-300"
             }`}>
-              {employeeData.isActive ? "Active Node" : "Inactive Node"}
+              {employeeData.isActive ? "Active" : "Inactive"}
             </span>
             <EditEmployeeModal
               employee={employeeData}
@@ -124,10 +124,10 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">
-            &gt; Staff Payment Sub-Ledger
+            Payment History
           </h2>
           <span className="text-[10px] text-zinc-400 uppercase font-semibold">
-            Total Disbursed Runs: {employeeData.payrollHistory.length}
+            Total Payments: {employeeData.payrollHistory.length}
           </span>
         </div>
 
@@ -135,9 +135,9 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
               <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Voucher Serial Ref</th>
-                <th className="p-4 border-r border-zinc-200">Execution Date</th>
-                <th className="p-4 border-r border-zinc-200">Line Breakdown Details</th>
+                <th className="p-4 border-r border-zinc-200">Payroll Ref</th>
+                <th className="p-4 border-r border-zinc-200">Date</th>
+                <th className="p-4 border-r border-zinc-200">Description</th>
                 <th className="p-4 border-r border-zinc-200 text-right">Net Payout</th>
                 <th className="p-4 text-center">Actions</th>
               </tr>
@@ -167,7 +167,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
                       href={`/workspaces/${slug}/payroll/${item.voucherId}`}
                       className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"
                     >
-                      View Run Voucher
+                      View Voucher
                     </Link>
                   </td>
                 </tr>
@@ -175,8 +175,8 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
 
               {employeeData.payrollHistory.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-12 text-center text-zinc-400 italic">
-                    &gt; NO HISTORICAL PAYROLL PAYOUTS LOGGED FOR THIS EMPLOYEE YET.
+                  <td colSpan={5} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                    No payroll payments recorded for this employee yet.
                   </td>
                 </tr>
               )}

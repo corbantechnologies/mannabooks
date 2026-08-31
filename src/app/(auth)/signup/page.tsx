@@ -94,16 +94,16 @@ function SignupContent() {
       <div className="card-modern w-full max-w-md p-8 space-y-6 bg-white">
         
         <div className="space-y-1.5">
-          <Link href="/" className="font-mono text-xs font-semibold tracking-widest text-zinc-400 block hover:underline">
-            ← MANNA BOOKS HOME
+          <Link href="/" className="font-sans text-xs font-semibold text-zinc-400 block hover:underline">
+            ← Back to Home
           </Link>
-          <h2 className="text-xl font-semibold tracking-tight uppercase leading-none font-sans text-black">Initialize Ledger</h2>
-          <p className="text-xs text-zinc-500 font-mono uppercase font-semibold">Create owner profile &amp; setup shop workspace</p>
+          <h2 className="text-xl font-semibold tracking-tight uppercase leading-none font-sans text-black">Create Account</h2>
+          <p className="text-xs text-zinc-500 font-sans">Create your account to set up your business workspace</p>
         </div>
 
         {error && (
-          <div className="border border-zinc-200 bg-zinc-50 p-3 font-mono text-xs text-black uppercase tracking-tight rounded font-semibold">
-            &gt; ERROR: {error}
+          <div className="border border-rose-200 bg-rose-50 p-3 font-sans text-xs text-rose-800 rounded font-semibold">
+            ⚠ {error}
           </div>
         )}
 

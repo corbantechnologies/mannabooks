@@ -2,7 +2,7 @@
 
 import { Resend } from "resend";
 import { db } from "@/db";
-import { documentTokens } from "@/db/schema";
+import { documentTokens, documents } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 // Initialize Resend using your active environment variable keys
@@ -143,6 +143,21 @@ export async function dispatchDocumentEmail({ documentId, isReminder = false }: 
         if (resendError) {
             console.error("Resend API Error:", resendError);
             return { success: false, error: resendError.message || "Email dispatch rejected by mail server." };
+        }
+
+        // 3. Update document delivery tracking status
+        if (data?.id) {
+            try {
+                await db.update(documents)
+                    .set({
+                        emailDeliveryStatus: "SENT",
+                        resendEmailId: data.id,
+                        lastEmailSentAt: new Date(),
+                    })
+                    .where(eq(documents.id, doc.id));
+            } catch (dbErr) {
+                console.error("Failed to update email tracking on document:", dbErr);
+            }
         }
 
         return { success: true, messageId: data?.id };

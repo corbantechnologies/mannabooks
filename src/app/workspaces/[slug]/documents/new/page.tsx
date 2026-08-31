@@ -7,6 +7,8 @@ import { DocumentBuilderClientForm } from "./DocumentBuilderClientForm";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { getShopCurrencies } from "@/lib/actions/currencies";
+
 interface NewDocumentPageProps {
   params: Promise<{ slug: string }>;
 }
@@ -45,6 +47,8 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
     orderBy: [asc(shopTerms.displayOrder), asc(shopTerms.createdAt)],
   });
 
+  const currenciesRegistry = await getShopCurrencies(shop.id, shop.currency || "KES");
+
   return (
     <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white font-mono text-xs">
       
@@ -74,7 +78,7 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
         </div>
       </div>
 
-      <Suspense fallback={<div className="font-mono text-xs text-zinc-400 p-8 border border-zinc-200 bg-zinc-50 rounded text-center">&gt; LOADING DOCUMENT COMPILER...</div>}>
+      <Suspense fallback={<div className="font-sans text-xs text-zinc-500 p-8 border border-zinc-200 bg-zinc-50 rounded-lg text-center">Loading document editor...</div>}>
         <DocumentBuilderClientForm 
           shop={shop}
           shopSlug={slug}
@@ -82,6 +86,7 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
           suppliers={supplierRegistry}
           products={productRegistry}
           shopTerms={termsRegistry}
+          currencies={currenciesRegistry}
         />
       </Suspense>
     </div>

@@ -37,7 +37,13 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
 
   const navItems: NavItem[] = [
     { href: `/workspaces/${slug}`, label: "Overview", exact: true },
-    { href: `/workspaces/${slug}/documents`, label: "Billing & Invoices" },
+    {
+      label: "Billing & Invoices",
+      children: [
+        { href: `/workspaces/${slug}/documents`, label: "All Documents", exact: true },
+        { href: `/workspaces/${slug}/documents/recurring`, label: "Recurring Invoices" },
+      ]
+    },
     { href: `/workspaces/${slug}/inbox`, label: "Shared Inbox" },
     { href: `/workspaces/${slug}/pos`, label: "Point of Sale (POS)" },
     { 
@@ -90,6 +96,7 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
         { href: `/workspaces/${slug}/finance/reports/balance-sheet`, label: "Balance Sheet" },
         { href: `/workspaces/${slug}/finance/reports/cashflow`, label: "Cash Flow" },
         { href: `/workspaces/${slug}/finance/reports/trial-balance`, label: "Trial Balance" },
+        { href: `/workspaces/${slug}/finance/reports/payables-aging`, label: "Payables Aging (AP)" },
         { href: `/workspaces/${slug}/finance/tax/assets`, label: "Fixed Assets Register" },
         { href: `/workspaces/${slug}/finance/tax/instalments`, label: "Instalment Tax" },
         { href: `/workspaces/${slug}/finance/tax/tot`, label: "Turnover Tax (TOT)" },
@@ -102,6 +109,7 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
         { href: `/workspaces/${slug}/team`, label: "Team Management" },
         { href: `/workspaces/${slug}/settings/billing`, label: "Billing & Plans" },
         { href: `/workspaces/${slug}/settings`, label: "Workspace Details", exact: true },
+        { href: `/workspaces/${slug}/settings/currencies`, label: "Multi-Currency Rates" },
         { href: `/workspaces/${slug}/settings/terms`, label: "Commercial Terms" },
         { href: `/workspaces/${slug}/settings/diagnostics`, label: "GL Diagnostics" },
         { href: `/workspaces/${slug}/guide`, label: "Operator Guide" },
@@ -173,13 +181,13 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
                 PIN: {shop.taxPin}
               </span>
             ) : (
-              <span className="text-[9px] italic text-rose-600 block">&gt; CONFIGURATION REQUIRED</span>
+              <span className="text-[10px] text-amber-600 block font-medium">Tax PIN missing</span>
             )}
           </div>
 
           {/* NAVIGATION LINKS */}
           <div className="space-y-2">
-            <span className="text-[10px] uppercase tracking-wider text-zinc-400 block mb-2 font-bold font-sans">Directories</span>
+            <span className="text-[10px] uppercase tracking-wider text-zinc-400 block mb-2 font-bold font-sans">Menu</span>
             <nav className="flex flex-col gap-1 font-medium font-sans text-xs tracking-normal text-zinc-600">
               {navItems.map((item, idx) => {
                 if (item.children) {

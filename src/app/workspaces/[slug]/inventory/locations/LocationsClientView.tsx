@@ -126,7 +126,7 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
           <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Inventory / Locations</span>
           <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Stock Locations</h1>
           <p className="font-sans text-xs text-zinc-600 mt-1">
-            Physical storage nodes — warehouses, branches, shop floors. Click any location to view its stock inventory, valuation, and movements.
+            Physical storage locations — warehouses, branches, shop floors. Click any location to view its stock inventory, valuation, and movements.
           </p>
         </div>
         <button
@@ -142,7 +142,7 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
         <div className="card-modern p-5 space-y-1">
           <p className="text-[10px] text-zinc-400 uppercase font-semibold">Active Locations</p>
           <p className="text-xl font-semibold font-mono text-black">{initialLocations.length}</p>
-          <p className="text-[10px] text-zinc-500">storage nodes</p>
+          <p className="text-[10px] text-zinc-500">locations</p>
         </div>
         <div className="card-modern p-5 space-y-1">
           <p className="text-[10px] text-zinc-400 uppercase font-semibold">Total Stock Units</p>
@@ -155,7 +155,7 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
           <p className="text-[10px] text-zinc-500">combined inventory valuation</p>
         </div>
         <div className="card-modern p-5 space-y-1">
-          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Default Node</p>
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Default Location</p>
           <p className="text-sm font-semibold font-sans text-black truncate">
             {initialLocations.find(l => l.isDefault)?.name || "None"}
           </p>
@@ -322,8 +322,8 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
 
             {initialLocations.length === 0 && (
               <tr>
-                <td colSpan={8} className="p-12 text-center text-zinc-400 italic">
-                  &gt; NO LOCATIONS CONFIGURED YET. CLICK "+ ADD LOCATION" TO CREATE YOUR FIRST STOCK NODE.
+                <td colSpan={8} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                  No locations added yet. Click "+ Add Location" to create your first stock location.
                 </td>
               </tr>
             )}
@@ -346,7 +346,7 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
       {/* INFO BOX */}
       <div className="border border-zinc-200 bg-zinc-50/60 rounded-xl p-5">
         <p className="font-sans text-xs text-zinc-600 leading-relaxed">
-          <strong className="text-black">How locations work:</strong> Each location represents a physical storage node within your workspace —
+          <strong className="text-black">How locations work:</strong> Each location represents a physical storage location within your workspace —
           a main warehouse, a branch store, a shop floor, or a delivery vehicle. 
           Stock movements (purchases, sales, adjustments, transfers) are all recorded against specific locations,
           giving you accurate per-location inventory levels and audit trails.

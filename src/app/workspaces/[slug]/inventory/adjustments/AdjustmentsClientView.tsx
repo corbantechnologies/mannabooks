@@ -243,7 +243,7 @@ export function AdjustmentsClientView({ shopId, shopSlug, shopCurrency, location
 
         {/* ADJUSTMENT HISTORY */}
         <div className="lg:col-span-3 space-y-4">
-          <h2 className="font-sans font-bold text-sm uppercase tracking-tight text-black">&gt; Adjustment History</h2>
+          <h2 className="font-sans font-bold text-sm uppercase tracking-tight text-black">Adjustment History</h2>
 
           <div className="card-modern overflow-x-auto">
             <table className="w-full text-left font-mono text-xs border-collapse">
@@ -288,8 +288,8 @@ export function AdjustmentsClientView({ shopId, shopSlug, shopCurrency, location
                 })}
                 {adjustmentHistory.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-10 text-center text-zinc-400 italic">
-                      &gt; NO ADJUSTMENTS RECORDED YET.
+                    <td colSpan={6} className="p-10 text-center text-zinc-400 italic font-sans text-xs">
+                      No adjustments recorded yet.
                     </td>
                   </tr>
                 )}

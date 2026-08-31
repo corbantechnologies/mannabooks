@@ -95,7 +95,7 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
           { label: "Stock Value", value: formatCurrency(overview.totalStockValue, shop.currency), sub: "current valuation", highlight: true },
           { label: "Low Stock", value: overview.lowStockCount.toString(), sub: "below reorder point", alert: overview.lowStockCount > 0 },
           { label: "Out of Stock", value: overview.outOfStockCount.toString(), sub: "zero quantity items", danger: overview.outOfStockCount > 0 },
-          { label: "Locations", value: overview.totalLocations.toString(), sub: "active stock nodes" },
+          { label: "Locations", value: overview.totalLocations.toString(), sub: "active locations" },
         ].map((card) => (
           <div
             key={card.label}
@@ -135,7 +135,7 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
       {/* RECENT STOCK MOVEMENTS */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">&gt; Recent Stock Movements</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">Recent Stock Activity</h2>
           <Link href={`/workspaces/${slug}/inventory/reports/movement`} className="text-[10px] text-zinc-500 hover:text-black hover:underline uppercase font-semibold">
             View Full History →
           </Link>
@@ -187,8 +187,8 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
               })}
               {overview.recentMovements.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-zinc-400 italic">
-                    &gt; NO STOCK MOVEMENTS RECORDED YET. ADD STOCK LOCATIONS AND RECORD OPENING BALANCES TO BEGIN.
+                  <td colSpan={6} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                    No stock movements recorded yet.
                   </td>
                 </tr>
               )}

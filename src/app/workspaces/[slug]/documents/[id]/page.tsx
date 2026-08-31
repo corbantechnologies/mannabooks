@@ -7,6 +7,8 @@ import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 import { DocumentStatusPanel } from "./DocumentStatusPanel";
 import { DocumentChain, type ChainNode } from "@/components/DocumentChain";
+import { PaymentHistorySubLedger } from "./PaymentHistorySubLedger";
+import { DocumentInternalNotes } from "./DocumentInternalNotes";
 
 interface DocumentDetailPageProps {
   params: Promise<{ slug: string; id: string }>;
@@ -28,6 +30,14 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
       client: true,
       supplier: true,
       items: true,
+      payments: {
+        orderBy: (p, { desc }) => [desc(p.paymentDate)],
+        with: { recordedBy: true },
+      },
+      notesList: {
+        orderBy: (n, { desc }) => [desc(n.createdAt)],
+        with: { user: true },
+      },
     },
   });
   if (!doc) notFound();
@@ -141,19 +151,37 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
             <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">{doc.docNumber}</h1>
             <p className="font-sans text-xs text-zinc-500 mt-0.5">Party: {party.name}</p>
           </div>
-          <div className="flex gap-2 font-mono text-[10px] flex-wrap">
+          <div className="flex gap-2 font-mono text-[10px] flex-wrap items-center">
             <span className="border border-black px-2 py-1 bg-zinc-50 font-bold uppercase">{doc.type}</span>
             <span className={`border px-2 py-1 font-bold uppercase ${
               doc.status === "PAID" ? "bg-black text-white border-black" :
               doc.status === "ISSUED" ? "bg-white text-black border-black" :
+              doc.status === "PARTIALLY_PAID" ? "bg-amber-100 border-amber-400 text-amber-900" :
               doc.status === "OVERDUE" ? "bg-zinc-100 border-rose-600 border-dashed text-rose-700" :
               "bg-zinc-50 text-zinc-400 border-zinc-200"
             }`}>
               {doc.status}
             </span>
-            {doc.isReadByRecipient && (
-              <span className="border border-emerald-500 bg-emerald-50 text-emerald-800 px-2 py-1 font-bold uppercase" title="Viewed by recipient">
-                👁️ Viewed
+            {doc.emailDeliveryStatus === "OPENED" ? (
+              <span className="border border-emerald-500 bg-emerald-50 text-emerald-800 px-2 py-1 font-bold uppercase" title={`Email opened on ${doc.lastEmailOpenedAt ? new Date(doc.lastEmailOpenedAt).toLocaleString() : ''}`}>
+                👁️ Email Opened
+              </span>
+            ) : doc.emailDeliveryStatus === "DELIVERED" ? (
+              <span className="border border-blue-400 bg-blue-50 text-blue-800 px-2 py-1 font-bold uppercase" title="Email delivered to recipient inbox">
+                ✓✓ Email Delivered
+              </span>
+            ) : doc.emailDeliveryStatus === "BOUNCED" ? (
+              <span className="border border-rose-400 bg-rose-50 text-rose-800 px-2 py-1 font-bold uppercase" title="Email bounced">
+                ⚠️ Email Bounced
+              </span>
+            ) : doc.emailDeliveryStatus === "SENT" ? (
+              <span className="border border-zinc-300 bg-zinc-50 text-zinc-600 px-2 py-1 font-bold uppercase" title="Email sent via mail gateway">
+                ✓ Email Sent
+              </span>
+            ) : null}
+            {doc.isReadByRecipient && doc.emailDeliveryStatus !== "OPENED" && (
+              <span className="border border-emerald-500 bg-emerald-50 text-emerald-800 px-2 py-1 font-bold uppercase" title="Viewed via public client portal">
+                👁️ Portal Viewed
               </span>
             )}
           </div>
@@ -207,10 +235,16 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         </div>
         <div className="p-5 space-y-1">
           <p className="font-mono text-[10px] text-zinc-400 uppercase">Grand Total</p>
-          <p className="text-2xl font-bold font-mono tracking-tight">{formatCurrency(doc.grandTotal, shop.currency)}</p>
+          <p className="text-2xl font-bold font-mono tracking-tight">{formatCurrency(doc.grandTotal, doc.currency || shop.currency)}</p>
           <p className="font-mono text-[10px] text-zinc-500">
-            Sub: {formatCurrency(doc.subTotal, shop.currency)} | VAT: {formatCurrency(doc.taxAmount, shop.currency)}
+            Sub: {formatCurrency(doc.subTotal, doc.currency || shop.currency)} | VAT: {formatCurrency(doc.taxAmount, doc.currency || shop.currency)}
           </p>
+          {doc.currency && doc.currency !== (shop.currency || "KES") && (
+            <div className="bg-amber-50 border border-amber-200 rounded p-2 text-[10px] font-sans text-amber-900 mt-1">
+              <span className="font-bold block">Base Equivalent ({shop.currency || "KES"}): {formatCurrency(doc.baseGrandTotal || (parseFloat(doc.grandTotal) * parseFloat(doc.exchangeRate || "1")), shop.currency || "KES")}</span>
+              <span className="text-[9px] text-amber-700 font-mono">1 {doc.currency} = {parseFloat(doc.exchangeRate || "1").toFixed(4)} {shop.currency || "KES"}</span>
+            </div>
+          )}
           {doc.kraCuInvoiceNumber ? (
             <p className="font-mono text-[10px] font-bold text-black border-t border-zinc-200 pt-1 mt-1">
               KRA eTIMS CU #: {doc.kraCuInvoiceNumber}
@@ -311,6 +345,27 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         );
       })()}
 
+      {/* PAYMENT SETTLEMENT & INSTALLMENTS SUB-LEDGER */}
+      {(doc.type === "INVOICE" || (doc.payments && doc.payments.length > 0)) && (
+        <PaymentHistorySubLedger
+          documentId={doc.id}
+          shopId={shop.id}
+          shopSlug={slug}
+          currency={shop.currency || "KES"}
+          grandTotal={doc.grandTotal}
+          payments={doc.payments.map((p) => ({
+            id: p.id,
+            amount: p.amount,
+            paymentDate: p.paymentDate,
+            paymentChannel: p.paymentChannel,
+            paymentReference: p.paymentReference,
+            notes: p.notes,
+            recordedBy: p.recordedBy ? { name: p.recordedBy.name } : null,
+          }))}
+          docStatus={doc.status}
+        />
+      )}
+
       {/* STATUS + ACTIONS PANEL */}
       <DocumentStatusPanel
         documentId={doc.id}
@@ -347,6 +402,19 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         partyPhone={party.phone}
         partyTaxPin={party.taxPin}
         issueDate={doc.issueDate}
+      />
+
+      {/* INTERNAL NOTES & OPERATOR AUDIT TRAIL */}
+      <DocumentInternalNotes
+        documentId={doc.id}
+        shopId={shop.id}
+        shopSlug={slug}
+        notes={doc.notesList.map((n) => ({
+          id: n.id,
+          note: n.note,
+          createdAt: n.createdAt,
+          user: n.user ? { name: n.user.name, email: n.user.email } : null,
+        }))}
       />
 
     </div>

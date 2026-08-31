@@ -84,7 +84,7 @@ export function EditEmployeeModal({ employee, shopId, shopSlug }: EditEmployeeMo
             <div className="flex justify-between items-start border-b border-zinc-200/80 pb-4">
               <div>
                 <h3 className="font-semibold uppercase tracking-tight text-base font-sans text-black">Edit Employee Profile</h3>
-                <p className="text-[10px] text-zinc-400 uppercase font-semibold">Human Capital Database Node Modifier</p>
+                <p className="font-sans text-xs text-zinc-400 mt-0.5">Update employee details and compensation</p>
               </div>
               <button
                 type="button"
@@ -96,8 +96,8 @@ export function EditEmployeeModal({ employee, shopId, shopSlug }: EditEmployeeMo
             </div>
 
             {error && (
-              <div className="border border-rose-200 bg-rose-50 p-3 text-rose-700 font-semibold uppercase rounded text-xs">
-                &gt; ERROR: {error}
+              <div className="border border-rose-200 bg-rose-50 p-3 text-rose-700 font-semibold rounded text-xs">
+                ⚠ {error}
               </div>
             )}
 

@@ -112,8 +112,8 @@ export default async function StockValuationPage({ params }: Props) {
             )}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="p-12 text-center text-zinc-400 italic">
-                  &gt; NO TRACKED PRODUCTS FOUND. ENABLE STOCK TRACKING ON PRODUCTS TO SEE VALUATION.
+                <td colSpan={8} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                  No tracked products found. Enable inventory tracking on your products to view stock valuation.
                 </td>
               </tr>
             )}

@@ -92,8 +92,8 @@ export function ProductFormClientSide({
             {/* MODAL HEADER */}
             <div className="border-b border-zinc-100 p-6 flex justify-between items-start bg-zinc-50/50">
               <div className="space-y-0.5">
-                <h2 className="text-lg font-bold uppercase tracking-tight font-sans text-black">Add Catalog Node</h2>
-                <p className="font-mono text-[10px] text-zinc-400 uppercase font-semibold">Define product rate profile metrics</p>
+                <h2 className="text-lg font-bold uppercase tracking-tight font-sans text-black">Add Product or Service</h2>
+                <p className="font-sans text-[11px] text-zinc-400">Add a new item or service to your catalog</p>
               </div>
               <button
                 type="button"
@@ -105,8 +105,8 @@ export function ProductFormClientSide({
             </div>
 
             {error && (
-              <div className="mx-6 mt-4 border border-rose-200 bg-rose-50 p-3 font-mono text-[11px] text-rose-800 font-semibold uppercase rounded">
-                ⚠ VALIDATION_ERROR: {error}
+              <div className="mx-6 mt-4 border border-rose-200 bg-rose-50 p-3 font-sans text-xs text-rose-800 font-semibold rounded">
+                ⚠ {error}
               </div>
             )}
 

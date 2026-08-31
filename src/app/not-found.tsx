@@ -22,8 +22,8 @@ export default function NotFound() {
                 </div>
             </div>
             
-            <div className="absolute bottom-8 text-[10px] uppercase tracking-widest font-bold text-zinc-400">
-                SYSTEM_ERROR // RESOURCE_LOCATOR_FAILURE
+            <div className="absolute bottom-8 text-[10px] uppercase tracking-widest font-semibold text-zinc-400">
+                404 Not Found
             </div>
         </div>
     );

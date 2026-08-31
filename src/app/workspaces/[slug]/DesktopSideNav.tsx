@@ -21,7 +21,13 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
 
   const navItems: NavItem[] = [
     { href: `/workspaces/${slug}`, label: "Overview", exact: true },
-    { href: `/workspaces/${slug}/documents`, label: "Billing & Invoices" },
+    {
+      label: "Billing & Invoices",
+      children: [
+        { href: `/workspaces/${slug}/documents`, label: "All Documents", exact: true },
+        { href: `/workspaces/${slug}/documents/recurring`, label: "Recurring Invoices" },
+      ]
+    },
     { href: `/workspaces/${slug}/inbox`, label: "Shared Inbox" },
     { href: `/workspaces/${slug}/pos`, label: "Point of Sale (POS)" },
     { 
@@ -74,6 +80,7 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
         { href: `/workspaces/${slug}/finance/reports/balance-sheet`, label: "Balance Sheet" },
         { href: `/workspaces/${slug}/finance/reports/cashflow`, label: "Cash Flow" },
         { href: `/workspaces/${slug}/finance/reports/trial-balance`, label: "Trial Balance" },
+        { href: `/workspaces/${slug}/finance/reports/payables-aging`, label: "Payables Aging (AP)" },
         { href: `/workspaces/${slug}/finance/tax/assets`, label: "Fixed Assets Register" },
         { href: `/workspaces/${slug}/finance/tax/instalments`, label: "Instalment Tax" },
         { href: `/workspaces/${slug}/finance/tax/tot`, label: "Turnover Tax (TOT)" },
@@ -86,6 +93,7 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
         { href: `/workspaces/${slug}/team`, label: "Team Management" },
         { href: `/workspaces/${slug}/settings/billing`, label: "Billing & Plans" },
         { href: `/workspaces/${slug}/settings`, label: "Workspace Details", exact: true },
+        { href: `/workspaces/${slug}/settings/currencies`, label: "Multi-Currency Rates" },
         { href: `/workspaces/${slug}/settings/terms`, label: "Commercial Terms" },
         { href: `/workspaces/${slug}/settings/diagnostics`, label: "GL Diagnostics" },
         { href: `/workspaces/${slug}/guide`, label: "Operator Guide" },

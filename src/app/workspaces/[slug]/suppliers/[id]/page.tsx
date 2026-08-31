@@ -155,7 +155,7 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
       {/* PROCUREMENT SUB-LEDGER TABLE */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">&gt; Supplier Procurement Ledger</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">Purchase Orders &amp; Invoices</h2>
           <span className="text-[10px] text-zinc-400 uppercase font-semibold">
             Total Documents: {supplierDocuments.length}
           </span>
@@ -165,10 +165,10 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
           <table className="w-full text-left text-xs border-collapse font-mono">
             <thead>
               <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Serial Reference</th>
+                <th className="p-4 border-r border-zinc-200">Document #</th>
                 <th className="p-4 border-r border-zinc-200">Document Type</th>
                 <th className="p-4 border-r border-zinc-200">Issue Date</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Total Aggregate Valuation</th>
+                <th className="p-4 border-r border-zinc-200 text-right">Total Amount</th>
                 <th className="p-4 border-r border-zinc-200 text-center">Status</th>
                 <th className="p-4 text-center">Actions</th>
               </tr>
@@ -217,8 +217,8 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
               ))}
               {supplierDocuments.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-zinc-400 italic">
-                    &gt; NO PROCUREMENT RECORDS LINKED TO THIS VENDOR NODE.
+                  <td colSpan={6} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                    No purchase records found for this supplier.
                   </td>
                 </tr>
               )}

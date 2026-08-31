@@ -87,8 +87,8 @@ export function RegisterEmployeeModal({ shopId, shopSlug }: RegisterEmployeeModa
             </div>
 
             {error && (
-              <div className="border border-rose-200 bg-rose-50 p-3 text-rose-700 font-semibold uppercase rounded text-xs">
-                &gt; ERROR: {error}
+              <div className="border border-rose-200 bg-rose-50 p-3 text-rose-700 font-semibold rounded text-xs">
+                ⚠ {error}
               </div>
             )}
 
@@ -180,7 +180,7 @@ export function RegisterEmployeeModal({ shopId, shopSlug }: RegisterEmployeeModa
                   disabled={loading}
                   className="btn-primary-modern px-4 py-2 text-xs uppercase disabled:bg-zinc-300"
                 >
-                  {loading ? "REGISTERING..." : "SAVE EMPLOYEE NODE"}
+                  {loading ? "SAVING..." : "SAVE EMPLOYEE"}
                 </button>
               </div>
             </form>

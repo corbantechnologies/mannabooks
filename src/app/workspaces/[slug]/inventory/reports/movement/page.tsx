@@ -127,8 +127,8 @@ export default async function MovementHistoryPage({ params }: Props) {
             })}
             {ledger.length === 0 && (
               <tr>
-                <td colSpan={8} className="p-12 text-center text-zinc-400 italic">
-                  &gt; NO STOCK MOVEMENTS RECORDED YET.
+                <td colSpan={8} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                  No stock movements recorded yet.
                 </td>
               </tr>
             )}

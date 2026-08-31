@@ -10,6 +10,7 @@ import { EditProductModal } from "./EditProductModal";
 import { ProductFilterBar } from "./ProductFilterBar";
 import { ShareCatalogModal } from "./ShareCatalogModal";
 import { ProductsTableClient } from "./ProductsTableClient";
+import { LowStockAlertBanner } from "@/components/LowStockAlertBanner";
 import Link from "next/link";
 
 interface ProductsPageProps {
@@ -98,6 +99,23 @@ export default async function WorkspaceProductsPage({ params, searchParams }: Pr
           <ProductFormClientSide shopId={shop.id} shopSlug={slug} locations={locationList} />
         </div>
       </div>
+
+      {/* LOW STOCK INVENTORY WARNING BANNER (DISMISSIBLE) */}
+      <LowStockAlertBanner
+        items={catalogList
+          .filter(
+            (p) => p.itemType === "PRODUCT" && p.trackStock && parseFloat(p.stockQuantity || "0") <= parseFloat(p.reorderThreshold || "5")
+          )
+          .map((p) => ({
+            name: p.name,
+            stockQuantity: p.stockQuantity,
+            reorderThreshold: p.reorderThreshold,
+          }))}
+        shopSlug={slug}
+        actionHref={`/workspaces/${slug}/inventory`}
+        actionLabel="Open Stock Ledger →"
+        storageKeyPrefix="manna_dismiss_stock_alert_products"
+      />
 
       {/* FILTER & SEARCH CONTROL BAR */}
       <ProductFilterBar />

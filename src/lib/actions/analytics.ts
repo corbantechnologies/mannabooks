@@ -69,6 +69,41 @@ export interface AnalyticsData {
     revenueSharePercent: number;
   }[];
 
+  // 12-Month Rolling Trajectory
+  twelveMonthTimeline: {
+    monthLabel: string;
+    inflow: number;
+    outflow: number;
+    netProfit: number;
+  }[];
+
+  // Top 10 Clients Leaderboard
+  topTenClients: {
+    id: string;
+    name: string;
+    ltv: number;
+    revenueSharePercent: number;
+    invoiceCount: number;
+  }[];
+
+  // Product vs Service Revenue Split
+  productServiceSplit: {
+    productRevenue: number;
+    serviceRevenue: number;
+    totalRevenue: number;
+    productPercent: number;
+    servicePercent: number;
+  };
+
+  // Quotation Pipeline & Conversion
+  quotationConversion: {
+    totalQuotesIssued: number;
+    totalQuotesAcceptedOrConverted: number;
+    conversionRatePercent: number;
+    totalQuotedValue: number;
+    totalConvertedValue: number;
+  };
+
   outstandingInvoices?: {
     id: string;
     docNumber: string;
@@ -395,8 +430,8 @@ export async function getWorkspaceAnalyticsData(
         revenueSharePercent: totalSalesItemRevenue > 0 ? (p.revenue / totalSalesItemRevenue) * 100 : 0,
       }));
 
-    // 9. Compute Client LTV & Concentration Ranking
-    const clientLtvMap: Record<string, { id: string; name: string; ltv: number }> = {};
+    // 9. Compute Client LTV & Concentration Ranking (Top 10)
+    const clientLtvMap: Record<string, { id: string; name: string; ltv: number; invoiceCount: number }> = {};
     let totalClientRevenue = 0;
 
     allDocs.forEach((d) => {
@@ -409,9 +444,10 @@ export async function getWorkspaceAnalyticsData(
         totalClientRevenue += val * factor;
 
         if (!clientLtvMap[d.client.id]) {
-          clientLtvMap[d.client.id] = { id: d.client.id, name: d.client.name, ltv: 0 };
+          clientLtvMap[d.client.id] = { id: d.client.id, name: d.client.name, ltv: 0, invoiceCount: 0 };
         }
         clientLtvMap[d.client.id].ltv += val * factor;
+        if (d.type === "INVOICE") clientLtvMap[d.client.id].invoiceCount += 1;
       }
     });
 
@@ -424,6 +460,121 @@ export async function getWorkspaceAnalyticsData(
         ltv: c.ltv,
         revenueSharePercent: totalClientRevenue > 0 ? (c.ltv / totalClientRevenue) * 100 : 0,
       }));
+
+    const topTenClients = Object.values(clientLtvMap)
+      .sort((a, b) => b.ltv - a.ltv)
+      .slice(0, 10)
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        ltv: c.ltv,
+        revenueSharePercent: totalClientRevenue > 0 ? (c.ltv / totalClientRevenue) * 100 : 0,
+        invoiceCount: c.invoiceCount,
+      }));
+
+    // 10. Compute 12-Month Rolling Trajectory Timeline
+    const twelveMonthTimelineMap: Record<string, { inflow: number; outflow: number; netProfit: number }> = {};
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }).toUpperCase();
+      twelveMonthTimelineMap[label] = { inflow: 0, outflow: 0, netProfit: 0 };
+    }
+
+    allDocs.forEach((d) => {
+      const issue = new Date(d.issueDate);
+      const label = issue.toLocaleDateString("en-US", { month: "short", year: "2-digit" }).toUpperCase();
+      if (twelveMonthTimelineMap[label]) {
+        const val = parseFloat(d.grandTotal || "0");
+        const isSales = d.type === "INVOICE" || d.type === "RECEIPT";
+        const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER" || d.type === "PAYROLL_VOUCHER";
+        const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
+
+        if (!isReceiptFromInvoice && (d.status === "PAID" || d.type === "RECEIPT")) {
+          if (isSales) twelveMonthTimelineMap[label].inflow += val;
+          else if (isOutflow) twelveMonthTimelineMap[label].outflow += val;
+        } else if (d.type === "CREDIT_NOTE" && d.status === "PAID") {
+          twelveMonthTimelineMap[label].inflow -= val;
+        }
+      }
+    });
+
+    allExpenses.forEach((exp) => {
+      const d = new Date(exp.expenseDate);
+      const label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }).toUpperCase();
+      if (twelveMonthTimelineMap[label]) {
+        twelveMonthTimelineMap[label].outflow += parseFloat(exp.amount || "0");
+      }
+    });
+
+    allIncomes.forEach((inc) => {
+      const d = new Date(inc.incomeDate);
+      const label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }).toUpperCase();
+      if (twelveMonthTimelineMap[label]) {
+        twelveMonthTimelineMap[label].inflow += parseFloat(inc.amount || "0");
+      }
+    });
+
+    const twelveMonthTimeline = Object.entries(twelveMonthTimelineMap).map(([monthLabel, data]) => ({
+      monthLabel,
+      inflow: data.inflow,
+      outflow: data.outflow,
+      netProfit: data.inflow - data.outflow,
+    }));
+
+    // 11. Compute Product vs Service Revenue Split
+    let productRevenue = 0;
+    let serviceRevenue = 0;
+
+    filteredDocs.forEach((d) => {
+      const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
+      const isSalesDoc = d.type === "INVOICE" || d.type === "RECEIPT" || d.type === "CREDIT_NOTE";
+      if (!isReceiptFromInvoice && isSalesDoc && (d.status === "PAID" || d.type === "RECEIPT")) {
+        const factor = d.type === "CREDIT_NOTE" ? -1 : 1;
+        d.items.forEach((item) => {
+          const itemVal = parseFloat(item.itemTotal || "0") * factor;
+          const descLower = item.description.toLowerCase();
+          const isService = descLower.includes("service") || descLower.includes("consult") || descLower.includes("fee") || descLower.includes("labor") || descLower.includes("support") || descLower.includes("maintenance") || descLower.includes("audit") || descLower.includes("advisory");
+          if (isService) {
+            serviceRevenue += itemVal;
+          } else {
+            productRevenue += itemVal;
+          }
+        });
+      }
+    });
+
+    const totalSplitRev = productRevenue + serviceRevenue;
+    const productServiceSplit = {
+      productRevenue: Math.max(0, productRevenue),
+      serviceRevenue: Math.max(0, serviceRevenue),
+      totalRevenue: totalSplitRev,
+      productPercent: totalSplitRev > 0 ? Math.round((productRevenue / totalSplitRev) * 100) : 50,
+      servicePercent: totalSplitRev > 0 ? Math.round((serviceRevenue / totalSplitRev) * 100) : 50,
+    };
+
+    // 12. Compute Quotation Pipeline & Conversion Analytics
+    const allQuotes = allDocs.filter((d) => d.type === "QUOTATION");
+    const totalQuotesIssued = allQuotes.length;
+    const totalQuotedValue = allQuotes.reduce((acc, q) => acc + parseFloat(q.grandTotal || "0"), 0);
+
+    const convertedQuotes = allQuotes.filter((q) => 
+      q.clientPortalResponse === "ACCEPTED" || 
+      q.status === "PAID" || 
+      allDocs.some((inv) => inv.parentDocumentId === q.id)
+    );
+    const totalQuotesAcceptedOrConverted = convertedQuotes.length;
+    const totalConvertedValue = convertedQuotes.reduce((acc, q) => acc + parseFloat(q.grandTotal || "0"), 0);
+    const conversionRatePercent = totalQuotesIssued > 0 
+      ? parseFloat(((totalQuotesAcceptedOrConverted / totalQuotesIssued) * 100).toFixed(1)) 
+      : 0;
+
+    const quotationConversion = {
+      totalQuotesIssued,
+      totalQuotesAcceptedOrConverted,
+      conversionRatePercent,
+      totalQuotedValue,
+      totalConvertedValue,
+    };
 
     return {
       success: true,
@@ -443,6 +594,10 @@ export async function getWorkspaceAnalyticsData(
         pendingReceivables,
         accountsPayableDebt,
         monthlyTimeline,
+        twelveMonthTimeline,
+        topTenClients,
+        productServiceSplit,
+        quotationConversion,
         kraVatSummary,
         arAging,
         outstandingInvoices,

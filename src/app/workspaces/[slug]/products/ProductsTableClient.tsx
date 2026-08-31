@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { EditProductModal } from "./EditProductModal";
 import { ShareCatalogModal } from "./ShareCatalogModal";
+import { QuickRestockModal } from "./QuickRestockModal";
 import Link from "next/link";
 
 interface ProductsTableClientProps {
@@ -139,7 +140,7 @@ export function ProductsTableClient({
                     )}
                   </td>
                   <td className="p-4 border-r border-zinc-200/80 text-zinc-500 tracking-wider">
-                    {p.sku || <span className="text-zinc-300 italic font-normal lowercase">&gt; unassigned</span>}
+                    {p.sku || <span className="text-zinc-300 italic font-normal">None</span>}
                   </td>
                   <td className="p-4 border-r border-zinc-200/80 font-semibold text-sm text-black">
                     {formatCurrency(p.unitPrice, shop.currency)}
@@ -162,17 +163,53 @@ export function ProductsTableClient({
                     {p.itemType === "SERVICE" || !p.trackStock ? (
                       <span className="text-zinc-400 italic font-normal">Service (Untracked)</span>
                     ) : qty <= 0 ? (
-                      <span className="bg-rose-100 text-rose-800 border border-rose-300 px-2 py-0.5 rounded font-semibold text-[10px] uppercase">
-                        ❌ Out of Stock ({qty})
-                      </span>
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className="bg-rose-100 text-rose-800 border border-rose-300 px-2 py-0.5 rounded font-semibold text-[10px] uppercase">
+                          ❌ Out of Stock ({qty})
+                        </span>
+                        <QuickRestockModal
+                          product={p}
+                          shopId={shop.id}
+                          shopSlug={shopSlug}
+                          currency={shop.currency}
+                          locations={locations}
+                        />
+                      </div>
                     ) : qty <= threshold ? (
-                      <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded font-semibold text-[10px] uppercase">
-                        ⚠️ Low Stock ({qty} left)
-                      </span>
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded font-semibold text-[10px] uppercase">
+                          ⚠️ Low Stock ({qty} left)
+                        </span>
+                        <QuickRestockModal
+                          product={p}
+                          shopId={shop.id}
+                          shopSlug={shopSlug}
+                          currency={shop.currency}
+                          locations={locations}
+                        />
+                      </div>
                     ) : (
-                      <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded font-semibold text-[10px] uppercase">
-                        ✓ {qty} in Stock
-                      </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded font-semibold text-[10px] uppercase">
+                          ✓ {qty} in Stock
+                        </span>
+                        <QuickRestockModal
+                          product={p}
+                          shopId={shop.id}
+                          shopSlug={shopSlug}
+                          currency={shop.currency}
+                          locations={locations}
+                          triggerButton={
+                            <button
+                              type="button"
+                              className="text-[10px] font-bold text-zinc-400 hover:text-black uppercase cursor-pointer"
+                              title="Restock units"
+                            >
+                              + Stock
+                            </button>
+                          }
+                        />
+                      </div>
                     )}
                   </td>
                   <td className="p-4 border-r border-zinc-200/80">
@@ -186,7 +223,9 @@ export function ProductsTableClient({
                     </span>
                   </td>
                   <td className="p-4 text-center">
-                    <EditProductModal product={p} shopId={shop.id} shopSlug={shopSlug} locations={locations} />
+                    <div className="flex items-center justify-center gap-1.5">
+                      <EditProductModal product={p} shopId={shop.id} shopSlug={shopSlug} locations={locations} />
+                    </div>
                   </td>
                 </tr>
               );

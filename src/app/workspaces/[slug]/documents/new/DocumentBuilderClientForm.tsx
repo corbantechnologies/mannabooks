@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { calculateLineItem, calculateDocumentTotals, formatCurrency, isFiscalDocType } from "@/lib/utils";
 import { createBillingDocument, updateBillingDocument, DocumentType } from "@/lib/actions/documents";
 import { toast } from "react-hot-toast";
@@ -15,6 +16,7 @@ interface BuilderProps {
   suppliers?: any[];
   products: any[];
   shopTerms?: any[];
+  currencies?: any[];
   initialDocument?: any;
 }
 
@@ -27,7 +29,7 @@ interface UiRowItem {
   taxType: "V_16" | "V_0" | "EXEMPT";
 }
 
-export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers = [], products, shopTerms = [], initialDocument }: BuilderProps) {
+export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers = [], products, shopTerms = [], currencies = [], initialDocument }: BuilderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialClientId = searchParams.get("clientId") || (initialDocument?.clientId) || "";
@@ -52,10 +54,49 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
   const [kraCuInvoiceNumber, setKraCuInvoiceNumber] = useState(initialDocument?.kraCuInvoiceNumber || "");
   const [requiresEtims, setRequiresEtims] = useState(initialDocument?.requiresEtims || false);
   const [currency, setCurrency] = useState(initialDocument?.currency || shop.currency || "KES");
+  const [exchangeRate, setExchangeRate] = useState<string>(() => {
+    if (initialDocument?.exchangeRate) return String(initialDocument.exchangeRate);
+    const initialCurr = initialDocument?.currency || shop.currency || "KES";
+    if (initialCurr === (shop.currency || "KES")) return "1.0000";
+    const matched = currencies.find((c: any) => c.code === initialCurr);
+    return matched ? parseFloat(matched.exchangeRate).toFixed(4) : "1.0000";
+  });
+  const [isFetchingGuidanceRate, setIsFetchingGuidanceRate] = useState(false);
   const [isRecurring, setIsRecurring] = useState(initialDocument?.isRecurring || false);
   const [recurringInterval, setRecurringInterval] = useState<"WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY">(
     initialDocument?.recurringInterval || "MONTHLY"
   );
+
+  function handleCurrencyChange(newCurr: string) {
+    setCurrency(newCurr);
+    const base = shop.currency || "KES";
+    if (newCurr === base) {
+      setExchangeRate("1.0000");
+      return;
+    }
+    const matched = currencies.find((c: any) => c.code === newCurr && c.isEnabled);
+    if (matched) {
+      setExchangeRate(parseFloat(matched.exchangeRate).toFixed(4));
+    } else {
+      fetchLiveGuidanceRate(newCurr, base);
+    }
+  }
+
+  async function fetchLiveGuidanceRate(fromCurr: string, toCurr: string) {
+    setIsFetchingGuidanceRate(true);
+    try {
+      const res = await fetch(`/api/exchange-rate?from=${fromCurr}&to=${toCurr}`);
+      const data = await res.json();
+      if (data.success && typeof data.rate === "number") {
+        setExchangeRate(data.rate.toFixed(4));
+        toast.success(`Guidance rate: 1 ${fromCurr} = ${data.rate.toFixed(4)} ${toCurr}`);
+      }
+    } catch {
+      toast.error("Could not fetch live rate. Please enter manually.");
+    } finally {
+      setIsFetchingGuidanceRate(false);
+    }
+  }
 
   // Commercial Terms & Conditions state
   const [selectedTermIds, setSelectedTermIds] = useState<string[]>(() => {
@@ -231,6 +272,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
           requiresEtims: isFiscalDocType(docType) ? requiresEtims : false,
           currency,
+          exchangeRate: parseFloat(exchangeRate) || 1.0,
           termsAndConditions: finalTermsSerialized,
           items: itemsPayload,
         })
@@ -244,6 +286,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
           requiresEtims: isFiscalDocType(docType) ? requiresEtims : false,
           currency,
+          exchangeRate: parseFloat(exchangeRate) || 1.0,
           isRecurring,
           recurringInterval: isRecurring ? recurringInterval : undefined,
           termsAndConditions: finalTermsSerialized,
@@ -409,6 +452,102 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
               className="w-full px-3 py-2.5 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black text-xs font-semibold h-10"
             />
           </div>
+
+        </div>
+
+        {/* ROW 2: MULTI-CURRENCY CONFIGURATION & RECURRING SCHEDULE */}
+        <div className="border-t border-zinc-100 pt-5 grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+          
+          {/* CURRENCY SELECTOR */}
+          <div className="md:col-span-4 space-y-1.5">
+            <div className="flex justify-between items-center">
+              <label className="text-[10px] text-zinc-400 uppercase font-semibold">
+                Billing Currency
+              </label>
+              <Link
+                href={`/workspaces/${shopSlug}/settings/currencies`}
+                className="text-[9px] text-zinc-400 hover:text-black font-sans uppercase underline"
+              >
+                ⚙ Manage Rates
+              </Link>
+            </div>
+            <select
+              value={currency}
+              onChange={(e) => handleCurrencyChange(e.target.value)}
+              className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-mono text-xs font-bold uppercase h-10"
+            >
+              <option value={shop.currency || "KES"}>
+                {shop.currency || "KES"} — Base Workspace Currency
+              </option>
+              {currencies.filter((c: any) => c.code !== (shop.currency || "KES")).map((c: any) => (
+                <option key={c.id || c.code} value={c.code}>
+                  {c.code} ({c.symbol}) — {c.name} {c.exchangeRate ? `(Rate: ${parseFloat(c.exchangeRate).toFixed(2)})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* EXCHANGE RATE INPUT (IF FOREIGN CURRENCY) */}
+          {currency !== (shop.currency || "KES") && (
+            <div className="md:col-span-4 space-y-1.5 animate-in fade-in">
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] text-zinc-500 uppercase font-bold">
+                  Exchange Rate (1 {currency} = ? {shop.currency || "KES"})
+                </label>
+                <button
+                  type="button"
+                  disabled={isFetchingGuidanceRate}
+                  onClick={() => fetchLiveGuidanceRate(currency, shop.currency || "KES")}
+                  className="text-[9px] text-blue-600 hover:underline font-bold uppercase"
+                >
+                  {isFetchingGuidanceRate ? "Fetching..." : "⚡ Live Guidance"}
+                </button>
+              </div>
+              <input
+                type="number"
+                step="0.0001"
+                min="0.0001"
+                required
+                value={exchangeRate}
+                onChange={(e) => setExchangeRate(e.target.value)}
+                placeholder="e.g. 129.50"
+                className="w-full px-3 py-2 border border-amber-300 bg-amber-50/50 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-mono text-xs font-bold h-10"
+              />
+            </div>
+          )}
+
+          {/* RECURRING INVOICE TOGGLE (FOR INVOICES) */}
+          {docType === "INVOICE" && (
+            <div className={`space-y-1.5 ${currency !== (shop.currency || "KES") ? "md:col-span-4" : "md:col-span-8"}`}>
+              <label className="text-[10px] text-zinc-400 uppercase font-semibold block">
+                Recurring Invoicing Series
+              </label>
+              <div className="flex items-center gap-3 h-10 border border-zinc-200 rounded-md px-3 bg-zinc-50/70">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isRecurring}
+                    onChange={(e) => setIsRecurring(e.target.checked)}
+                    className="w-4 h-4 rounded text-black focus:ring-black border-zinc-300"
+                  />
+                  <span className="font-sans text-xs font-bold text-black">🔁 Make Recurring</span>
+                </label>
+
+                {isRecurring && (
+                  <select
+                    value={recurringInterval}
+                    onChange={(e) => setRecurringInterval(e.target.value as any)}
+                    className="ml-auto px-2 py-1 border border-zinc-300 bg-white rounded font-mono text-[10px] uppercase font-bold focus:outline-none focus:border-black"
+                  >
+                    <option value="WEEKLY">Every Week</option>
+                    <option value="MONTHLY">Every Month</option>
+                    <option value="QUARTERLY">Every Quarter</option>
+                    <option value="YEARLY">Every Year</option>
+                  </select>
+                )}
+              </div>
+            </div>
+          )}
 
         </div>
       </div>
@@ -713,12 +852,12 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
               <span className="w-2 h-2 rounded-full bg-black" />
               <h3 className="font-bold text-xs uppercase tracking-tight text-black">Compliance &amp; System Notes</h3>
             </div>
-            <p className="text-zinc-500 text-xs leading-relaxed font-mono text-[11px]">
-              &gt; Fiscal Verification Engine: Transactions are stored cleanly with frozen precision metrics. Draft documents can be updated or finalized at any time.
+            <p className="text-zinc-500 text-xs leading-relaxed font-sans">
+              All transactions and calculations are saved accurately. Draft documents can be edited or finalized whenever you are ready.
             </p>
             {requiresEtims && (
-              <div className="bg-emerald-50 border border-emerald-200 p-3 rounded text-[11px] font-semibold text-emerald-900 flex items-center gap-2">
-                <span>✓ Target entity requires eTIMS fiscal signing.</span>
+              <div className="bg-emerald-50 border border-emerald-200 p-3 rounded text-xs font-semibold text-emerald-900 flex items-center gap-2 font-sans">
+                <span>✓ Client requires eTIMS fiscal signing.</span>
               </div>
             )}
           </div>
@@ -743,6 +882,18 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                 <span>GRAND TOTAL:</span>
                 <span>{formatCurrency(totals.grandTotal, currency)}</span>
               </div>
+
+              {currency !== (shop.currency || "KES") && (
+                <div className="bg-amber-50 border border-amber-200 rounded p-2.5 space-y-1 text-[11px] font-sans text-amber-900 mt-2">
+                  <div className="flex justify-between font-semibold">
+                    <span>Base Equivalent ({shop.currency || "KES"}):</span>
+                    <span className="font-bold">{formatCurrency(totals.grandTotal * (parseFloat(exchangeRate) || 1), shop.currency || "KES")}</span>
+                  </div>
+                  <p className="text-[9px] text-amber-700 font-mono">
+                    Applied rate: 1 {currency} = {parseFloat(exchangeRate || "1").toFixed(4)} {shop.currency || "KES"}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           

@@ -348,3 +348,80 @@ export async function createBulkProducts(input: BulkCreateProductInput) {
         revalidatePath(`/workspaces/${input.shopSlug}/inventory`);
     }
 }
+
+/**
+ * Action: Quick Restock a product (increases stock quantity and logs movement in stock ledger).
+ */
+export async function restockProductAction(input: {
+    shopId: string;
+    shopSlug: string;
+    productId: string;
+    addQuantity: number;
+    unitCost?: number;
+    notes?: string;
+    locationId?: string;
+}): Promise<{ success: boolean; error?: string; newQuantity?: number }> {
+    try {
+        const session = await verifyAndGetSession();
+        if (!session) {
+            return { success: false, error: "Unauthorized. Please log in." };
+        }
+        if (input.addQuantity <= 0 || isNaN(input.addQuantity)) {
+            return { success: false, error: "Quantity to add must be greater than zero." };
+        }
+
+        const product = await db.query.products.findFirst({
+            where: and(eq(products.id, input.productId), eq(products.shopId, input.shopId)),
+        });
+
+        if (!product) {
+            return { success: false, error: "Product record not found." };
+        }
+
+        const location = await resolveOrCreateLocation(input.shopId, input.locationId || product.defaultLocationId || undefined);
+        const currentQty = parseFloat(product.stockQuantity || "0");
+        const newQty = currentQty + input.addQuantity;
+
+        await db.transaction(async (tx) => {
+            await tx.update(products)
+                .set({
+                    stockQuantity: newQty.toFixed(2),
+                    costPrice: input.unitCost !== undefined ? input.unitCost.toFixed(2) : product.costPrice,
+                })
+                .where(eq(products.id, input.productId));
+
+            if (location) {
+                await tx.insert(stockLedger).values({
+                    shopId: input.shopId,
+                    productId: input.productId,
+                    locationId: location.id,
+                    movementType: "PURCHASE_RECEIPT",
+                    quantity: input.addQuantity.toFixed(2),
+                    unitCost: input.unitCost !== undefined ? input.unitCost.toFixed(2) : product.costPrice,
+                    runningBalance: newQty.toFixed(2),
+                    notes: input.notes?.trim() || "Quick restock replenishment",
+                    createdById: session.userId,
+                });
+
+                await tx.insert(productLocationStock).values({
+                    shopId: input.shopId,
+                    productId: input.productId,
+                    locationId: location.id,
+                    quantity: newQty.toFixed(2),
+                }).onConflictDoUpdate({
+                    target: [productLocationStock.productId, productLocationStock.locationId],
+                    set: { quantity: newQty.toFixed(2), updatedAt: new Date() },
+                });
+            }
+        });
+
+        revalidatePath(`/workspaces/${input.shopSlug}/products`);
+        revalidatePath(`/workspaces/${input.shopSlug}/inventory`);
+        revalidatePath(`/workspaces/${input.shopSlug}`);
+
+        return { success: true, newQuantity: newQty };
+    } catch (error: any) {
+        console.error("Failed to restock product:", error);
+        return { success: false, error: error.message || "Failed to restock product." };
+    }
+}

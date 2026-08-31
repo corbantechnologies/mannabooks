@@ -4,15 +4,19 @@ import Link from "next/link";
 import { PublicNavbar } from "@/components/PublicNavbar";
 
 export const metadata: Metadata = {
-  title: "Operator Guide | Manna Books — How to Use KRA eTIMS Invoicing, Payroll, Digital Catalog & POS",
+  title: "Operator Guide | Manna Books — How to Use KRA eTIMS Invoicing, Payroll, POS, RBAC & Inventory",
   description:
-    "Step-by-step operator manual for Manna Books. Learn how to issue KRA eTIMS invoices, share digital product catalogs, run statutory payroll, manage walk-in POS sales, track inventory and COGS, automate your monthly 20th VAT return, and inspect double-entry general ledgers.",
+    "Step-by-step operator manual for Manna Books. Learn how to issue KRA eTIMS invoices, manage quotation expiry, share digital catalogs, run statutory payroll, manage walk-in POS sales, reconcile multi-location inventory, configure staff RBAC, automate monthly 20th VAT returns, and inspect double-entry general ledgers.",
   keywords: [
     "Manna Books guide",
     "KRA eTIMS invoicing tutorial Kenya",
     "digital product catalog guide Kenya",
     "statutory payroll guide Kenya",
     "POS sales Kenya",
+    "inventory reconciliation Kenya",
+    "staff permissions RBAC Kenya",
+    "in-app notifications Kenya",
+    "quotation expiry tutorial Kenya",
     "20th VAT return Kenya tutorial",
     "general ledger double entry guide Kenya",
     "mannabooks.co.ke guide",
@@ -20,7 +24,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "Operator Guide | Manna Books — KRA eTIMS, Payroll, Catalog & Analytics",
-    description: "Complete step-by-step guide for Manna Books: eTIMS invoicing, digital product catalogs, statutory payroll, walk-in POS, COGS tracking, VAT return automation, and double-entry accounting.",
+    description: "Complete step-by-step guide for Manna Books: eTIMS invoicing, digital product catalogs, statutory payroll, walk-in POS, inventory reconciler, staff RBAC, VAT return automation, and double-entry accounting.",
     url: "https://mannabooks.co.ke/guide",
     siteName: "Manna Books",
     locale: "en_KE",
@@ -33,19 +37,21 @@ export const metadata: Metadata = {
 
 const GUIDE_MODULES = [
   { href: "#module-0", label: "[00] Walk-in POS Terminal" },
-  { href: "#module-1", label: "[01] Workspace Setup" },
-  { href: "#module-2", label: "[02] Product Catalog & Shareable Rate Cards" },
-  { href: "#module-3", label: "[03] Client & Supplier Directory" },
-  { href: "#module-4", label: "[04] Fiscal Invoices & eTIMS" },
-  { href: "#module-5", label: "[05] Passwordless Portals" },
-  { href: "#module-6", label: "[06] Payment Channels" },
-  { href: "#module-7", label: "[07] KRA 20th VAT Tracker" },
-  { href: "#module-8", label: "[08] Analytics & A/R Aging" },
-  { href: "#module-9", label: "[09] Statutory Payroll" },
-  { href: "#module-10", label: "[10] Multi-Location Stock" },
-  { href: "#module-11", label: "[11] Shared B2B Inbox" },
-  { href: "#module-12", label: "[12] General Ledger, Budgets & Diagnostics" },
-  { href: "#module-13", label: "[13] PWA Appliance" },
+  { href: "#module-1", label: "[01] Workspace & Multi-Currency" },
+  { href: "#module-2", label: "[02] Staff & Granular RBAC" },
+  { href: "#module-3", label: "[03] In-App Notifications Bell" },
+  { href: "#module-4", label: "[04] Product Catalog & Rate Cards" },
+  { href: "#module-5", label: "[05] Inventory & 1-Click Reconciler" },
+  { href: "#module-6", label: "[06] Client & Supplier Directory" },
+  { href: "#module-7", label: "[07] Fiscal Invoices & Quote Expiry" },
+  { href: "#module-8", label: "[08] Portals & Quote Amendments" },
+  { href: "#module-9", label: "[09] Payment Channels & Remittances" },
+  { href: "#module-10", label: "[10] KRA 20th VAT Tracker" },
+  { href: "#module-11", label: "[11] Advanced Analytics & Leaderboard" },
+  { href: "#module-12", label: "[12] Statutory Payroll" },
+  { href: "#module-13", label: "[13] Shared B2B Inbox" },
+  { href: "#module-14", label: "[14] General Ledger & Budgets" },
+  { href: "#module-15", label: "[15] PWA Appliance" },
 ];
 
 export default function PublicOperatorGuidePage() {
@@ -81,13 +87,13 @@ export default function PublicOperatorGuidePage() {
           {/* GUIDE TITLE HEADER */}
           <div className="border-b border-zinc-200/80 pb-8 space-y-4">
             <div className="inline-block border border-emerald-200 px-3.5 py-1 text-[10px] font-mono uppercase tracking-widest bg-emerald-50 rounded-full font-semibold text-[#064e3b]">
-              Official Operator Manual // Version 2026.6
+              Official Operator Manual // Version 2026.8
             </div>
             <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-tight font-sans text-black">
               Manna Books Platform Guide &amp; Operating Specifications
             </h1>
             <p className="font-sans text-sm text-zinc-600 max-w-2xl leading-relaxed">
-              Step-by-step documentation for managing workspaces, issuing eTIMS invoices, sharing digital product catalogs, running POS counter sales, tracking COGS profitability, managing statutory payroll, and inspecting double-entry accounting ledgers.
+              Step-by-step documentation for managing workspaces, issuing eTIMS invoices, tracking quotation validity, sharing digital product catalogs, running POS counter sales, reconciling multi-location stock, configuring staff RBAC, managing statutory payroll, and inspecting double-entry accounting ledgers.
             </p>
 
             {/* MOBILE INDEX (shown on mobile only) */}
@@ -154,35 +160,91 @@ export default function PublicOperatorGuidePage() {
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 1: PROVISIONING WORKSPACE */}
+          {/* MODULE 1: PROVISIONING WORKSPACE & MULTI-CURRENCY */}
           {/* ─────────────────────────────────────────── */}
           <section id="module-1" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 01]</span>
-              <h2 className="text-xl font-bold uppercase font-sans text-black">Provisioning Workspaces &amp; Custom Shop Themes</h2>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Provisioning Workspaces &amp; Multi-Currency FX</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
-              Manna Books supports multi-tenancy. Operate multiple business profiles under a single user account. Each workspace has its own brand color, logo, documents, products, and client directory.
+              Manna Books supports multi-tenancy. Operate multiple business profiles under a single user account. Each workspace has its own brand color, logo, documents, products, and foreign currency exchange rates.
             </p>
             <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
-                <li>Navigate to <strong>[09] System Settings</strong> in the workspace sidebar.</li>
+                <li>Navigate to <strong>System Settings</strong> in the workspace navigation.</li>
                 <li>Enter your <strong>Business Name</strong>, <strong>KRA Tax PIN</strong>, <strong>Phone Number</strong>, <strong>Short Name</strong>, and <strong>Website URL</strong>.</li>
                 <li>Upload your shop logo asset to Cloudinary via the logo upload button.</li>
                 <li>Select your shop&apos;s <strong>Primary Theme Hex Color</strong> (e.g. Emerald Green <code>#064e3b</code> or Navy Blue <code>#1e3a8a</code>). This color auto-styles action buttons, invoice portals, vector PDFs, and Resend emails.</li>
-                <li>Toggle <strong>VAT Registered</strong> if your business is registered for 16% Standard VAT.</li>
+                <li>To enable foreign currency billing, visit <strong>Settings &rarr; Multi-Currency</strong> to configure exchange rates for USD, EUR, GBP, or regional currencies.</li>
                 <li>Click <strong>Commit Changes</strong> to save.</li>
               </ol>
             </div>
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 2: PRODUCT CATALOG, CURATED SELECTION & RATE CARDS */}
+          {/* MODULE 2: STAFF MANAGEMENT & GRANULAR RBAC */}
           {/* ─────────────────────────────────────────── */}
           <section id="module-2" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 02]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Staff Management &amp; Role-Based Permissions (RBAC)</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Control workspace access with server-enforced RBAC. Invite cashiers, sales staff, managers, and accountants with customized operational scopes.
+            </p>
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Managing Roles &amp; Permissions:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li>Navigate to <strong>Settings &rarr; Staff &amp; Permissions</strong> (or <code>/workspaces/[slug]/team</code>).</li>
+                <li>Click <strong>+ Add Member</strong> and enter the employee&apos;s registered email address.</li>
+                <li>Select the target role: <strong>Viewer</strong> (Read Only), <strong>Employee</strong> (Custom Granular), <strong>Accountant</strong> (Financials), <strong>Manager</strong> (Operational), or <strong>Admin</strong>.</li>
+                <li>For <strong>Employee</strong> accounts, check the exact permissions permitted:
+                  <ul className="list-disc list-inside pl-4 pt-1 space-y-1 text-xs text-zinc-600 font-mono">
+                    <li><code>[✓] Can Create Documents (Invoices, Quotations, Receipts)</code></li>
+                    <li><code>[✓] Can Edit Clients &amp; Directory</code></li>
+                    <li><code>[✓] Can View Finance, Ledgers &amp; Analytics</code></li>
+                    <li><code>[✓] Can Export Reports &amp; Summaries</code></li>
+                    <li><code>[✓] Can Manage Product Catalog &amp; Stock</code></li>
+                    <li><code>[✓] Can Manage Payroll &amp; Staff Wages</code></li>
+                  </ul>
+                </li>
+                <li>To modify an existing member&apos;s role or toggle permissions, click <strong>Edit</strong> next to their name to open the live configuration modal.</li>
+              </ol>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 3: IN-APP ACTIVITY BELL */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-3" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 03]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">In-App Notifications &amp; Activity Bell</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Real-time workspace activity stream in the top navigation bar with unread count badges.
+            </p>
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Notification Features:</h4>
+              <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Quotation Acceptance:</strong> Real-time alerts when a customer signs and accepts a quotation on the public portal.</li>
+                <li><strong>Quotation Amendments:</strong> Alerts when a client requests scope or price updates before accepting.</li>
+                <li><strong>Overdue Invoices:</strong> Automated warnings when invoices surpass payment terms.</li>
+                <li><strong>Quotation Expiry:</strong> Alerts when quotes expire and are cancelled by automated sweeps.</li>
+                <li><strong>Low Stock Warnings:</strong> Instant alerts when tracked products fall below reorder thresholds.</li>
+                <li>Click any notification to navigate directly to the affected document and automatically mark the alert as read.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 4: PRODUCT CATALOG & RATE CARDS */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-4" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 04]</span>
               <h2 className="text-xl font-bold uppercase font-sans text-black">Product Catalog, Curated Selection &amp; Shareable Rate Cards</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
@@ -190,44 +252,56 @@ export default function PublicOperatorGuidePage() {
             </p>
             
             <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
-              <h4 className="font-bold uppercase text-black text-xs">Registering Catalog Items:</h4>
-              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
-                <li>Navigate to <strong>[04] Product Catalog</strong> and click <strong>+ Register Catalog Item</strong>.</li>
-                <li>Select the <strong>Item Classification</strong>: <strong>📦 Product</strong> (tangible good with stock tracking) or <strong>🛠️ Service</strong> (labor/consulting).</li>
-                <li>Enter the item <strong>Name</strong>, optional <strong>SKU</strong> code, <strong>Selling Price</strong>, and <strong>Cost Price / COGS</strong>.</li>
-                <li>Set the <strong>Default Tax Type</strong>: <code>V_16</code> (16% VAT), <code>V_0</code> (Zero-Rated), or <code>EXEMPT</code>.</li>
-                <li>For Products, toggle <strong>Track Inventory Stock</strong> to configure opening stock and low-stock alert thresholds.</li>
-              </ol>
-            </div>
-
-            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Sharing Curated Product Lists with Clients:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
-                <li>On the Product Catalog table, <strong>check the boxes <code>[✓]</code></strong> next to the specific products you want to share (e.g. 5 specific All-in-One PC models).</li>
-                <li>In the top selection toolbar, click <strong>🔗 Share Selected (X)</strong> to copy a compact, URL-safe token link (<code>/portal/catalog/[slug]?token=...</code>) containing only those models.</li>
+                <li>On the Product Catalog table, <strong>check the boxes <code>[✓]</code></strong> next to the specific products you want to share.</li>
+                <li>In the top selection toolbar, click <strong>🔗 Share Selected (X)</strong> to copy a compact token link (<code>/portal/catalog/[slug]?token=...</code>) containing only those models.</li>
                 <li>Click <strong>💬 WhatsApp</strong> to send a pre-filled invitation directly to the client.</li>
-                <li>Click <strong>📧 Email</strong> to send a styled quotation preview directly to the customer&apos;s email address.</li>
-                <li>Or click <strong>📄 Download PDF Price Card</strong> inside the Share modal to download a clean, branded PDF rate card containing only the chosen items.</li>
+                <li>Click <strong>📧 Email</strong> to send a styled quotation preview directly to the customer&apos;s inbox.</li>
+                <li>Or click <strong>📄 Download PDF Price Card</strong> inside the Share modal to export a clean, branded PDF rate card.</li>
                 <li>When the client opens the link, they browse specifications and prices (cost margins remain hidden), pick quantities, and click <strong>&quot;Submit Quote Request&quot;</strong> — automatically creating an ISSUED Quotation in your dashboard!</li>
               </ol>
             </div>
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 3: CLIENT & SUPPLIER DIRECTORY */}
+          {/* MODULE 5: INVENTORY & DISCREPANCY RECONCILER */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-3" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
+          <section id="module-5" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 03]</span>
-              <h2 className="text-xl font-bold uppercase font-sans text-black">Client &amp; Supplier Directory Management</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 05]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Multi-Location Inventory, Discrepancy Reconciler &amp; LPO Receiving</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
-              Store client and supplier entities with KRA Tax PINs for statutory compliance. Walk-in sales don&apos;t require a registered client — use the POS terminal instead.
+              Define physical stock locations (warehouses, stores, branches) and track products across them with a real-time, double-entry audit trail ledger.
             </p>
             <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
-                <li>Open <strong>[03] Client Flow</strong> or <strong>[05] Supplier Network</strong>.</li>
+                <li>Create stock locations at <strong>Inventory &rarr; Locations</strong>. Mark one as the Default.</li>
+                <li><strong>Automatic Catalog Sync:</strong> Updating catalog stock counts automatically synchronizes location stock and writes an audit ledger entry.</li>
+                <li><strong>1-Click Discrepancy Reconciler:</strong> If quantities ever diverge, click <strong>&quot;⚡ Reconcile Inventory &amp; Location Stock&quot;</strong> on the Inventory or Locations page to re-align all balances instantly.</li>
+                <li><strong>Receiving Supplier Goods:</strong> Open an issued LPO, PO, or GRN and click <strong>&quot;📦 Goods Delivered? Mark as Received&quot;</strong> to automatically credit physical stock inflow.</li>
+                <li><strong>Stock Transfers:</strong> Move stock between locations with in-transit lifecycle validation (Dispatch &rarr; Confirm Receipt).</li>
+              </ol>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 6: CLIENT & SUPPLIER DIRECTORY */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-6" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 06]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Client &amp; Supplier Directory Management</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Store client and supplier entities with KRA Tax PINs for statutory compliance. View client lifetime value (LTV) rankings and download complete running Statements of Account.
+            </p>
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li>Open <strong>Client Flow</strong> or <strong>Supplier Network</strong>.</li>
                 <li>Click <strong>+ Register Client</strong> or <strong>+ Register Supplier</strong>.</li>
                 <li>Select the Entity Type: <strong>Individual</strong> (Personal PIN e.g. A...) or <strong>Corporate</strong> (Company PIN e.g. P...).</li>
                 <li>Toggle <strong>Requires eTIMS</strong> if this entity needs KRA eTIMS CU serial numbers embedded on their documents.</li>
@@ -237,12 +311,12 @@ export default function PublicOperatorGuidePage() {
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 4: FISCAL INVOICES & ETIMS */}
+          {/* MODULE 7: FISCAL INVOICES & QUOTATION EXPIRY */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-4" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
+          <section id="module-7" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 04]</span>
-              <h2 className="text-xl font-bold uppercase font-sans text-black">Issuing Fiscal Invoices, Receipts, Taxes &amp; Credit Notes</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 07]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Issuing Fiscal Invoices, Receipts, Taxes &amp; Quotation Expiry</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Generate all outbound sales documents, procurement orders, and credit notes. Multi-rate tax (16% VAT, 0% Zero-Rated, Exempt) is handled per line item with dedicated VAT line display above Grand Total.
@@ -250,27 +324,27 @@ export default function PublicOperatorGuidePage() {
             <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
-                <li>Click <strong>+ Issue Document</strong> from the Fiscal Ledgers stream or from a client/supplier profile page.</li>
+                <li>Click <strong>+ Issue Document</strong> from the Fiscal Ledgers stream.</li>
                 <li>Select the <strong>Document Type</strong>: Invoice, Receipt, Quotation, LPO, PO, Delivery Note, Credit Note, Debit Note, GRN, or Payment Voucher.</li>
-                <li>For Receipts — a <strong>Client</strong> is optional (useful for walk-in / counter sales). For Invoices, select the target client. For procurement documents, select the supplier.</li>
+                <li>When issuing a <strong>Quotation</strong>, select a validity expiry preset (<strong>+7d</strong>, <strong>+14d</strong>, <strong>+30d</strong>, <strong>+60d</strong>) or pick a custom date.</li>
                 <li>Add line items. Set the tax rate per row: <code>V_16 (16%)</code>, <code>V_0 (0%)</code>, or <code>EXEMPT</code>. 16% VAT calculates and appears on its dedicated line right above Grand Total.</li>
-                <li>(Optional) Enter the statutory <strong>KRA eTIMS Control Unit (CU) Serial Number</strong> (e.g. <code>CU012345/2026</code>).</li>
-                <li>For <strong>Credit Notes</strong>, link the parent invoice if crediting against receivables, or issue as a standalone cash refund. The general ledger automatically posts corresponding balancing double entries.</li>
+                <li>(Optional) Enter the statutory <strong>KRA eTIMS Control Unit (CU) Serial Number</strong>.</li>
+                <li>For <strong>Credit Notes</strong>, link the parent invoice if crediting against receivables, or issue as a standalone cash refund.</li>
                 <li>Click <strong>Publish Ledger Document</strong>.</li>
               </ol>
             </div>
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 5: PASSWORDLESS PORTALS */}
+          {/* MODULE 8: PASSWORDLESS PORTALS */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-5" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
+          <section id="module-8" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 05]</span>
-              <h2 className="text-xl font-bold uppercase font-sans text-black">Passwordless Client Portals &amp; Email Dispatch</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 08]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Passwordless Client Portals, Signatures &amp; Amendments</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
-              Clients view documents via secure 64-character unguessable token links — no accounts or passwords required. Share via WhatsApp, email, or any messaging channel.
+              Clients view documents via secure 64-character unguessable token links — no accounts or passwords required.
             </p>
             <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
@@ -278,17 +352,18 @@ export default function PublicOperatorGuidePage() {
                 <li>Open any document detail page.</li>
                 <li>Click <strong>Copy Public Portal Link</strong> to copy the secure 64-character token URL for sharing via WhatsApp or messaging.</li>
                 <li>Or click <strong>Dispatch via Email</strong> to send a styled Resend HTML email with your shop logo and brand color CTA button.</li>
-                <li>The client portal shows the full document, payment status, remittance details, and a <strong>Download PDF</strong> button — all without logging in.</li>
+                <li><strong>Quotation Acceptance:</strong> Clients can electronically sign and accept quotes directly on the portal.</li>
+                <li><strong>Quotation Expiry Warning:</strong> If a quote has expired, the portal displays a warning banner disabling acceptance and offering a 1-click &quot;Request Updated Quote&quot; button.</li>
               </ol>
             </div>
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 6: PAYMENT CHANNELS */}
+          {/* MODULE 9: PAYMENT CHANNELS */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-6" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
+          <section id="module-9" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 06]</span>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 09]</span>
               <h2 className="text-xl font-bold uppercase font-sans text-black">Recording Payment Channels &amp; Remittance Ref #</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
@@ -306,11 +381,11 @@ export default function PublicOperatorGuidePage() {
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 7: KRA 20TH VAT TRACKER */}
+          {/* MODULE 10: KRA 20TH VAT TRACKER */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-7" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
+          <section id="module-10" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 07]</span>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 10]</span>
               <h2 className="text-xl font-bold uppercase font-sans text-black">Statutory KRA 20th Monthly VAT Return Tracker</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
@@ -319,8 +394,8 @@ export default function PublicOperatorGuidePage() {
             <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
-                <li>Open <strong>[08] Analytics</strong> in the workspace sidebar.</li>
-                <li>Locate the <strong>KRA eTIMS VAT Return Tracker</strong> banner — it always shows the current calendar month&apos;s figures regardless of the timeframe filter.</li>
+                <li>Open <strong>Financial Analytics</strong> in the workspace navigation.</li>
+                <li>Locate the <strong>KRA eTIMS VAT Return Tracker</strong> banner — it always shows the current calendar month&apos;s figures.</li>
                 <li>The countdown badge is color-coded: <span className="text-emerald-700 font-bold">Green</span> (&gt;10 days), <span className="text-amber-700 font-bold">Amber</span> (&lt;10 days), <span className="text-rose-700 font-bold">Red</span> (&lt;5 days).</li>
                 <li>Use the four VAT figures — <strong>Output VAT (16%)</strong>, <strong>Taxable Sales Volume</strong>, <strong>0% Zero-Rated Volume</strong>, and <strong>Exempt Volume</strong> — to fill in your iTax monthly return directly.</li>
               </ol>
@@ -328,35 +403,34 @@ export default function PublicOperatorGuidePage() {
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 8: ANALYTICS & A/R AGING */}
+          {/* MODULE 11: ADVANCED ANALYTICS & LEADERBOARDS */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-8" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
+          <section id="module-11" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 08]</span>
-              <h2 className="text-xl font-bold uppercase font-sans text-black">Financial Intelligence &amp; A/R Aging Matrix</h2>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 11]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Financial Intelligence, Rolling Trajectories &amp; Leaderboards</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
-              Real-time visibility into operating cash flows, profitability margins, overdue client receivables, product velocity, and client LTV ranking.
+              Real-time executive intelligence across cash flow streams, profitability margins, quotation conversion funnels, top 10 clients leaderboard, and accounts receivable aging risk.
             </p>
             <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
-                <li>Open <strong>[08] Analytics</strong> in the workspace sidebar.</li>
-                <li>Use the <strong>Scope Horizon</strong> timeframe tabs to filter metrics: This Month, Last Month, This Quarter, This Year, or All Time.</li>
-                <li>Review the <strong>COGS &amp; Gross Profit Intelligence</strong> panel to see your gross margin % and how much of your revenue is profit vs. cost.</li>
-                <li>Inspect the <strong>Monthly Cash Flow Timeline</strong> chart — hover bars to see exact inflow/outflow figures per month.</li>
+                <li>Open <strong>Financial Analytics</strong> in the workspace navigation.</li>
+                <li>Toggle the <strong>Rolling Timeline Horizon</strong> between <strong>6 Months</strong> and <strong>12 Months</strong> to analyze cash flow momentum.</li>
+                <li>Inspect the <strong>Top 10 Clients Leaderboard</strong> to see customer revenue share and LTV progress bars.</li>
+                <li>Review the <strong>Product vs Service Split</strong> visualizer and the <strong>Quotation Conversion Funnel</strong>.</li>
                 <li>Review the <strong>A/R Aging Risk Matrix</strong> (0–30, 31–60, 61–90, 90+ days) to identify high-risk overdue collection accounts.</li>
-                <li>Check the <strong>Product Sales Velocity</strong> and <strong>Client LTV</strong> leaderboards to understand what drives your revenue.</li>
               </ol>
             </div>
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 9: STATUTORY PAYROLL */}
+          {/* MODULE 12: STATUTORY PAYROLL */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-9" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
+          <section id="module-12" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 09]</span>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 12]</span>
               <h2 className="text-xl font-bold uppercase font-sans text-black">Statutory Payroll &amp; Wage Compiler</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
@@ -365,9 +439,9 @@ export default function PublicOperatorGuidePage() {
             <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
-                <li>Navigate to <strong>[06] Employee Directory</strong> and register all staff with their National ID and KRA PIN.</li>
-                <li>Open <strong>[07] Payroll Vouchers</strong> and click <strong>+ New Payroll Run</strong>.</li>
-                <li>Select a <strong>Pay Period</strong> (e.g. July 2026) and add employees to the run.</li>
+                <li>Navigate to <strong>Employee Directory</strong> and register all staff with their National ID and KRA PIN.</li>
+                <li>Open <strong>Payroll Vouchers</strong> and click <strong>+ New Payroll Run</strong>.</li>
+                <li>Select a <strong>Pay Period</strong> (e.g. August 2026) and add employees to the run.</li>
                 <li>Enter each employee&apos;s <strong>Base Salary</strong>, <strong>Allowances</strong>, <strong>Commission</strong>, and any <strong>Advance Recoveries</strong>. The system automatically computes statutory deductions.</li>
                 <li>Save as <strong>DRAFT</strong> to review, or click <strong>Lock &amp; Pay</strong> to finalize the run at PAID status.</li>
                 <li>Download the <strong>A4 Landscape PDF Payroll Voucher</strong> featuring 11 unbundled breakdown columns for each employee.</li>
@@ -376,34 +450,11 @@ export default function PublicOperatorGuidePage() {
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 10: MULTI-LOCATION STOCK TRANSFERS */}
+          {/* MODULE 13: SHARED B2B INBOX */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-10" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
+          <section id="module-13" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 10]</span>
-              <h2 className="text-xl font-bold uppercase font-sans text-black">Multi-Location Inventory &amp; Stock Transfers</h2>
-            </div>
-            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
-              Define multiple locations (stores, warehouses, branches) and move products between them with dual-step dispatch and receipt validation.
-            </p>
-            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
-              <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
-              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
-                <li>Create stock locations at <strong>Inventory &rarr; Locations</strong>. Mark one as the Default.</li>
-                <li>To perform a transfer, navigate to <strong>Inventory &rarr; Transfers &rarr; New Transfer</strong>. Select the source (From) and destination (To) locations.</li>
-                <li>Add lines for the products and requested quantities. Save to create a <strong>DRAFT</strong> transfer.</li>
-                <li>To dispatch, click <strong>🚚 Dispatch Transfer</strong>. This immediately writes a <code>TRANSFER_OUT</code> ledger entry and deducts stock from the source warehouse. The status moves to <strong>IN_TRANSIT</strong>.</li>
-                <li>When the shipment arrives, open the transfer and click <strong>✅ Confirm Receipt</strong>. Enter the received quantities (supports partial arrivals). This writes a <code>TRANSFER_IN</code> entry and credits stock to the destination.</li>
-              </ol>
-            </div>
-          </section>
-
-          {/* ─────────────────────────────────────────── */}
-          {/* MODULE 11: SHARED B2B INBOX & INTERCOMPANY ROUTING */}
-          {/* ─────────────────────────────────────────── */}
-          <section id="module-11" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 11]</span>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 13]</span>
               <h2 className="text-xl font-bold uppercase font-sans text-black">Shared B2B Inbox &amp; Intercompany Routing</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
@@ -416,17 +467,17 @@ export default function PublicOperatorGuidePage() {
                 <li>Create an invoice or LPO, and set the recipient.</li>
                 <li>In the document details page, click <strong>Send via Manna Network</strong> to route the document instantly.</li>
                 <li>The receiving division opens <strong>Shared Inbox</strong> in their workspace. The document will appear as a pending incoming item.</li>
-                <li>Click <strong>Accept &amp; Convert to Expense</strong> (for invoices) or <strong>Convert to Sale</strong> (for LPOs). The invoice fields populate automatically, and a read receipt is sent back to the sender.</li>
+                <li>Click <strong>Accept &amp; Convert to Expense</strong> (for invoices) or <strong>Convert to Sale</strong> (for LPOs).</li>
               </ol>
             </div>
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 12: GENERAL LEDGER, BUDGETS & DIAGNOSTICS */}
+          {/* MODULE 14: GENERAL LEDGER, BUDGETS & DIAGNOSTICS */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-12" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
+          <section id="module-14" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 12]</span>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 14]</span>
               <h2 className="text-xl font-bold uppercase font-sans text-black">General Ledger, Operating Budgets &amp; Diagnostics</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
@@ -451,23 +502,14 @@ export default function PublicOperatorGuidePage() {
                 <li>Search and inspect the real-time stream of double-entry journal postings for that month.</li>
               </ol>
             </div>
-
-            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
-              <h4 className="font-bold uppercase text-black text-xs">Clean Slate Reset &amp; Automated Backups:</h4>
-              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
-                <li>Go to <strong>Settings &rarr; GL Diagnostics</strong> and scroll to <strong>Clean Slate &amp; Factory Reset</strong>.</li>
-                <li>Select <strong>Option A (Fresh Accounting Reset)</strong> to wipe transactions and restart sequences from <code>0001</code> while preserving your product catalog and contacts.</li>
-                <li>The system automatically triggers a download of a complete JSON backup archive (<code>manna_backup_*.json</code>) before any purge is executed on the database.</li>
-              </ol>
-            </div>
           </section>
 
           {/* ─────────────────────────────────────────── */}
-          {/* MODULE 13: PWA APPLIANCE */}
+          {/* MODULE 15: PWA APPLIANCE */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-13" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+          <section id="module-15" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 13]</span>
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 15]</span>
               <h2 className="text-xl font-bold uppercase font-sans text-black">Installing the Standalone PWA Appliance</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">

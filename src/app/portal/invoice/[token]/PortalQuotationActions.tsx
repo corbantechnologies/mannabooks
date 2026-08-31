@@ -11,6 +11,7 @@ interface PortalQuotationActionsProps {
   clientName?: string;
   initialResponse?: string | null;
   initialAmendmentNotes?: string | null;
+  dueDate?: string | Date | null;
 }
 
 export function PortalQuotationActions({
@@ -19,7 +20,9 @@ export function PortalQuotationActions({
   clientName,
   initialResponse,
   initialAmendmentNotes,
+  dueDate,
 }: PortalQuotationActionsProps) {
+  const isExpired = Boolean(dueDate && new Date(dueDate) < new Date(new Date().setHours(0, 0, 0, 0)));
   const [responseState, setResponseState] = useState<string | null>(initialResponse || null);
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
   const [isAmendmentModalOpen, setIsAmendmentModalOpen] = useState(false);
@@ -129,6 +132,36 @@ export function PortalQuotationActions({
           className="px-3 py-1 bg-amber-800 text-white rounded font-mono text-[10px] font-bold uppercase shrink-0 hover:bg-amber-900"
         >
           Update Request
+        </button>
+      </div>
+    );
+  }
+
+  if (isExpired) {
+    const formattedExpiry = dueDate
+      ? new Date(dueDate).toLocaleDateString("en-KE", { dateStyle: "long" })
+      : "the validity period";
+
+    return (
+      <div className="bg-rose-50 border border-rose-300 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl text-rose-600">⏳</span>
+          <div>
+            <p className="font-bold text-rose-900 text-sm font-sans">
+              Quotation Expired
+            </p>
+            <p className="text-rose-700 text-xs font-sans mt-0.5">
+              This quotation reached its validity deadline on {formattedExpiry}. Formal acceptance is closed. You may request an updated quote below.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsAmendmentModalOpen(true)}
+          className="w-full sm:w-auto px-4 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-lg text-xs font-bold font-sans uppercase transition-colors shrink-0 shadow-sm"
+        >
+          ✏️ Request Updated Quote
         </button>
       </div>
     );

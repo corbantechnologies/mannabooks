@@ -417,10 +417,12 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
             />
           </div>
 
-          {/* PAYMENT DUE DATE */}
+          {/* PAYMENT DUE DATE / QUOTATION EXPIRY DATE */}
           <div className="flex flex-col justify-end">
             <div className="h-7 flex items-end justify-between mb-1.5">
-              <label className="text-[10px] text-zinc-400 uppercase font-semibold">Payment Due Date</label>
+              <label className="text-[10px] text-zinc-400 uppercase font-semibold">
+                {docType === "QUOTATION" ? "Quotation Expiry Date" : "Payment Due Date"}
+              </label>
               <div className="flex gap-1 text-[9px]">
                 <button
                   type="button"
@@ -442,6 +444,13 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                   className="px-1.5 py-0.5 border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 rounded text-zinc-600 font-semibold"
                 >
                   +30d
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickDueDate(60)}
+                  className="px-1.5 py-0.5 border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 rounded text-zinc-600 font-semibold"
+                >
+                  +60d
                 </button>
               </div>
             </div>

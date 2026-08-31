@@ -176,3 +176,43 @@ export async function revokeInvitation(shopId: string, inviteId: string) {
         return { success: false, error: error.message || "Failed to revoke invitation." };
     }
 }
+
+export async function updateTeamMemberRoleAndPermissions(
+    shopId: string,
+    memberId: string,
+    role: "ADMIN" | "MANAGER" | "ACCOUNTANT" | "EMPLOYEE" | "VIEWER",
+    customPermissions: Record<string, boolean>
+) {
+    try {
+        await enforcePermission(shopId, "manage_team");
+
+        const membership = await db.query.shopMembers.findFirst({
+            where: and(
+                eq(shopMembers.id, memberId),
+                eq(shopMembers.shopId, shopId)
+            )
+        });
+
+        if (!membership) {
+            return { success: false, error: "Member not found." };
+        }
+
+        if (membership.role === "OWNER") {
+            return { success: false, error: "Cannot alter the workspace owner's role or permissions." };
+        }
+
+        await db
+            .update(shopMembers)
+            .set({
+                role,
+                customPermissions: JSON.stringify(customPermissions),
+            })
+            .where(eq(shopMembers.id, memberId));
+
+        revalidatePath(`/workspaces/${shopId}/team`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to update team member:", error);
+        return { success: false, error: error.message || "Failed to update member permissions." };
+    }
+}

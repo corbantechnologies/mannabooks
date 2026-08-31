@@ -255,6 +255,7 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
             clientName={party.name}
             initialResponse={doc.clientPortalResponse}
             initialAmendmentNotes={doc.clientAmendmentNotes}
+            dueDate={doc.dueDate}
           />
         )}
 

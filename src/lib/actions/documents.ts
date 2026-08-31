@@ -87,6 +87,8 @@ function determineDefaultStatus(type: DocumentType, sourceDocType?: DocumentType
  */
 export async function createBillingDocument(input: CreateDocumentInput): Promise<{ success: true; documentId: string; serial: string } | { success: false; error: string }> {
     try {
+        await enforcePermission(input.shopId, "canCreateDocuments");
+
         if (input.items.length === 0) {
             return { success: false, error: "A document must contain at least one line item entry." };
         }

@@ -5,10 +5,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/actions/logout";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface MobileNavDrawerProps {
   slug: string;
   shop: {
+    id: string;
     name: string;
     shortName?: string | null;
     primaryColor?: string | null;
@@ -146,14 +148,17 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
           </div>
         </div>
 
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="border border-zinc-300 rounded px-3 py-1.5 font-mono text-xs font-semibold uppercase hover:bg-black hover:text-white transition-colors flex items-center gap-1.5 bg-white"
-          aria-label="Toggle Navigation Menu"
-        >
-          <span>{isOpen ? "✕" : "☰"}</span>
-          <span>{isOpen ? "Close" : "Menu"}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationBell shopId={shop.id} shopSlug={slug} />
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="border border-zinc-300 rounded px-3 py-1.5 font-mono text-xs font-semibold uppercase hover:bg-black hover:text-white transition-colors flex items-center gap-1.5 bg-white"
+            aria-label="Toggle Navigation Menu"
+          >
+            <span>{isOpen ? "✕" : "☰"}</span>
+            <span>{isOpen ? "Close" : "Menu"}</span>
+          </button>
+        </div>
       </div>
 
       {/* MOBILE OVERLAY DRAWER PANEL */}

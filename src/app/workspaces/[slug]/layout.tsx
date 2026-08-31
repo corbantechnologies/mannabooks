@@ -10,6 +10,7 @@ import { eq } from "drizzle-orm";
 import { GracePeriodBanner } from "@/components/GracePeriodBanner";
 import { MobileNavDrawer } from "./MobileNavDrawer";
 import { DesktopSideNav } from "./DesktopSideNav";
+import { BottomTabBar } from "./BottomTabBar";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -36,6 +37,7 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
   const planName = isLifetime ? "LIFETIME PRO" : (planDetails?.planSpec.name || planDetails?.plan || "FREE").toUpperCase();
 
   return (
+    <>
     <div
       style={{ "--brand-primary": brandColor } as React.CSSProperties}
       className="flex flex-col lg:flex-row min-h-screen bg-white"
@@ -244,9 +246,14 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
             </div>
           )}
           {children}
+          {/* Bottom tab bar safe-area spacer on mobile */}
+          <div className="h-14 lg:hidden" />
         </div>
       </main>
 
     </div>
-  );
+
+    {/* MOBILE STICKY BOTTOM NAV TAB BAR */}
+    <BottomTabBar slug={slug} />
+  </>);
 }

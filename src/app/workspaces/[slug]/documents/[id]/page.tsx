@@ -1,18 +1,21 @@
 // src/app/workspaces/[slug]/documents/[id]/page.tsx
 import { db } from "@/db";
 import { documents, documentTokens, shops } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 import { DocumentStatusPanel } from "./DocumentStatusPanel";
+import { DocumentChain, type ChainNode } from "@/components/DocumentChain";
 
 interface DocumentDetailPageProps {
   params: Promise<{ slug: string; id: string }>;
+  searchParams: Promise<{ converted?: string; from?: string }>;
 }
 
-export default async function DocumentDetailPage({ params }: DocumentDetailPageProps) {
+export default async function DocumentDetailPage({ params, searchParams }: DocumentDetailPageProps) {
   const { slug, id } = await params;
+  const { converted, from: fromDoc } = await searchParams;
 
   // 1. Resolve shop
   const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
@@ -46,6 +49,58 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
     });
   }
 
+  // Pre-capture shopId for use inside closures (TypeScript narrows undefined away)
+  const shopId = shop.id;
+
+  // Build full document chain (walk up to root, then fetch all descendants)
+  const chain: ChainNode[] = [];
+  try {
+    // Walk upward to find root
+    let rootId = doc.id;
+    let cursor: typeof doc | null = doc as any;
+    const visited = new Set<string>();
+    while (cursor?.parentDocumentId && !visited.has(cursor.parentDocumentId)) {
+      visited.add(cursor.parentDocumentId);
+      const parent = await db.query.documents.findFirst({
+        where: eq(documents.id, cursor.parentDocumentId),
+      });
+      if (parent) {
+        rootId = parent.id;
+        cursor = parent as any;
+      } else break;
+    }
+
+    // Recursively fetch descendants from root
+    async function fetchDescendants(docId: string, depth = 0): Promise<ChainNode[]> {
+      if (depth > 6) return [];
+      const node = await db.query.documents.findFirst({
+        where: and(eq(documents.id, docId), eq(documents.shopId, shopId)),
+      });
+      if (!node) return [];
+      const result: ChainNode[] = [{
+        id: node.id,
+        docNumber: node.docNumber,
+        type: node.type,
+        status: node.status,
+        issueDate: node.issueDate,
+      }];
+      const children = await db.query.documents.findMany({
+        where: and(eq(documents.parentDocumentId, node.id), eq(documents.shopId, shopId)),
+        orderBy: (d, { asc }) => [asc(d.createdAt)],
+      });
+      for (const child of children) {
+        const subtree = await fetchDescendants(child.id, depth + 1);
+        result.push(...subtree);
+      }
+      return result;
+    }
+
+    const fullChain = await fetchDescendants(rootId);
+    chain.push(...fullChain);
+  } catch (_) {
+    // Silently fail — chain is decorative
+  }
+
   // 3. Fetch the public portal token
   const tokenRecord = await db.query.documentTokens.findFirst({
     where: eq(documentTokens.documentId, id),
@@ -55,7 +110,22 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
   const portalLink = tokenRecord ? `${appUrl}/portal/invoice/${tokenRecord.token}` : null;
 
   return (
-    <div className="p-8 space-y-10 selection:bg-black selection:text-white">
+    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
+
+      {/* POST-CONVERSION SUCCESS BANNER */}
+      {converted && fromDoc && (
+        <div className="bg-emerald-50 border border-emerald-300 rounded-xl px-4 py-3 flex items-start gap-3 animate-in fade-in slide-in-from-top-3 duration-300">
+          <span className="text-emerald-600 text-xl mt-0.5">✓</span>
+          <div>
+            <p className="font-bold text-emerald-900 text-sm">
+              {doc.type.charAt(0) + doc.type.slice(1).toLowerCase().replace(/_/g, " ")} created successfully!
+            </p>
+            <p className="text-emerald-700 text-xs mt-0.5">
+              Converted from <strong>{fromDoc}</strong>. The original {converted.toLowerCase().replace(/_/g, " ")} has been updated accordingly.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* BACK NAV + HEADER */}
       <div className="border-b border-black pb-6 space-y-2">
@@ -63,7 +133,7 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
           href={`/workspaces/${slug}/documents`}
           className="font-sans text-xs font-bold text-zinc-400 hover:underline block"
         >
-          ← Back to Billing & Invoices
+          ← Back to Billing &amp; Invoices
         </Link>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
           <div>
@@ -89,6 +159,15 @@ export default async function DocumentDetailPage({ params }: DocumentDetailPageP
           </div>
         </div>
       </div>
+
+      {/* DOCUMENT JOURNEY CHAIN */}
+      {chain.length > 1 && (
+        <DocumentChain
+          chain={chain}
+          currentDocId={doc.id}
+          shopSlug={slug}
+        />
+      )}
 
       {/* METADATA GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-3 border border-black divide-y sm:divide-y-0 sm:divide-x divide-black bg-white">

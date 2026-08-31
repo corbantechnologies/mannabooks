@@ -83,7 +83,8 @@ export function DocumentActionsPopover({
       const res = await convertDocumentAction(documentId, targetType, shopId, shopSlug);
       if (res.success) {
         toast.success(`Generated ${targetType} (${res.serial}) successfully.`);
-        router.push(`/workspaces/${shopSlug}/documents/${res.newDocumentId}`);
+        const params = new URLSearchParams({ converted: docType, from: res.serial || "" });
+        router.push(`/workspaces/${shopSlug}/documents/${res.newDocumentId}?${params.toString()}`);
       } else {
         toast.error(res.error || "Failed to execute conversion.");
       }

@@ -65,7 +65,7 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
       label: "Cash Book",
       children: [
         { href: `/workspaces/${slug}/incomes`, label: "Other Income" },
-        { href: `/workspaces/[slug]/expenses`, label: "Operating Expenses" },
+        { href: `/workspaces/${slug}/expenses`, label: "Operating Expenses" },
       ]
     },
     {

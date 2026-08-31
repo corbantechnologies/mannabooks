@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import crypto from "crypto";
 import QRCode from "react-qr-code";
+import { DocumentChain, type ChainNode } from "@/components/DocumentChain";
 
 interface PortalPageProps {
   params: Promise<{ token: string }>;
@@ -90,6 +91,37 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
 
   const brandColor = shop.primaryColor || "#000000";
 
+  // Build document journey chain for portal display
+  const portalChain: ChainNode[] = [];
+  try {
+    // Walk upward to root
+    let rootId = doc.id;
+    let cursor: typeof doc | null = doc as any;
+    const visited = new Set<string>();
+    while (cursor?.parentDocumentId && !visited.has(cursor.parentDocumentId)) {
+      visited.add(cursor.parentDocumentId);
+      const parent = await db.query.documents.findFirst({
+        where: and(eq(documents.id, cursor.parentDocumentId), eq(documents.shopId, shop.id)),
+      });
+      if (parent) { rootId = parent.id; cursor = parent as any; }
+      else break;
+    }
+    // Recursive descent
+    async function fetchPortalChain(docId: string, depth = 0): Promise<ChainNode[]> {
+      if (depth > 6) return [];
+      const node = await db.query.documents.findFirst({ where: and(eq(documents.id, docId), eq(documents.shopId, shop.id)) });
+      if (!node) return [];
+      const result: ChainNode[] = [{ id: node.id, docNumber: node.docNumber, type: node.type, status: node.status, issueDate: node.issueDate }];
+      const children = await db.query.documents.findMany({
+        where: and(eq(documents.parentDocumentId, node.id), eq(documents.shopId, shop.id)),
+        orderBy: (d, { asc }) => [asc(d.createdAt)],
+      });
+      for (const child of children) result.push(...(await fetchPortalChain(child.id, depth + 1)));
+      return result;
+    }
+    portalChain.push(...(await fetchPortalChain(rootId)));
+  } catch (_) {}
+
   return (
     <div className="min-h-screen bg-zinc-50 py-6 sm:py-12 px-3 sm:px-6 font-mono text-xs text-black selection:bg-black selection:text-white">
       <style>{`
@@ -126,6 +158,20 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
       )}
 
       <div className="max-w-3xl mx-auto card-modern p-6 sm:p-12 space-y-8 sm:space-y-10 shadow-sm">
+
+        {/* DOCUMENT JOURNEY CHAIN ON PORTAL */}
+        {portalChain.length > 1 && (
+          <div>
+            <p className="font-mono text-[10px] uppercase font-bold mb-3 tracking-widest" style={{ color: brandColor }}>
+              Document Journey
+            </p>
+            <DocumentChain
+              chain={portalChain}
+              currentDocId={doc.id}
+              brandColor={brandColor}
+            />
+          </div>
+        )}
         
         {/* PUBLIC PORTAL BRAND HEADER */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-b border-zinc-200/80 pb-8">

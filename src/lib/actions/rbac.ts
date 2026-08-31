@@ -7,9 +7,16 @@ import { verifyAndGetSession } from "./auth";
 
 export type WorkspacePermission = 
     | "manage_documents"
+    | "canCreateDocuments"
+    | "manage_clients"
+    | "canEditClients"
     | "manage_products"
     | "manage_expenses"
     | "view_analytics"
+    | "view_finance"
+    | "canViewFinance"
+    | "export_reports"
+    | "canExportReports"
     | "manage_payroll"
     | "manage_team"
     | "manage_settings";
@@ -62,7 +69,7 @@ export async function enforcePermission(shopId: string, requiredPermission: Work
     // 3. ACCOUNTANT has access to financial and analytical data
     if (role === "ACCOUNTANT") {
         const accountantAllowed: WorkspacePermission[] = [
-            "view_analytics", "manage_documents", "manage_expenses", "manage_payroll"
+            "view_analytics", "view_finance", "canViewFinance", "manage_documents", "canCreateDocuments", "manage_expenses", "manage_payroll", "export_reports", "canExportReports", "manage_clients", "canEditClients"
         ];
         if (!accountantAllowed.includes(requiredPermission)) {
             throw new Error("Access Denied. Accountants cannot perform this action.");
@@ -71,10 +78,8 @@ export async function enforcePermission(shopId: string, requiredPermission: Work
     }
 
     // 4. VIEWER is strictly read-only for EVERYTHING.
-    // (Notice none of the permissions typically map to "read" directly in this model, 
-    // but if we had a "view_documents", they'd get it. For now, they can't "manage" anything.)
     if (role === "VIEWER") {
-        if (requiredPermission === "view_analytics") {
+        if (requiredPermission === "view_analytics" || requiredPermission === "view_finance" || requiredPermission === "canViewFinance") {
             return { userId: session.userId, role }; // Viewers can see analytics
         }
         throw new Error("Access Denied. Viewers are restricted to read-only mode.");
@@ -84,13 +89,23 @@ export async function enforcePermission(shopId: string, requiredPermission: Work
     if (role === "EMPLOYEE") {
         try {
             const permissionsMap: Record<string, boolean> = JSON.parse(membership.customPermissions || "{}");
-            if (permissionsMap[requiredPermission] === true) {
+            
+            const isAllowed = 
+                permissionsMap[requiredPermission] === true ||
+                ((requiredPermission === "manage_documents" || requiredPermission === "canCreateDocuments") && (permissionsMap["manage_documents"] === true || permissionsMap["canCreateDocuments"] === true)) ||
+                ((requiredPermission === "manage_clients" || requiredPermission === "canEditClients") && (permissionsMap["manage_clients"] === true || permissionsMap["canEditClients"] === true)) ||
+                ((requiredPermission === "view_finance" || requiredPermission === "canViewFinance" || requiredPermission === "view_analytics" || requiredPermission === "manage_expenses") && (permissionsMap["canViewFinance"] === true || permissionsMap["view_finance"] === true || permissionsMap["view_analytics"] === true || permissionsMap["manage_expenses"] === true)) ||
+                ((requiredPermission === "export_reports" || requiredPermission === "canExportReports") && (permissionsMap["export_reports"] === true || permissionsMap["canExportReports"] === true)) ||
+                (requiredPermission === "manage_products" && permissionsMap["manage_products"] === true) ||
+                (requiredPermission === "manage_payroll" && permissionsMap["manage_payroll"] === true);
+
+            if (isAllowed) {
                 return { userId: session.userId, role };
             }
         } catch (e) {
             console.error("Failed to parse employee permissions:", e);
         }
-        throw new Error(`Access Denied. Your employee account lacks the '${requiredPermission}' permission.`);
+        throw new Error(`Access Denied. Your employee account lacks the required permission.`);
     }
 
     throw new Error("Access Denied. Unknown role mapping.");

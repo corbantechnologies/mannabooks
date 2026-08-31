@@ -878,3 +878,26 @@ export const productLocationStockRelations = relations(productLocationStock, ({ 
     product: one(products, { fields: [productLocationStock.productId], references: [products.id] }),
     location: one(stockLocations, { fields: [productLocationStock.locationId], references: [stockLocations.id] }),
 }));
+
+// ==========================================
+// NOTIFICATIONS TABLE (In-App Activity Bell & System Alerts)
+// ==========================================
+export const notifications = pgTable('notifications', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }), // Nullable for global platform announcements
+    title: varchar('title', { length: 255 }).notNull(),
+    message: text('message').notNull(),
+    type: varchar('type', { length: 50 }).default('SYSTEM').notNull(), // 'INVOICE_OVERDUE' | 'SUBSCRIPTION_ALERT' | 'QUOTE_EXPIRED' | 'QUOTE_ACCEPTED' | 'PAYMENT_RECEIVED' | 'STOCK_LOW' | 'SYSTEM'
+    link: text('link'), // Optional in-app route e.g. /workspaces/manna/documents/123
+    isRead: boolean('is_read').default(false).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    index('idx_notifications_user_unread').on(table.userId, table.isRead),
+    index('idx_notifications_shop').on(table.shopId),
+]);
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+    user: one(users, { fields: [notifications.userId], references: [users.id] }),
+    shop: one(shops, { fields: [notifications.shopId], references: [shops.id] }),
+}));

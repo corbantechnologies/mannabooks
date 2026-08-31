@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { documents, documentTokens, documentNotes, shops, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { createNotificationAction } from "./notifications";
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_mock_key");
 
@@ -77,6 +78,22 @@ export async function acceptQuotationPortalAction(input: {
         note: noteText,
       });
     });
+
+    // Create In-App Notification for Owner
+    try {
+      if (doc.shop?.ownerId) {
+        await createNotificationAction({
+          userId: doc.shop.ownerId,
+          shopId: doc.shopId,
+          title: `🎉 Quotation ${doc.docNumber} Accepted!`,
+          message: `${partyName} officially accepted quotation ${doc.docNumber} (${doc.currency || doc.shop?.currency || "KES"} ${doc.grandTotal}).`,
+          type: "QUOTE_ACCEPTED",
+          link: doc.shop?.slug ? `/workspaces/${doc.shop.slug}/documents/${doc.id}` : null,
+        });
+      }
+    } catch (notifErr) {
+      console.warn("Could not create in-app notification:", notifErr);
+    }
 
     // Notify Business Owner via Email
     try {
@@ -158,6 +175,22 @@ export async function requestQuotationAmendmentPortalAction(input: {
         note: noteText,
       });
     });
+
+    // Create In-App Notification for Owner
+    try {
+      if (doc.shop?.ownerId) {
+        await createNotificationAction({
+          userId: doc.shop.ownerId,
+          shopId: doc.shopId,
+          title: `📝 Quotation ${doc.docNumber} Amendment Requested`,
+          message: `${partyName} requested modifications on quote ${doc.docNumber}: "${input.amendmentNotes.trim()}".`,
+          type: "SYSTEM",
+          link: doc.shop?.slug ? `/workspaces/${doc.shop.slug}/documents/${doc.id}` : null,
+        });
+      }
+    } catch (notifErr) {
+      console.warn("Could not create in-app notification:", notifErr);
+    }
 
     // Notify Business Owner via Email
     try {

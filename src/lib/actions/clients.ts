@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { clients } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { enforcePermission } from "./rbac";
 
 interface CreateClientInput {
     shopId: string; // The active shop isolation token from the user session
@@ -21,6 +22,8 @@ interface CreateClientInput {
  */
 export async function createClientProfile(input: CreateClientInput) {
     try {
+        await enforcePermission(input.shopId, "manage_clients");
+
         // 1. Structural Validation based on compliance selections
         const cleanEmail = input.email ? input.email.toLowerCase().trim() : "";
         const cleanName = input.name.trim();
@@ -58,6 +61,8 @@ interface UpdateClientInput extends Partial<CreateClientInput> {
  */
 export async function updateClientProfile({ id, shopId, shopSlug, ...updates }: UpdateClientInput) {
     try {
+        await enforcePermission(shopId, "manage_clients");
+
         // Verify target profile is owned by the requesting shop entity
         const existing = await db.query.clients.findFirst({
             where: and(eq(clients.id, id), eq(clients.shopId, shopId)),
@@ -84,9 +89,9 @@ export async function updateClientProfile({ id, shopId, shopSlug, ...updates }: 
         revalidatePath(`/workspaces/${shopSlug}/clients/${id}`);
 
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to update client profile records:", error);
-        return { success: false, error: "Failed to persist client corrections data." };
+        return { success: false, error: error.message || "Failed to persist client corrections data." };
     }
 }
 
@@ -95,13 +100,15 @@ export async function updateClientProfile({ id, shopId, shopSlug, ...updates }: 
  */
 export async function deleteClientProfile(id: string, shopId: string, shopSlug: string) {
     try {
+        await enforcePermission(shopId, "manage_clients");
+
         await db.delete(clients)
             .where(and(eq(clients.id, id), eq(clients.shopId, shopId)));
 
         revalidatePath(`/workspaces/${shopSlug}/clients`);
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to delete client profile:", error);
-        return { success: false, error: "Failed to remove client record from database." };
+        return { success: false, error: error.message || "Failed to remove client record from database." };
     }
 }

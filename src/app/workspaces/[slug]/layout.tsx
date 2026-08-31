@@ -13,6 +13,7 @@ import { DesktopSideNav } from "./DesktopSideNav";
 import { DesktopSidebarShell } from "./DesktopSidebarShell";
 import { BottomTabBar } from "./BottomTabBar";
 import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcutsProvider";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -117,6 +118,7 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
               <span>Operator:</span>
               <span className="font-semibold text-black">{user.name}</span>
             </div>
+            <NotificationBell shopId={shop.id} shopSlug={slug} />
             <Link
               href={`/workspaces/${slug}/documents/new`}
               className="bg-black hover:bg-zinc-800 text-white text-xs font-semibold px-3 py-1.5 rounded transition-colors"

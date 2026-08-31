@@ -5,6 +5,7 @@ import { documents, documentItems, clients, suppliers, products, shops, expenses
 import { eq, and, desc, gte, lte } from "drizzle-orm";
 import { calculateDocumentTotals } from "@/lib/utils";
 import { getFiscalQuarterRange, getFiscalYearRange } from "@/lib/fiscalYear";
+import { enforcePermission } from "./rbac";
 
 export type TimeframeFilter = "THIS_MONTH" | "LAST_MONTH" | "THIS_QUARTER" | "THIS_YEAR" | "ALL_TIME";
 
@@ -123,6 +124,8 @@ export async function getWorkspaceAnalyticsData(
   timeframe: TimeframeFilter = "THIS_MONTH"
 ): Promise<{ success: true; data: AnalyticsData } | { success: false; error: string }> {
   try {
+    await enforcePermission(shopId, "view_finance");
+
     const shop = await db.query.shops.findFirst({
       where: eq(shops.id, shopId),
     });

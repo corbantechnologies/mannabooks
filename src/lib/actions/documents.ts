@@ -179,7 +179,8 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
 
             // 5. Resolve Commercial Terms & Conditions
             let finalTerms = input.termsAndConditions;
-            if (finalTerms === undefined || finalTerms === null) {
+            const isSupplierDoc = Boolean(input.supplierId || ["LPO", "PO", "GOODS_RECEIVED_NOTE", "PAYMENT_VOUCHER"].includes(input.type));
+            if ((finalTerms === undefined || finalTerms === null) && !isSupplierDoc) {
                 const isCatalogQuote = input.type === "QUOTATION" && (input.notes?.includes("Public Digital Product Catalog") || input.sourceDocType === "QUOTATION");
                 const defaultTerms = await tx.query.shopTerms.findMany({
                     where: and(
@@ -389,9 +390,12 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
             }
         }
         
-        // Ensure LPOs and POs trigger INFLOW when marked as PAID (received/settled)
-        if (existing.status !== "PAID" && input.status === "PAID") {
-             if (existing.type === "LPO" || existing.type === "PO") {
+        // Ensure LPOs, POs, and GRNs trigger INFLOW when marked as RECEIVED or PAID (goods delivered)
+        const isReceivingTransition = (input.status === "RECEIVED" || input.status === "PAID") && 
+                                      existing.status !== "RECEIVED" && 
+                                      existing.status !== "PAID";
+        if (isReceivingTransition) {
+             if (existing.type === "LPO" || existing.type === "PO" || existing.type === "GOODS_RECEIVED_NOTE") {
                  await applyDocumentStockMovements(existing.id, "INFLOW");
              }
         }

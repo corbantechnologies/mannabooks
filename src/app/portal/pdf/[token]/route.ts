@@ -401,35 +401,46 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
             React.createElement(
                 ReactPDF.View,
                 { style: styles.settleBox },
-                React.createElement(ReactPDF.Text, { style: { fontWeight: "bold", marginBottom: 4, textTransform: "uppercase", fontSize: 7.5 } }, "Remittance / Payment Details:"),
-                settlements && settlements.length > 0
-                    ? settlements.map((s: any, sIdx: number) => {
-                        const parts = (s.details || "")
-                            .split("\n")
-                            .flatMap((line: any) => line.split("|"))
-                            .map((p: any) => p.trim())
-                            .filter(Boolean);
-                        return React.createElement(
-                            ReactPDF.View,
-                            { key: s.id || sIdx, style: { marginBottom: 3.5 } },
-                            React.createElement(ReactPDF.Text, { style: { fontSize: 7.5, fontWeight: "bold", color: "#18181b", textTransform: "uppercase" } }, String(s.name || "")),
-                            parts.map((part: string, pIdx: number) => {
-                                const colonIndex = part.indexOf(":");
-                                if (colonIndex > -1) {
-                                    const key = part.slice(0, colonIndex).trim();
-                                    const val = part.slice(colonIndex + 1).trim();
-                                    return React.createElement(
-                                        ReactPDF.View,
-                                        { key: pIdx, style: { flexDirection: "row", marginTop: 1 } },
-                                        React.createElement(ReactPDF.Text, { style: { fontSize: 6.8, color: "#71717a", width: 55, textTransform: "uppercase" } }, `${key}:`),
-                                        React.createElement(ReactPDF.Text, { style: { fontSize: 6.8, color: "#27272a", fontWeight: "bold" } }, val)
-                                    );
-                                }
-                                return React.createElement(ReactPDF.Text, { key: pIdx, style: { fontSize: 6.8, color: "#3f3f46", marginTop: 1 } }, part);
+                ...(Boolean(doc.supplier || ["LPO", "PO", "GOODS_RECEIVED_NOTE", "PAYMENT_VOUCHER"].includes(doc.type))
+                    ? [
+                        React.createElement(ReactPDF.Text, { key: "title", style: { fontWeight: "bold", marginBottom: 4, textTransform: "uppercase", fontSize: 7.5 } }, "Procurement & Fulfillment Details:"),
+                        doc.supplier?.paymentTerms 
+                            ? React.createElement(ReactPDF.Text, { key: "terms", style: { fontSize: 7, color: "#27272a", marginBottom: 2 } }, `Agreed Payment Terms: ${doc.supplier.paymentTerms}`) 
+                            : null,
+                        React.createElement(ReactPDF.Text, { key: "note", style: { fontSize: 6.8, color: "#71717a", fontStyle: "italic" } }, "Please fulfill and dispatch items according to agreed procurement terms.")
+                    ].filter(Boolean)
+                    : [
+                        React.createElement(ReactPDF.Text, { key: "title", style: { fontWeight: "bold", marginBottom: 4, textTransform: "uppercase", fontSize: 7.5 } }, "Remittance / Payment Details:"),
+                        settlements && settlements.length > 0
+                            ? settlements.map((s: any, sIdx: number) => {
+                                const parts = (s.details || "")
+                                    .split("\n")
+                                    .flatMap((line: any) => line.split("|"))
+                                    .map((p: any) => p.trim())
+                                    .filter(Boolean);
+                                return React.createElement(
+                                    ReactPDF.View,
+                                    { key: s.id || sIdx, style: { marginBottom: 3.5 } },
+                                    React.createElement(ReactPDF.Text, { style: { fontSize: 7.5, fontWeight: "bold", color: "#18181b", textTransform: "uppercase" } }, String(s.name || "")),
+                                    parts.map((part: string, pIdx: number) => {
+                                        const colonIndex = part.indexOf(":");
+                                        if (colonIndex > -1) {
+                                            const key = part.slice(0, colonIndex).trim();
+                                            const val = part.slice(colonIndex + 1).trim();
+                                            return React.createElement(
+                                                ReactPDF.View,
+                                                { key: pIdx, style: { flexDirection: "row", marginTop: 1 } },
+                                                React.createElement(ReactPDF.Text, { style: { fontSize: 6.8, color: "#71717a", width: 55, textTransform: "uppercase" } }, `${key}:`),
+                                                React.createElement(ReactPDF.Text, { style: { fontSize: 6.8, color: "#27272a", fontWeight: "bold" } }, val)
+                                            );
+                                        }
+                                        return React.createElement(ReactPDF.Text, { key: pIdx, style: { fontSize: 6.8, color: "#3f3f46", marginTop: 1 } }, part);
+                                    })
+                                );
                             })
-                        );
-                    })
-                    : React.createElement(ReactPDF.Text, { style: { fontSize: 7, color: "#71717a", fontStyle: "italic" } }, "Direct bank transfers or cash payment. Contact supplier.")
+                            : React.createElement(ReactPDF.Text, { key: "fallback", style: { fontSize: 7, color: "#71717a", fontStyle: "italic" } }, "Direct bank transfers or cash payment. Contact merchant.")
+                    ]
+                )
             ),
 
             React.createElement(ReactPDF.View, { style: styles.totalBox }, ...totalBoxChildren)

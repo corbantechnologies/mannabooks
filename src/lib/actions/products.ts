@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { products, stockLocations, stockLedger, productLocationStock } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { verifyAndGetSession } from "./auth";
 
@@ -226,6 +226,45 @@ export async function updateProductItem({ id, shopId, shopSlug, ...updates }: Up
                         set: { quantity: openingQty.toString(), updatedAt: new Date() },
                     });
                 }
+            } else if (newTrackStock && wasAlreadyTracking && updates.stockQuantity !== undefined) {
+                // Real-time sync for existing tracked products when stock quantity is manually edited
+                const oldQty = parseFloat(existing.stockQuantity || "0");
+                const newQty = updates.stockQuantity;
+
+                if (oldQty !== newQty) {
+                    let locId = updates.locationId || resolvedLocationId || existing.defaultLocationId;
+                    if (!locId) {
+                        const loc = await resolveOrCreateLocation(shopId);
+                        locId = loc.id;
+                        await tx.update(products).set({ defaultLocationId: locId }).where(eq(products.id, id));
+                    }
+
+                    const costPrice = updates.costPrice ?? parseFloat(existing.costPrice || "0");
+                    const delta = newQty - oldQty;
+                    const movementType = delta >= 0 ? "ADJUSTMENT_IN" : "ADJUSTMENT_OUT";
+
+                    await tx.insert(stockLedger).values({
+                        shopId,
+                        productId: id,
+                        locationId: locId,
+                        movementType,
+                        quantity: Math.abs(delta).toString(),
+                        unitCost: costPrice.toString(),
+                        runningBalance: newQty.toString(),
+                        notes: `Manual product catalog adjustment (${delta > 0 ? "+" : ""}${delta.toFixed(2)})`,
+                        createdById: session.userId,
+                    });
+
+                    await tx.insert(productLocationStock).values({
+                        shopId,
+                        productId: id,
+                        locationId: locId,
+                        quantity: newQty.toString(),
+                    }).onConflictDoUpdate({
+                        target: [productLocationStock.productId, productLocationStock.locationId],
+                        set: { quantity: newQty.toString(), updatedAt: new Date() },
+                    });
+                }
             }
 
             return { success: true };
@@ -407,10 +446,13 @@ export async function restockProductAction(input: {
                     shopId: input.shopId,
                     productId: input.productId,
                     locationId: location.id,
-                    quantity: newQty.toFixed(2),
+                    quantity: input.addQuantity.toFixed(2),
                 }).onConflictDoUpdate({
                     target: [productLocationStock.productId, productLocationStock.locationId],
-                    set: { quantity: newQty.toFixed(2), updatedAt: new Date() },
+                    set: { 
+                        quantity: sql`GREATEST(0, ${productLocationStock.quantity} + ${input.addQuantity})`, 
+                        updatedAt: new Date() 
+                    },
                 });
             }
         });

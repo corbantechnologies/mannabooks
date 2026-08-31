@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import Link from "next/link";
+import { ReconcileInventoryButton } from "@/components/ReconcileInventoryButton";
 
 interface LocationWithStats {
   id: string;
@@ -129,12 +130,15 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
             Physical storage locations — warehouses, branches, shop floors. Click any location to view its stock inventory, valuation, and movements.
           </p>
         </div>
-        <button
-          onClick={openCreate}
-          className="bg-black text-white hover:bg-zinc-800 px-4 py-2 font-mono text-xs font-semibold uppercase rounded transition-colors"
-        >
-          + Add Location
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <ReconcileInventoryButton shopId={shopId} shopSlug={shopSlug} />
+          <button
+            onClick={openCreate}
+            className="bg-black text-white hover:bg-zinc-800 px-4 py-2 font-mono text-xs font-semibold uppercase rounded transition-colors"
+          >
+            + Add Location
+          </button>
+        </div>
       </div>
 
       {/* SUMMARY STATS */}

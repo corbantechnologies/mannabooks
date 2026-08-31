@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { getInventoryOverview, migrateCatalogToStockLedger, backfillLedgerLocations } from "@/lib/actions/inventory";
 import Link from "next/link";
+import { ReconcileInventoryButton } from "@/components/ReconcileInventoryButton";
 
 interface InventoryPageProps {
   params: Promise<{ slug: string }>;
@@ -71,7 +72,8 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
           <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Stock Overview</h1>
           <p className="font-sans text-xs text-zinc-600 mt-1">Real-time inventory levels, valuation, and recent movements across all locations.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <ReconcileInventoryButton shopId={shop.id} shopSlug={slug} />
           <Link
             href={`/workspaces/${slug}/inventory/adjustments`}
             className="border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-black px-4 py-2 font-mono text-xs font-semibold uppercase rounded transition-colors"

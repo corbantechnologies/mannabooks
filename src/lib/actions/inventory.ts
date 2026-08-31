@@ -923,3 +923,116 @@ export async function backfillLedgerLocations(shopId: string, shopSlug: string) 
         return { success: false, error: error.message || "Backfill failed." };
     }
 }
+
+// ================================================================
+// RECONCILIATION: Synchronize products.stockQuantity with productLocationStock
+// Scans all tracked products and reconciles any discrepancies with location stock.
+// ================================================================
+
+export async function reconcileInventoryAndLocationsAction(shopId: string, shopSlug: string) {
+    const session = await verifyAndGetSession();
+    if (!session) return { success: false, error: "Unauthorized. Please log in." };
+
+    try {
+        // 1. Resolve default location (or create Main Store)
+        let defaultLocation = await db.query.stockLocations.findFirst({
+            where: and(eq(stockLocations.shopId, shopId), eq(stockLocations.isDefault, true)),
+        });
+
+        if (!defaultLocation) {
+            defaultLocation = await db.query.stockLocations.findFirst({
+                where: and(eq(stockLocations.shopId, shopId), eq(stockLocations.isActive, true)),
+            });
+        }
+
+        if (!defaultLocation) {
+            const [createdLoc] = await db.insert(stockLocations).values({
+                shopId,
+                name: "Main Store",
+                code: "MAIN",
+                isDefault: true,
+                isActive: true,
+            }).returning();
+            defaultLocation = createdLoc;
+        }
+
+        // 2. Fetch all tracked products
+        const trackedProducts = await db.query.products.findMany({
+            where: and(eq(products.shopId, shopId), eq(products.trackStock, true)),
+        });
+
+        let reconciledCount = 0;
+
+        await db.transaction(async (tx) => {
+            for (const p of trackedProducts) {
+                const targetLocId = p.defaultLocationId || defaultLocation!.id;
+                const catalogQty = parseFloat(p.stockQuantity || "0");
+                const costPrice = parseFloat(p.costPrice || "0");
+
+                // Get all location stocks for this product
+                const existingStocks = await tx.query.productLocationStock.findMany({
+                    where: and(
+                        eq(productLocationStock.shopId, shopId),
+                        eq(productLocationStock.productId, p.id)
+                    )
+                });
+
+                const totalLocationStock = existingStocks.reduce(
+                    (sum, item) => sum + parseFloat(item.quantity || "0"),
+                    0
+                );
+
+                // If mismatch or no location entry exists
+                if (existingStocks.length === 0 || totalLocationStock !== catalogQty) {
+                    // Update or insert primary location stock to match catalog quantity
+                    await tx
+                        .insert(productLocationStock)
+                        .values({
+                            shopId,
+                            productId: p.id,
+                            locationId: targetLocId,
+                            quantity: catalogQty.toString(),
+                        })
+                        .onConflictDoUpdate({
+                            target: [productLocationStock.productId, productLocationStock.locationId],
+                            set: { quantity: catalogQty.toString(), updatedAt: new Date() },
+                        });
+
+                    // Ensure defaultLocationId is set
+                    if (!p.defaultLocationId) {
+                        await tx
+                            .update(products)
+                            .set({ defaultLocationId: targetLocId })
+                            .where(eq(products.id, p.id));
+                    }
+
+                    // Write adjustment entry to stockLedger
+                    const delta = catalogQty - totalLocationStock;
+                    const movementType = delta >= 0 ? "ADJUSTMENT_IN" : "ADJUSTMENT_OUT";
+
+                    await tx.insert(stockLedger).values({
+                        shopId,
+                        productId: p.id,
+                        locationId: targetLocId,
+                        movementType,
+                        quantity: Math.abs(delta).toString(),
+                        unitCost: costPrice.toString(),
+                        runningBalance: catalogQty.toString(),
+                        notes: `System inventory & location reconciliation sync (${totalLocationStock.toFixed(2)} → ${catalogQty.toFixed(2)})`,
+                        createdById: session.userId,
+                    });
+
+                    reconciledCount++;
+                }
+            }
+        });
+
+        revalidatePath(`/workspaces/${shopSlug}/inventory`);
+        revalidatePath(`/workspaces/${shopSlug}/inventory/locations`);
+        revalidatePath(`/workspaces/${shopSlug}/products`);
+        return { success: true, reconciledCount, totalTracked: trackedProducts.length };
+    } catch (error: any) {
+        console.error("Inventory reconciliation failed:", error);
+        return { success: false, error: error.message || "Failed to reconcile inventory balances." };
+    }
+}

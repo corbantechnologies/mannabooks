@@ -32,6 +32,7 @@ const SHORTCUT_CATEGORIES = [
   {
     category: "Global & Dialogs",
     shortcuts: [
+      { key: "[ or Ctrl+B", description: "Collapse or Expand Desktop Sidebar" },
       { key: "?", description: "Open this Keyboard Shortcuts Reference" },
       { key: "Esc", description: "Close active modal dialog" },
     ],

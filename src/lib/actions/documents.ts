@@ -48,6 +48,7 @@ interface CreateDocumentInput {
     notes?: string;
     termsAndConditions?: string;
     currency?: string;
+    exchangeRate?: number;
     customerEmail?: string;
     sourceDocType?: DocumentType;
     isRecurring?: boolean;
@@ -192,6 +193,11 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 }
             }
 
+            const docCurrency = input.currency || shopProfile.currency || "KES";
+            const rateVal = input.exchangeRate && input.exchangeRate > 0 ? input.exchangeRate : 1.0;
+            const baseCurr = shopProfile.currency || "KES";
+            const baseTotalVal = (calculatedTotals.grandTotal * rateVal).toFixed(2);
+
             // 6. Insert master header registry (The Document)
             const [newDoc] = await tx.insert(documents).values({
                 shopId: input.shopId,
@@ -205,7 +211,10 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 requiresEtims: isFiscalDocType(input.type) ? (input.requiresEtims || false) : false,
                 notes: input.notes || null,
                 termsAndConditions: finalTerms || null,
-                currency: input.currency || shopProfile.currency,
+                currency: docCurrency,
+                exchangeRate: rateVal.toFixed(4),
+                baseCurrency: baseCurr,
+                baseGrandTotal: baseTotalVal,
                 isRecurring: input.isRecurring || false,
                 recurringInterval: input.recurringInterval || null,
                 nextRecurringDate: input.isRecurring ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : null, // Default to next month if recurring
@@ -751,6 +760,7 @@ interface UpdateDocumentInput {
     notes?: string;
     termsAndConditions?: string;
     currency?: string;
+    exchangeRate?: number;
     items: UpdateDocumentItemInput[];
 }
 
@@ -793,6 +803,11 @@ export async function updateBillingDocument(input: UpdateDocumentInput) {
                 isShopVatRegistered: isVatActive,
             });
 
+            const docCurrency = input.currency || shopProfile.currency || "KES";
+            const rateVal = input.exchangeRate && input.exchangeRate > 0 ? input.exchangeRate : 1.0;
+            const baseCurr = shopProfile.currency || "KES";
+            const baseTotalVal = (calculatedTotals.grandTotal * rateVal).toFixed(2);
+
             // Update master header
             await tx.update(documents)
                 .set({
@@ -804,7 +819,10 @@ export async function updateBillingDocument(input: UpdateDocumentInput) {
                     requiresEtims: isFiscalDocType(input.type) ? (input.requiresEtims || false) : false,
                     notes: input.notes || null,
                     termsAndConditions: input.termsAndConditions !== undefined ? (input.termsAndConditions || null) : doc.termsAndConditions,
-                    currency: input.currency || shopProfile.currency,
+                    currency: docCurrency,
+                    exchangeRate: rateVal.toFixed(4),
+                    baseCurrency: baseCurr,
+                    baseGrandTotal: baseTotalVal,
                     subTotal: calculatedTotals.subTotal.toString(),
                     taxAmount: calculatedTotals.taxAmount.toString(),
                     grandTotal: calculatedTotals.grandTotal.toString(),

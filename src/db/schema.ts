@@ -128,6 +128,21 @@ export const shopTerms = pgTable('shop_terms', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// SHOP CURRENCIES & EXCHANGE RATES TABLE (Predefined Multi-Currency Portfolio)
+export const shopCurrencies = pgTable('shop_currencies', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    code: varchar('code', { length: 3 }).notNull(), // e.g., 'USD', 'EUR', 'GBP', 'UGX', 'TZS'
+    name: varchar('name', { length: 50 }).notNull(), // e.g., 'US Dollar', 'Euro'
+    symbol: varchar('symbol', { length: 10 }).default('$').notNull(),
+    exchangeRate: numeric('exchange_rate', { precision: 12, scale: 4 }).default('1.0000').notNull(), // Multiplier to base currency
+    isEnabled: boolean('is_enabled').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_currency_code').on(table.shopId, table.code),
+]);
+
 // PRODUCTS/SERVICES CATALOG TABLE
 export const products = pgTable('products', {
     id: uuid('id').defaultRandom().primaryKey(),
@@ -195,6 +210,9 @@ export const documents = pgTable('documents', {
 
     // Multi-currency and High-precision frozen metrics
     currency: varchar('currency', { length: 3 }), // Defaults to shop currency if null
+    exchangeRate: numeric('exchange_rate', { precision: 12, scale: 4 }).default('1.0000').notNull(), // Exchange rate against base currency at doc creation
+    baseCurrency: varchar('base_currency', { length: 3 }), // e.g. KES
+    baseGrandTotal: numeric('base_grand_total', { precision: 12, scale: 2 }), // Grand total converted to base currency
     subTotal: numeric('sub_total', { precision: 12, scale: 2 }).notNull(),
     taxAmount: numeric('tax_amount', { precision: 12, scale: 2 }).default('0.00').notNull(),
     grandTotal: numeric('grand_total', { precision: 12, scale: 2 }).notNull(),
@@ -208,6 +226,10 @@ export const documents = pgTable('documents', {
     issueDate: timestamp('issue_date').defaultNow().notNull(),
     dueDate: timestamp('due_date'),
     isReadByRecipient: boolean('is_read_by_recipient').default(false).notNull(),
+
+    // Client Portal Interactive Responses (Quotes)
+    clientPortalResponse: varchar('client_portal_response', { length: 50 }), // 'ACCEPTED' | 'AMENDMENT_REQUESTED'
+    clientAmendmentNotes: text('client_amendment_notes'),
 
     // Email Delivery & Read Receipts Tracking
     emailDeliveryStatus: varchar('email_delivery_status', { length: 50 }).default('NOT_SENT').notNull(), // 'NOT_SENT' | 'SENT' | 'DELIVERED' | 'OPENED' | 'BOUNCED'
@@ -626,6 +648,7 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     members: many(shopMembers),
     paymentMethods: many(paymentMethods),
     terms: many(shopTerms),
+    currencies: many(shopCurrencies),
     products: many(products),
     clients: many(clients),
     suppliers: many(suppliers),
@@ -646,6 +669,10 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     stockLedger: many(stockLedger),
     subscriptions: many(subscriptions),
     billingTransactions: many(billingTransactions),
+}));
+
+export const shopCurrenciesRelations = relations(shopCurrencies, ({ one }) => ({
+    shop: one(shops, { fields: [shopCurrencies.shopId], references: [shops.id] }),
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({

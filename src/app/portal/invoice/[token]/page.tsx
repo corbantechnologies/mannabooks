@@ -7,6 +7,7 @@ import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import crypto from "crypto";
 import QRCode from "react-qr-code";
 import { DocumentChain, type ChainNode } from "@/components/DocumentChain";
+import { PortalQuotationActions } from "./PortalQuotationActions";
 
 interface PortalPageProps {
   params: Promise<{ token: string }>;
@@ -246,6 +247,17 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
           </div>
         </div>
 
+        {/* CLIENT PORTAL INTERACTION (QUOTATIONS) */}
+        {doc.type === "QUOTATION" && (
+          <PortalQuotationActions
+            token={token}
+            docNumber={doc.docNumber}
+            clientName={party.name}
+            initialResponse={doc.clientPortalResponse}
+            initialAmendmentNotes={doc.clientAmendmentNotes}
+          />
+        )}
+
         {/* EXPLICIT TRANSACTION LINE ITEM MATRIX */}
         <div className="space-y-2">
           <span className="text-zinc-400 uppercase text-[10px] block">Itemization Sub-Ledger:</span>
@@ -357,16 +369,22 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
           <div className="md:col-span-6 border border-black bg-white p-4 space-y-2 ml-auto w-full max-w-sm">
             <div className="flex justify-between text-zinc-500">
               <span>Gross Sub-Total:</span>
-              <span className="font-bold text-black">{formatCurrency(doc.subTotal, shop.currency)}</span>
+              <span className="font-bold text-black">{formatCurrency(doc.subTotal, doc.currency || shop.currency)}</span>
             </div>
             <div className="flex justify-between text-zinc-500">
               <span>Statutory VAT Levy:</span>
-              <span className="font-bold text-black">{formatCurrency(doc.taxAmount, shop.currency)}</span>
+              <span className="font-bold text-black">{formatCurrency(doc.taxAmount, doc.currency || shop.currency)}</span>
             </div>
             <div className="flex justify-between text-black font-bold text-sm pt-2 border-t-2 border-black">
-              <span>TOTAL OUTSTANDING:</span>
-              <span className="underline underline-offset-2 decoration-double">{formatCurrency(doc.grandTotal, shop.currency)}</span>
+              <span>TOTAL {doc.type === "QUOTATION" ? "ESTIMATE:" : "OUTSTANDING:"}</span>
+              <span className="underline underline-offset-2 decoration-double">{formatCurrency(doc.grandTotal, doc.currency || shop.currency)}</span>
             </div>
+            {doc.currency && doc.currency !== (shop.currency || "KES") && (
+              <div className="bg-zinc-50 border border-zinc-200 rounded p-2 text-[10px] font-sans text-zinc-700 mt-2">
+                <span className="font-bold block">Base Currency Equivalent: {formatCurrency(doc.baseGrandTotal || (parseFloat(doc.grandTotal) * parseFloat(doc.exchangeRate || "1")), shop.currency || "KES")}</span>
+                <span className="text-[9px] text-zinc-500 font-mono">1 {doc.currency} = {parseFloat(doc.exchangeRate || "1").toFixed(4)} {shop.currency || "KES"}</span>
+              </div>
+            )}
 
             {doc.kraCuInvoiceNumber && (
               <div className="border-t border-zinc-200 pt-4 mt-4 flex flex-col items-center gap-2">

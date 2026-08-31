@@ -235,10 +235,16 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         </div>
         <div className="p-5 space-y-1">
           <p className="font-mono text-[10px] text-zinc-400 uppercase">Grand Total</p>
-          <p className="text-2xl font-bold font-mono tracking-tight">{formatCurrency(doc.grandTotal, shop.currency)}</p>
+          <p className="text-2xl font-bold font-mono tracking-tight">{formatCurrency(doc.grandTotal, doc.currency || shop.currency)}</p>
           <p className="font-mono text-[10px] text-zinc-500">
-            Sub: {formatCurrency(doc.subTotal, shop.currency)} | VAT: {formatCurrency(doc.taxAmount, shop.currency)}
+            Sub: {formatCurrency(doc.subTotal, doc.currency || shop.currency)} | VAT: {formatCurrency(doc.taxAmount, doc.currency || shop.currency)}
           </p>
+          {doc.currency && doc.currency !== (shop.currency || "KES") && (
+            <div className="bg-amber-50 border border-amber-200 rounded p-2 text-[10px] font-sans text-amber-900 mt-1">
+              <span className="font-bold block">Base Equivalent ({shop.currency || "KES"}): {formatCurrency(doc.baseGrandTotal || (parseFloat(doc.grandTotal) * parseFloat(doc.exchangeRate || "1")), shop.currency || "KES")}</span>
+              <span className="text-[9px] text-amber-700 font-mono">1 {doc.currency} = {parseFloat(doc.exchangeRate || "1").toFixed(4)} {shop.currency || "KES"}</span>
+            </div>
+          )}
           {doc.kraCuInvoiceNumber ? (
             <p className="font-mono text-[10px] font-bold text-black border-t border-zinc-200 pt-1 mt-1">
               KRA eTIMS CU #: {doc.kraCuInvoiceNumber}

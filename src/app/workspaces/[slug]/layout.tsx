@@ -11,6 +11,7 @@ import { GracePeriodBanner } from "@/components/GracePeriodBanner";
 import { MobileNavDrawer } from "./MobileNavDrawer";
 import { DesktopSideNav } from "./DesktopSideNav";
 import { BottomTabBar } from "./BottomTabBar";
+import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcutsProvider";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -255,5 +256,8 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
 
     {/* MOBILE STICKY BOTTOM NAV TAB BAR */}
     <BottomTabBar slug={slug} />
+    <KeyboardShortcutsProvider slug={slug}>
+      <></>
+    </KeyboardShortcutsProvider>
   </>);
 }

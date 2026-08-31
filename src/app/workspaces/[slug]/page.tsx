@@ -8,6 +8,8 @@ import Link from "next/link";
 import { OnboardingTracker } from "./OnboardingTracker";
 import { DashboardRevenueChart, type WeekRevenueBucket } from "./DashboardRevenueChart";
 import { LowStockAlertBanner } from "@/components/LowStockAlertBanner";
+import { getRecurringInvoices } from "@/lib/actions/recurring";
+import { RecurringInvoicesWidget } from "./RecurringInvoicesWidget";
 
 interface WorkspaceOverviewPageProps {
   params: Promise<{ slug: string }>;
@@ -39,6 +41,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
     allProducts,
     allClients,
     recentExpenses,
+    recurringInvoices,
   ] = await Promise.all([
     db.query.documents.findMany({
       where: eq(documents.shopId, shop.id),
@@ -67,6 +70,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
       orderBy: [desc(expenses.expenseDate)],
       limit: 4,
     }),
+    getRecurringInvoices(shop.id),
   ]);
 
   // 3. Compute 30-day weekly buckets
@@ -293,6 +297,11 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
 
       {/* 30-DAY REVENUE TRAJECTORY CHART */}
       <DashboardRevenueChart weeks={weeks} currency={shop.currency} />
+
+      {/* RECURRING INVOICES WIDGET */}
+      {recurringInvoices.length > 0 && (
+        <RecurringInvoicesWidget slug={slug} currency={shop.currency} recurringInvoices={recurringInvoices} />
+      )}
 
       {/* RECENT TRANSACTIONS STREAM */}
       <div className="space-y-4">

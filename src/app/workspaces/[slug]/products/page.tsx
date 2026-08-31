@@ -10,6 +10,7 @@ import { EditProductModal } from "./EditProductModal";
 import { ProductFilterBar } from "./ProductFilterBar";
 import { ShareCatalogModal } from "./ShareCatalogModal";
 import { ProductsTableClient } from "./ProductsTableClient";
+import { LowStockAlertBanner } from "@/components/LowStockAlertBanner";
 import Link from "next/link";
 
 interface ProductsPageProps {
@@ -99,35 +100,22 @@ export default async function WorkspaceProductsPage({ params, searchParams }: Pr
         </div>
       </div>
 
-      {/* LOW STOCK INVENTORY WARNING BANNER */}
-      {(() => {
-        const lowStockItems = catalogList.filter(
-          (p) => p.itemType === "PRODUCT" && p.trackStock && parseFloat(p.stockQuantity || "0") <= parseFloat(p.reorderThreshold || "5")
-        );
-        if (lowStockItems.length === 0) return null;
-        return (
-          <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">⚠️</span>
-              <div>
-                <p className="font-bold text-amber-900 text-xs uppercase font-mono tracking-wide">
-                  Inventory Alert: {lowStockItems.length} Product{lowStockItems.length > 1 ? "s" : ""} Below Reorder Threshold
-                </p>
-                <p className="text-amber-800 text-xs font-sans mt-0.5">
-                  {lowStockItems.slice(0, 3).map((p) => `${p.name} (${parseFloat(p.stockQuantity)} in stock, threshold: ${parseFloat(p.reorderThreshold)})`).join("; ")}
-                  {lowStockItems.length > 3 ? ` ...and ${lowStockItems.length - 3} more` : ""}
-                </p>
-              </div>
-            </div>
-            <Link
-              href={`/workspaces/${slug}/inventory`}
-              className="bg-amber-900 hover:bg-amber-950 text-white font-mono text-[10px] uppercase font-bold px-3 py-1.5 rounded transition-colors shrink-0"
-            >
-              Open Stock Ledger →
-            </Link>
-          </div>
-        );
-      })()}
+      {/* LOW STOCK INVENTORY WARNING BANNER (DISMISSIBLE) */}
+      <LowStockAlertBanner
+        items={catalogList
+          .filter(
+            (p) => p.itemType === "PRODUCT" && p.trackStock && parseFloat(p.stockQuantity || "0") <= parseFloat(p.reorderThreshold || "5")
+          )
+          .map((p) => ({
+            name: p.name,
+            stockQuantity: p.stockQuantity,
+            reorderThreshold: p.reorderThreshold,
+          }))}
+        shopSlug={slug}
+        actionHref={`/workspaces/${slug}/inventory`}
+        actionLabel="Open Stock Ledger →"
+        storageKeyPrefix="manna_dismiss_stock_alert_products"
+      />
 
       {/* FILTER & SEARCH CONTROL BAR */}
       <ProductFilterBar />

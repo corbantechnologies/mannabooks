@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { OnboardingTracker } from "./OnboardingTracker";
 import { DashboardRevenueChart, type WeekRevenueBucket } from "./DashboardRevenueChart";
+import { LowStockAlertBanner } from "@/components/LowStockAlertBanner";
 
 interface WorkspaceOverviewPageProps {
   params: Promise<{ slug: string }>;
@@ -205,29 +206,17 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
         hasDocuments={allDocs.length > 0}
       />
 
-      {/* LOW STOCK ALERT BANNER */}
-      {lowStockItems.length > 0 && (
-        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">⚠️</span>
-            <div>
-              <p className="font-bold text-amber-900 text-xs uppercase font-mono tracking-wide">
-                Inventory Alert: {lowStockItems.length} Item{lowStockItems.length > 1 ? "s" : ""} Below Reorder Threshold
-              </p>
-              <p className="text-amber-800 text-xs font-sans mt-0.5">
-                {lowStockItems.slice(0, 3).map((p) => `${p.name} (${parseFloat(p.stockQuantity)} left)`).join(", ")}
-                {lowStockItems.length > 3 ? ` and ${lowStockItems.length - 3} more` : ""}
-              </p>
-            </div>
-          </div>
-          <Link
-            href={`/workspaces/${slug}/products`}
-            className="bg-amber-900 hover:bg-amber-950 text-white font-mono text-[10px] uppercase font-bold px-3 py-1.5 rounded transition-colors shrink-0"
-          >
-            Restock Inventory →
-          </Link>
-        </div>
-      )}
+      {/* LOW STOCK ALERT BANNER (DISMISSIBLE) */}
+      <LowStockAlertBanner
+        items={lowStockItems.map((p) => ({
+          name: p.name,
+          stockQuantity: p.stockQuantity,
+          reorderThreshold: p.reorderThreshold,
+        }))}
+        shopSlug={slug}
+        actionHref={`/workspaces/${slug}/products`}
+        actionLabel="Restock Inventory →"
+      />
 
       {/* PRIMARY KPI METRIC CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

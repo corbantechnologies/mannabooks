@@ -297,12 +297,12 @@ export function SettingsForm({
         <h2 className="font-semibold uppercase tracking-wider text-sm text-black font-sans">Business Profile</h2>
 
         {profileMsg && (
-          <div className={`border p-3 font-semibold uppercase text-xs rounded ${
+          <div className={`border p-3 font-semibold text-xs rounded ${
             profileMsg.type === "success"
-              ? "border-black bg-black text-white"
-              : "border-zinc-200 bg-zinc-50 text-black"
+              ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+              : "border-rose-200 bg-rose-50 text-rose-800"
           }`}>
-            &gt; {profileMsg.text}
+            {profileMsg.type === "success" ? "✓ " : "⚠ "}{profileMsg.text}
           </div>
         )}
 
@@ -703,8 +703,8 @@ export function SettingsForm({
         )}
 
         {initialMethods.length === 0 && (
-          <div className="p-6 font-mono text-xs text-zinc-400 italic">
-            &gt; No payment methods configured. Add one below.
+          <div className="p-6 font-sans text-xs text-zinc-400 italic">
+            No payment methods configured yet. Add one below.
           </div>
         )}
 

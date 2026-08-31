@@ -68,30 +68,33 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
       {/* KPI METRIC CARDS */}
       <div className="card-modern divide-y md:divide-y-0 md:divide-x divide-zinc-200/80 bg-white grid grid-cols-1 md:grid-cols-3">
         <div className="p-6 space-y-1">
-          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Active Staff Nodes</p>
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Active Employees</p>
           <p className="text-xl font-semibold font-mono tracking-tight text-black">
-            {activeStaffCount} Registered Staff
+            {activeStaffCount} Active
           </p>
           <p className="text-[10px] text-zinc-500 leading-tight">Total active employees and commission workers.</p>
         </div>
 
         <div className="p-6 space-y-1">
-          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Total Disbursed Payroll Outflow</p>
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Total Payroll Paid</p>
           <p className="text-xl font-semibold font-mono tracking-tight text-emerald-700">
             {formatCurrency(totalYtdNetOutflow, shop.currency)}
           </p>
-          <p className="text-[10px] text-zinc-500 leading-tight">Cumulative net earnings paid out across runs.</p>
+          <p className="text-[10px] text-zinc-500 leading-tight">All-time net pay disbursements across all runs.</p>
         </div>
 
         <div className="p-6 space-y-1">
-          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Last Processed Run</p>
-          <p className="text-xl font-semibold font-mono tracking-tight text-black uppercase">
-            {lastProcessedVoucher ? lastProcessedVoucher.docNumber : "NONE_RECORDED"}
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Last Payroll Date</p>
+          <p className="text-xl font-semibold font-mono tracking-tight text-black">
+            {lastProcessedVoucher 
+              ? new Date(lastProcessedVoucher.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" }) 
+              : "None"
+            }
           </p>
           <p className="text-[10px] text-zinc-500 leading-tight">
             {lastProcessedVoucher 
-              ? `Issued on ${new Date(lastProcessedVoucher.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}`
-              : "No active payroll voucher runs locked."
+              ? `Voucher: ${lastProcessedVoucher.docNumber}` 
+              : "No payroll processed yet."
             }
           </p>
         </div>
@@ -100,7 +103,7 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
       {/* HISTORICAL PAYROLL VOUCHERS RUNS */}
       <div className="space-y-4 pt-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">&gt; Historical Payroll Runs &amp; Vouchers</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">Payroll History</h2>
           <span className="text-[10px] text-zinc-400 uppercase font-semibold">Total Runs: {payrollVouchers.length}</span>
         </div>
 
@@ -108,12 +111,12 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
               <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Voucher Serial Ref</th>
+                <th className="p-4 border-r border-zinc-200">Payroll Ref</th>
                 <th className="p-4 border-r border-zinc-200">Issue Date</th>
                 <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Gross Earnings Pool</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Deductions Pool</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Net Disbursed Cash</th>
+                <th className="p-4 border-r border-zinc-200 text-right">Gross Earnings</th>
+                <th className="p-4 border-r border-zinc-200 text-right">Deductions</th>
+                <th className="p-4 border-r border-zinc-200 text-right">Net Pay</th>
                 <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
@@ -160,8 +163,8 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
 
               {payrollVouchers.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-zinc-400 italic">
-                    &gt; NO HISTORICAL PAYROLL RUNS LOCKED IN LEDGER YET.
+                  <td colSpan={7} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                    No payroll runs recorded yet.
                   </td>
                 </tr>
               )}
@@ -173,7 +176,7 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
       {/* EMPLOYEE DIRECTORY REGISTRY */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">&gt; Employee &amp; Staff Directory</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">Employees</h2>
           <span className="text-[10px] text-zinc-400 uppercase font-semibold">Total: {staffList.length}</span>
         </div>
 
@@ -241,8 +244,8 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
 
               {staffList.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-zinc-400 italic">
-                    &gt; NO STAFF NODES REGISTERED YET. CLICK "+ REGISTER EMPLOYEE" TO GET STARTED.
+                  <td colSpan={7} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                    No employees added yet. Click "+ Register Employee" to get started.
                   </td>
                 </tr>
               )}

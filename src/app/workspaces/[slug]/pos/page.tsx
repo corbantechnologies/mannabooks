@@ -59,7 +59,7 @@ export default async function WalkInSalesPage({ params }: WalkInSalesPageProps) 
         </div>
       </div>
 
-      <Suspense fallback={<div className="font-mono text-xs text-zinc-400 p-8 border border-zinc-200 bg-zinc-50 rounded text-center">&gt; LOADING POS TERMINAL...</div>}>
+      <Suspense fallback={<div className="font-sans text-xs text-zinc-500 p-8 border border-zinc-200 bg-zinc-50 rounded-lg text-center">Loading Point of Sale...</div>}>
         <WalkInSalesTerminal 
           shop={shop}
           shopSlug={slug}

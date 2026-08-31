@@ -189,7 +189,7 @@ export function LocationDetailClientView({
               </span>
             </div>
             <p className="font-sans text-xs text-zinc-600">
-              Storage node statistics, on-hand product inventory, valuation, and location audit movements.
+              Location statistics, on-hand product inventory, valuation, and stock movements.
             </p>
           </div>
 
@@ -210,7 +210,7 @@ export function LocationDetailClientView({
               onClick={() => setShowEditModal(true)}
               className="border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 px-3 py-2 font-mono text-xs font-semibold uppercase rounded transition-colors"
             >
-              Edit Node
+              Edit Location
             </button>
             {!location.isDefault && (
               <button
@@ -403,8 +403,8 @@ export function LocationDetailClientView({
 
                 {filteredItems.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="p-12 text-center text-zinc-400 italic">
-                      &gt; NO PRODUCTS FOUND MATCHING THE CURRENT FILTERS.
+                    <td colSpan={8} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                      No products found matching the current filters.
                     </td>
                   </tr>
                 )}
@@ -470,8 +470,8 @@ export function LocationDetailClientView({
 
                 {recentMovements.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="p-12 text-center text-zinc-400 italic">
-                      &gt; NO STOCK MOVEMENTS LOGGED AT THIS LOCATION YET.
+                    <td colSpan={7} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                      No stock movements recorded for this location yet.
                     </td>
                   </tr>
                 )}
@@ -545,8 +545,8 @@ export function LocationDetailClientView({
 
                 {transfers.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="p-12 text-center text-zinc-400 italic">
-                      &gt; NO TRANSFERS RECORDED FOR THIS LOCATION YET.
+                    <td colSpan={7} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                      No transfers recorded for this location yet.
                     </td>
                   </tr>
                 )}

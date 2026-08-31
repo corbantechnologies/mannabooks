@@ -71,12 +71,12 @@ function LoginFormContent() {
         
         <div className="space-y-1.5">
           <h2 className="text-xl font-semibold tracking-tight uppercase leading-none font-sans text-black">Log In</h2>
-          <p className="text-xs text-zinc-500 font-mono uppercase font-semibold">Enter credentials to open ledger node</p>
+          <p className="text-xs text-zinc-500 font-sans">Enter your credentials to access your account</p>
         </div>
 
         {error && (
-          <div className="border border-zinc-200 bg-zinc-50 p-3 font-mono text-xs text-black uppercase tracking-tight rounded font-semibold">
-            &gt; ERROR: {error}
+          <div className="border border-rose-200 bg-rose-50 p-3 font-sans text-xs text-rose-800 rounded font-semibold">
+            ⚠ {error}
           </div>
         )}
 

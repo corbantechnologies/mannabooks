@@ -64,9 +64,9 @@ export default async function WorkspaceEmployeesPage({ params }: WorkspaceEmploy
       {/* KPI METRIC CARDS */}
       <div className="card-modern divide-y md:divide-y-0 md:divide-x divide-zinc-200/80 bg-white grid grid-cols-1 md:grid-cols-3">
         <div className="p-6 space-y-1">
-          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Total Staff Members</p>
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Total Staff</p>
           <p className="text-xl font-semibold font-mono tracking-tight text-black">
-            {staffList.length} Registered Nodes
+            {staffList.length} Employees
           </p>
           <p className="text-[10px] text-zinc-500 leading-tight">
             {activeStaffCount} active • {inactiveStaffCount} inactive
@@ -94,7 +94,7 @@ export default async function WorkspaceEmployeesPage({ params }: WorkspaceEmploy
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">
-            &gt; Master Employee Registry ({staffList.length})
+            Employee Directory ({staffList.length})
           </h2>
         </div>
 
@@ -167,8 +167,8 @@ export default async function WorkspaceEmployeesPage({ params }: WorkspaceEmploy
 
               {staffList.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-zinc-400 italic">
-                    &gt; NO EMPLOYEES REGISTERED IN WORKSPACE YET. CLICK "+ REGISTER EMPLOYEE" TO ADD STAFF.
+                  <td colSpan={7} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                    No employees registered yet. Click "+ Register Employee" to add staff.
                   </td>
                 </tr>
               )}

@@ -98,8 +98,8 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
             
             <div className="border-b border-zinc-100 pb-4 flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-bold uppercase tracking-tight font-sans text-black">Edit Catalog Node</h2>
-                <p className="text-[10px] text-zinc-400 uppercase font-semibold mt-0.5">Update item classification, pricing, &amp; inventory tracking</p>
+                <h2 className="text-xl font-bold uppercase tracking-tight font-sans text-black">Edit Product / Service</h2>
+                <p className="font-sans text-xs text-zinc-400 mt-0.5">Update item details, pricing, and inventory tracking</p>
               </div>
               <button
                 type="button"

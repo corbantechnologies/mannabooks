@@ -320,7 +320,7 @@ export default function ReconciliationClient({
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
                         <h3 className="font-semibold uppercase tracking-tight text-sm font-sans text-black">
-                            &gt; External Statement Lines
+                            External Statement Lines
                         </h3>
                         <span className="font-mono text-[11px] text-zinc-400">
                             {statementRows.length} transactions
@@ -388,7 +388,7 @@ export default function ReconciliationClient({
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
                         <h3 className="font-semibold uppercase tracking-tight text-sm font-sans text-black">
-                            &gt; Internal Books (Account 1200: Cash &amp; Bank)
+                            Internal Books (Cash &amp; Bank Ledger)
                         </h3>
                         <span className="font-mono text-[11px] text-zinc-400">
                             {glEntries.length} entries

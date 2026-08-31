@@ -28,8 +28,8 @@ export default async function WorkspaceAnalyticsPage({ params }: AnalyticsPagePr
   if (!analyticsRes.success) {
     return (
       <div className="p-8 text-black font-mono">
-        <div className="border border-zinc-200 bg-zinc-50 p-4 font-semibold uppercase rounded text-xs">
-          &gt; ERROR_FETCHING_ANALYTICS: {analyticsRes.error}
+        <div className="border border-zinc-200 bg-zinc-50 p-4 font-medium rounded text-xs text-rose-700">
+          Unable to load analytics: {analyticsRes.error}
         </div>
       </div>
     );
@@ -38,7 +38,7 @@ export default async function WorkspaceAnalyticsPage({ params }: AnalyticsPagePr
   return (
     <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
       <div>
-        <span className="font-mono text-xs text-zinc-400 font-semibold uppercase">INTELLIGENCE // BUSINESS_ANALYTICS_SUITE</span>
+        <span className="font-sans text-xs text-zinc-400 font-semibold uppercase tracking-wider">Reports &amp; Performance</span>
         <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">{shop.name} Analytics</h1>
       </div>
 

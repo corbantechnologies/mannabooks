@@ -140,7 +140,7 @@ export function ProductsTableClient({
                     )}
                   </td>
                   <td className="p-4 border-r border-zinc-200/80 text-zinc-500 tracking-wider">
-                    {p.sku || <span className="text-zinc-300 italic font-normal lowercase">&gt; unassigned</span>}
+                    {p.sku || <span className="text-zinc-300 italic font-normal">None</span>}
                   </td>
                   <td className="p-4 border-r border-zinc-200/80 font-semibold text-sm text-black">
                     {formatCurrency(p.unitPrice, shop.currency)}

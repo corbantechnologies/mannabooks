@@ -60,13 +60,13 @@ export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; sho
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-zinc-200/80 rounded-md shadow-xl max-w-lg w-full p-6 space-y-6 font-mono text-xs animate-in zoom-in-95 duration-150 relative">
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold uppercase tracking-tight font-sans text-black">Onboard Client</h2>
-              <p className="font-mono text-[10px] text-zinc-400 uppercase font-semibold">Append new entity context to repository</p>
+              <h2 className="text-xl font-semibold uppercase tracking-tight font-sans text-black">Add New Client</h2>
+              <p className="font-sans text-xs text-zinc-400">Enter client profile and contact information</p>
             </div>
 
             {error && (
-              <div className="border border-zinc-200 bg-zinc-50 p-3 font-mono text-[11px] text-black font-semibold uppercase rounded">
-                &gt; VALIDATION_FAILURE: {error}
+              <div className="border border-rose-200 bg-rose-50 p-3 font-sans text-xs text-rose-800 font-semibold rounded">
+                ⚠ {error}
               </div>
             )}
 
@@ -167,7 +167,7 @@ export function ClientFormClientSide({ shopId, shopSlug }: { shopId: string; sho
                   disabled={loading}
                   className="btn-primary-modern px-6 py-2 font-semibold uppercase text-xs disabled:bg-zinc-300"
                 >
-                  {loading ? "COMMITTING NODE..." : "SAVE PROFILE"}
+                  {loading ? "SAVING..." : "SAVE PROFILE"}
                 </button>
               </div>
 

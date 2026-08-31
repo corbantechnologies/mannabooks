@@ -199,15 +199,15 @@ export default async function ClientProfileLedgerPage({ params, searchParams }: 
       {/* CORE CONTACT SCHEDULING DETAILS BOX */}
       <div className="card-modern p-4 bg-zinc-50/50 font-mono text-xs grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <div>
-          <span className="text-zinc-400 block uppercase text-[10px] font-semibold">Email Destination</span>
+          <span className="text-zinc-400 block uppercase text-[10px] font-semibold">Email Address</span>
           <span className="font-sans font-semibold text-black text-sm">{clientRecord.email}</span>
         </div>
         <div>
-          <span className="text-zinc-400 block uppercase text-[10px] font-semibold">Phone Line Reference</span>
-          <span className="font-semibold text-black text-sm">{clientRecord.phone || "UNASSIGNED"}</span>
+          <span className="text-zinc-400 block uppercase text-[10px] font-semibold">Phone Number</span>
+          <span className="font-semibold text-black text-sm">{clientRecord.phone || "Not set"}</span>
         </div>
         <div>
-          <span className="text-zinc-400 block uppercase text-[10px] font-semibold">Onboarding Timestamp</span>
+          <span className="text-zinc-400 block uppercase text-[10px] font-semibold">Client Since</span>
           <span className="text-zinc-600 text-sm font-semibold">
             {new Date(clientRecord.createdAt).toLocaleDateString("en-KE", { dateStyle: "long" })}
           </span>
@@ -216,7 +216,7 @@ export default async function ClientProfileLedgerPage({ params, searchParams }: 
 
       {/* STANDALONE HISTORICAL SUB-LEDGER GRID */}
       <div className="space-y-4">
-        <h3 className="font-semibold uppercase tracking-tight text-sm font-sans text-black">&gt; Transaction Sub-Ledger</h3>
+        <h3 className="font-semibold uppercase tracking-tight text-sm font-sans text-black">Documents &amp; Transactions</h3>
         
         <ClientDocumentsFilterBar />
         
@@ -224,11 +224,11 @@ export default async function ClientProfileLedgerPage({ params, searchParams }: 
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
               <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Serial Reference</th>
+                <th className="p-4 border-r border-zinc-200">Document #</th>
                 <th className="p-4 border-r border-zinc-200">Document Type</th>
-                <th className="p-4 border-r border-zinc-200">Issue Tracking Date</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Total Aggregate Valuation</th>
-                <th className="p-4 border-r border-zinc-200 text-center">Execution Status</th>
+                <th className="p-4 border-r border-zinc-200">Date</th>
+                <th className="p-4 border-r border-zinc-200 text-right">Total Amount</th>
+                <th className="p-4 border-r border-zinc-200 text-center">Status</th>
                 <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
@@ -277,8 +277,8 @@ export default async function ClientProfileLedgerPage({ params, searchParams }: 
 
               {filteredDocs.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-zinc-400 italic">
-                    &gt; NO REVENUE RECORDS ASSIGNED TO THIS INDIVIDUAL CLIENT TRACKING NODE.
+                  <td colSpan={6} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                    No documents found for this client.
                   </td>
                 </tr>
               )}

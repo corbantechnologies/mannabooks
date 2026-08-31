@@ -163,8 +163,8 @@ export function DesktopSidebarShell({
                   PIN: {shop.taxPin}
                 </div>
               ) : (
-                <span className="font-mono text-[9px] italic text-rose-600 block mt-1">
-                  &gt; CONFIGURATION REQUIRED
+                <span className="font-sans text-[10px] text-amber-600 block mt-1 font-medium">
+                  Tax PIN missing
                 </span>
               )}
             </div>
@@ -174,7 +174,7 @@ export function DesktopSidebarShell({
         {/* 2. SCROLLABLE APPLICATION DIRECTORY LINKS */}
         <div className="flex-1 overflow-y-auto p-5 space-y-2 w-64">
           <span className="font-sans text-[10px] uppercase tracking-wider text-zinc-400 block mb-3 font-bold">
-            Directories
+            Menu
           </span>
           {sidebarChildren}
         </div>

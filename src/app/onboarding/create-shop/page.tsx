@@ -54,16 +54,16 @@ export default function CreateShopPage() {
       <div className="card-modern w-full max-w-md p-8 space-y-6 bg-white">
 
         <div className="space-y-1.5">
-          <Link href="/dashboard" className="font-mono text-xs font-semibold tracking-widest text-zinc-400 block hover:underline">
-            {"<-"} BACK TO DASHBOARD
+          <Link href="/dashboard" className="font-sans text-xs font-semibold text-zinc-400 block hover:underline">
+            ← Back to Dashboard
           </Link>
-          <h1 className="text-xl font-semibold tracking-tight uppercase leading-none font-sans text-black">Provision New Shop</h1>
-          <p className="text-xs text-zinc-500 font-mono uppercase font-semibold">Register an additional business workspace</p>
+          <h1 className="text-xl font-semibold tracking-tight uppercase leading-none font-sans text-black">Create New Workspace</h1>
+          <p className="text-xs text-zinc-500 font-sans">Set up an additional business or store workspace</p>
         </div>
 
         {error && (
-          <div className="border border-zinc-200 bg-zinc-50 p-3 font-mono text-xs text-black uppercase tracking-tight rounded font-semibold">
-            &gt; ERROR: {error}
+          <div className="border border-rose-200 bg-rose-50 p-3 font-sans text-xs text-rose-800 rounded font-semibold">
+            ⚠ {error}
           </div>
         )}
 

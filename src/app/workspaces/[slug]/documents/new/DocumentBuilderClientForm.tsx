@@ -852,12 +852,12 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
               <span className="w-2 h-2 rounded-full bg-black" />
               <h3 className="font-bold text-xs uppercase tracking-tight text-black">Compliance &amp; System Notes</h3>
             </div>
-            <p className="text-zinc-500 text-xs leading-relaxed font-mono text-[11px]">
-              &gt; Fiscal Verification Engine: Transactions are stored cleanly with frozen precision metrics. Draft documents can be updated or finalized at any time.
+            <p className="text-zinc-500 text-xs leading-relaxed font-sans">
+              All transactions and calculations are saved accurately. Draft documents can be edited or finalized whenever you are ready.
             </p>
             {requiresEtims && (
-              <div className="bg-emerald-50 border border-emerald-200 p-3 rounded text-[11px] font-semibold text-emerald-900 flex items-center gap-2">
-                <span>✓ Target entity requires eTIMS fiscal signing.</span>
+              <div className="bg-emerald-50 border border-emerald-200 p-3 rounded text-xs font-semibold text-emerald-900 flex items-center gap-2 font-sans">
+                <span>✓ Client requires eTIMS fiscal signing.</span>
               </div>
             )}
           </div>

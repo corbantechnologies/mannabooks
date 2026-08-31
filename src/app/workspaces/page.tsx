@@ -38,7 +38,7 @@ export default async function WorkspacesDirectoryPage() {
       {/* TOP META BAR */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 pb-6">
         <div>
-          <span className="font-mono text-xs text-zinc-400 font-semibold">CONSOLE // SUITE_MANAGEMENT</span>
+          <span className="font-sans text-xs text-zinc-400 font-semibold uppercase tracking-wider">Account Workspaces</span>
           <div className="flex items-center gap-3 mt-1">
             <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight font-sans text-black">
               Select Workspace

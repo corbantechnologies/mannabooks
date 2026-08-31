@@ -15,31 +15,31 @@ export default function PrivacyPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16 space-y-8 flex-1">
         <div className="space-y-2 border-b border-zinc-200/80 pb-6">
-          <span className="font-mono text-xs text-zinc-400 font-semibold uppercase">SPECIFICATION // PRIVACY_LOGIC</span>
-          <h1 className="text-xl font-semibold uppercase tracking-tight text-black font-sans">Privacy Logic &amp; Security</h1>
+          <span className="font-sans text-xs text-zinc-400 font-semibold uppercase tracking-wider">Legal</span>
+          <h1 className="text-xl font-semibold uppercase tracking-tight text-black font-sans">Privacy &amp; Security</h1>
           <p className="font-mono text-xs text-zinc-500 uppercase font-semibold">Effective Date: Edition 2026</p>
         </div>
 
         <section className="space-y-4 text-sm text-zinc-700 leading-relaxed font-sans">
-          <h2 className="font-mono font-semibold text-black uppercase text-sm">&gt; 1. Client Confidentiality</h2>
+          <h2 className="font-sans font-semibold text-black uppercase text-sm">1. Client Confidentiality</h2>
           <p>
-            Client details, billing documents, and transactional entries are strictly isolated to your tenant workspace. We do not sell or monetize client financial metadata.
+            Client details, billing documents, and transactional entries are strictly isolated to your business workspace. We do not sell or monetize client financial data.
           </p>
 
-          <h2 className="font-mono font-semibold text-black uppercase text-sm pt-4">&gt; 2. Passwordless Client Links</h2>
+          <h2 className="font-sans font-semibold text-black uppercase text-sm pt-4">2. Secure Client Links</h2>
           <p>
-            Client document portals are accessible via cryptographically un-guessable 64-character tokens. Clients do not need account credentials to view and acknowledge issued invoices.
+            Client document portals are accessible via unique, secure links. Clients do not need passwords or account credentials to view and acknowledge issued invoices.
           </p>
 
-          <h2 className="font-mono font-semibold text-black uppercase text-sm pt-4">&gt; 3. Data Protection Standards</h2>
+          <h2 className="font-sans font-semibold text-black uppercase text-sm pt-4">3. Data Protection Standards</h2>
           <p>
-            Sessions are protected using stateful HTTP-only cookies with cryptographic token IDs stored securely in PostgreSQL.
+            All user sessions and data are protected using industry-standard encryption and secure cookies.
           </p>
         </section>
       </main>
 
-      <footer className="border-t border-zinc-200/80 px-6 py-6 text-xs text-zinc-500 font-mono text-center">
-        © 2026 Manna Books LTD. Privacy Logic Node.
+      <footer className="border-t border-zinc-200/80 px-6 py-6 text-xs text-zinc-500 font-sans text-center">
+        © 2026 Manna Books LTD. All rights reserved.
       </footer>
     </div>
   );

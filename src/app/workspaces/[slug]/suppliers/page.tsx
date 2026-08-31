@@ -110,7 +110,7 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
                   </span>
                 </td>
                 <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-widest font-mono">
-                  {sup.taxPin || <span className="text-zinc-300 font-normal italic lowercase">&gt; unassigned</span>}
+                  {sup.taxPin || <span className="text-zinc-300 font-normal italic">None</span>}
                   {sup.requiresEtims && (
                     <span className="ml-2 border border-zinc-300 px-1.5 py-0.5 text-[8px] bg-zinc-50 font-semibold uppercase rounded">
                       eTIMS
@@ -128,8 +128,8 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
 
             {supplierList.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-12 text-center text-zinc-400 italic">
-                  &gt; SUPPLIER REGISTRY EMPTY. NO VENDOR NODES MATCHING SEARCH CRITERIA.
+                <td colSpan={7} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                  No suppliers found matching your search.
                 </td>
               </tr>
             )}

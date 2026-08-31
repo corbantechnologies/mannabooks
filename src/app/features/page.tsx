@@ -105,7 +105,7 @@ export default function FeaturesPage() {
                 { title: "1-Click Receipt Reprint", body: "Reprint 58mm or 80mm thermal slips at any time directly from the Document Status Panel or Fiscal Ledgers stream." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -130,7 +130,7 @@ export default function FeaturesPage() {
                 { title: "KRA CU & PIN Compliance", body: "Embed official KRA eTIMS Control Unit (CU) serial numbers and merchant/client KRA PINs on all formal financial documents for statutory audit compliance." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -158,7 +158,7 @@ export default function FeaturesPage() {
                 { title: "Zero Data Duplication", body: "Your catalog is powered directly by your product inventory — any price or name update reflects immediately on the live link and PDF." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -184,7 +184,7 @@ export default function FeaturesPage() {
                 { title: "Advanced Stock Reporting", body: "Generate real-time FIFO stock valuations, inspect full ledger histories, review active low-stock alerts, and perform ABC revenue Pareto analyses." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -209,7 +209,7 @@ export default function FeaturesPage() {
                 { title: "Custom Schedules & Dispatch", body: "Run weekly or monthly payrolls with custom payout dates. Save as DRAFT, lock when ready, and dispatch email payslips to staff instantly." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -234,7 +234,7 @@ export default function FeaturesPage() {
                 { title: "Compliance Audit Ledgers", body: "All issued invoices, receipts, and tax positions are stored immutably for easy cross-referencing during KRA iTax and eTIMS compliance audits." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -272,7 +272,7 @@ export default function FeaturesPage() {
                 },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -297,7 +297,7 @@ export default function FeaturesPage() {
                 { title: "Resend Email Dispatch", body: "Send branded HTML email notifications with shop logo, brand color CTA buttons, and secure portal links directly from your Manna workspace." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -322,7 +322,7 @@ export default function FeaturesPage() {
                 { title: "Sales Velocity & Client LTV", body: "Top product bestsellers by revenue and quantity sold. Client Lifetime Value (LTV) ranking with revenue concentration share — across This Month, Quarter, Year, or All Time." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -347,7 +347,7 @@ export default function FeaturesPage() {
                 { title: "Client Lifetime Value", body: "The analytics engine automatically computes each client's lifetime revenue contribution and ranks them by LTV — so you always know your most valuable relationships." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -372,7 +372,7 @@ export default function FeaturesPage() {
                 { title: "Expense Analytics", body: "Expenses feed directly into the analytics dashboard, showing total operating costs alongside gross revenue and profit — giving you a true picture of net operating income." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -397,7 +397,7 @@ export default function FeaturesPage() {
                 { title: "Invitation History & Audit", body: "Track the full invitation lifecycle: Pending, Accepted, and Revoked. Revoke access at any time. A complete audit trail is maintained for compliance." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -422,7 +422,7 @@ export default function FeaturesPage() {
                 { title: "Live Read Receipts", body: "When you send a document via the network, know exactly when the recipient opens it with automatic '👁️ Viewed' read receipts." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -453,7 +453,7 @@ export default function FeaturesPage() {
                 { title: "Real-time Financial Statements", body: "Dynamic Profit & Loss, Balance Sheet, Cash Flow, and Trial Balance reports compiled instantly from ledger postings for board or compliance audits." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}
@@ -478,7 +478,7 @@ export default function FeaturesPage() {
                 { title: "Instalment & Turnover Tax (TOT)", body: "Quarterly CIT instalment scheduler (with KES 30,000 auto-obligation check) and Turnover Tax (TOT) 1.5% calculation on monthly gross revenue." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
-                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-mono">&gt; {item.title}</span>
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
                   <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
                 </div>
               ))}

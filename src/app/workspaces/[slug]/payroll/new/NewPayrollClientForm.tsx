@@ -242,7 +242,7 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
           <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-3 border-r border-zinc-200">Staff Name Reference Node</th>
+                <th className="p-3 border-r border-zinc-200">Employee Name</th>
                 <th className="p-3 border-r border-zinc-200 text-right">Base Pay ({shop.currency})</th>
                 <th className="p-3 border-r border-zinc-200 text-right">Allowances</th>
                 <th className="p-3 border-r border-zinc-200 text-right">Commissions</th>
@@ -256,7 +256,7 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
                     <th className="p-3 border-r border-zinc-200 text-zinc-500 text-right">NSSF</th>
                   </>
                 )}
-                <th className="p-3 border-r border-zinc-200 bg-zinc-900 text-emerald-400 text-right font-semibold">Net Outflow</th>
+                <th className="p-3 border-r border-zinc-200 bg-zinc-900 text-emerald-400 text-right font-semibold">Net Pay</th>
                 <th className="p-3 text-center">Action</th>
               </tr>
             </thead>

@@ -92,7 +92,7 @@ export default function PublicOperatorGuidePage() {
 
             {/* MOBILE INDEX (shown on mobile only) */}
             <div className="lg:hidden border border-emerald-200 rounded-xl p-5 space-y-3 mt-4 bg-emerald-50/30">
-              <span className="font-bold text-[#064e3b] uppercase text-xs block font-sans">&gt; Documentation Index</span>
+              <span className="font-bold text-[#064e3b] uppercase text-xs block font-sans">Documentation Index</span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-semibold text-[10px] uppercase">
                 {GUIDE_MODULES.map((item) => (
                   <a key={item.href} href={item.href} className="hover:underline text-zinc-800 hover:text-[#064e3b]">{item.label}</a>

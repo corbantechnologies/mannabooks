@@ -207,12 +207,12 @@ export function DocumentStatusPanel({
       </div>
 
       {message && (
-        <div className={`border p-3 font-semibold uppercase tracking-tight text-xs rounded ${
+        <div className={`border p-3 font-semibold text-xs rounded ${
           message.type === "success"
-            ? "border-black bg-black text-white"
-            : "border-zinc-200 bg-zinc-50 text-black"
+            ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+            : "border-rose-200 bg-rose-50 text-rose-800"
         }`}>
-          &gt; {message.text}
+          {message.type === "success" ? "✓ " : "⚠ "}{message.text}
         </div>
       )}
 

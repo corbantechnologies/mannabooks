@@ -181,13 +181,13 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
                 PIN: {shop.taxPin}
               </span>
             ) : (
-              <span className="text-[9px] italic text-rose-600 block">&gt; CONFIGURATION REQUIRED</span>
+              <span className="text-[10px] text-amber-600 block font-medium">Tax PIN missing</span>
             )}
           </div>
 
           {/* NAVIGATION LINKS */}
           <div className="space-y-2">
-            <span className="text-[10px] uppercase tracking-wider text-zinc-400 block mb-2 font-bold font-sans">Directories</span>
+            <span className="text-[10px] uppercase tracking-wider text-zinc-400 block mb-2 font-bold font-sans">Menu</span>
             <nav className="flex flex-col gap-1 font-medium font-sans text-xs tracking-normal text-zinc-600">
               {navItems.map((item, idx) => {
                 if (item.children) {

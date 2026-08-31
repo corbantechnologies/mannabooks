@@ -46,28 +46,28 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
       <div className="border-b border-zinc-200/80 pb-6 space-y-2">
         <Link
           href={`/workspaces/${slug}/payroll`}
-          className="text-xs font-semibold text-zinc-400 hover:underline block print:hidden"
+          className="text-xs uppercase font-mono font-semibold underline hover:no-underline text-black"
         >
-          ← BACK TO PAYROLL HUB &amp; DIRECTORY
+          ← Back to Payroll
         </Link>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
           <div>
-            <span className="text-xs text-zinc-400 font-semibold uppercase">PAYROLL_VOUCHER_RUN</span>
+            <span className="text-xs text-zinc-400 font-semibold uppercase">Payroll Voucher</span>
             <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
               Payroll Voucher {voucherRecord.docNumber}
             </h1>
-            <p className="text-xs text-zinc-500 lowercase mt-0.5">&gt; Reference: {voucherRecord.id}</p>
+            <p className="text-xs text-zinc-500 mt-0.5">Reference: {voucherRecord.id}</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-[10px]">
             <span className="border border-zinc-300 px-2.5 py-1 bg-zinc-50 font-semibold uppercase rounded text-zinc-700">
-              Execution Date: {new Date(voucherRecord.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
+              Payroll Date: {new Date(voucherRecord.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
             </span>
             <span className={`px-2.5 py-1 font-semibold uppercase tracking-wide rounded ${
               isDraft ? "bg-amber-100 text-amber-900 border border-amber-300" : "bg-black text-white"
             }`}>
-              Status: {isDraft ? "DRAFT (UNLOCKED)" : "PAID & LOCKED"}
+              Status: {isDraft ? "Draft" : "Finalized & Paid"}
             </span>
 
             {isDraft && (
@@ -83,7 +83,7 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
       {/* FINANCIAL SUMMARY CARDS */}
       <div className="card-modern divide-y md:divide-y-0 md:divide-x divide-zinc-200/80 bg-white grid grid-cols-1 md:grid-cols-3">
         <div className="p-6 space-y-1">
-          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Total Gross Payroll Allocation</p>
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Total Gross Salary</p>
           <p className="text-xl font-semibold font-mono tracking-tight text-black">
             {formatCurrency(parseFloat(voucherRecord.subTotal), shop.currency)}
           </p>
@@ -91,7 +91,7 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
         </div>
 
         <div className="p-6 space-y-1">
-          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Total Statutory Reserves Pool</p>
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Total Deductions</p>
           <p className="text-xl font-semibold font-mono tracking-tight text-rose-600">
             {formatCurrency(parseFloat(voucherRecord.taxAmount), shop.currency)}
           </p>
@@ -99,7 +99,7 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
         </div>
 
         <div className="p-6 space-y-1">
-          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Net Disbursed Cash Outflow</p>
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Total Net Pay</p>
           <p className="text-xl font-semibold font-mono tracking-tight text-emerald-700">
             {formatCurrency(parseFloat(voucherRecord.grandTotal), shop.currency)}
           </p>
@@ -111,7 +111,7 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">
-            &gt; Detailed Staff Disbursement Matrix ({voucherRecord.items.length} Line Entries)
+            Staff Breakdown ({voucherRecord.items.length} employees)
           </h2>
         </div>
 
@@ -119,9 +119,9 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
               <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Index</th>
-                <th className="p-4 border-r border-zinc-200">Staff Member / Line Description</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Net Payout Allocated</th>
+                <th className="p-4 border-r border-zinc-200">#</th>
+                <th className="p-4 border-r border-zinc-200">Employee / Description</th>
+                <th className="p-4 border-r border-zinc-200 text-right">Net Pay</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200/80 bg-white">

@@ -241,7 +241,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
         {/* Accounts Receivable & Overdue */}
         <div className="card-modern p-5 space-y-2 border-l-4 border-amber-500 bg-white">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Accounts Receivable (AR)</span>
+            <span className="font-sans text-[10px] text-zinc-400 uppercase font-bold">Unpaid Invoices (A/R)</span>
             <span className="text-xs">⏳</span>
           </div>
           <p className="text-2xl font-bold font-mono tracking-tight text-black">
@@ -257,7 +257,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
         {/* Top Client */}
         <div className="card-modern p-5 space-y-2 border-l-4 border-blue-500 bg-white">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Top Client</span>
+            <span className="font-sans text-[10px] text-zinc-400 uppercase font-bold">Top Client</span>
             <span className="text-xs">👑</span>
           </div>
           {topClient ? (
@@ -280,7 +280,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
         {/* Pipeline Summary */}
         <div className="card-modern p-5 space-y-2 border-l-4 border-black bg-white">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Active Pipeline</span>
+            <span className="font-sans text-[10px] text-zinc-400 uppercase font-bold">Active Pipeline</span>
             <span className="text-xs">📋</span>
           </div>
           <p className="text-2xl font-bold font-mono tracking-tight text-black">
@@ -307,7 +307,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <div>
-            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Live Transaction Stream</span>
+            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Recent Activity</span>
             <h2 className="font-sans font-semibold uppercase tracking-tight text-sm text-black mt-0.5">
               Recent Invoices &amp; Receipts
             </h2>
@@ -316,7 +316,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
             href={`/workspaces/${slug}/documents`}
             className="font-mono text-xs font-semibold uppercase underline hover:no-underline text-black"
           >
-            All Ledgers →
+            View All Documents →
           </Link>
         </div>
 
@@ -324,7 +324,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
               <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Serial Reference</th>
+                <th className="p-4 border-r border-zinc-200">Document #</th>
                 <th className="p-4 border-r border-zinc-200">Type</th>
                 <th className="p-4 border-r border-zinc-200">Client / Recipient</th>
                 <th className="p-4 border-r border-zinc-200 text-right">Grand Total</th>
@@ -385,8 +385,8 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
 
               {recentDocs.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-zinc-400 italic">
-                    &gt; NO RECENT TRANSACTIONS LOCATED IN WORKSPACE LEDGER.
+                  <td colSpan={6} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                    No recent transactions recorded yet.
                   </td>
                 </tr>
               )}

@@ -186,14 +186,14 @@ export function B2BInboxClient({
         {/* DOCUMENTS LIST */}
         <div className="p-6">
           {currentList.length === 0 ? (
-            <div className="text-center py-12 text-zinc-400">
-              <p className="font-semibold uppercase tracking-wider">
-                &gt; No {showArchived ? "archived" : "active"} documents located
+            <div className="text-center py-12 text-zinc-400 font-sans text-xs">
+              <p className="font-semibold text-zinc-600">
+                No {showArchived ? "archived" : "active"} documents found
               </p>
-              <p className="text-[10px] font-sans mt-1">
+              <p className="text-xs text-zinc-400 mt-1">
                 {showArchived 
-                  ? "Archived documents will be retained here for historical audit logs."
-                  : "Enjoy Inbox Zero! New incoming documents will show up here dynamically."}
+                  ? "Archived documents will appear here for your records."
+                  : "You're all caught up! New incoming documents will appear here."}
               </p>
             </div>
           ) : (

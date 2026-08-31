@@ -58,8 +58,8 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
       {/* TIMEFRAME SELECTOR */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-5">
         <div className="flex-1 min-w-0">
-          <span className="text-[10px] text-zinc-400 block uppercase font-semibold">Scope Horizon</span>
-          <p className="font-sans text-xs text-zinc-500 mt-0.5">Filter business intelligence across operating timeframes.</p>
+          <span className="text-[10px] text-zinc-400 block uppercase font-semibold">Date Range</span>
+          <p className="font-sans text-xs text-zinc-500 mt-0.5">Select a timeframe to filter your reports.</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {timeframes.map((tf) => (
@@ -85,25 +85,25 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
         {/* Inflow */}
         <div className="bg-white border border-zinc-200/80 rounded-xl p-5 space-y-2 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-start justify-between">
-            <p className="text-[10px] text-zinc-400 uppercase font-semibold leading-tight">Settled Inflow</p>
+            <p className="text-[10px] text-zinc-400 uppercase font-semibold leading-tight">Total Money In</p>
             <span className="text-base">💰</span>
           </div>
           <p className="text-xl font-bold tracking-tight text-black font-sans">
             {formatCurrency(data.totalSettledInflow, data.currency)}
           </p>
-          <p className="text-[10px] text-emerald-700 font-medium">Receipts &amp; Paid Invoices</p>
+          <p className="text-[10px] text-emerald-700 font-medium">Receipts &amp; paid invoices</p>
         </div>
 
         {/* Outflow */}
         <div className="bg-white border border-zinc-200/80 rounded-xl p-5 space-y-2 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-start justify-between">
-            <p className="text-[10px] text-zinc-400 uppercase font-semibold leading-tight">Settled Outflow</p>
+            <p className="text-[10px] text-zinc-400 uppercase font-semibold leading-tight">Total Money Out</p>
             <span className="text-base">📤</span>
           </div>
           <p className="text-xl font-bold tracking-tight text-black font-sans">
             {formatCurrency(data.totalSettledOutflow, data.currency)}
           </p>
-          <p className="text-[10px] text-rose-700 font-medium">Paid LPOs &amp; POs</p>
+          <p className="text-[10px] text-rose-700 font-medium">Supplier bills &amp; expenses</p>
         </div>
 
         {/* Net Cash Flow */}
@@ -115,19 +115,19 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
           <p className={`text-xl font-bold tracking-tight font-sans ${cashFlowColor}`}>
             {formatCurrency(data.netOperatingCashFlow, data.currency)}
           </p>
-          <p className="text-[10px] text-zinc-500 font-medium">Inflow minus Outflow</p>
+          <p className="text-[10px] text-zinc-500 font-medium">Money in minus money out</p>
         </div>
 
         {/* AR Receivables */}
         <div className="bg-white border border-zinc-200/80 rounded-xl p-5 space-y-2 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-start justify-between">
-            <p className="text-[10px] text-zinc-400 uppercase font-semibold leading-tight">Accounts Receivable</p>
+            <p className="text-[10px] text-zinc-400 uppercase font-semibold leading-tight">Unpaid Invoices</p>
             <span className="text-base">⏳</span>
           </div>
           <p className="text-xl font-bold tracking-tight text-black font-sans">
             {formatCurrency(data.pendingReceivables, data.currency)}
           </p>
-          <p className="text-[10px] text-amber-700 font-medium">Uncollected Client Debt</p>
+          <p className="text-[10px] text-amber-700 font-medium">Pending client payments</p>
         </div>
       </div>
 
@@ -136,10 +136,10 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-emerald-200/60">
           <div>
             <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans flex items-center gap-2">
-              📈 COGS, Expenses &amp; Net Profit Intelligence
+              📈 Profit &amp; Loss Summary
             </h2>
             <p className="font-sans text-xs text-zinc-500 mt-0.5">
-              Comprehensive profitability analysis including cost of goods and operational expenses.
+              Breakdown of your revenue, product costs, operating expenses, and net profit.
             </p>
           </div>
           <div className={`shrink-0 px-4 py-2 text-xs font-bold uppercase rounded-lg font-mono ${
@@ -151,57 +151,45 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="bg-white border border-emerald-200 rounded-lg p-4 space-y-1">
-            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Total Sales Revenue</span>
-            <span className="text-lg font-bold text-black block font-sans">{formatCurrency(data.totalSettledInflow, data.currency)}</span>
-            <span className="text-[9px] text-zinc-500 block">Gross receipts &amp; settled sales</span>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 bg-white/80 border border-emerald-100 rounded-lg space-y-1">
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Total Revenue</span>
+            <span className="text-lg font-bold text-black font-sans block">{formatCurrency(data.totalSettledInflow, data.currency)}</span>
+            <span className="text-[10px] text-zinc-500 block">Gross sales</span>
           </div>
 
-          <div className="bg-white border border-emerald-200 rounded-lg p-4 space-y-1">
-            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Total COGS</span>
-            <span className="text-lg font-bold text-rose-700 block font-sans">{formatCurrency(data.totalCostOfGoodsSold, data.currency)}</span>
-            <span className="text-[9px] text-zinc-500 block">Cost of production/purchase</span>
+          <div className="p-4 bg-white/80 border border-emerald-100 rounded-lg space-y-1">
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Cost of Goods (COGS)</span>
+            <span className="text-lg font-bold text-rose-700 font-sans block">-{formatCurrency(data.totalCostOfGoodsSold, data.currency)}</span>
+            <span className="text-[10px] text-zinc-500 block">Product purchase costs</span>
           </div>
 
-          <div className="bg-white border border-emerald-200 rounded-lg p-4 space-y-1">
-            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Gross Operating Profit</span>
-            <span className={`text-lg font-bold block font-sans ${profitColor}`}>{formatCurrency(data.netGrossProfit, data.currency)}</span>
-            <span className={`text-[9px] font-bold block ${profitColor}`}>
-              {data.grossProfitMargin >= 0 ? "Revenue − COGS" : "Operating Loss"}
-            </span>
-          </div>
-
-          <div className="bg-white border border-emerald-200 rounded-lg p-4 space-y-1">
+          <div className="p-4 bg-white/80 border border-emerald-100 rounded-lg space-y-1">
             <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Operating Expenses</span>
-            <span className="text-lg font-bold text-rose-700 block font-sans">{formatCurrency(data.totalOperatingExpenses, data.currency)}</span>
-            <span className="text-[9px] text-zinc-500 block">Rent, salaries, utilities, etc.</span>
+            <span className="text-lg font-bold text-rose-700 font-sans block">-{formatCurrency(data.totalOperatingExpenses, data.currency)}</span>
+            <span className="text-[10px] text-zinc-500 block">Rent, utilities, staff, etc.</span>
           </div>
 
-          <div className="bg-white border border-emerald-200 rounded-lg p-4 space-y-1">
-            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Other Income</span>
-            <span className="text-lg font-bold text-emerald-600 block font-sans">{formatCurrency(data.totalOtherIncome, data.currency)}</span>
-            <span className="text-[9px] text-zinc-500 block">Non-operating revenue</span>
-          </div>
-
-          <div className="bg-black border border-black rounded-lg p-4 space-y-1 shadow-md">
-            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Net Income</span>
-            <span className={`text-xl font-black block font-sans ${data.netIncome >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{formatCurrency(data.netIncome, data.currency)}</span>
-            <span className="text-[9px] font-bold text-zinc-300 block">
-              The absolute bottom line
+          <div className="p-4 bg-white/80 border border-emerald-100 rounded-lg space-y-1">
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Estimated Net Profit</span>
+            <span className={`text-lg font-bold font-sans block ${data.netIncome >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
+              {formatCurrency(data.netIncome, data.currency)}
+            </span>
+            <span className="text-[10px] text-zinc-500 block">
+              {data.netIncome >= 0 ? "Net business gain" : "Net operating loss"}
             </span>
           </div>
         </div>
 
-        {/* Gross Margin Progress Bar */}
-        <div className="mt-4 pt-4 border-t border-emerald-200/60 space-y-2">
-          <div className="flex justify-between text-[10px] font-semibold uppercase">
-            <span className="text-zinc-500">Gross Margin Progress</span>
-            <span className={profitColor}>{data.grossProfitMargin.toFixed(1)}%</span>
+        {/* Profit margin bar */}
+        <div className="mt-4 pt-4 border-t border-emerald-200/40">
+          <div className="flex justify-between items-center text-[10px] font-semibold uppercase text-zinc-500 mb-1.5">
+            <span>Profit Realization Rate</span>
+            <span>{data.grossProfitMargin.toFixed(1)}% Gross Margin</span>
           </div>
-          <div className="w-full h-3 bg-zinc-100 rounded-full overflow-hidden">
+          <div className="w-full h-2.5 bg-zinc-200/60 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${data.grossProfitMargin >= 0 ? "bg-emerald-500" : "bg-rose-500"}`}
+              className={`h-full rounded-full transition-all duration-500 ${data.grossProfitMargin >= 0 ? "bg-emerald-600" : "bg-rose-500"}`}
               style={{ width: `${Math.min(Math.abs(data.grossProfitMargin), 100)}%` }}
             />
           </div>
@@ -212,9 +200,9 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
       <div className="bg-white border border-zinc-200/80 rounded-xl p-5 sm:p-6 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans">&gt; Rolling Cash Flow Trajectory</h2>
+            <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans">Rolling Cash Flow</h2>
             <p className="font-sans text-xs text-zinc-500 mt-0.5">
-              Historical inflow vs. outflow volume across {timelineHorizon === "12M" ? "12 months" : "6 months"}.
+              Monthly cash in versus cash out over the last {timelineHorizon === "12M" ? "12 months" : "6 months"}.
             </p>
           </div>
           <div className="flex items-center gap-4 text-[10px] font-semibold shrink-0">
@@ -242,10 +230,10 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
 
             <div className="flex gap-3">
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 bg-black inline-block rounded-sm" /> INFLOW
+                <span className="w-3 h-3 bg-black inline-block rounded-sm" /> MONEY IN
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 bg-zinc-300 border border-zinc-400 inline-block rounded-sm" /> OUTFLOW
+                <span className="w-3 h-3 bg-zinc-300 border border-zinc-400 inline-block rounded-sm" /> MONEY OUT
               </span>
             </div>
           </div>
@@ -310,7 +298,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse inline-block" />
               <span className="font-bold text-black uppercase text-xs font-sans">
-                KRA eTIMS VAT Return Tracker — {data.kraVatSummary.currentMonthName}
+                KRA eTIMS VAT Return Summary — {data.kraVatSummary.currentMonthName}
               </span>
             </div>
             <p className="font-sans text-xs text-zinc-500 mt-0.5">
@@ -346,19 +334,19 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
       {/* A/R AGING MATRIX */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans">&gt; Accounts Receivable Aging Risk Matrix</h2>
+          <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans">Unpaid Invoices by Age (A/R Aging)</h2>
           <div className="flex items-center gap-4 shrink-0 font-mono text-[10px]">
             {data.outstandingInvoices && data.outstandingInvoices.length > 0 && (
               <button
                 type="button"
                 onClick={() => setShowArDetails(!showArDetails)}
-                className="font-bold uppercase underline hover:no-underline text-zinc-600"
+                className="font-bold uppercase underline hover:no-underline text-zinc-600 cursor-pointer"
               >
-                {showArDetails ? "Hide Invoices [-]" : "Inspect Invoices [+]"}
+                {showArDetails ? "Hide Invoices" : "View Invoices"}
               </button>
             )}
             <span className="text-zinc-400 font-semibold uppercase">
-              Total A/R: {formatCurrency(data.arAging.totalAr, data.currency)}
+              Total Unpaid: {formatCurrency(data.arAging.totalAr, data.currency)}
             </span>
           </div>
         </div>
@@ -390,7 +378,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
         {showArDetails && data.outstandingInvoices && data.outstandingInvoices.length > 0 && (
           <div className="border border-zinc-200 bg-white rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
             <div className="px-4 py-3 bg-zinc-50 border-b border-zinc-200 flex justify-between items-center">
-              <span className="font-bold uppercase text-[10px] text-zinc-500">Drill-Down: Uncollected Client Debt Details</span>
+              <span className="font-bold uppercase text-[10px] text-zinc-500">Unpaid Invoices Breakdown</span>
               <span className="text-[9px] text-zinc-400 uppercase font-semibold">{data.outstandingInvoices.length} outstanding invoice(s)</span>
             </div>
             <div className="overflow-x-auto max-h-[350px]">
@@ -452,10 +440,10 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
             <div>
               <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans flex items-center gap-2">
                 <span>🎯</span>
-                <span>Quotation Pipeline &amp; Conversion Funnel</span>
+                <span>Quotes &amp; Conversions</span>
               </h2>
               <p className="font-sans text-[10px] text-zinc-400 mt-0.5">
-                Conversion velocity from initial quotes to paid customer invoices.
+                How many quotes turned into accepted and paid invoices.
               </p>
             </div>
             {data.quotationConversion && (
@@ -475,7 +463,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
                 <div className="p-3.5 bg-zinc-50 border border-zinc-200 rounded-lg space-y-1">
                   <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Total Quotes Issued</span>
                   <span className="text-xl font-bold text-black font-mono block">{data.quotationConversion.totalQuotesIssued}</span>
-                  <span className="text-[10px] text-zinc-500 block">{formatCurrency(data.quotationConversion.totalQuotedValue, data.currency)} pipeline</span>
+                  <span className="text-[10px] text-zinc-500 block">{formatCurrency(data.quotationConversion.totalQuotedValue, data.currency)} quoted</span>
                 </div>
                 <div className="p-3.5 bg-emerald-50/50 border border-emerald-200 rounded-lg space-y-1">
                   <span className="text-[10px] text-emerald-800 uppercase font-semibold block">Converted / Accepted</span>
@@ -487,7 +475,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
               {/* Visual Funnel Bar */}
               <div className="space-y-1.5 pt-2">
                 <div className="flex justify-between text-[10px] font-semibold uppercase text-zinc-500">
-                  <span>Conversion Realization</span>
+                  <span>Conversion Rate</span>
                   <span>{data.quotationConversion.conversionRatePercent.toFixed(1)}%</span>
                 </div>
                 <div className="w-full h-3 bg-zinc-100 rounded-full overflow-hidden">
@@ -510,10 +498,10 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
           <div className="border-b border-zinc-200/80 pb-3">
             <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans flex items-center gap-2">
               <span>⚖️</span>
-              <span>Product vs. Service Revenue Split</span>
+              <span>Products vs. Services</span>
             </h2>
             <p className="font-sans text-[10px] text-zinc-400 mt-0.5">
-              Portfolio composition between catalog merchandise and billable services.
+              Sales breakdown between physical items and billable services.
             </p>
           </div>
 
@@ -573,8 +561,8 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
         <div className="bg-white border border-zinc-200/80 rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
           <div className="border-b border-zinc-200/80 pb-3 flex justify-between items-center">
             <div>
-              <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans">&gt; Top 10 Clients by Revenue</h2>
-              <p className="font-sans text-[10px] text-zinc-400 mt-0.5">Top customer accounts ranked by lifetime revenue contribution.</p>
+              <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans">Top 10 Clients by Revenue</h2>
+              <p className="font-sans text-[10px] text-zinc-400 mt-0.5">Clients ranked by total revenue contribution.</p>
             </div>
             <span className="text-[10px] font-mono text-zinc-400 uppercase font-semibold">
               {(data.topTenClients || data.topClients).length} Ranked
@@ -623,8 +611,8 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
         {/* TOP PRODUCTS */}
         <div className="bg-white border border-zinc-200/80 rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
           <div className="border-b border-zinc-200/80 pb-3">
-            <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans">&gt; Product Sales Velocity</h2>
-            <p className="font-sans text-[10px] text-zinc-400 mt-0.5">Top bestselling products by revenue share.</p>
+            <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans">Top Selling Products</h2>
+            <p className="font-sans text-[10px] text-zinc-400 mt-0.5">Bestselling catalog items by revenue share.</p>
           </div>
 
           <div className="space-y-3.5">

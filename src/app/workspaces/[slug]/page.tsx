@@ -1,11 +1,12 @@
 // src/app/workspaces/[slug]/page.tsx
 import { db } from "@/db";
-import { shops, documents, clients, products, paymentMethods } from "@/db/schema";
-import { eq, count, and } from "drizzle-orm";
+import { shops, documents, clients, products, paymentMethods, expenses } from "@/db/schema";
+import { eq, count, and, desc, gte } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { OnboardingTracker } from "./OnboardingTracker";
+import { DashboardRevenueChart, type WeekRevenueBucket } from "./DashboardRevenueChart";
 
 interface WorkspaceOverviewPageProps {
   params: Promise<{ slug: string }>;
@@ -23,53 +24,177 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
     notFound();
   }
 
-  // 2. Fetch documents, clients, and products metrics concurrently in parallel
-  const [shopDocs, clientCountRes, productCountRes, allDocs, paymentCountRes] = await Promise.all([
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // 2. Parallel data fetching
+  const [
+    recentDocs,
+    clientCountRes,
+    productCountRes,
+    allDocs,
+    paymentCountRes,
+    allProducts,
+    allClients,
+    recentExpenses,
+  ] = await Promise.all([
     db.query.documents.findMany({
       where: eq(documents.shopId, shop.id),
       with: {
         client: true,
         supplier: true,
       },
-      orderBy: (docs, { desc }) => [desc(docs.createdAt)],
-      limit: 5,
+      orderBy: [desc(documents.issueDate)],
+      limit: 6,
     }),
     db.select({ value: count() }).from(clients).where(eq(clients.shopId, shop.id)),
     db.select({ value: count() }).from(products).where(eq(products.shopId, shop.id)),
     db.query.documents.findMany({
       where: eq(documents.shopId, shop.id),
+      with: { client: true },
     }),
     db.select({ value: count() }).from(paymentMethods).where(eq(paymentMethods.shopId, shop.id)),
+    db.query.products.findMany({
+      where: eq(products.shopId, shop.id),
+    }),
+    db.query.clients.findMany({
+      where: eq(clients.shopId, shop.id),
+    }),
+    db.query.expenses.findMany({
+      where: eq(expenses.shopId, shop.id),
+      orderBy: [desc(expenses.expenseDate)],
+      limit: 4,
+    }),
   ]);
 
-  // Compute metrics
-  let totalRevenue = 0;
-  let pendingAmount = 0;
-  let draftCount = 0;
+  // 3. Compute 30-day weekly buckets
+  const weeks: WeekRevenueBucket[] = [];
+  for (let i = 3; i >= 0; i--) {
+    const end = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
+    const start = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const label = i === 0 ? "This Week" : i === 1 ? "1 Wk Ago" : `${i} Wks Ago`;
+
+    let paidAmount = 0;
+    let issuedAmount = 0;
+
+    allDocs.forEach((d) => {
+      const issueTime = new Date(d.issueDate).getTime();
+      const val = parseFloat(d.grandTotal || "0");
+      if (issueTime >= start.getTime() && issueTime <= end.getTime()) {
+        if (d.status === "PAID" || d.type === "RECEIPT") {
+          paidAmount += val;
+        } else if (d.status === "ISSUED" || d.status === "OVERDUE" || d.status === "PARTIALLY_PAID") {
+          issuedAmount += val;
+        }
+      }
+    });
+
+    weeks.push({
+      label,
+      startDate: start.toLocaleDateString("en-KE", { month: "short", day: "numeric" }),
+      endDate: end.toLocaleDateString("en-KE", { month: "short", day: "numeric" }),
+      paidAmount,
+      issuedAmount,
+    });
+  }
+
+  // 4. Compute Metrics
+  let totalRevenueAllTime = 0;
+  let revenueMtd = 0;
+  let pendingReceivables = 0;
+  let overdueReceivables = 0;
+  let overdueCount = 0;
+  let openQuotesCount = 0;
+
+  // Track client revenue for Top Client KPI
+  const clientRevenueMap: Record<string, { name: string; totalPaid: number }> = {};
 
   allDocs.forEach((d) => {
     const val = parseFloat(d.grandTotal || "0");
-    if (d.status === "PAID") {
-      totalRevenue += val;
-    } else if (d.status === "ISSUED" || d.status === "OVERDUE") {
-      pendingAmount += val;
-    } else if (d.status === "DRAFT") {
-      draftCount += 1;
+    const docDate = new Date(d.issueDate);
+
+    if (d.status === "PAID" || d.type === "RECEIPT") {
+      totalRevenueAllTime += val;
+      if (docDate >= startOfMonth) {
+        revenueMtd += val;
+      }
+      if (d.client) {
+        if (!clientRevenueMap[d.client.id]) {
+          clientRevenueMap[d.client.id] = { name: d.client.name, totalPaid: 0 };
+        }
+        clientRevenueMap[d.client.id].totalPaid += val;
+      }
+    } else if (d.status === "ISSUED" || d.status === "PARTIALLY_PAID") {
+      pendingReceivables += val;
+      if (d.dueDate && new Date(d.dueDate) < now) {
+        overdueReceivables += val;
+        overdueCount += 1;
+      }
+    } else if (d.status === "OVERDUE") {
+      pendingReceivables += val;
+      overdueReceivables += val;
+      overdueCount += 1;
+    }
+
+    if (d.type === "QUOTATION" && d.status !== "CANCELLED") {
+      openQuotesCount += 1;
     }
   });
 
-  return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white">
+  // Top client
+  const topClients = Object.values(clientRevenueMap).sort((a, b) => b.totalPaid - a.totalPaid);
+  const topClient = topClients[0] || null;
 
-      {/* HEADER TITLE */}
+  // Low stock check
+  const lowStockItems = allProducts.filter(
+    (p) => p.trackStock && parseFloat(p.stockQuantity || "0") <= parseFloat(p.reorderThreshold || "5")
+  );
+
+  return (
+    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
+
+      {/* HEADER WITH QUICK ACTIONS */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Financial Summary</span>
-          <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">{shop.name} Overview</h1>
+          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Executive Cockpit</span>
+          <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
+            {shop.name} Overview
+          </h1>
+        </div>
+
+        {/* QUICK ACTION BUTTONS */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/workspaces/${slug}/documents/new?type=INVOICE`}
+            className="btn-primary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
+          >
+            + New Invoice
+          </Link>
+          <Link
+            href={`/workspaces/${slug}/documents/new?type=QUOTATION`}
+            className="border border-zinc-300 bg-white hover:border-black text-black px-3 py-1.5 text-xs font-mono font-bold uppercase rounded transition-colors"
+          >
+            + Quote
+          </Link>
+          <Link
+            href={`/workspaces/${slug}/expenses`}
+            className="border border-zinc-300 bg-white hover:border-black text-black px-3 py-1.5 text-xs font-mono font-bold uppercase rounded transition-colors"
+          >
+            + Expense
+          </Link>
+          <Link
+            href={`/workspaces/${slug}/pos`}
+            className="border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-black px-3 py-1.5 text-xs font-mono font-bold uppercase rounded transition-colors flex items-center gap-1"
+          >
+            <span>🧾</span>
+            <span>POS</span>
+          </Link>
         </div>
       </div>
 
-      <OnboardingTracker 
+      {/* ONBOARDING TRACKER */}
+      <OnboardingTracker
         shopSlug={slug}
         shopId={shop.id}
         hideOnboarding={shop.hideOnboarding}
@@ -80,54 +205,120 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
         hasDocuments={allDocs.length > 0}
       />
 
-      {/* METRIC CARDS GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 card-modern divide-y sm:divide-y-0 sm:divide-x divide-zinc-200/80 bg-white">
-        <div className="p-6 space-y-1">
-          <p className="font-mono text-[10px] text-zinc-400 uppercase font-semibold">Settled Revenue (Paid)</p>
-          <p className="text-xl font-semibold tracking-tight text-black font-sans">
-            {formatCurrency(totalRevenue, shop.currency)}
-          </p>
-          <p className="font-mono text-[10px] text-emerald-700">Remitted Cash Flow</p>
-        </div>
-
-        <div className="p-6 space-y-1">
-          <p className="font-mono text-[10px] text-zinc-400 uppercase font-semibold">Pending Remittance</p>
-          <p className="text-xl font-semibold tracking-tight text-black font-sans">
-            {formatCurrency(pendingAmount, shop.currency)}
-          </p>
-          <p className="font-mono text-[10px] text-amber-700">Sent &amp; Overdue Invoices</p>
-        </div>
-
-        <div className="p-6 space-y-1">
-          <p className="font-mono text-[10px] text-zinc-400 uppercase font-semibold">Active Client Directory</p>
-          <p className="text-xl font-semibold tracking-tight text-black font-sans">
-            {clientCountRes[0]?.value || 0}
-          </p>
-          <Link href={`/workspaces/${slug}/clients`} className="font-mono text-[10px] text-zinc-500 hover:underline block">
-            View Client Flow →
+      {/* LOW STOCK ALERT BANNER */}
+      {lowStockItems.length > 0 && (
+        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">⚠️</span>
+            <div>
+              <p className="font-bold text-amber-900 text-xs uppercase font-mono tracking-wide">
+                Inventory Alert: {lowStockItems.length} Item{lowStockItems.length > 1 ? "s" : ""} Below Reorder Threshold
+              </p>
+              <p className="text-amber-800 text-xs font-sans mt-0.5">
+                {lowStockItems.slice(0, 3).map((p) => `${p.name} (${parseFloat(p.stockQuantity)} left)`).join(", ")}
+                {lowStockItems.length > 3 ? ` and ${lowStockItems.length - 3} more` : ""}
+              </p>
+            </div>
+          </div>
+          <Link
+            href={`/workspaces/${slug}/products`}
+            className="bg-amber-900 hover:bg-amber-950 text-white font-mono text-[10px] uppercase font-bold px-3 py-1.5 rounded transition-colors shrink-0"
+          >
+            Restock Inventory →
           </Link>
         </div>
+      )}
 
-        <div className="p-6 space-y-1">
-          <p className="font-mono text-[10px] text-zinc-400 uppercase font-semibold">Catalog Items</p>
-          <p className="text-xl font-semibold tracking-tight text-black font-sans">
-            {productCountRes[0]?.value || 0}
+      {/* PRIMARY KPI METRIC CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* MTD Revenue */}
+        <div className="card-modern p-5 space-y-2 border-l-4 border-emerald-500 bg-white">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Revenue MTD</span>
+            <span className="text-xs">💰</span>
+          </div>
+          <p className="text-2xl font-bold font-mono tracking-tight text-emerald-700">
+            {formatCurrency(revenueMtd, shop.currency)}
           </p>
-          <Link href={`/workspaces/${slug}/products`} className="font-mono text-[10px] text-zinc-500 hover:underline block">
-            Manage Catalog →
-          </Link>
+          <p className="font-sans text-[11px] text-zinc-500">
+            All-time: <span className="font-semibold text-black">{formatCurrency(totalRevenueAllTime, shop.currency)}</span>
+          </p>
+        </div>
+
+        {/* Accounts Receivable & Overdue */}
+        <div className="card-modern p-5 space-y-2 border-l-4 border-amber-500 bg-white">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Accounts Receivable (AR)</span>
+            <span className="text-xs">⏳</span>
+          </div>
+          <p className="text-2xl font-bold font-mono tracking-tight text-black">
+            {formatCurrency(pendingReceivables, shop.currency)}
+          </p>
+          <div className="flex items-center justify-between text-[11px] font-sans">
+            <span className="text-rose-600 font-semibold">
+              {overdueCount > 0 ? `⚠️ ${overdueCount} overdue (${formatCurrency(overdueReceivables, shop.currency)})` : "✓ 0 overdue"}
+            </span>
+          </div>
+        </div>
+
+        {/* Top Client */}
+        <div className="card-modern p-5 space-y-2 border-l-4 border-blue-500 bg-white">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Top Client</span>
+            <span className="text-xs">👑</span>
+          </div>
+          {topClient ? (
+            <>
+              <p className="text-lg font-bold font-sans tracking-tight text-black truncate" title={topClient.name}>
+                {topClient.name}
+              </p>
+              <p className="font-mono text-[11px] text-zinc-500">
+                LTV: <span className="font-semibold text-black">{formatCurrency(topClient.totalPaid, shop.currency)}</span>
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-bold text-zinc-400 font-sans">No client revenue yet</p>
+              <p className="font-sans text-[11px] text-zinc-400">Recorded after first paid invoice</p>
+            </>
+          )}
+        </div>
+
+        {/* Pipeline Summary */}
+        <div className="card-modern p-5 space-y-2 border-l-4 border-black bg-white">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Active Pipeline</span>
+            <span className="text-xs">📋</span>
+          </div>
+          <p className="text-2xl font-bold font-mono tracking-tight text-black">
+            {openQuotesCount} <span className="text-xs font-normal text-zinc-500 font-sans">Open Quotes</span>
+          </p>
+          <div className="flex items-center justify-between text-[11px] font-sans">
+            <span className="text-zinc-500">{clientCountRes[0]?.value || 0} active clients</span>
+            <Link href={`/workspaces/${slug}/documents?view=pipeline`} className="text-black font-semibold hover:underline">
+              Pipeline →
+            </Link>
+          </div>
         </div>
       </div>
+
+      {/* 30-DAY REVENUE TRAJECTORY CHART */}
+      <DashboardRevenueChart weeks={weeks} currency={shop.currency} />
 
       {/* RECENT TRANSACTIONS STREAM */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="font-sans font-semibold uppercase tracking-tight text-sm text-black">&gt; Recent Transactions</h2>
+          <div>
+            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Live Transaction Stream</span>
+            <h2 className="font-sans font-semibold uppercase tracking-tight text-sm text-black mt-0.5">
+              Recent Invoices &amp; Receipts
+            </h2>
+          </div>
           <Link
             href={`/workspaces/${slug}/documents`}
             className="font-mono text-xs font-semibold uppercase underline hover:no-underline text-black"
           >
-            View Fiscal Ledgers →
+            All Ledgers →
           </Link>
         </div>
 
@@ -135,25 +326,39 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
               <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Document Serial</th>
+                <th className="p-4 border-r border-zinc-200">Serial Reference</th>
                 <th className="p-4 border-r border-zinc-200">Type</th>
-                <th className="p-4 border-r border-zinc-200">Client</th>
+                <th className="p-4 border-r border-zinc-200">Client / Recipient</th>
                 <th className="p-4 border-r border-zinc-200 text-right">Grand Total</th>
                 <th className="p-4 border-r border-zinc-200 text-center">Status</th>
                 <th className="p-4 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200/80 bg-white">
-              {shopDocs.map((doc) => (
+              {recentDocs.map((doc) => (
                 <tr key={doc.id} className="hover:bg-zinc-50/80 transition-colors">
                   <td className="p-4 border-r border-zinc-200/80 font-semibold uppercase text-black">
                     <Link href={`/workspaces/${slug}/documents/${doc.id}`} className="hover:underline">
                       {doc.docNumber}
                     </Link>
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 uppercase text-zinc-600">{doc.type}</td>
+                  <td className="p-4 border-r border-zinc-200/80">
+                    <span className="border border-zinc-200 px-1.5 py-0.5 text-[9px] font-semibold tracking-widest bg-zinc-50 rounded uppercase">
+                      {doc.type}
+                    </span>
+                  </td>
                   <td className="p-4 border-r border-zinc-200/80 uppercase font-sans font-semibold text-zinc-900">
-                    {doc.client?.name || doc.supplier?.name || "General Contact"}
+                    {doc.client ? (
+                      <Link href={`/workspaces/${slug}/clients/${doc.client.id}`} className="hover:underline text-black">
+                        {doc.client.name} ➔
+                      </Link>
+                    ) : doc.supplier ? (
+                      <Link href={`/workspaces/${slug}/suppliers/${doc.supplier.id}`} className="hover:underline text-zinc-700">
+                        {doc.supplier.name} ➔
+                      </Link>
+                    ) : (
+                      "Walk-in Customer"
+                    )}
                   </td>
                   <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-black">
                     {formatCurrency(doc.grandTotal, shop.currency)}
@@ -163,6 +368,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
                       doc.status === "PAID" ? "bg-black text-white border-black" :
                       doc.status === "ISSUED" ? "bg-white text-black border-zinc-300 font-semibold" :
                       doc.status === "OVERDUE" ? "bg-rose-50 border-rose-300 text-rose-700 font-semibold" :
+                      doc.status === "PARTIALLY_PAID" ? "bg-amber-50 border-amber-300 text-amber-900 font-semibold" :
                       "bg-zinc-50 text-zinc-400 border-zinc-200"
                     }`}>
                       {doc.status}
@@ -179,7 +385,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
                 </tr>
               ))}
 
-              {shopDocs.length === 0 && (
+              {recentDocs.length === 0 && (
                 <tr>
                   <td colSpan={6} className="p-12 text-center text-zinc-400 italic">
                     &gt; NO RECENT TRANSACTIONS LOCATED IN WORKSPACE LEDGER.

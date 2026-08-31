@@ -74,6 +74,7 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
         { href: `/workspaces/${slug}/finance/reports/balance-sheet`, label: "Balance Sheet" },
         { href: `/workspaces/${slug}/finance/reports/cashflow`, label: "Cash Flow" },
         { href: `/workspaces/${slug}/finance/reports/trial-balance`, label: "Trial Balance" },
+        { href: `/workspaces/${slug}/finance/reports/payables-aging`, label: "Payables Aging (AP)" },
         { href: `/workspaces/${slug}/finance/tax/assets`, label: "Fixed Assets Register" },
         { href: `/workspaces/${slug}/finance/tax/instalments`, label: "Instalment Tax" },
         { href: `/workspaces/${slug}/finance/tax/tot`, label: "Turnover Tax (TOT)" },

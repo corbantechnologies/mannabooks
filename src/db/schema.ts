@@ -208,6 +208,13 @@ export const documents = pgTable('documents', {
     issueDate: timestamp('issue_date').defaultNow().notNull(),
     dueDate: timestamp('due_date'),
     isReadByRecipient: boolean('is_read_by_recipient').default(false).notNull(),
+
+    // Email Delivery & Read Receipts Tracking
+    emailDeliveryStatus: varchar('email_delivery_status', { length: 50 }).default('NOT_SENT').notNull(), // 'NOT_SENT' | 'SENT' | 'DELIVERED' | 'OPENED' | 'BOUNCED'
+    resendEmailId: varchar('resend_email_id', { length: 100 }),
+    lastEmailSentAt: timestamp('last_email_sent_at'),
+    lastEmailOpenedAt: timestamp('last_email_opened_at'),
+
     createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
     unique('unique_shop_doc_number').on(table.shopId, table.docNumber, table.type),
@@ -236,6 +243,30 @@ export const documentTokens = pgTable('document_tokens', {
 }, (table) => [
     index('token_idx').on(table.token)
 ]);
+
+// DOCUMENT PAYMENTS TABLE (Installments & Partial Settlement Ledger)
+export const documentPayments = pgTable('document_payments', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    documentId: uuid('document_id').references(() => documents.id, { onDelete: 'cascade' }).notNull(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+    paymentDate: timestamp('payment_date').defaultNow().notNull(),
+    paymentChannel: varchar('payment_channel', { length: 50 }).default('BANK').notNull(), // MPESA, BANK, CASH, CHEQUE, OTHER
+    paymentReference: varchar('payment_reference', { length: 100 }),
+    notes: text('notes'),
+    recordedByUserId: uuid('recorded_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// DOCUMENT INTERNAL NOTES TABLE (Private Operator Notes & Audit Trail)
+export const documentNotes = pgTable('document_notes', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    documentId: uuid('document_id').references(() => documents.id, { onDelete: 'cascade' }).notNull(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    note: text('note').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
 
 // EMPLOYEES TABLE
 export const employees = pgTable('employees', {
@@ -638,7 +669,21 @@ export const documentsRelations = relations(documents, ({ one, many }) => ({
     supplier: one(suppliers, { fields: [documents.supplierId], references: [suppliers.id] }),
     parentDocument: one(documents, { fields: [documents.parentDocumentId], references: [documents.id], relationName: 'document_lineage' }),
     items: many(documentItems),
+    payments: many(documentPayments),
+    notesList: many(documentNotes),
     token: one(documentTokens, { fields: [documents.id], references: [documentTokens.documentId] }),
+}));
+
+export const documentPaymentsRelations = relations(documentPayments, ({ one }) => ({
+    document: one(documents, { fields: [documentPayments.documentId], references: [documents.id] }),
+    shop: one(shops, { fields: [documentPayments.shopId], references: [shops.id] }),
+    recordedBy: one(users, { fields: [documentPayments.recordedByUserId], references: [users.id] }),
+}));
+
+export const documentNotesRelations = relations(documentNotes, ({ one }) => ({
+    document: one(documents, { fields: [documentNotes.documentId], references: [documents.id] }),
+    shop: one(shops, { fields: [documentNotes.shopId], references: [shops.id] }),
+    user: one(users, { fields: [documentNotes.userId], references: [users.id] }),
 }));
 
 export const documentItemsRelations = relations(documentItems, ({ one }) => ({

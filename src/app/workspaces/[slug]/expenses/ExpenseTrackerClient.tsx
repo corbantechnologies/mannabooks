@@ -23,6 +23,7 @@ type Expense = {
 
 export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpenses }: { shopId: string, shopCurrency: string, initialExpenses: Expense[] }) {
     const [isAdding, setIsAdding] = useState(false);
+    const [activeCategory, setActiveCategory] = useState<string>("ALL");
     
     const [description, setDescription] = useState("");
     const [amount, setAmount] = useState("");
@@ -36,6 +37,20 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
     const [status, setStatus] = useState<"IDLE" | "LOADING" | "ERROR">("IDLE");
     const [isUploading, setIsUploading] = useState(false);
     const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null);
+
+    // Compute category aggregations
+    const totalExpensesSum = initialExpenses.reduce((acc, e) => acc + parseFloat(e.amount || "0"), 0);
+    const nonDeductibleSum = initialExpenses.filter(e => e.isNonDeductible).reduce((acc, e) => acc + parseFloat(e.amount || "0"), 0);
+
+    const categoryBreakdown = initialExpenses.reduce((acc, e) => {
+        const cat = e.category || "OTHER";
+        acc[cat] = (acc[cat] || 0) + parseFloat(e.amount || "0");
+        return acc;
+    }, {} as Record<string, number>);
+
+    const filteredExpenses = activeCategory === "ALL" 
+        ? initialExpenses 
+        : initialExpenses.filter(e => e.category === activeCategory);
 
     async function handleCloudinaryUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
@@ -121,8 +136,8 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
 
 
     return (
-        <div>
-            {isAdding ? (
+        <div className="space-y-6">
+            {isAdding && (
                 <div className="bg-white border border-zinc-200/80 rounded-xl p-6 shadow-sm mb-8">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="font-bold text-lg text-black">Log Operating Expense</h2>
@@ -285,13 +300,80 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                         </div>
                     </form>
                 </div>
-            ) : (
-                <div className="flex justify-end mb-4">
-                    <button onClick={() => setIsAdding(true)} className="bg-black text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-zinc-800 transition-colors">
+            )}
+
+            {/* CATEGORY BREAKDOWN CARDS */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="card-modern p-4 space-y-1 border-l-2 border-black bg-white">
+                    <p className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Total Operating Expenses</p>
+                    <p className="font-mono text-lg font-black text-black leading-tight">
+                        {formatCurrency(totalExpensesSum, shopCurrency)}
+                    </p>
+                    <p className="text-[10px] text-zinc-500 font-sans">{initialExpenses.length} transactions logged</p>
+                </div>
+
+                <div className="card-modern p-4 space-y-1 border-l-2 border-blue-500 bg-white">
+                    <p className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Top Expense Category</p>
+                    <p className="font-mono text-lg font-black text-blue-700 leading-tight">
+                        {(() => {
+                            const entries = Object.entries(categoryBreakdown).sort((a, b) => b[1] - a[1]);
+                            return entries[0] ? entries[0][0] : "—";
+                        })()}
+                    </p>
+                    <p className="text-[10px] text-zinc-500 font-sans">
+                        {(() => {
+                            const entries = Object.entries(categoryBreakdown).sort((a, b) => b[1] - a[1]);
+                            return entries[0] ? formatCurrency(entries[0][1], shopCurrency) : "No expenses";
+                        })()}
+                    </p>
+                </div>
+
+                <div className="card-modern p-4 space-y-1 border-l-2 border-amber-500 bg-white">
+                    <p className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Tax Non-Deductible</p>
+                    <p className="font-mono text-lg font-black text-amber-800 leading-tight">
+                        {formatCurrency(nonDeductibleSum, shopCurrency)}
+                    </p>
+                    <p className="text-[10px] text-zinc-500 font-sans">KRA Income Tax add-back</p>
+                </div>
+
+                <div className="card-modern p-4 space-y-1 border-l-2 border-emerald-500 bg-white">
+                    <p className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Category Scope</p>
+                    <p className="font-mono text-lg font-black text-emerald-700 leading-tight">
+                        {Object.keys(categoryBreakdown).length} Categories
+                    </p>
+                    <p className="text-[10px] text-zinc-500 font-sans">Active spending lines</p>
+                </div>
+            </div>
+
+            {/* ACTION & CATEGORY FILTER BAR */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                {/* Category Pills */}
+                <div className="overflow-x-auto -mx-1 px-1 w-full sm:w-auto">
+                    <div className="flex border border-zinc-200 divide-x divide-zinc-200 bg-white font-mono text-[10px] uppercase w-fit rounded shadow-2xs">
+                        {["ALL", "RENT", "UTILITIES", "FUEL", "MARKETING", "SALARIES", "OFFICE_SUPPLIES", "OTHER"].map((cat) => {
+                            const isActive = activeCategory === cat;
+                            return (
+                                <button
+                                    key={cat}
+                                    type="button"
+                                    onClick={() => setActiveCategory(cat)}
+                                    className={`px-3 py-1.5 font-bold transition-colors whitespace-nowrap ${
+                                        isActive ? "bg-black text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"
+                                    }`}
+                                >
+                                    {cat.replace("_", " ")}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {!isAdding && (
+                    <button onClick={() => setIsAdding(true)} className="btn-primary-modern px-4 py-2 text-xs font-semibold uppercase shrink-0">
                         + Add Expense
                     </button>
-                </div>
-            )}
+                )}
+            </div>
 
             <div className="card-modern overflow-x-auto">
                 <table className="w-full text-left font-mono text-xs border-collapse">
@@ -307,7 +389,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-200/80 bg-white">
-                        {initialExpenses.map(expense => (
+                        {filteredExpenses.map(expense => (
                             <tr key={expense.id} className="hover:bg-zinc-50/80 transition-colors">
                                 <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-black">{expense.expenseDate.split('T')[0]}</td>
                                 <td className="p-4 border-r border-zinc-200/80 text-zinc-600">

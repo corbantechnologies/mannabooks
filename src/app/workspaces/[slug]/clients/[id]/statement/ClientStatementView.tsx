@@ -3,6 +3,8 @@
 import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { getClientStatement, type ClientStatementData } from "@/lib/actions/reports";
+import { sendClientStatementEmailAction } from "@/lib/actions/statement-email";
+import toast from "react-hot-toast";
 
 interface Props {
     shopId: string;
@@ -43,6 +45,35 @@ export default function ClientStatementView({
     );
     const [isPending, startTransition] = useTransition();
     const printRef = useRef<HTMLDivElement>(null);
+    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+    const [recipientEmail, setRecipientEmail] = useState("");
+    const [customNote, setCustomNote] = useState("");
+    const [isSendingEmail, setIsSendingEmail] = useState(false);
+
+    async function handleSendEmail() {
+        setIsSendingEmail(true);
+        const toastId = toast.loading("Dispatching statement to client...");
+        try {
+            const res = await sendClientStatementEmailAction({
+                shopId,
+                clientId,
+                startDate: new Date(startDate + "T00:00:00"),
+                endDate: new Date(endDate + "T23:59:59"),
+                recipientEmail: recipientEmail.trim() || undefined,
+                customNote: customNote.trim() || undefined,
+            });
+            if (res.success) {
+                toast.success("Statement emailed successfully!", { id: toastId });
+                setIsEmailModalOpen(false);
+            } else {
+                toast.error(res.error || "Failed to send email.", { id: toastId });
+            }
+        } catch (err: any) {
+            toast.error("Network error while dispatching statement.", { id: toastId });
+        } finally {
+            setIsSendingEmail(false);
+        }
+    }
 
     function applyFilter(startStr: string, endStr: string) {
         setStartDate(startStr);
@@ -138,7 +169,16 @@ export default function ClientStatementView({
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setIsEmailModalOpen(true)}
+                            disabled={!data}
+                            className="px-4 py-2 rounded-lg font-mono text-xs uppercase font-bold border border-zinc-300 bg-white hover:border-black hover:bg-zinc-50 transition-colors disabled:opacity-40 flex items-center gap-1.5"
+                        >
+                            <span>✉</span>
+                            <span>Email Statement</span>
+                        </button>
                         <button
                             onClick={handleCsvExport}
                             disabled={!data}
@@ -156,6 +196,93 @@ export default function ClientStatementView({
                     </div>
                 </div>
             </div>
+
+            {/* EMAIL STATEMENT MODAL */}
+            {isEmailModalOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
+                    <div className="bg-white border border-zinc-300 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+                            <h3 className="font-bold font-mono text-sm uppercase text-black">
+                                ✉ Email Statement to Client
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setIsEmailModalOpen(false)}
+                                className="text-zinc-400 hover:text-black font-mono font-bold text-base"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 font-sans text-xs">
+                            <p className="text-zinc-600">
+                                This will format and dispatch an official statement of account for <strong>{data?.clientName}</strong> covering <strong>{data?.periodLabel}</strong>.
+                            </p>
+
+                            <div>
+                                <label className="font-mono text-[10px] uppercase font-bold text-zinc-500 block mb-1">
+                                    Recipient Email (Defaults to Client Profile)
+                                </label>
+                                <input
+                                    type="email"
+                                    placeholder="e.g. accounts@client.co.ke"
+                                    value={recipientEmail}
+                                    onChange={(e) => setRecipientEmail(e.target.value)}
+                                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs font-mono focus:outline-none focus:border-black"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="font-mono text-[10px] uppercase font-bold text-zinc-500 block mb-1">
+                                    Optional Note / Cover Message
+                                </label>
+                                <textarea
+                                    rows={3}
+                                    placeholder="e.g. Please find attached your latest statement. Kindly remit outstanding balance by Friday."
+                                    value={customNote}
+                                    onChange={(e) => setCustomNote(e.target.value)}
+                                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs font-sans focus:outline-none focus:border-black resize-none"
+                                />
+                            </div>
+
+                            <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-200 font-mono text-[11px] space-y-1">
+                                <div className="flex justify-between text-zinc-500">
+                                    <span>Total Invoiced:</span>
+                                    <span className="font-bold text-black">{data ? fmt(data.totalDebits, data.currency) : "—"}</span>
+                                </div>
+                                <div className="flex justify-between text-zinc-500">
+                                    <span>Total Paid:</span>
+                                    <span className="font-bold text-emerald-700">{data ? fmt(data.totalCredits, data.currency) : "—"}</span>
+                                </div>
+                                <div className="flex justify-between text-black font-bold pt-1 border-t border-zinc-200">
+                                    <span>Closing Balance:</span>
+                                    <span className={data && data.closingBalance > 0 ? "text-rose-600 font-black" : "text-black"}>
+                                        {data ? fmt(data.closingBalance, data.currency) : "—"}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-200">
+                            <button
+                                type="button"
+                                onClick={() => setIsEmailModalOpen(false)}
+                                className="px-4 py-2 border border-zinc-300 rounded-lg font-mono text-xs uppercase font-bold text-zinc-600 hover:bg-zinc-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                disabled={isSendingEmail}
+                                onClick={handleSendEmail}
+                                className="px-4 py-2 bg-black text-white rounded-lg font-mono text-xs uppercase font-bold hover:bg-zinc-800 disabled:opacity-50 shadow-sm flex items-center gap-1.5"
+                            >
+                                {isSendingEmail ? "Dispatching..." : "Send Statement"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* FILTER & DATE PRESET CONTROLS */}
             <div className="card-modern p-4 bg-zinc-50/70 border border-zinc-200/80 rounded-xl space-y-3 print:hidden">

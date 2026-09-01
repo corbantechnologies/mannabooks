@@ -5,22 +5,16 @@ import { eq, and, desc, or } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { ClientActionsPopover } from "./ClientActionsPopover";
-import { ClientDocumentsFilterBar } from "./ClientDocumentsFilterBar";
+import { ClientDocumentsSubLedger } from "./ClientDocumentsSubLedger";
 import Link from "next/link";
 
 interface ClientProfilePageProps {
   params: Promise<{ slug: string; id: string }>;
-  searchParams: Promise<{
-    type?: string;
-    status?: string;
-    search?: string;
-  }>;
 }
 
-export default async function ClientProfileLedgerPage({ params, searchParams }: ClientProfilePageProps) {
-  // 1. Await params and searchParams (required in Next.js 15+)
+export default async function ClientProfileLedgerPage({ params }: ClientProfilePageProps) {
+  // 1. Await params
   const { slug, id } = await params;
-  const { type, status: docStatus, search } = await searchParams;
 
   // 2. Resolve multi-tenant shop criteria context
   const shop = await db.query.shops.findFirst({
@@ -46,26 +40,6 @@ export default async function ClientProfileLedgerPage({ params, searchParams }: 
 
   if (!clientRecord) {
     notFound();
-  }
-
-  // 4. In-memory filter on client's documents based on search parameters
-  let filteredDocs = clientRecord.documents;
-
-  if (type && type !== "ALL") {
-    filteredDocs = filteredDocs.filter((d) => d.type === type);
-  }
-
-  if (docStatus && docStatus !== "ALL") {
-    filteredDocs = filteredDocs.filter((d) => d.status === docStatus);
-  }
-
-  if (search && search.trim() !== "") {
-    const q = search.toLowerCase().trim();
-    filteredDocs = filteredDocs.filter(
-      (d) =>
-        d.docNumber.toLowerCase().includes(q) ||
-        (d.notes && d.notes.toLowerCase().includes(q))
-    );
   }
 
   // 3.5 Check if a corresponding supplier profile already exists
@@ -204,77 +178,23 @@ export default async function ClientProfileLedgerPage({ params, searchParams }: 
         </div>
       </div>
 
-      {/* STANDALONE HISTORICAL SUB-LEDGER GRID */}
+      {/* STANDALONE HISTORICAL SUB-LEDGER GRID (INSTANT 0MS CLIENT-SIDE FILTERING) */}
       <div className="space-y-4">
         <h3 className="font-semibold uppercase tracking-tight text-sm font-sans text-black">Documents &amp; Transactions</h3>
         
-        <ClientDocumentsFilterBar />
-        
-        <div className="card-modern overflow-x-auto">
-          <table className="w-full text-left font-mono text-xs border-collapse">
-            <thead>
-              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Document #</th>
-                <th className="p-4 border-r border-zinc-200">Document Type</th>
-                <th className="p-4 border-r border-zinc-200">Date</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Total Amount</th>
-                <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-                <th className="p-4 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200/80 bg-white">
-              {filteredDocs.map((doc) => (
-                <tr key={doc.id} className="hover:bg-zinc-50/80 transition-colors">
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider">
-                    <Link 
-                      href={`/workspaces/${slug}/documents/${doc.id}`}
-                      className="hover:underline underline-offset-2"
-                    >
-                      {doc.docNumber}
-                    </Link>
-                  </td>
-                  <td className="p-4 border-r border-zinc-200/80">
-                    <span className="border border-zinc-300 px-2 py-0.5 text-[9px] font-semibold tracking-widest bg-white rounded">
-                      {doc.type}
-                    </span>
-                  </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
-                    {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
-                  </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-sm text-black text-right">
-                    {formatCurrency(doc.grandTotal, shop.currency)}
-                  </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-center">
-                    <span className={`border px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded ${
-                      doc.status === "PAID" ? "bg-black text-white border-black" :
-                      doc.status === "ISSUED" ? "bg-white text-black border-zinc-300" :
-                      doc.status === "OVERDUE" ? "bg-rose-50 border-rose-300 text-rose-700" :
-                      "bg-zinc-50 text-zinc-400 border-zinc-200"
-                    }`}>
-                      {doc.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    <Link
-                      href={`/workspaces/${slug}/documents/${doc.id}`}
-                      className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"
-                    >
-                      View Details
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-
-              {filteredDocs.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
-                    No documents found for this client.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ClientDocumentsSubLedger
+          documents={clientRecord.documents.map((d) => ({
+            id: d.id,
+            docNumber: d.docNumber,
+            type: d.type,
+            issueDate: d.issueDate,
+            grandTotal: d.grandTotal,
+            status: d.status,
+            notes: d.notes,
+          }))}
+          slug={slug}
+          currency={shop.currency}
+        />
       </div>
 
     </div>

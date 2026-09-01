@@ -72,14 +72,10 @@ export function ClientActionsPopover({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
-        className={`border px-3.5 py-2 font-mono text-xs font-semibold uppercase rounded-md shadow-2xs transition-all flex items-center gap-2 cursor-pointer ${
-          isOpen
-            ? "border-black bg-black text-white"
-            : "border-zinc-300 bg-white hover:bg-zinc-50 text-black"
-        }`}
+        className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 shadow-2xs"
       >
         <span>Actions</span>
-        <span className="text-[10px] text-zinc-400">{isOpen ? "▲" : "▼"}</span>
+        <span className="text-[9px] opacity-70">{isOpen ? "▲" : "▼"}</span>
       </button>
 
       {/* POPOVER DROPDOWN MENU */}

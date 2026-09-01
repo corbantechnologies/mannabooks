@@ -101,16 +101,16 @@ export function DocumentActionsPopover({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         disabled={loading}
-        className="border border-black bg-white px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider hover:bg-black hover:text-white transition-colors flex items-center gap-2"
+        className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 shadow-2xs"
       >
         <span>⚡ Document Actions</span>
-        <span>{isOpen ? "▲" : "▼"}</span>
+        <span className="text-[9px] opacity-70">{isOpen ? "▲" : "▼"}</span>
       </button>
 
       {/* POPOVER MENU PANEL */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 border border-black bg-white shadow-lg z-40 font-mono text-xs divide-y divide-zinc-200 animate-in fade-in zoom-in-95 duration-100">
-          <div className="px-3 py-2 bg-zinc-50 font-bold uppercase text-[9px] text-zinc-400">
+        <div className="absolute right-0 mt-1.5 w-64 border border-zinc-200/80 bg-white rounded-xl shadow-xl z-40 text-xs divide-y divide-zinc-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="px-3.5 py-2 bg-zinc-50/80 font-bold uppercase text-[9px] text-zinc-400">
             Lifecycle Conversions
           </div>
 
@@ -120,39 +120,41 @@ export function DocumentActionsPopover({
               {status !== "CANCELLED" && (
                 <button
                   onClick={() => handleConvert("INVOICE")}
-                  className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
+                  className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
                 >
-                  ➔ Convert to Invoice
+                  <span>📄</span> Convert to Tax Invoice
                 </button>
               )}
 
               {status !== "CANCELLED" ? (
                 confirmCancel ? (
-                  <div className="bg-rose-50 p-2 flex flex-col gap-1 border-t border-zinc-200">
-                    <span className="text-[9px] text-rose-600 font-bold uppercase block px-2 leading-tight">Cancel this quotation?</span>
-                    <button
-                      onClick={handleCancelQuotation}
-                      className="w-full text-left px-2 py-1 text-rose-700 hover:bg-rose-600 hover:text-white font-bold uppercase text-[10px] rounded transition-colors"
-                    >
-                      Confirm Cancel
-                    </button>
-                    <button
-                      onClick={() => setConfirmCancel(false)}
-                      className="w-full text-left px-2 py-1 text-zinc-500 hover:bg-zinc-100 font-bold uppercase text-[10px] rounded transition-colors"
-                    >
-                      Keep Quotation
-                    </button>
+                  <div className="bg-rose-50 p-2.5 flex flex-col gap-1.5 border-t border-zinc-100">
+                    <span className="text-[10px] text-rose-700 font-bold uppercase block px-1 leading-tight">Cancel this quotation?</span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={handleCancelQuotation}
+                        className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 font-semibold uppercase text-[10px] rounded-md transition-colors cursor-pointer"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        onClick={() => setConfirmCancel(false)}
+                        className="btn-secondary-modern px-2 py-1 text-[10px] font-semibold uppercase"
+                      >
+                        Keep Quote
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button
                     onClick={() => setConfirmCancel(true)}
-                    className="w-full text-left px-4 py-2.5 hover:bg-rose-50 text-rose-600 font-bold uppercase text-[11px] transition-colors border-t border-zinc-100"
+                    className="w-full text-left px-3.5 py-2.5 hover:bg-rose-50 text-rose-600 font-semibold text-[11px] transition-colors border-t border-zinc-100 cursor-pointer flex items-center gap-2"
                   >
-                    ➔ Cancel Quotation
+                    <span>✕</span> Cancel Quotation
                   </button>
                 )
               ) : (
-                <div className="px-4 py-2 text-[10px] text-zinc-400 italic font-semibold">
+                <div className="px-3.5 py-2 text-[10px] text-zinc-400 italic font-semibold">
                   Quotation Cancelled
                 </div>
               )}
@@ -164,16 +166,16 @@ export function DocumentActionsPopover({
             <>
               <button
                 onClick={() => handleConvert("RECEIPT")}
-                className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
+                className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
               >
-                ➔ Issue Official Receipt
+                <span>🧾</span> Issue Official Receipt
               </button>
 
               <button
                 onClick={() => handleConvert("DELIVERY_NOTE")}
-                className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
+                className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
               >
-                ➔ Generate Delivery Note
+                <span>🚚</span> Generate Delivery Note
               </button>
 
               <button
@@ -183,50 +185,52 @@ export function DocumentActionsPopover({
                   setShowCreditNoteModal(true);
                 }}
                 disabled={status !== "PAID"}
-                className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] text-rose-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full text-left px-3.5 py-2.5 hover:bg-rose-50 hover:text-rose-900 font-semibold text-[11px] text-rose-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
                 title={status !== "PAID" ? "Invoice must be paid to raise a credit note" : ""}
               >
-                ➔ Raise Credit Note {status !== "PAID" && "(Invoice Unpaid)"}
+                <span>↩️</span> Raise Credit Note {status !== "PAID" && "(Unpaid)"}
               </button>
 
               <button
                 onClick={() => handleConvert("DEBIT_NOTE")}
-                className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
+                className="w-full text-left px-3.5 py-2.5 hover:bg-zinc-100 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
               >
-                ➔ Raise Debit Note
+                <span>➕</span> Raise Debit Note
               </button>
 
               {status !== "CANCELLED" && (status === "ISSUED" || status === "OVERDUE") && (
                 <>
                   {confirmCancel ? (
-                    <div className="bg-rose-50 p-2 flex flex-col gap-1 border-t border-zinc-200">
-                      <span className="text-[9px] text-rose-600 font-bold uppercase block px-2 leading-tight">Cancel &amp; reverse in GL?</span>
-                      <button
-                        onClick={handleCancelInvoice}
-                        className="w-full text-left px-2 py-1 text-rose-700 hover:bg-rose-600 hover:text-white font-bold uppercase text-[10px] rounded transition-colors"
-                      >
-                        Confirm Cancel
-                      </button>
-                      <button
-                        onClick={() => setConfirmCancel(false)}
-                        className="w-full text-left px-2 py-1 text-zinc-500 hover:bg-zinc-100 font-bold uppercase text-[10px] rounded transition-colors"
-                      >
-                        Keep Invoice
-                      </button>
+                    <div className="bg-rose-50 p-2.5 flex flex-col gap-1.5 border-t border-zinc-100">
+                      <span className="text-[10px] text-rose-700 font-bold uppercase block px-1 leading-tight">Cancel &amp; reverse in GL?</span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={handleCancelInvoice}
+                          className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 font-semibold uppercase text-[10px] rounded-md transition-colors cursor-pointer"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => setConfirmCancel(false)}
+                          className="btn-secondary-modern px-2 py-1 text-[10px] font-semibold uppercase"
+                        >
+                          Keep Invoice
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <button
                       onClick={() => setConfirmCancel(true)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-rose-50 text-rose-600 font-bold uppercase text-[11px] transition-colors border-t border-zinc-100"
+                      className="w-full text-left px-3.5 py-2.5 hover:bg-rose-50 text-rose-600 font-semibold text-[11px] transition-colors border-t border-zinc-100 cursor-pointer flex items-center gap-2"
                     >
-                      ➔ Cancel Invoice
+                      <span>✕</span> Cancel Invoice
                     </button>
                   )}
                 </>
               )}
 
               {status === "CANCELLED" && (
-                <div className="px-4 py-2.5 text-[10px] text-zinc-400 italic font-semibold border-t border-zinc-100">
+                <div className="px-3.5 py-2 text-[10px] text-zinc-400 italic font-semibold border-t border-zinc-100">
                   Invoice Cancelled
                 </div>
               )}
@@ -238,15 +242,15 @@ export function DocumentActionsPopover({
             <>
               <button
                 onClick={() => handleConvert("GOODS_RECEIVED_NOTE")}
-                className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
+                className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
               >
-                ➔ Convert to Goods Received Note
+                <span>📦</span> Convert to Goods Received Note
               </button>
               <button
                 onClick={() => handleConvert("PAYMENT_VOUCHER")}
-                className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
+                className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
               >
-                ➔ Issue Payment Voucher
+                <span>💳</span> Issue Payment Voucher
               </button>
             </>
           )}
@@ -255,9 +259,9 @@ export function DocumentActionsPopover({
           {docType === "GOODS_RECEIVED_NOTE" && (
             <button
               onClick={() => handleConvert("PAYMENT_VOUCHER")}
-              className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
+              className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
             >
-              ➔ Issue Payment Voucher
+              <span>💳</span> Issue Payment Voucher
             </button>
           )}
 

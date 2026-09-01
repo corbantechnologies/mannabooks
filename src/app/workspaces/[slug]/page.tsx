@@ -10,6 +10,7 @@ import { DashboardRevenueChart, type WeekRevenueBucket } from "./DashboardRevenu
 import { LowStockAlertBanner } from "@/components/LowStockAlertBanner";
 import { getRecurringInvoices } from "@/lib/actions/recurring";
 import { RecurringInvoicesWidget } from "./RecurringInvoicesWidget";
+import { QuickCreatePopover } from "./QuickCreatePopover";
 
 interface WorkspaceOverviewPageProps {
   params: Promise<{ slug: string }>;
@@ -168,32 +169,15 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
           </h1>
         </div>
 
-        {/* QUICK ACTION BUTTONS */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={`/workspaces/${slug}/documents/new?type=INVOICE`}
-            className="btn-primary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
-          >
-            + New Invoice
-          </Link>
-          <Link
-            href={`/workspaces/${slug}/documents/new?type=QUOTATION`}
-            className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
-          >
-            + Quote
-          </Link>
-          <Link
-            href={`/workspaces/${slug}/expenses`}
-            className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
-          >
-            + Expense
-          </Link>
+        {/* QUICK ACTION POPOVER & SHORTCUTS */}
+        <div className="flex items-center gap-2">
+          <QuickCreatePopover slug={slug} />
           <Link
             href={`/workspaces/${slug}/pos`}
-            className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider flex items-center gap-1"
+            className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5"
           >
             <span>🧾</span>
-            <span>POS</span>
+            <span>POS Terminal</span>
           </Link>
         </div>
       </div>

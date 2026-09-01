@@ -140,8 +140,86 @@
     background-color: #ecfdf5;
     color: #064e3b;
     border: 1px solid #a7f3d0;
-    border-radius: 9999px;
+    border-radius: 6px;
     font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .badge-amber {
+    background-color: #fffbeb;
+    color: #78350f;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .badge-rose {
+    background-color: #fff1f2;
+    color: #9f1239;
+    border: 1px solid #fecdd3;
+    border-radius: 6px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .badge-zinc {
+    background-color: #f4f4f5;
+    color: #27272a;
+    border: 1px solid #e4e4e7;
+    border-radius: 6px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .badge-black {
+    background-color: #18181b;
+    color: #ffffff;
+    border: 1px solid #18181b;
+    border-radius: 6px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .input-modern {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d4d4d8;
+    background-color: #ffffff;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    transition: all 0.15s ease-out;
+  }
+
+  .input-modern:focus {
+    outline: none;
+    border-color: #064e3b;
+    box-shadow: 0 0 0 1px #064e3b;
   }
 
   .gradient-text-emerald {

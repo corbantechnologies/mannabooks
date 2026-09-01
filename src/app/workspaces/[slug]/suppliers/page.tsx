@@ -55,7 +55,7 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
   });
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white font-mono">
+    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
       {/* HEADER + CTA */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
         <div>
@@ -100,19 +100,19 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
                 <td className="p-4 border-r border-zinc-200/80 text-zinc-600 font-mono">
                   {sup.phone || "—"}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 font-mono">
-                  <span className={`px-2.5 py-0.5 font-semibold uppercase text-[10px] rounded ${
-                    sup.supplierType === "CORPORATE" ? "bg-black text-white" :
-                    sup.supplierType === "INDIVIDUAL" ? "border border-zinc-300 bg-white text-black" :
-                    "bg-zinc-100 text-zinc-400"
-                  }`}>
+                <td className="p-4 border-r border-zinc-200/80">
+                  <span className={
+                    sup.supplierType === "CORPORATE" ? "badge-black" :
+                    sup.supplierType === "INDIVIDUAL" ? "badge-zinc" :
+                    "badge-zinc text-zinc-400"
+                  }>
                     {sup.supplierType}
                   </span>
                 </td>
                 <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-widest font-mono">
                   {sup.taxPin || <span className="text-zinc-300 font-normal italic">None</span>}
                   {sup.requiresEtims && (
-                    <span className="ml-2 border border-zinc-300 px-1.5 py-0.5 text-[8px] bg-zinc-50 font-semibold uppercase rounded">
+                    <span className="ml-2 badge-emerald text-[9px]">
                       eTIMS
                     </span>
                   )}

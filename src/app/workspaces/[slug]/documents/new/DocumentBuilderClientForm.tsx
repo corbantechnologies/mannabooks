@@ -713,7 +713,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                       type="button"
                       onClick={() => removeRow(index)}
                       disabled={rows.length === 1}
-                      className="text-rose-600 hover:text-rose-900 border border-rose-200 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 text-[10px] font-semibold uppercase rounded disabled:opacity-20 transition-colors w-full mt-2"
+                      className="text-rose-600 hover:text-rose-900 border border-rose-200 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 text-[10px] font-semibold uppercase rounded-md disabled:opacity-20 transition-colors w-full mt-2 cursor-pointer"
                     >
                       Delete
                     </button>
@@ -846,7 +846,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                 </div>
               </div>
             ) : (
-              <div className="p-3 border border-dashed border-zinc-200 rounded text-zinc-400 text-center font-sans text-xs">
+              <div className="p-3 border border-dashed border-zinc-200 rounded-lg text-zinc-400 text-center font-sans text-xs">
                 No shop terms library created yet. You can configure reusable presets in Settings or type custom terms below.
               </div>
             )}
@@ -860,7 +860,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                 value={customTermsText}
                 onChange={(e) => setCustomTermsText(e.target.value)}
                 placeholder="e.g., Special agreement: 30-day grace period or waiver of delivery fee for VIP account."
-                className="w-full px-3 py-2 border border-zinc-300 bg-white rounded focus:outline-none focus:border-black text-xs font-sans h-16 resize-none"
+                className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-1 focus:ring-black text-xs font-sans h-16 resize-none"
               ></textarea>
             </div>
           </div>
@@ -868,14 +868,14 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           {/* COMPLIANCE NOTE */}
           <div className="bg-zinc-50 border border-zinc-200/80 rounded-lg p-5 space-y-3 font-sans">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-black" />
+              <span className="w-2 h-2 rounded-full bg-emerald-600" />
               <h3 className="font-bold text-xs uppercase tracking-tight text-black">Compliance &amp; System Notes</h3>
             </div>
             <p className="text-zinc-500 text-xs leading-relaxed font-sans">
               All transactions and calculations are saved accurately. Draft documents can be edited or finalized whenever you are ready.
             </p>
             {requiresEtims && (
-              <div className="bg-emerald-50 border border-emerald-200 p-3 rounded text-xs font-semibold text-emerald-900 flex items-center gap-2 font-sans">
+              <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-md text-xs font-semibold text-emerald-900 flex items-center gap-2 font-sans">
                 <span>✓ Client requires eTIMS fiscal signing.</span>
               </div>
             )}
@@ -888,7 +888,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           </h3>
 
           <div className="space-y-2 text-xs">
-            <div className="bg-white rounded p-4 border border-zinc-200/80 shadow-sm space-y-3 font-mono">
+            <div className="bg-white rounded-lg p-4 border border-zinc-200/80 shadow-sm space-y-3 font-mono">
               <div className="flex justify-between text-zinc-600 text-[10px] font-semibold">
                 <span>SUB-TOTAL ({currency}):</span>
                 <span className="text-black">{formatCurrency(totals.subTotal, currency)}</span>

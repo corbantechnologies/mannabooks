@@ -50,7 +50,7 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
   const currenciesRegistry = await getShopCurrencies(shop.id, shop.currency || "KES");
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white font-mono text-xs">
+    <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white">
       
       {/* PAGE HEADER WITH BACK LINK */}
       <div className="border-b border-zinc-200/80 pb-6 space-y-2">
@@ -71,7 +71,11 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
             </p>
           </div>
 
-          <div className="inline-flex items-center gap-2 border border-zinc-300 px-3 py-1.5 bg-zinc-50 rounded text-[10px] font-semibold text-zinc-700 uppercase">
+          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase ${
+            shop.isVatRegistered
+              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+              : "bg-zinc-50 text-zinc-700 border border-zinc-200"
+          }`}>
             <span className={`w-2 h-2 rounded-full ${shop.isVatRegistered ? "bg-emerald-500 animate-pulse" : "bg-zinc-400"}`} />
             <span>{shop.isVatRegistered ? "eTIMS 16% VAT Active" : "Non-VAT Account"}</span>
           </div>

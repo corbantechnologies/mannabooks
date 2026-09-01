@@ -42,7 +42,7 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
   const lastProcessedVoucher = payrollVouchers[0];
 
   return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-mono text-xs">
+    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white">
       
       {/* HEADER & TOP ACTION BUTTONS */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
@@ -135,19 +135,19 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
                     {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                   </td>
                   <td className="p-4 border-r border-zinc-200/80 text-center">
-                    <span className={`px-2 py-0.5 text-[9px] font-semibold tracking-wider uppercase rounded ${
-                      doc.status === "DRAFT" ? "bg-amber-100 text-amber-900 border border-amber-300" : "bg-black text-white"
-                    }`}>
+                    <span className={
+                      doc.status === "DRAFT" ? "badge-amber" : "badge-emerald"
+                    }>
                       {doc.status}
                     </span>
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black text-right">
+                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black text-right font-mono">
                     {formatCurrency(parseFloat(doc.subTotal), shop.currency)}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-rose-600 font-semibold text-right">
+                  <td className="p-4 border-r border-zinc-200/80 text-rose-600 font-semibold text-right font-mono">
                     {formatCurrency(parseFloat(doc.taxAmount), shop.currency)}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-emerald-700 text-right text-sm">
+                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-emerald-700 text-right text-sm font-mono">
                     {formatCurrency(parseFloat(doc.grandTotal), shop.currency)}
                   </td>
                   <td className="p-4 text-center">
@@ -210,16 +210,16 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
                   <td className="p-4 border-r border-zinc-200/80 text-zinc-600 uppercase font-semibold">
                     {emp.kraPin || "N/A"}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black text-right">
+                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black text-right font-mono">
                     {formatCurrency(parseFloat(emp.baseSalary), shop.currency)}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-right text-zinc-600">
+                  <td className="p-4 border-r border-zinc-200/80 text-right text-zinc-600 font-mono">
                     {parseFloat(emp.commissionRate).toFixed(1)}%
                   </td>
                   <td className="p-4 border-r border-zinc-200/80 text-center">
-                    <span className={`px-2 py-0.5 text-[9px] font-semibold tracking-wider uppercase rounded ${
-                      emp.isActive ? "bg-black text-white" : "bg-zinc-100 text-zinc-400 border border-zinc-300"
-                    }`}>
+                    <span className={
+                      emp.isActive ? "badge-black" : "badge-zinc text-zinc-400"
+                    }>
                       {emp.isActive ? "ACTIVE" : "INACTIVE"}
                     </span>
                   </td>

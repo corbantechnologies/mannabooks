@@ -128,13 +128,13 @@ export function ProductsTableClient({
                   <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-black">
                     {p.name}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-[10px]">
+                  <td className="p-4 border-r border-zinc-200/80">
                     {p.itemType === "SERVICE" ? (
-                      <span className="bg-zinc-100 text-zinc-800 border border-zinc-300 px-2 py-0.5 rounded uppercase">
+                      <span className="badge-zinc">
                         Service
                       </span>
                     ) : (
-                      <span className="bg-blue-50 text-blue-900 border border-blue-200 px-2 py-0.5 rounded uppercase">
+                      <span className="bg-blue-50 text-blue-900 border border-blue-200 px-2 py-0.5 rounded-md uppercase text-[10px] font-semibold">
                         Product
                       </span>
                     )}
@@ -164,7 +164,7 @@ export function ProductsTableClient({
                       <span className="text-zinc-400 italic font-normal">Service (Untracked)</span>
                     ) : qty <= 0 ? (
                       <div className="flex flex-col gap-1 items-start">
-                        <span className="bg-rose-100 text-rose-800 border border-rose-300 px-2 py-0.5 rounded font-semibold text-[10px] uppercase">
+                        <span className="badge-rose">
                           ❌ Out of Stock ({qty})
                         </span>
                         <QuickRestockModal
@@ -177,7 +177,7 @@ export function ProductsTableClient({
                       </div>
                     ) : qty <= threshold ? (
                       <div className="flex flex-col gap-1 items-start">
-                        <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded font-semibold text-[10px] uppercase">
+                        <span className="badge-amber">
                           ⚠️ Low Stock ({qty} left)
                         </span>
                         <QuickRestockModal
@@ -190,7 +190,7 @@ export function ProductsTableClient({
                       </div>
                     ) : (
                       <div className="flex items-center justify-between gap-2">
-                        <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded font-semibold text-[10px] uppercase">
+                        <span className="badge-emerald">
                           ✓ {qty} in Stock
                         </span>
                         <QuickRestockModal
@@ -202,7 +202,7 @@ export function ProductsTableClient({
                           triggerButton={
                             <button
                               type="button"
-                              className="text-[10px] font-bold text-zinc-400 hover:text-black uppercase cursor-pointer"
+                              className="text-[10px] font-bold text-zinc-400 hover:text-emerald-800 uppercase cursor-pointer"
                               title="Restock units"
                             >
                               + Stock
@@ -213,11 +213,11 @@ export function ProductsTableClient({
                     )}
                   </td>
                   <td className="p-4 border-r border-zinc-200/80">
-                    <span className={`px-2.5 py-0.5 font-semibold uppercase text-[10px] rounded ${
-                      p.defaultTaxType === "V_16" ? "bg-black text-white" :
-                      p.defaultTaxType === "V_0" ? "border border-zinc-300 bg-white text-zinc-600 font-semibold" :
-                      "bg-zinc-100 text-zinc-400 border border-zinc-200"
-                    }`}>
+                    <span className={
+                      p.defaultTaxType === "V_16" ? "badge-black" :
+                      p.defaultTaxType === "V_0" ? "badge-zinc" :
+                      "badge-zinc text-zinc-400"
+                    }>
                       {p.defaultTaxType === "V_16" ? "VAT 16%" :
                        p.defaultTaxType === "V_0" ? "Zero Rated" : "Tax Exempt"}
                     </span>

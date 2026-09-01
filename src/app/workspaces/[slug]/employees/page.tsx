@@ -38,7 +38,7 @@ export default async function WorkspaceEmployeesPage({ params }: WorkspaceEmploy
     .reduce((sum, e) => sum + parseFloat(e.baseSalary), 0);
 
   return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-mono text-xs">
+    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white">
       
       {/* HEADER & ACTION BUTTON */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
@@ -140,9 +140,9 @@ export default async function WorkspaceEmployeesPage({ params }: WorkspaceEmploy
                     {parseFloat(emp.commissionRate).toFixed(1)}%
                   </td>
                   <td className="p-4 border-r border-zinc-200/80 text-center">
-                    <span className={`px-2 py-0.5 text-[9px] font-semibold tracking-wider uppercase rounded ${
-                      emp.isActive ? "bg-black text-white" : "bg-zinc-100 text-zinc-400 border border-zinc-300"
-                    }`}>
+                    <span className={
+                      emp.isActive ? "badge-black" : "badge-zinc text-zinc-400"
+                    }>
                       {emp.isActive ? "ACTIVE" : "INACTIVE"}
                     </span>
                   </td>

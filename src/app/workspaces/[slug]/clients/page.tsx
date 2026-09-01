@@ -100,18 +100,18 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
                   {c.phone || "—"}
                 </td>
                 <td className="p-4 border-r border-zinc-200/80">
-                  <span className={`px-2.5 py-0.5 font-semibold uppercase tracking-tight rounded text-[10px] ${
-                    c.clientType === "CORPORATE" ? "bg-black text-white" :
-                    c.clientType === "INDIVIDUAL" ? "border border-zinc-300 bg-white text-black" :
-                    "bg-zinc-100 text-zinc-500"
-                  }`}>
+                  <span className={
+                    c.clientType === "CORPORATE" ? "badge-black" :
+                    c.clientType === "INDIVIDUAL" ? "badge-zinc" :
+                    "badge-zinc text-zinc-500"
+                  }>
                     {c.clientType}
                   </span>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-widest">
+                <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-widest font-mono">
                   {c.taxPin || <span className="text-zinc-300 font-normal italic">None</span>}
                   {c.requiresEtims && (
-                    <span className="ml-2 border border-zinc-300 px-1.5 py-0.5 text-[8px] bg-zinc-50 font-semibold uppercase rounded">
+                    <span className="ml-2 badge-emerald text-[9px]">
                       eTIMS
                     </span>
                   )}
@@ -124,7 +124,7 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
 
             {clientList.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                <td colSpan={6} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
                   No clients found matching your search.
                 </td>
               </tr>

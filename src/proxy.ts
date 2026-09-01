@@ -17,15 +17,8 @@ export function proxy(request: NextRequest) {
 
     if (isDashboardRoute && !sessionToken) {
         const loginUrl = new URL("/login", request.url);
-        // Optional: Pass the original path as a redirect parameter so they return here after login
         loginUrl.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(loginUrl);
-    }
-
-    // 3. Catch authenticated users trying to hit /login or /signup and push them to dashboard
-    const isAuthRoute = pathname === "/login" || pathname === "/signup";
-    if (isAuthRoute && sessionToken) {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
     // Continue to the intended route seamlessly

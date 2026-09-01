@@ -4,6 +4,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loginUserAccount } from "@/lib/actions/auth-login";
+import { clearStaleSessionAction } from "@/lib/actions/auth";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
@@ -11,11 +12,33 @@ import { Spinner } from "@/components/Spinner";
 function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const rawCallback = searchParams.get("callbackUrl");
+  const callbackUrl = (rawCallback && !rawCallback.startsWith("/login") && !rawCallback.startsWith("/signup") && !rawCallback.startsWith("/logout"))
+    ? rawCallback
+    : "/dashboard";
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+
+  async function handleClearSession() {
+    setIsClearing(true);
+    const toastId = toast.loading("Clearing session cookies...");
+    try {
+      await clearStaleSessionAction();
+      // Also manually clear any document cookies if accessible
+      document.cookie.split(";").forEach(c => {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      toast.success("Session cookies wiped cleanly. You can now log in.", { id: toastId });
+      setError(null);
+    } catch (e) {
+      toast.error("Failed to clear cookies.", { id: toastId });
+    } finally {
+      setIsClearing(false);
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -134,11 +157,23 @@ function LoginFormContent() {
           </button>
         </form>
 
-        <div className="border-t border-zinc-200/80 pt-4 font-mono text-xs text-center">
-          <span className="text-zinc-400">New operator? </span>
-          <Link href="/signup" className="font-semibold text-black underline hover:no-underline uppercase">
-            Initialize Account
-          </Link>
+        <div className="border-t border-zinc-200/80 pt-4 font-mono text-xs text-center space-y-2">
+          <div>
+            <span className="text-zinc-400">New operator? </span>
+            <Link href="/signup" className="font-semibold text-black underline hover:no-underline uppercase">
+              Initialize Account
+            </Link>
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={handleClearSession}
+              disabled={isClearing}
+              className="text-[10px] text-zinc-400 hover:text-rose-600 transition-colors uppercase tracking-wider underline cursor-pointer"
+            >
+              {isClearing ? "Clearing..." : "Having login issues? Clear stale session cookies"}
+            </button>
+          </div>
         </div>
 
       </div>

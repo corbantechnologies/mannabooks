@@ -27,10 +27,50 @@ export const getActiveWorkspaceContext = cache(async function getActiveWorkspace
     });
 
     if (!shopProfile) {
-        redirect("/dashboard");
+        redirect("/workspaces");
     }
 
-    // 3. Verify that this specific user is an active member/owner of this shop
+    // 3. Super Admin bypass — always permitted with full OWNER role
+    if (sessionRecord.user.isSuperAdmin) {
+        return {
+            user: sessionRecord.user,
+            shop: shopProfile,
+            role: "OWNER" as const,
+        };
+    }
+
+    // 4. Direct Shop Owner check — auto-heal membership if needed
+    if (shopProfile.ownerId === sessionRecord.userId) {
+        const membership = await db.query.shopMembers.findFirst({
+            where: and(
+                eq(shopMembers.shopId, shopProfile.id),
+                eq(shopMembers.userId, sessionRecord.userId)
+            ),
+        });
+
+        if (!membership) {
+            try {
+                await db.insert(shopMembers).values({
+                    shopId: shopProfile.id,
+                    userId: sessionRecord.userId,
+                    role: "OWNER",
+                    isActive: true,
+                });
+            } catch (e) {}
+        } else if (!membership.isActive) {
+            try {
+                await db.update(shopMembers).set({ isActive: true, role: "OWNER" }).where(eq(shopMembers.id, membership.id));
+            } catch (e) {}
+        }
+
+        return {
+            user: sessionRecord.user,
+            shop: shopProfile,
+            role: "OWNER" as const,
+        };
+    }
+
+    // 5. Verify that this specific user is an active member of this shop
     const membership = await db.query.shopMembers.findFirst({
         where: and(
             eq(shopMembers.shopId, shopProfile.id),
@@ -40,7 +80,7 @@ export const getActiveWorkspaceContext = cache(async function getActiveWorkspace
     });
 
     if (!membership) {
-        redirect("/dashboard"); // Unauthorized access attempt; bounce to safe root proxy
+        redirect("/workspaces"); // Bounce to multi-workspace directory, avoiding /dashboard redirect loop
     }
 
     return {

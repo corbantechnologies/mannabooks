@@ -11,6 +11,7 @@ interface ShareCatalogModalProps {
   selectedProductIds?: string[];
   buttonLabel?: string;
   className?: string;
+  customTrigger?: (openModal: () => void) => React.ReactNode;
 }
 
 export function ShareCatalogModal({
@@ -19,6 +20,7 @@ export function ShareCatalogModal({
   selectedProductIds,
   buttonLabel,
   className,
+  customTrigger,
 }: ShareCatalogModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [catalogUrl, setCatalogUrl] = useState("");
@@ -108,21 +110,25 @@ export function ShareCatalogModal({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className={
-          className ||
-          (isCurated
-            ? "bg-black hover:bg-zinc-800 text-white px-4 py-2 font-mono text-xs font-bold uppercase rounded-lg transition-all shadow-sm flex items-center gap-1.5"
-            : "border border-zinc-300 bg-white hover:bg-zinc-50 hover:border-black text-black px-4 py-2 font-mono text-xs font-semibold uppercase rounded transition-all shadow-sm flex items-center gap-1.5")
-        }
-      >
-        <span>🔗</span>
-        <span>
-          {buttonLabel || (isCurated ? `Share Selected (${count})` : "Share Catalog")}
-        </span>
-      </button>
+      {customTrigger ? (
+        customTrigger(() => setIsOpen(true))
+      ) : (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className={
+            className ||
+            (isCurated
+              ? "bg-black hover:bg-zinc-800 text-white px-4 py-2 font-mono text-xs font-bold uppercase rounded-lg transition-all shadow-sm flex items-center gap-1.5"
+              : "border border-zinc-300 bg-white hover:bg-zinc-50 hover:border-black text-black px-4 py-2 font-mono text-xs font-semibold uppercase rounded transition-all shadow-sm flex items-center gap-1.5")
+          }
+        >
+          <span>🔗</span>
+          <span>
+            {buttonLabel || (isCurated ? `Share Selected (${count})` : "Share Catalog")}
+          </span>
+        </button>
+      )}
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">

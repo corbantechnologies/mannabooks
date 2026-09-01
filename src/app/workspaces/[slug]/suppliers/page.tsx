@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { SupplierFormClientSide } from "./SupplierFormClientSide";
 import { SupplierFilterBar } from "./SupplierFilterBar";
-import { EditSupplierModal } from "./EditSupplierModal";
+import { SupplierRowPopover } from "./SupplierRowPopover";
 
 interface SuppliersPageProps {
   params: Promise<{ slug: string }>;
@@ -121,7 +121,7 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
                   {sup.paymentTerms || "NET_30"}
                 </td>
                 <td className="p-4 text-center font-mono">
-                  <EditSupplierModal supplier={sup} shopId={shop.id} shopSlug={slug} />
+                  <SupplierRowPopover supplier={sup} shopId={shop.id} shopSlug={slug} />
                 </td>
               </tr>
             ))}

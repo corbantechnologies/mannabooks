@@ -20,9 +20,18 @@ interface EditClientModalProps {
   shopId: string;
   shopSlug: string;
   redirectToDirectoryAfterDelete?: boolean;
+  triggerButton?: React.ReactNode;
+  customTrigger?: (openModal: () => void) => React.ReactNode;
 }
 
-export function EditClientModal({ client, shopId, shopSlug, redirectToDirectoryAfterDelete }: EditClientModalProps) {
+export function EditClientModal({
+  client,
+  shopId,
+  shopSlug,
+  redirectToDirectoryAfterDelete,
+  triggerButton,
+  customTrigger,
+}: EditClientModalProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -58,16 +67,22 @@ export function EditClientModal({ client, shopId, shopSlug, redirectToDirectoryA
     );
   }
 
-
-
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="btn-secondary-modern px-2 py-1 text-[10px] font-semibold uppercase"
-      >
-        Edit Profile
-      </button>
+      {customTrigger ? (
+        customTrigger(() => setIsOpen(true))
+      ) : triggerButton ? (
+        <span onClick={() => setIsOpen(true)} className="cursor-pointer">
+          {triggerButton}
+        </span>
+      ) : (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="btn-secondary-modern px-2 py-1 text-[10px] font-semibold uppercase"
+        >
+          Edit Profile
+        </button>
+      )}
 
       {isOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">

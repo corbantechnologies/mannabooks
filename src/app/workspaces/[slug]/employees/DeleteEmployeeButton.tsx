@@ -12,6 +12,7 @@ interface DeleteEmployeeButtonProps {
   shopId: string;
   shopSlug: string;
   redirectToDirectory?: boolean;
+  customTrigger?: (openModal: () => void) => React.ReactNode;
 }
 
 export function DeleteEmployeeButton({
@@ -20,6 +21,7 @@ export function DeleteEmployeeButton({
   shopId,
   shopSlug,
   redirectToDirectory = false,
+  customTrigger,
 }: DeleteEmployeeButtonProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -47,13 +49,17 @@ export function DeleteEmployeeButton({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white px-2 py-0.5 font-semibold text-[10px] uppercase rounded transition-colors"
-      >
-        Delete
-      </button>
+      {customTrigger ? (
+        customTrigger(() => setIsOpen(true))
+      ) : (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white px-2 py-0.5 font-semibold text-[10px] uppercase rounded transition-colors"
+        >
+          Delete
+        </button>
+      )}
 
       {isOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">

@@ -4,8 +4,7 @@ import { clients, documents, shops, suppliers } from "@/db/schema";
 import { eq, and, desc, or } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
-import { EditClientModal } from "../EditClientModal";
-import { SyncClientToSupplierButton } from "./SyncClientToSupplierButton";
+import { ClientActionsPopover } from "./ClientActionsPopover";
 import { ClientDocumentsFilterBar } from "./ClientDocumentsFilterBar";
 import Link from "next/link";
 
@@ -104,67 +103,58 @@ export default async function ClientProfileLedgerPage({ params, searchParams }: 
     <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
       
       {/* BACK NAVIGATION AND INTERFACE HEADER */}
-      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
+      <div className="border-b border-zinc-200/80 pb-6 space-y-3">
         <Link 
           href={`/workspaces/${slug}/clients`} 
-          className="font-sans text-xs font-bold text-zinc-400 hover:underline block"
+          className="font-sans text-xs font-bold text-zinc-400 hover:underline inline-flex items-center gap-1"
         >
           ← Back to Client Directory
         </Link>
+
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Customer Statement</span>
-            <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">{clientRecord.name}</h1>
-            <p className="font-sans text-xs text-zinc-500 mt-0.5">ID: {clientRecord.id}</p>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Customer Statement</span>
+              {clientRecord.requiresEtims && (
+                <span className="border border-amber-300 bg-amber-50 text-amber-900 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wide rounded">
+                  eTIMS Required
+                </span>
+              )}
+            </div>
+
+            <h1 className="text-2xl font-bold uppercase tracking-tight text-black font-sans">
+              {clientRecord.name}
+            </h1>
+
+            <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-zinc-600">
+              <span className="border border-zinc-300 px-2 py-0.5 bg-zinc-50 font-semibold uppercase rounded text-zinc-700">
+                Class: {clientRecord.clientType}
+              </span>
+              {clientRecord.taxPin && (
+                <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase tracking-wide rounded">
+                  PIN: {clientRecord.taxPin}
+                </span>
+              )}
+              <span className="text-zinc-400 font-mono text-[10px]">ID: {clientRecord.id}</span>
+            </div>
           </div>
           
-          <div className="flex flex-wrap items-center gap-2 font-mono text-[10px]">
-            <span className="border border-zinc-300 px-2.5 py-1 bg-zinc-50 font-semibold uppercase rounded text-zinc-700">
-              Class: {clientRecord.clientType}
-            </span>
-            {clientRecord.taxPin && (
-              <span className="bg-black text-white px-2.5 py-1 font-semibold uppercase tracking-wide rounded">
-                PIN: {clientRecord.taxPin}
-              </span>
-            )}
-            {clientRecord.requiresEtims && (
-              <span className="border border-amber-300 bg-amber-50 text-amber-900 px-2.5 py-1 font-semibold uppercase tracking-wide rounded">
-                eTIMS Required
-              </span>
-            )}
-            <Link
-              href={`/workspaces/${slug}/clients/${clientRecord.id}/statement`}
-              className="border border-black bg-black text-white px-3 py-1 font-semibold uppercase tracking-wider text-[11px] rounded hover:bg-zinc-800 transition-colors"
-            >
-              📜 Statement of Account
-            </Link>
+          {/* STREAMLINED ACTION CONTROLS */}
+          <div className="flex items-center gap-2.5">
             <Link
               href={`/workspaces/${slug}/documents/new?clientId=${clientRecord.id}`}
-              className="btn-primary-modern px-3 py-1 font-semibold uppercase tracking-wider text-[11px]"
+              className="btn-primary-modern px-4 py-2 font-semibold uppercase tracking-wider text-xs shadow-sm flex items-center gap-1.5"
             >
-              + Generate Document
+              <span>+</span>
+              <span>Generate Document</span>
             </Link>
-            <EditClientModal
-              client={clientRecord}
-              shopId={shop.id}
-              shopSlug={slug}
-              redirectToDirectoryAfterDelete={true}
-            />
 
-            {matchedSupplier ? (
-              <Link
-                href={`/workspaces/${slug}/suppliers/${matchedSupplier.id}`}
-                className="border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 px-2.5 py-1 font-semibold uppercase rounded tracking-wide text-[10px]"
-              >
-                Linked Supplier Profile ➔
-              </Link>
-            ) : (
-              <SyncClientToSupplierButton
-                clientId={clientRecord.id}
-                shopId={shop.id}
-                shopSlug={slug}
-              />
-            )}
+            <ClientActionsPopover
+              client={clientRecord}
+              shop={shop}
+              shopSlug={slug}
+              matchedSupplier={matchedSupplier}
+            />
           </div>
         </div>
       </div>

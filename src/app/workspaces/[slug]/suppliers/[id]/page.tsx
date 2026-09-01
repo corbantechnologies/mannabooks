@@ -1,12 +1,11 @@
 // src/app/workspaces/[slug]/suppliers/[id]/page.tsx
 import { db } from "@/db";
 import { suppliers, documents, shops, clients } from "@/db/schema";
-import { eq, and, desc, or } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
-import { EditSupplierModal } from "../EditSupplierModal";
-import { SyncSupplierToClientButton } from "./SyncSupplierToClientButton";
+import { SupplierActionsPopover } from "./SupplierActionsPopover";
 
 interface SupplierDetailPageProps {
   params: Promise<{ slug: string; id: string }>;
@@ -24,7 +23,7 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
     notFound();
   }
 
-  // 2. Locate targeted supplier node
+  // 2. Fetch the target supplier details
   const supplierRecord = await db.query.suppliers.findFirst({
     where: and(eq(suppliers.id, id), eq(suppliers.shopId, shop.id)),
   });
@@ -33,94 +32,92 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
     notFound();
   }
 
-  // 2.5 Check if a corresponding client profile already exists
-  const matchedClient = await db.query.clients.findFirst({
-    where: and(
-      eq(clients.shopId, shop.id),
-      supplierRecord.taxPin
-        ? or(eq(clients.taxPin, supplierRecord.taxPin), eq(clients.email, supplierRecord.email))
-        : eq(clients.email, supplierRecord.email)
-    ),
-  });
-
-  // 3. Fetch all historical procurement documents linked to this supplier
+  // 3. Query all procurement docs associated with this specific vendor
   const supplierDocuments = await db.query.documents.findMany({
-    where: and(eq(documents.supplierId, id), eq(documents.shopId, shop.id)),
+    where: and(
+      eq(documents.supplierId, supplierRecord.id),
+      eq(documents.shopId, shop.id)
+    ),
     orderBy: [desc(documents.issueDate)],
   });
 
-  // Calculate procurement financial metrics
-  let totalProcurementSpend = 0;
-  let accountsPayableDebt = 0;
+  // Calculate gross procurement turnover
+  const totalProcurementSpend = supplierDocuments
+    .filter((d) => d.status === "PAID")
+    .reduce((acc, curr) => acc + Number(curr.grandTotal), 0);
 
-  supplierDocuments.forEach((doc) => {
-    const val = parseFloat(doc.grandTotal);
-    if (doc.status === "PAID") {
-      totalProcurementSpend += val;
-    } else if (doc.status === "ISSUED" || doc.status === "OVERDUE") {
-      accountsPayableDebt += val;
-    }
-  });
+  // Calculate accounts payable debt
+  const accountsPayableDebt = supplierDocuments
+    .filter((d) => d.status === "ISSUED" || d.status === "OVERDUE")
+    .reduce((acc, curr) => acc + Number(curr.grandTotal), 0);
+
+  // Check if a client exists with the exact same taxPin (to provide cross-link)
+  let matchedClient = null;
+  if (supplierRecord.taxPin) {
+    matchedClient = await db.query.clients.findFirst({
+      where: and(
+        eq(clients.shopId, shop.id),
+        eq(clients.taxPin, supplierRecord.taxPin)
+      ),
+    });
+  }
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white font-mono">
-      {/* NAVIGATION & HEADER BLOCK */}
-      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
+    <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
+      
+      {/* INTERFACE NAVIGATION HEADER */}
+      <div className="border-b border-zinc-200/80 pb-6 space-y-3">
         <Link
           href={`/workspaces/${slug}/suppliers`}
-          className="text-xs font-sans font-bold text-zinc-400 hover:underline block"
+          className="text-xs font-sans font-bold text-zinc-400 hover:underline inline-flex items-center gap-1"
         >
           ← Back to Supplier Registry
         </Link>
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
-          <div>
-            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Procurement Summary</span>
-            <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">{supplierRecord.name}</h1>
-            <p className="font-sans text-xs text-zinc-500 mt-0.5">ID: {supplierRecord.id}</p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Procurement Summary</span>
+              {supplierRecord.requiresEtims && (
+                <span className="border border-amber-300 bg-amber-50 text-amber-900 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wide rounded">
+                  eTIMS Required
+                </span>
+              )}
+            </div>
+
+            <h1 className="text-2xl font-bold uppercase tracking-tight text-black font-sans">
+              {supplierRecord.name}
+            </h1>
+
+            <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-zinc-600">
+              <span className="border border-zinc-300 px-2 py-0.5 bg-zinc-50 font-semibold uppercase rounded text-zinc-700">
+                Class: {supplierRecord.supplierType}
+              </span>
+              {supplierRecord.taxPin && (
+                <span className="bg-black text-white px-2 py-0.5 font-semibold uppercase tracking-wide rounded">
+                  PIN: {supplierRecord.taxPin}
+                </span>
+              )}
+              <span className="text-zinc-400 font-mono text-[10px]">ID: {supplierRecord.id}</span>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-[10px]">
-            <span className="border border-zinc-300 px-2.5 py-1 bg-zinc-50 font-semibold uppercase rounded text-zinc-700">
-              Class: {supplierRecord.supplierType}
-            </span>
-            {supplierRecord.taxPin && (
-              <span className="bg-black text-white px-2.5 py-1 font-semibold uppercase tracking-wide rounded">
-                PIN: {supplierRecord.taxPin}
-              </span>
-            )}
-            {supplierRecord.requiresEtims && (
-              <span className="border border-amber-300 bg-amber-50 text-amber-900 px-2.5 py-1 font-semibold uppercase tracking-wide rounded">
-                eTIMS Required
-              </span>
-            )}
+          {/* STREAMLINED ACTION CONTROLS */}
+          <div className="flex items-center gap-2.5">
             <Link
-              href={`/workspaces/${slug}/documents/new?supplierId=${supplierRecord.id}`}
-              className="btn-primary-modern px-3 py-1 font-semibold uppercase tracking-wider text-[11px]"
+              href={`/workspaces/${slug}/documents/new?supplierId=${supplierRecord.id}&type=LPO`}
+              className="btn-primary-modern px-4 py-2 font-semibold uppercase tracking-wider text-xs shadow-sm flex items-center gap-1.5"
             >
-              + Generate Document
+              <span>+</span>
+              <span>Issue LPO</span>
             </Link>
-            <EditSupplierModal
-              supplier={supplierRecord}
-              shopId={shop.id}
-              shopSlug={slug}
-              redirectToDirectoryAfterDelete={true}
-            />
 
-            {matchedClient ? (
-              <Link
-                href={`/workspaces/${slug}/clients/${matchedClient.id}`}
-                className="border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 px-2.5 py-1 font-semibold uppercase rounded tracking-wide text-[10px]"
-              >
-                Linked Client Profile ➔
-              </Link>
-            ) : (
-              <SyncSupplierToClientButton
-                supplierId={supplierRecord.id}
-                shopId={shop.id}
-                shopSlug={slug}
-              />
-            )}
+            <SupplierActionsPopover
+              supplier={supplierRecord}
+              shop={shop}
+              shopSlug={slug}
+              matchedClient={matchedClient}
+            />
           </div>
         </div>
       </div>

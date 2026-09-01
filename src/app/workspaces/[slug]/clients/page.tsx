@@ -4,7 +4,7 @@ import { clients, shops } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { ClientFormClientSide } from "./ClientFormClientSide";
-import { EditClientModal } from "./EditClientModal";
+import { ClientRowPopover } from "./ClientRowPopover";
 import Link from "next/link";
 
 import { and } from "drizzle-orm";
@@ -117,7 +117,7 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
                   )}
                 </td>
                 <td className="p-4 text-center">
-                  <EditClientModal client={c} shopId={shop.id} shopSlug={slug} />
+                  <ClientRowPopover client={c} shopId={shop.id} shopSlug={slug} />
                 </td>
               </tr>
             ))}

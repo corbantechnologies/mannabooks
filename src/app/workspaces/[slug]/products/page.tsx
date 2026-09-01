@@ -5,10 +5,8 @@ import { eq, desc, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { ProductFormClientSide } from "./ProductFormClientSide";
-import { EditProductModal } from "./EditProductModal";
-
+import { CatalogActionsPopover } from "./CatalogActionsPopover";
 import { ProductFilterBar } from "./ProductFilterBar";
-import { ShareCatalogModal } from "./ShareCatalogModal";
 import { ProductsTableClient } from "./ProductsTableClient";
 import { LowStockAlertBanner } from "@/components/LowStockAlertBanner";
 import Link from "next/link";
@@ -73,30 +71,12 @@ export default async function WorkspaceProductsPage({ params, searchParams }: Pr
           <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Products &amp; Inventory</span>
           <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Product Catalog</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {/* Shareable interactive digital catalog */}
-          <ShareCatalogModal shopSlug={slug} shopName={shop.name} />
-
-          <a
-            href={`/api/catalog/${slug}/pdf${search ? `?search=${encodeURIComponent(search)}` : ""}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-black px-4 py-2 font-mono text-xs font-semibold uppercase rounded transition-colors flex items-center gap-1.5"
-            title="Download formatted product rate card PDF"
-          >
-            <span>📄</span>
-            <span>Price PDF</span>
-          </a>
-
-          <Link 
-            href={`/workspaces/${slug}/products/bulk`}
-            className="border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-black px-4 py-2 font-mono text-xs font-semibold uppercase rounded transition-colors"
-          >
-            Bulk Import
-          </Link>
-
-          {/* Inject interactive creation portal block — with locations for stock assignment */}
+        <div className="flex items-center gap-2.5">
+          {/* Inject interactive creation portal block */}
           <ProductFormClientSide shopId={shop.id} shopSlug={slug} locations={locationList} />
+
+          {/* Clean Catalog Options Popover */}
+          <CatalogActionsPopover shopSlug={slug} shopName={shop.name} search={search} />
         </div>
       </div>
 

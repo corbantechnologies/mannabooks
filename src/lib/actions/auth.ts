@@ -43,48 +43,69 @@ import { cache } from "react";
 
 /**
  * Validates the session token from cookies against the database.
- * Auto-cleans expired slots to keep your data performance high.
+ * Auto-cleans expired or orphan tokens to prevent redirect loops.
  */
 export const verifyAndGetSession = cache(async function verifyAndGetSession() {
-    const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+    let token: string | undefined;
+    try {
+        token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+    } catch {
+        return null;
+    }
+
     if (!token) return null;
 
-    // Fetch the session alongside user profile contexts
-    const sessionRecord = await db.query.sessions.findFirst({
-        where: eq(sessions.id, token),
-        with: {
-            user: true,
-        },
-    });
+    try {
+        // Fetch the session alongside user profile contexts
+        const sessionRecord = await db.query.sessions.findFirst({
+            where: eq(sessions.id, token),
+            with: {
+                user: true,
+            },
+        });
 
-    if (!sessionRecord) {
+        if (!sessionRecord || !sessionRecord.user) {
+            // Drop invalid / orphan session cookie immediately
+            try {
+                (await cookies()).delete(SESSION_COOKIE_NAME);
+            } catch (e) {}
+            return null;
+        }
+
+        // Check if session has expired
+        const expiryTime = sessionRecord.expiresAt instanceof Date
+            ? sessionRecord.expiresAt.getTime()
+            : new Date(sessionRecord.expiresAt).getTime();
+
+        if (isNaN(expiryTime) || Date.now() >= expiryTime) {
+            // Session stale; purge from DB and drop cookie context
+            try {
+                await db.delete(sessions).where(eq(sessions.id, token));
+                (await cookies()).delete(SESSION_COOKIE_NAME);
+            } catch (e) {}
+            return null;
+        }
+
+        return sessionRecord;
+    } catch (err) {
+        console.error("Database error during verifyAndGetSession:", err);
         return null;
     }
-
-    // Check if session has expired
-    const expiryTime = sessionRecord.expiresAt instanceof Date
-        ? sessionRecord.expiresAt.getTime()
-        : new Date(sessionRecord.expiresAt).getTime();
-
-    if (isNaN(expiryTime) || Date.now() >= expiryTime) {
-        // Session stale; purge from DB and drop cookie context
-        await db.delete(sessions).where(eq(sessions.id, token));
-        (await cookies()).delete(SESSION_COOKIE_NAME);
-        return null;
-    }
-
-    return sessionRecord;
 });
 
 /**
  * Revokes the active session row and clears the client browser cookie.
  */
 export async function invalidateSession() {
-    const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
-    if (!token) return;
-
-    await db.delete(sessions).where(eq(sessions.id, token));
-    (await cookies()).delete(SESSION_COOKIE_NAME);
+    try {
+        const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+        if (token) {
+            await db.delete(sessions).where(eq(sessions.id, token));
+        }
+        (await cookies()).delete(SESSION_COOKIE_NAME);
+    } catch (e) {
+        console.error("Error during invalidateSession:", e);
+    }
 }
 
 interface RegisterOwnerInput {
@@ -214,4 +235,9 @@ export async function registerOwnerAccount(input: RegisterOwnerInput) {
         console.error("Critical error during merchant onboarding transaction:", error);
         return { success: false as const, error: "Account initialization failed. Please try again." };
     }
+}
+
+export async function clearStaleSessionAction() {
+    await invalidateSession();
+    return { success: true };
 }

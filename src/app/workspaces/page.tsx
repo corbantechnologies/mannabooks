@@ -1,6 +1,5 @@
-// src/app/workspaces/page.tsx
 import { db } from "@/db";
-import { shopMembers, users } from "@/db/schema";
+import { shopMembers, shops, users } from "@/db/schema";
 import { verifyAndGetSession } from "@/lib/actions/auth";
 import { logoutAction } from "@/lib/actions/logout";
 import { eq, and } from "drizzle-orm";
@@ -11,6 +10,22 @@ export default async function WorkspacesDirectoryPage() {
   const session = await verifyAndGetSession();
   if (!session) {
     redirect("/login");
+  }
+
+  // Auto-heal: Check if this user owns shops directly in the shops table
+  const ownedShops = await db.query.shops.findMany({
+    where: eq(shops.ownerId, session.userId),
+  });
+
+  for (const shop of ownedShops) {
+    try {
+      await db.insert(shopMembers).values({
+        shopId: shop.id,
+        userId: session.userId,
+        role: "OWNER",
+        isActive: true,
+      }).onConflictDoNothing();
+    } catch (e) {}
   }
 
   // Pull user profile and active memberships

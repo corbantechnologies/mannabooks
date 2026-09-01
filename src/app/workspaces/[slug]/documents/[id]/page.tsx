@@ -9,6 +9,7 @@ import { DocumentStatusPanel } from "./DocumentStatusPanel";
 import { DocumentChain, type ChainNode } from "@/components/DocumentChain";
 import { PaymentHistorySubLedger } from "./PaymentHistorySubLedger";
 import { DocumentInternalNotes } from "./DocumentInternalNotes";
+import { ConversionAlertBanner } from "./ConversionAlertBanner";
 
 interface DocumentDetailPageProps {
   params: Promise<{ slug: string; id: string }>;
@@ -124,17 +125,11 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
 
       {/* POST-CONVERSION SUCCESS BANNER */}
       {converted && fromDoc && (
-        <div className="bg-emerald-50 border border-emerald-300 rounded-xl px-4 py-3 flex items-start gap-3 animate-in fade-in slide-in-from-top-3 duration-300">
-          <span className="text-emerald-600 text-xl mt-0.5">✓</span>
-          <div>
-            <p className="font-bold text-emerald-900 text-sm">
-              {doc.type.charAt(0) + doc.type.slice(1).toLowerCase().replace(/_/g, " ")} created successfully!
-            </p>
-            <p className="text-emerald-700 text-xs mt-0.5">
-              Converted from <strong>{fromDoc}</strong>. The original {converted.toLowerCase().replace(/_/g, " ")} has been updated accordingly.
-            </p>
-          </div>
-        </div>
+        <ConversionAlertBanner
+          convertedFromType={converted}
+          sourceDocNumber={fromDoc}
+          targetDocType={doc.type}
+        />
       )}
 
       {/* BACK NAV + HEADER */}

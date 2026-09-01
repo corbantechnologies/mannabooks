@@ -4,10 +4,12 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { calculateLineItem, calculateDocumentTotals, formatCurrency, isFiscalDocType } from "@/lib/utils";
+import { calculateLineItem, calculateDocumentTotals, formatCurrency, isFiscalDocType, isProcurementDocType } from "@/lib/utils";
 import { createBillingDocument, updateBillingDocument, DocumentType } from "@/lib/actions/documents";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
+import { CatalogProductPicker, CatalogProductItem } from "@/components/CatalogProductPicker";
+import { PartyPicker } from "@/components/PartyPicker";
 
 interface BuilderProps {
   shop: any;
@@ -191,18 +193,31 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
     setRows(updated);
   }
 
-  function handleProductLookup(index: number, productId: string) {
-    const matchedProduct = products.find((p) => p.id === productId);
-    if (!matchedProduct) return;
-
+  function handleProductSelect(index: number, product: CatalogProductItem | null) {
     const updated = [...rows];
+    if (!product) {
+      updated[index] = {
+        ...updated[index],
+        productId: undefined,
+      };
+      setRows(updated);
+      return;
+    }
+
+    const isProcurement = isProcurementDocType(docType) || partyType === "SUPPLIER";
+    const costVal = product.costPrice ? parseFloat(product.costPrice) : 0;
+    const sellVal = parseFloat(product.unitPrice);
+    const defaultPrice = isProcurement
+      ? (costVal > 0 ? costVal : sellVal)
+      : sellVal;
+
     updated[index] = {
-      productId: matchedProduct.id,
-      description: matchedProduct.name,
+      productId: product.id,
+      description: product.name,
       notes: updated[index].notes || "",
-      quantity: 1,
-      unitPrice: parseFloat(matchedProduct.unitPrice),
-      taxType: matchedProduct.defaultTaxType,
+      quantity: updated[index].quantity || 1,
+      unitPrice: defaultPrice,
+      taxType: product.defaultTaxType,
     };
     setRows(updated);
   }
@@ -351,27 +366,16 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
               </div>
             </div>
 
-            <select
-              value={targetId}
-              onChange={(e) => setTargetId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-sans text-xs font-semibold h-10"
-            >
-              <option value="">
-                {partyType === "CLIENT" ? "-- Walk-in / Over the Counter (No Client Record) --" : "-- Select Supplier Profile --"}
-              </option>
-              {partyType === "CLIENT"
-                ? clients.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name.toUpperCase()} {c.taxPin ? `(PIN: ${c.taxPin})` : ""} {c.requiresEtims ? "[eTIMS]" : ""}
-                    </option>
-                  ))
-                : suppliers.map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.name.toUpperCase()} {s.taxPin ? `(PIN: ${s.taxPin})` : ""} {s.requiresEtims ? "[eTIMS]" : ""}
-                    </option>
-                  ))
-              }
-            </select>
+            <PartyPicker
+              partyType={partyType}
+              parties={partyType === "CLIENT" ? clients : suppliers}
+              selectedId={targetId}
+              onSelect={(id) => setTargetId(id)}
+              onPartyTypeChange={(type) => {
+                setPartyType(type);
+                setTargetId("");
+              }}
+            />
           </div>
 
           {/* DOCUMENT TYPE SELECTOR */}
@@ -595,22 +599,13 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                   <div className="lg:col-span-5 space-y-3">
                     <div className="space-y-1">
                       <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Catalog Product / Service Lookup</label>
-                      <select
-                        onChange={(e) => handleProductLookup(index, e.target.value)}
-                        value={row.productId || ""}
-                        className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-md font-sans text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-black"
-                      >
-                        <option value="">-- SELECT FROM CATALOG REGISTER (OPTIONAL) --</option>
-                        {products.map((p) => {
-                          const stockVal = parseFloat(p.stockQuantity || "0");
-                          const stockLabel = p.trackStock ? ` (${stockVal > 0 ? `${stockVal} in stock` : "OUT OF STOCK"})` : "";
-                          return (
-                            <option key={p.id} value={p.id}>
-                              {p.name} — {formatCurrency(parseFloat(p.unitPrice), shop.currency)}{stockLabel}
-                            </option>
-                          );
-                        })}
-                      </select>
+                      <CatalogProductPicker
+                        products={products}
+                        selectedProductId={row.productId}
+                        currency={currency}
+                        isProcurement={isProcurementDocType(docType) || partyType === "SUPPLIER"}
+                        onSelect={(product) => handleProductSelect(index, product)}
+                      />
                     </div>
                     
                     <div className="space-y-1">
@@ -636,10 +631,23 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                       />
                     </div>
 
-                    {isOverstock && (
-                      <div className="text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded">
-                        ⚠️ Quantity ({row.quantity}) exceeds current stock ({parseFloat(matchedCatalogProduct.stockQuantity)} available)
-                      </div>
+                    {/* CONTEXT-AWARE INVENTORY STATUS BADGE */}
+                    {matchedCatalogProduct && matchedCatalogProduct.trackStock && (
+                      isProcurementDocType(docType) || partyType === "SUPPLIER" ? (
+                        <div className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded flex items-center gap-1.5 font-mono">
+                          <span>📦</span>
+                          <span>Inbound Restock: Current stock is {parseFloat(matchedCatalogProduct.stockQuantity || "0")} units ({rowQty > 0 ? `ordering +${rowQty}` : "enter qty"})</span>
+                        </div>
+                      ) : docType === "QUOTATION" ? (
+                        <div className="text-[10px] font-semibold text-zinc-700 bg-zinc-50 border border-zinc-200 px-2.5 py-1.5 rounded flex items-center gap-1.5 font-mono">
+                          <span>📦</span>
+                          <span>Available Inventory: {parseFloat(matchedCatalogProduct.stockQuantity || "0")} units</span>
+                        </div>
+                      ) : isOverstock ? (
+                        <div className="text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded font-mono">
+                          ⚠️ Outbound quantity ({row.quantity}) exceeds available stock ({parseFloat(matchedCatalogProduct.stockQuantity || "0")} units)
+                        </div>
+                      ) : null
                     )}
                   </div>
 
@@ -659,9 +667,11 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                     />
                   </div>
 
-                  {/* UNIT PRICE */}
+                  {/* UNIT PRICE / COST PRICE */}
                   <div className="lg:col-span-2 space-y-2">
-                    <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Unit Price ({currency})</label>
+                    <label className="text-[10px] text-zinc-400 uppercase block font-semibold">
+                      {isProcurementDocType(docType) || partyType === "SUPPLIER" ? `Cost Price (${currency})` : `Unit Price (${currency})`}
+                    </label>
                     <input
                       type="number"
                       step="0.01"

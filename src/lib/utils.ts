@@ -36,6 +36,15 @@ export function isFiscalDocType(type: string | null | undefined): boolean {
     return type === "INVOICE" || type === "RECEIPT" || type === "CREDIT_NOTE" || type === "DEBIT_NOTE";
 }
 
+/**
+ * Returns true if the document type represents incoming procurement from a supplier/vendor
+ * (LPO, PO, GOODS_RECEIVED_NOTE, PAYMENT_VOUCHER).
+ */
+export function isProcurementDocType(type: string | null | undefined): boolean {
+    if (!type) return false;
+    return type === "LPO" || type === "PO" || type === "GOODS_RECEIVED_NOTE" || type === "PAYMENT_VOUCHER";
+}
+
 export interface LineItemCalculationInput {
     quantity: number;
     unitPrice: number;

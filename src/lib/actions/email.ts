@@ -11,12 +11,13 @@ const resend = new Resend(process.env.RESEND_API_KEY || "re_mock_key");
 interface EmailDeliveryInput {
     documentId: string;
     isReminder?: boolean;
+    recipientEmail?: string;
 }
 
 /**
  * Automates document dispatch by querying the crypt token and emailing the client.
  */
-export async function dispatchDocumentEmail({ documentId, isReminder = false }: EmailDeliveryInput) {
+export async function dispatchDocumentEmail({ documentId, isReminder = false, recipientEmail }: EmailDeliveryInput) {
     try {
         // 1. Locate the public secure path token for this document
         const matchToken = await db.query.documentTokens.findFirst({
@@ -34,7 +35,8 @@ export async function dispatchDocumentEmail({ documentId, isReminder = false }: 
 
         const doc = matchToken.document;
         const recipient = doc.client || doc.supplier;
-        if (!recipient || !recipient.email) {
+        const targetEmail = recipientEmail?.trim() || recipient?.email?.trim();
+        if (!targetEmail) {
             return { success: false, error: "No recipient email address available for this document." };
         }
 
@@ -70,7 +72,7 @@ export async function dispatchDocumentEmail({ documentId, isReminder = false }: 
         // 2. Dispatch the transaction details via Resend with clean HTML layout
         const { data, error: resendError } = await resend.emails.send({
             from: fromAddress,
-            to: [recipient.email],
+            to: [targetEmail],
             replyTo: doc.shop.email ? [doc.shop.email.trim()] : undefined,
             subject: `${doc.shop.name} — ${doc.type} ${doc.docNumber}`,
             html: `
@@ -80,7 +82,7 @@ export async function dispatchDocumentEmail({ documentId, isReminder = false }: 
                         <p style="font-family: monospace; font-size: 11px; color: #71717a; margin: 4px 0 0 0; text-transform: uppercase;">Official Billing Statement</p>
                     </div>
 
-                    <p style="font-size: 14px; margin-bottom: 20px;">Dear <strong>${recipient.name}</strong>,</p>
+                    <p style="font-size: 14px; margin-bottom: 20px;">Dear <strong>${recipient?.name || "Valued Client"}</strong>,</p>
 
                     <p style="font-size: 14px; line-height: 1.5; color: #3f3f46; margin-bottom: 24px;">
                         ${introText}

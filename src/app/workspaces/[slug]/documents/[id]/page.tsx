@@ -376,8 +376,8 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         docNumber={doc.docNumber}
         kraCuInvoiceNumber={doc.kraCuInvoiceNumber}
         requiresEtims={doc.requiresEtims}
-        initialPaymentChannel={doc.paymentChannel}
-        initialPaymentReference={doc.paymentReference}
+        initialPaymentChannel={doc.paymentChannel || doc.payments?.[0]?.paymentChannel || ""}
+        initialPaymentReference={doc.paymentReference || doc.payments?.[0]?.paymentReference || ""}
         parentDocument={parentDoc ? { id: parentDoc.id, docNumber: parentDoc.docNumber, type: parentDoc.type } : null}
         shopName={shop.name}
         shopShortName={shop.shortName}

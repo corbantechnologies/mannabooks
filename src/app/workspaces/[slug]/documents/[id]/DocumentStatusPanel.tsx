@@ -335,7 +335,7 @@ export function DocumentStatusPanel({
           {/* PRIMARY DIRECT DISPATCH CTA */}
           <button
             type="button"
-            disabled={sending}
+            disabled={sending || !clientEmail}
             onClick={handleSendEmail}
             className="btn-primary-modern px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider disabled:bg-zinc-400 disabled:opacity-50"
           >
@@ -344,10 +344,31 @@ export function DocumentStatusPanel({
                 <Spinner size={10} color="white" />
                 <span>Dispatching...</span>
               </span>
-            ) : (
+            ) : clientEmail ? (
               `Email to ${clientEmail}`
+            ) : (
+              "Missing Client Email"
             )}
           </button>
+
+          {/* AGING REMINDER FOR OVERDUE INVOICES */}
+          {docType === "INVOICE" && status === "OVERDUE" && (
+            <button
+              type="button"
+              disabled={sending || !clientEmail}
+              onClick={handleSendReminder}
+              className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100 flex items-center gap-1.5 disabled:opacity-50"
+            >
+              {sending ? (
+                <span className="flex items-center justify-center gap-1.5">
+                  <Spinner size={10} color="currentColor" />
+                  <span>Dispatching...</span>
+                </span>
+              ) : (
+                "🔔 Send Aging Reminder"
+              )}
+            </button>
+          )}
 
           {/* SHARE & EXPORT POPOVER DROPDOWN */}
           <div className="relative inline-block text-left">
@@ -517,71 +538,60 @@ export function DocumentStatusPanel({
         </div>
       </div>
 
-      {/* MAIN EMAIL DISPATCH & REMINDER */}
-      <div className="flex gap-4">
-        <button
-          onClick={handleSendEmail}
-          disabled={sending || !clientEmail}
-          className="flex-1 border border-zinc-200 bg-white hover:bg-zinc-50 px-4 py-2 font-mono text-[10px] font-bold uppercase transition-colors disabled:opacity-50"
-        >
-          {sending ? (
-            <span className="flex items-center justify-center gap-1.5">
-              <Spinner size={10} />
-              <span>Dispatching...</span>
-            </span>
-          ) : clientEmail ? (
-            "✉ Email Secure Portal Link"
-          ) : (
-            "✉ Missing Client Email"
-          )}
-        </button>
-        
-        {(docType === "INVOICE" && currentStatus === "OVERDUE") && (
-          <button
-            onClick={handleSendReminder}
-            disabled={sending || !clientEmail}
-            className="flex-1 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 px-4 py-2 font-mono text-[10px] font-bold uppercase transition-colors disabled:opacity-50"
-          >
-            {sending ? (
-              <span className="flex items-center justify-center gap-1.5">
-                <Spinner size={10} color="currentColor" />
-                <span>Dispatching...</span>
+      {/* SETTLEMENT CONFIRMATION / PAYMENT REMITTANCE */}
+      {(status === "PAID" || status === "RECEIVED") ? (
+        <div className="border border-emerald-200/80 bg-emerald-50/50 p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-emerald-700 font-bold text-xs">✓</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-950">
+                Payment Settled &amp; Recorded
               </span>
-            ) : (
-              "🔔 Send Aging Reminder"
-            )}
-          </button>
-        )}
-      </div>
-
-      {/* PAYMENT CONFIRMATION DETAILS (OPTIONAL) */}
-      <div className="border border-zinc-200/80 p-4 bg-zinc-50/50 rounded space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-[10px] font-semibold uppercase text-black">Payment Confirmation &amp; Remittance Ref</span>
-          <span className="text-[9px] text-zinc-400 italic">Optional Settlement Details</span>
+            </div>
+            <p className="text-[11px] text-emerald-800 font-sans">
+              {paymentChannel || paymentReference ? (
+                <>
+                  Settlement via <strong className="font-semibold uppercase">{paymentChannel || "Direct Remittance"}</strong>
+                  {paymentReference && <> • Ref: <span className="font-mono font-bold">{paymentReference}</span></>}
+                </>
+              ) : (
+                "Settlement transaction recorded in the Payment History ledger."
+              )}
+            </p>
+          </div>
+          <span className="badge-emerald self-start sm:self-auto text-[10px] px-2.5 py-1">
+            PAID IN FULL
+          </span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <select
-            value={paymentChannel}
-            onChange={(e) => setPaymentChannel(e.target.value)}
-            className="w-full px-3 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase"
-          >
-            <option value="">-- PAYMENT CHANNEL / METHOD --</option>
-            <option value="BANK">Bank Account / Transfer</option>
-            <option value="MPESA">M-Pesa (Till / Paybill)</option>
-            <option value="CASH">Cash Settlement</option>
-            <option value="CHEQUE">Bank Cheque</option>
-            <option value="OTHER">Other Custom Method</option>
-          </select>
-          <input
-            type="text"
-            value={paymentReference}
-            onChange={(e) => setPaymentReference(e.target.value)}
-            placeholder="e.g. M-Pesa Code QAB71239X or Bank Ref"
-            className="w-full px-3 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase"
-          />
+      ) : (
+        <div className="border border-zinc-200/80 p-4 bg-zinc-50/50 rounded-lg space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-semibold uppercase text-black">Payment Confirmation &amp; Remittance Ref</span>
+            <span className="text-[9px] text-zinc-400 italic">Optional Settlement Details</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <select
+              value={paymentChannel}
+              onChange={(e) => setPaymentChannel(e.target.value)}
+              className="w-full px-3 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase rounded-md"
+            >
+              <option value="">-- PAYMENT CHANNEL / METHOD --</option>
+              <option value="BANK">Bank Account / Transfer</option>
+              <option value="MPESA">M-Pesa (Till / Paybill)</option>
+              <option value="CASH">Cash Settlement</option>
+              <option value="CHEQUE">Bank Cheque</option>
+              <option value="OTHER">Other Custom Method</option>
+            </select>
+            <input
+              type="text"
+              value={paymentReference}
+              onChange={(e) => setPaymentReference(e.target.value)}
+              placeholder="e.g. M-Pesa Code QAB71239X or Bank Ref"
+              className="w-full px-3 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase rounded-md"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* THERMAL RECEIPT MODAL */}
       <ThermalReceiptModal

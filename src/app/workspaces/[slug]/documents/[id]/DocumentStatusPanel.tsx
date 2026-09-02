@@ -103,9 +103,7 @@ export function DocumentStatusPanel({
   const [paymentChannel, setPaymentChannel] = useState(initialPaymentChannel || "");
   const [paymentReference, setPaymentReference] = useState(initialPaymentReference || "");
   const [savingCu, setSavingCu] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showThermalModal, setShowThermalModal] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -144,46 +142,116 @@ export function DocumentStatusPanel({
     );
   }
 
-  async function handleSendEmail() {
+  async function executeSendEmail(targetEmail: string, isReminder = false) {
     setSending(true);
-    setMessage(null);
-    const toastId = toast.loading(`Dispatching email to ${clientEmail}...`);
+    const toastId = toast.loading(
+      isReminder
+        ? `Dispatching aging reminder to ${targetEmail}...`
+        : `Dispatching email to ${targetEmail}...`
+    );
 
-    const res = await dispatchDocumentEmail({ documentId, isReminder: false });
+    const res = await dispatchDocumentEmail({
+      documentId,
+      isReminder,
+      recipientEmail: targetEmail,
+    });
     setSending(false);
 
     if (res.success) {
-      const text = `Document emailed to ${clientEmail} successfully.`;
-      setMessage({ type: "success", text });
-      toast.success(text, { id: toastId });
+      toast.success(
+        isReminder
+          ? `Aging reminder sent to ${targetEmail}!`
+          : `Document successfully emailed to ${targetEmail}!`,
+        { id: toastId }
+      );
     } else {
-      const text = res.error || "Failed to send email.";
-      setMessage({ type: "error", text });
-      toast.error(text, { id: toastId });
+      toast.error(res.error || "Failed to send email.", { id: toastId });
     }
   }
 
-  async function handleSendReminder() {
-    setSending(true);
-    setMessage(null);
-    const toastId = toast.loading(`Dispatching aging reminder to ${clientEmail}...`);
+  function promptEmailDispatch(isReminder = false) {
+    const defaultEmail = clientEmail || "";
+    let editedEmail = defaultEmail;
 
-    const res = await dispatchDocumentEmail({ documentId, isReminder: true });
-    setSending(false);
+    toast.custom(
+      (t) => (
+        <div
+          className={`${
+            t.visible ? "animate-in fade-in zoom-in-95 duration-200" : "animate-out fade-out zoom-out-95 duration-150"
+          } max-w-md w-full bg-white border border-zinc-200/90 rounded-xl shadow-2xl p-4 space-y-3 font-sans text-xs text-black pointer-events-auto`}
+        >
+          <div className="flex items-start justify-between gap-2 border-b border-zinc-100 pb-2.5">
+            <div className="flex items-center gap-2">
+              <span className="text-base">{isReminder ? "🔔" : "✉️"}</span>
+              <div>
+                <p className="font-bold text-sm uppercase tracking-tight text-black">
+                  {isReminder ? "Send Aging Reminder" : "Email Document"}
+                </p>
+                <p className="text-[11px] text-zinc-500 font-mono">
+                  {docNumber} ({docType})
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => toast.dismiss(t.id)}
+              className="text-zinc-400 hover:text-black p-1 text-sm font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
 
-    if (res.success) {
-      const text = `Aging reminder emailed to ${clientEmail} successfully.`;
-      setMessage({ type: "success", text });
-      toast.success(text, { id: toastId });
-    } else {
-      const text = res.error || "Failed to send reminder.";
-      setMessage({ type: "error", text });
-      toast.error(text, { id: toastId });
-    }
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-semibold uppercase text-zinc-500 block">
+              Recipient Email Address
+            </label>
+            <input
+              type="email"
+              defaultValue={defaultEmail}
+              onChange={(e) => {
+                editedEmail = e.target.value;
+              }}
+              placeholder="recipient@example.com"
+              className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black text-xs font-mono bg-white"
+              autoFocus
+            />
+            <p className="text-[10px] text-zinc-400 font-sans">
+              Confirm or edit the email address before dispatching via secure mail gateway.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => toast.dismiss(t.id)}
+              className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const finalEmail = editedEmail.trim();
+                if (!finalEmail || !finalEmail.includes("@")) {
+                  toast.error("Please enter a valid recipient email address.");
+                  return;
+                }
+                toast.dismiss(t.id);
+                executeSendEmail(finalEmail, isReminder);
+              }}
+              className="btn-primary-modern px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider shadow-2xs"
+            >
+              Confirm &amp; Send
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: Infinity, position: "top-center" }
+    );
   }
 
   return (
-    <div className="card-modern p-4 sm:p-6 space-y-6 font-mono text-xs">
+    <div className="card-modern p-4 sm:p-6 space-y-5 font-mono text-xs">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-4">
         <div>
           <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Manage Lifecycle</span>
@@ -212,16 +280,6 @@ export function DocumentStatusPanel({
           status={status}
         />
       </div>
-
-      {message && (
-        <div className={`border p-3 font-semibold text-xs rounded ${
-          message.type === "success"
-            ? "border-emerald-300 bg-emerald-50 text-emerald-900"
-            : "border-rose-200 bg-rose-50 text-rose-800"
-        }`}>
-          {message.type === "success" ? "✓ " : "⚠ "}{message.text}
-        </div>
-      )}
 
       {/* STATUS TOGGLE */}
       <div className="space-y-3">
@@ -317,26 +375,12 @@ export function DocumentStatusPanel({
           )}
         </div>
 
-        {portalLink && (
-          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-            <span className="text-zinc-500 text-[10px] uppercase">Portal Link:</span>
-            <a
-              href={portalLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-emerald-800 underline underline-offset-2 font-bold text-xs break-all hover:text-emerald-950"
-            >
-              {portalLink}
-            </a>
-          </div>
-        )}
-
         <div className="flex flex-wrap items-center gap-2">
-          {/* PRIMARY DIRECT DISPATCH CTA */}
+          {/* PRIMARY CONFIRMABLE DISPATCH CTA */}
           <button
             type="button"
-            disabled={sending || !clientEmail}
-            onClick={handleSendEmail}
+            disabled={sending}
+            onClick={() => promptEmailDispatch(false)}
             className="btn-primary-modern px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider disabled:bg-zinc-400 disabled:opacity-50"
           >
             {sending ? (
@@ -347,7 +391,7 @@ export function DocumentStatusPanel({
             ) : clientEmail ? (
               `Email to ${clientEmail}`
             ) : (
-              "Missing Client Email"
+              "Email Document"
             )}
           </button>
 
@@ -355,8 +399,8 @@ export function DocumentStatusPanel({
           {docType === "INVOICE" && status === "OVERDUE" && (
             <button
               type="button"
-              disabled={sending || !clientEmail}
-              onClick={handleSendReminder}
+              disabled={sending}
+              onClick={() => promptEmailDispatch(true)}
               className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100 flex items-center gap-1.5 disabled:opacity-50"
             >
               {sending ? (
@@ -392,7 +436,6 @@ export function DocumentStatusPanel({
                     type="button"
                     onClick={() => {
                       navigator.clipboard.writeText(portalLink);
-                      setMessage({ type: "success", text: "Portal link copied to clipboard." });
                       toast.success("Portal link copied to clipboard.");
                       setIsShareOpen(false);
                     }}
@@ -500,95 +543,31 @@ export function DocumentStatusPanel({
         </div>
       </div>
 
-      {/* KRA eTIMS / CONTROL UNIT SERIAL NUMBER (OPTIONAL STATUTORY FIELD) */}
-      <div className="border border-zinc-200/80 p-4 bg-zinc-50/50 rounded-lg space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-[10px] font-semibold uppercase text-black">Statutory KRA eTIMS CU Serial Number</span>
-          {isFiscalDocType(docType) && requiresEtims && !cuNumber ? (
-            <span className="border border-amber-300 bg-amber-100 text-amber-900 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-tight rounded">
-              ⚠️ eTIMS CU Serial Pending
-            </span>
-          ) : (
-            <span className="text-[9px] text-zinc-400 italic">Optional Tax Control Number</span>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={cuNumber}
-            onChange={(e) => setCuNumber(e.target.value)}
-            placeholder="e.g. CU0123456789/2026"
-            className="flex-1 px-3 py-1.5 border border-zinc-300 rounded bg-white focus:outline-none focus:border-black text-xs uppercase font-mono"
-          />
-          <button
-            type="button"
-            onClick={handleSaveCuNumber}
-            disabled={savingCu}
-            className="btn-primary-modern px-4 py-1.5 font-semibold uppercase text-[10px] disabled:bg-zinc-400"
-          >
-            {savingCu ? (
-              <span className="flex items-center justify-center gap-1.5">
-                <Spinner size={10} color="white" />
-                <span>Saving...</span>
-              </span>
-            ) : (
-              "Save CU #"
+      {/* COMPACT KRA eTIMS CU SERIAL NUMBER (IF FISCAL DOC TYPE) */}
+      {isFiscalDocType(docType) && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-zinc-100 pt-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold uppercase text-zinc-500">Statutory KRA eTIMS CU:</span>
+            {requiresEtims && !cuNumber && (
+              <span className="badge-amber text-[9px]">CU Pending</span>
             )}
-          </button>
-        </div>
-      </div>
-
-      {/* SETTLEMENT CONFIRMATION / PAYMENT REMITTANCE */}
-      {(status === "PAID" || status === "RECEIVED") ? (
-        <div className="border border-emerald-200/80 bg-emerald-50/50 p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-1.5">
-              <span className="text-emerald-700 font-bold text-xs">✓</span>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-950">
-                Payment Settled &amp; Recorded
-              </span>
-            </div>
-            <p className="text-[11px] text-emerald-800 font-sans">
-              {paymentChannel || paymentReference ? (
-                <>
-                  Settlement via <strong className="font-semibold uppercase">{paymentChannel || "Direct Remittance"}</strong>
-                  {paymentReference && <> • Ref: <span className="font-mono font-bold">{paymentReference}</span></>}
-                </>
-              ) : (
-                "Settlement transaction recorded in the Payment History ledger."
-              )}
-            </p>
           </div>
-          <span className="badge-emerald self-start sm:self-auto text-[10px] px-2.5 py-1">
-            PAID IN FULL
-          </span>
-        </div>
-      ) : (
-        <div className="border border-zinc-200/80 p-4 bg-zinc-50/50 rounded-lg space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-semibold uppercase text-black">Payment Confirmation &amp; Remittance Ref</span>
-            <span className="text-[9px] text-zinc-400 italic">Optional Settlement Details</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <select
-              value={paymentChannel}
-              onChange={(e) => setPaymentChannel(e.target.value)}
-              className="w-full px-3 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase rounded-md"
-            >
-              <option value="">-- PAYMENT CHANNEL / METHOD --</option>
-              <option value="BANK">Bank Account / Transfer</option>
-              <option value="MPESA">M-Pesa (Till / Paybill)</option>
-              <option value="CASH">Cash Settlement</option>
-              <option value="CHEQUE">Bank Cheque</option>
-              <option value="OTHER">Other Custom Method</option>
-            </select>
+          <div className="flex items-center gap-1.5 max-w-sm w-full sm:w-auto">
             <input
               type="text"
-              value={paymentReference}
-              onChange={(e) => setPaymentReference(e.target.value)}
-              placeholder="e.g. M-Pesa Code QAB71239X or Bank Ref"
-              className="w-full px-3 py-1.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs uppercase rounded-md"
+              value={cuNumber}
+              onChange={(e) => setCuNumber(e.target.value)}
+              placeholder="e.g. CU0123456789/2026"
+              className="px-2.5 py-1 border border-zinc-300 rounded text-xs uppercase font-mono flex-1 sm:w-48 bg-white focus:outline-none focus:border-black"
             />
+            <button
+              type="button"
+              onClick={handleSaveCuNumber}
+              disabled={savingCu}
+              className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider"
+            >
+              {savingCu ? "Saving..." : "Save CU"}
+            </button>
           </div>
         </div>
       )}

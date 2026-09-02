@@ -133,10 +133,10 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
       )}
 
       {/* BACK NAV + HEADER */}
-      <div className="border-b border-black pb-6 space-y-2">
+      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
         <Link
           href={`/workspaces/${slug}/documents`}
-          className="font-sans text-xs font-bold text-zinc-400 hover:underline block"
+          className="font-sans text-xs font-bold text-zinc-400 hover:text-black hover:underline block"
         >
           ← Back to Billing &amp; Invoices
         </Link>
@@ -144,38 +144,38 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
           <div>
             <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Transaction Detail</span>
             <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">{doc.docNumber}</h1>
-            <p className="font-sans text-xs text-zinc-500 mt-0.5">Party: {party.name}</p>
+            <p className="font-sans text-xs text-zinc-500 mt-0.5">Party: <span className="font-semibold text-black">{party.name}</span></p>
           </div>
           <div className="flex gap-2 font-mono text-[10px] flex-wrap items-center">
-            <span className="border border-black px-2 py-1 bg-zinc-50 font-bold uppercase">{doc.type}</span>
-            <span className={`border px-2 py-1 font-bold uppercase ${
-              doc.status === "PAID" ? "bg-black text-white border-black" :
-              doc.status === "ISSUED" ? "bg-white text-black border-black" :
-              doc.status === "PARTIALLY_PAID" ? "bg-amber-100 border-amber-400 text-amber-900" :
-              doc.status === "OVERDUE" ? "bg-zinc-100 border-rose-600 border-dashed text-rose-700" :
-              "bg-zinc-50 text-zinc-400 border-zinc-200"
-            }`}>
+            <span className="badge-zinc">{doc.type}</span>
+            <span className={
+              doc.status === "PAID" ? "badge-emerald" :
+              doc.status === "ISSUED" ? "badge-zinc" :
+              doc.status === "PARTIALLY_PAID" ? "badge-amber" :
+              doc.status === "OVERDUE" ? "badge-rose" :
+              "badge-zinc text-zinc-400"
+            }>
               {doc.status}
             </span>
             {doc.emailDeliveryStatus === "OPENED" ? (
-              <span className="border border-emerald-500 bg-emerald-50 text-emerald-800 px-2 py-1 font-bold uppercase" title={`Email opened on ${doc.lastEmailOpenedAt ? new Date(doc.lastEmailOpenedAt).toLocaleString() : ''}`}>
+              <span className="badge-emerald" title={`Email opened on ${doc.lastEmailOpenedAt ? new Date(doc.lastEmailOpenedAt).toLocaleString() : ''}`}>
                 👁️ Email Opened
               </span>
             ) : doc.emailDeliveryStatus === "DELIVERED" ? (
-              <span className="border border-blue-400 bg-blue-50 text-blue-800 px-2 py-1 font-bold uppercase" title="Email delivered to recipient inbox">
+              <span className="bg-blue-50 text-blue-800 border border-blue-200 rounded-md px-2 py-0.5 font-semibold text-[10px] uppercase" title="Email delivered to recipient inbox">
                 ✓✓ Email Delivered
               </span>
             ) : doc.emailDeliveryStatus === "BOUNCED" ? (
-              <span className="border border-rose-400 bg-rose-50 text-rose-800 px-2 py-1 font-bold uppercase" title="Email bounced">
+              <span className="badge-rose" title="Email bounced">
                 ⚠️ Email Bounced
               </span>
             ) : doc.emailDeliveryStatus === "SENT" ? (
-              <span className="border border-zinc-300 bg-zinc-50 text-zinc-600 px-2 py-1 font-bold uppercase" title="Email sent via mail gateway">
+              <span className="badge-zinc" title="Email sent via mail gateway">
                 ✓ Email Sent
               </span>
             ) : null}
             {doc.isReadByRecipient && doc.emailDeliveryStatus !== "OPENED" && (
-              <span className="border border-emerald-500 bg-emerald-50 text-emerald-800 px-2 py-1 font-bold uppercase" title="Viewed via public client portal">
+              <span className="badge-emerald" title="Viewed via public client portal">
                 👁️ Portal Viewed
               </span>
             )}
@@ -193,20 +193,20 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
       )}
 
       {/* METADATA GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 border border-black divide-y sm:divide-y-0 sm:divide-x divide-black bg-white">
+      <div className="card-modern grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-zinc-200/80 bg-white overflow-hidden">
         <div className="p-5 space-y-1">
           <p className="font-mono text-[10px] text-zinc-400 uppercase">{doc.supplier ? "Supplier" : "Client"}</p>
           {doc.client ? (
             <Link
               href={`/workspaces/${slug}/clients/${doc.client.id}`}
-              className="font-bold uppercase text-sm hover:underline hover:text-black block"
+              className="font-bold uppercase text-sm hover:underline hover:text-emerald-800 block"
             >
               {party.name} ➔
             </Link>
           ) : doc.supplier ? (
             <Link
               href={`/workspaces/${slug}/suppliers/${doc.supplier.id}`}
-              className="font-bold uppercase text-sm hover:underline hover:text-black block"
+              className="font-bold uppercase text-sm hover:underline hover:text-emerald-800 block"
             >
               {party.name} ➔
             </Link>
@@ -230,7 +230,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         </div>
         <div className="p-5 space-y-1">
           <p className="font-mono text-[10px] text-zinc-400 uppercase">Grand Total</p>
-          <p className="text-2xl font-bold font-mono tracking-tight">{formatCurrency(doc.grandTotal, doc.currency || shop.currency)}</p>
+          <p className="text-2xl font-bold font-mono tracking-tight text-emerald-800">{formatCurrency(doc.grandTotal, doc.currency || shop.currency)}</p>
           <p className="font-mono text-[10px] text-zinc-500">
             Sub: {formatCurrency(doc.subTotal, doc.currency || shop.currency)} | VAT: {formatCurrency(doc.taxAmount, doc.currency || shop.currency)}
           </p>
@@ -246,7 +246,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
             </p>
           ) : isFiscalDocType(doc.type) && doc.requiresEtims ? (
             <div className="border-t border-zinc-200 pt-1 mt-1">
-              <span className="inline-block border border-amber-400 bg-amber-50 text-amber-900 text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-tight">
+              <span className="inline-block border border-amber-400 bg-amber-50 text-amber-900 text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-tight rounded-md">
                 ⚠️ eTIMS CU Serial Pending
               </span>
             </div>
@@ -262,23 +262,23 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
 
       {/* LINE ITEMS TABLE */}
       <div className="space-y-3">
-        <h3 className="font-bold uppercase tracking-tight text-sm font-mono">{">"} Line Item Breakdown</h3>
-        <div className="border border-black bg-white overflow-x-auto">
+        <h3 className="font-bold uppercase tracking-tight text-xs font-mono text-zinc-600">Line Item Breakdown</h3>
+        <div className="card-modern overflow-x-auto overflow-hidden">
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
-              <tr className="bg-zinc-50 border-b border-black uppercase tracking-wider font-bold">
-                <th className="p-4 border-r border-black">Description</th>
-                <th className="p-4 border-r border-black text-center">Qty</th>
-                <th className="p-4 border-r border-black text-right">Unit Rate</th>
-                <th className="p-4 border-r border-black text-center">Tax</th>
-                <th className="p-4 border-r border-black text-right">Tax Amt</th>
-                <th className="p-4 text-right">Total</th>
+              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+                <th className="p-3.5 border-r border-zinc-200">Description</th>
+                <th className="p-3.5 border-r border-zinc-200 text-center">Qty</th>
+                <th className="p-3.5 border-r border-zinc-200 text-right">Unit Rate</th>
+                <th className="p-3.5 border-r border-zinc-200 text-center">Tax</th>
+                <th className="p-3.5 border-r border-zinc-200 text-right">Tax Amt</th>
+                <th className="p-3.5 text-right">Total</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-black">
+            <tbody className="divide-y divide-zinc-200/80 bg-white">
               {doc.items.map((item) => (
-                <tr key={item.id} className="hover:bg-zinc-50">
-                  <td className="p-4 border-r border-black font-sans text-sm">
+                <tr key={item.id} className="hover:bg-zinc-50/70 transition-colors">
+                  <td className="p-3.5 border-r border-zinc-200/80 font-sans text-sm">
                     <div className="font-semibold text-black">{item.description}</div>
                     {item.notes && (
                       <div className="text-[10px] text-zinc-500 italic mt-0.5 font-mono">
@@ -286,19 +286,15 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
                       </div>
                     )}
                   </td>
-                  <td className="p-4 border-r border-black text-center">{item.quantity}</td>
-                  <td className="p-4 border-r border-black text-right font-bold">{formatCurrency(item.unitPrice, shop.currency)}</td>
-                  <td className="p-4 border-r border-black text-center">
-                    <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase border ${
-                      item.taxType === "V_16" ? "bg-black text-white border-black" :
-                      item.taxType === "V_0" ? "border-zinc-400 text-zinc-600" :
-                      "border-dashed border-zinc-300 text-zinc-400"
-                    }`}>
-                      {item.taxType}
+                  <td className="p-3.5 border-r border-zinc-200/80 text-center">{item.quantity}</td>
+                  <td className="p-3.5 border-r border-zinc-200/80 text-right font-bold">{formatCurrency(item.unitPrice, shop.currency)}</td>
+                  <td className="p-3.5 border-r border-zinc-200/80 text-center">
+                    <span className="badge-zinc">
+                      {item.taxType === "V_16" ? "16% VAT" : item.taxType === "V_0" ? "0% ZERO" : "EXEMPT"}
                     </span>
                   </td>
-                  <td className="p-4 border-r border-black text-right text-zinc-600">{formatCurrency(item.taxAmount, shop.currency)}</td>
-                  <td className="p-4 text-right font-bold text-black">{formatCurrency(item.itemTotal, shop.currency)}</td>
+                  <td className="p-3.5 border-r border-zinc-200/80 text-right text-zinc-600">{formatCurrency(item.taxAmount, shop.currency)}</td>
+                  <td className="p-3.5 text-right font-bold text-black">{formatCurrency(item.itemTotal, shop.currency)}</td>
                 </tr>
               ))}
             </tbody>

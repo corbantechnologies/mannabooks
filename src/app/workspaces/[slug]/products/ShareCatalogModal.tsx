@@ -119,8 +119,8 @@ export function ShareCatalogModal({
           className={
             className ||
             (isCurated
-              ? "bg-black hover:bg-zinc-800 text-white px-4 py-2 font-mono text-xs font-bold uppercase rounded-lg transition-all shadow-sm flex items-center gap-1.5"
-              : "border border-zinc-300 bg-white hover:bg-zinc-50 hover:border-black text-black px-4 py-2 font-mono text-xs font-semibold uppercase rounded transition-all shadow-sm flex items-center gap-1.5")
+              ? "btn-primary-modern px-3 py-1.5 text-xs font-semibold uppercase flex items-center gap-1.5"
+              : "btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase flex items-center gap-1.5")
           }
         >
           <span>🔗</span>
@@ -131,13 +131,13 @@ export function ShareCatalogModal({
       )}
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white border border-zinc-200 rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-zinc-200/80 rounded-xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             
             {/* MODAL HEADER */}
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+            <div className="flex items-center justify-between border-b border-zinc-200/80 pb-4">
               <div>
-                <span className="font-mono text-[10px] uppercase font-bold text-zinc-400 tracking-wider block">
+                <span className="text-[10px] uppercase font-semibold text-zinc-400 tracking-wider block">
                   {isCurated ? `Curated Product Selection (${count} Items)` : "Full Product Showcase"}
                 </span>
                 <h2 className="text-lg font-bold font-sans text-black">
@@ -149,7 +149,7 @@ export function ShareCatalogModal({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-zinc-400 hover:text-black font-mono text-xs uppercase font-bold"
+                className="text-zinc-400 hover:text-black font-bold text-base cursor-pointer"
               >
                 ✕
               </button>
@@ -163,7 +163,7 @@ export function ShareCatalogModal({
 
             {/* LINK BOX */}
             <div className="space-y-2">
-              <label className="text-[10px] font-mono uppercase font-bold text-zinc-500 block">
+              <label className="text-[10px] uppercase font-semibold text-zinc-500 block">
                 {isCurated ? "Curated Public Link (Selected Items Only)" : "Public Shareable Link"}
               </label>
               <div className="flex items-center gap-2">
@@ -171,12 +171,12 @@ export function ShareCatalogModal({
                   type="text"
                   readOnly
                   value={catalogUrl}
-                  className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-xs font-mono text-zinc-700 select-all focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-md text-xs font-mono text-zinc-700 select-all focus:outline-none focus:ring-1 focus:ring-black"
                 />
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="bg-black hover:bg-zinc-800 text-white px-4 py-2.5 rounded-lg font-mono text-xs font-bold uppercase transition-colors shrink-0"
+                  className="btn-primary-modern px-4 py-2.5 text-xs font-semibold uppercase shrink-0"
                 >
                   {copied ? "Copied! ✓" : "Copy"}
                 </button>
@@ -189,7 +189,7 @@ export function ShareCatalogModal({
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 px-3 py-2.5 rounded-xl font-mono text-xs font-bold uppercase transition-colors text-center"
+                className="flex items-center justify-center gap-1.5 border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 px-3 py-2.5 rounded-md text-xs font-semibold uppercase transition-colors text-center"
               >
                 <span>💬</span>
                 <span>WhatsApp</span>
@@ -198,9 +198,9 @@ export function ShareCatalogModal({
               <button
                 type="button"
                 onClick={() => setShowEmailForm((prev) => !prev)}
-                className={`flex items-center justify-center gap-1.5 border px-3 py-2.5 rounded-xl font-mono text-xs font-bold uppercase transition-all text-center ${
+                className={`flex items-center justify-center gap-1.5 border px-3 py-2.5 rounded-md text-xs font-semibold uppercase transition-all text-center cursor-pointer ${
                   showEmailForm
-                    ? "bg-zinc-900 border-zinc-900 text-white shadow-sm"
+                    ? "bg-zinc-900 border-zinc-900 text-white shadow-xs"
                     : "border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-900"
                 }`}
               >
@@ -212,7 +212,7 @@ export function ShareCatalogModal({
                 href={pdfUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-black px-3 py-2.5 rounded-xl font-mono text-xs font-bold uppercase transition-colors text-center"
+                className="flex items-center justify-center gap-1.5 btn-secondary-modern px-3 py-2.5 text-xs font-semibold uppercase text-center"
               >
                 <span>📄</span>
                 <span>PDF</span>
@@ -222,7 +222,7 @@ export function ShareCatalogModal({
                 href={catalogUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 border border-zinc-800 bg-black text-white hover:bg-zinc-800 px-3 py-2.5 rounded-xl font-mono text-xs font-bold uppercase transition-colors text-center"
+                className="flex items-center justify-center gap-1.5 btn-primary-modern px-3 py-2.5 text-xs font-semibold uppercase text-center"
               >
                 <span>↗</span>
                 <span>Preview</span>

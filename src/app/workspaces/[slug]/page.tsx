@@ -10,6 +10,7 @@ import { DashboardRevenueChart, type WeekRevenueBucket } from "./DashboardRevenu
 import { LowStockAlertBanner } from "@/components/LowStockAlertBanner";
 import { getRecurringInvoices } from "@/lib/actions/recurring";
 import { RecurringInvoicesWidget } from "./RecurringInvoicesWidget";
+import { QuickCreatePopover } from "./QuickCreatePopover";
 
 interface WorkspaceOverviewPageProps {
   params: Promise<{ slug: string }>;
@@ -168,32 +169,15 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
           </h1>
         </div>
 
-        {/* QUICK ACTION BUTTONS */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={`/workspaces/${slug}/documents/new?type=INVOICE`}
-            className="btn-primary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
-          >
-            + New Invoice
-          </Link>
-          <Link
-            href={`/workspaces/${slug}/documents/new?type=QUOTATION`}
-            className="border border-zinc-300 bg-white hover:border-black text-black px-3 py-1.5 text-xs font-mono font-bold uppercase rounded transition-colors"
-          >
-            + Quote
-          </Link>
-          <Link
-            href={`/workspaces/${slug}/expenses`}
-            className="border border-zinc-300 bg-white hover:border-black text-black px-3 py-1.5 text-xs font-mono font-bold uppercase rounded transition-colors"
-          >
-            + Expense
-          </Link>
+        {/* QUICK ACTION POPOVER & SHORTCUTS */}
+        <div className="flex items-center gap-2">
+          <QuickCreatePopover slug={slug} />
           <Link
             href={`/workspaces/${slug}/pos`}
-            className="border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-black px-3 py-1.5 text-xs font-mono font-bold uppercase rounded transition-colors flex items-center gap-1"
+            className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5"
           >
             <span>🧾</span>
-            <span>POS</span>
+            <span>POS Terminal</span>
           </Link>
         </div>
       </div>
@@ -341,7 +325,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
                     </Link>
                   </td>
                   <td className="p-4 border-r border-zinc-200/80">
-                    <span className="border border-zinc-200 px-1.5 py-0.5 text-[9px] font-semibold tracking-widest bg-zinc-50 rounded uppercase">
+                    <span className="badge-zinc">
                       {doc.type}
                     </span>
                   </td>
@@ -358,17 +342,17 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
                       "Walk-in Customer"
                     )}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-black">
+                  <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-black font-mono">
                     {formatCurrency(doc.grandTotal, shop.currency)}
                   </td>
                   <td className="p-4 border-r border-zinc-200/80 text-center">
-                    <span className={`px-2.5 py-0.5 text-[10px] font-semibold uppercase border rounded ${
-                      doc.status === "PAID" ? "bg-black text-white border-black" :
-                      doc.status === "ISSUED" ? "bg-white text-black border-zinc-300 font-semibold" :
-                      doc.status === "OVERDUE" ? "bg-rose-50 border-rose-300 text-rose-700 font-semibold" :
-                      doc.status === "PARTIALLY_PAID" ? "bg-amber-50 border-amber-300 text-amber-900 font-semibold" :
-                      "bg-zinc-50 text-zinc-400 border-zinc-200"
-                    }`}>
+                    <span className={
+                      doc.status === "PAID" ? "badge-emerald" :
+                      doc.status === "ISSUED" ? "badge-zinc" :
+                      doc.status === "OVERDUE" ? "badge-rose" :
+                      doc.status === "PARTIALLY_PAID" ? "badge-amber" :
+                      "badge-zinc text-zinc-400"
+                    }>
                       {doc.status}
                     </span>
                   </td>

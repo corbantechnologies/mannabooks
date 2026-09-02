@@ -108,6 +108,7 @@ export function DocumentStatusPanel({
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showThermalModal, setShowThermalModal] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const updateStatusMutation = useUpdateDocumentStatus(shopId, shopSlug);
   const duplicateDocMutation = useDuplicateDocument(shopId, shopSlug);
@@ -261,25 +262,26 @@ export function DocumentStatusPanel({
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {(["LPO", "PO", "GOODS_RECEIVED_NOTE", "PAYMENT_VOUCHER"].includes(docType) ? SUPPLIER_STATUS_OPTIONS : DEFAULT_STATUS_OPTIONS).map((opt) => {
             const isBlocked = (status === "PAID" || status === "CANCELLED") && opt.value !== status;
             const isCurrentPending = updateStatusMutation.isPending && updateStatusMutation.variables?.status === opt.value;
+            const isActive = status === opt.value;
             return (
               <button
                 key={opt.value}
                 type="button"
                 disabled={updateStatusMutation.isPending || isBlocked}
                 onClick={() => handleStatusUpdate(opt.value as any)}
-                className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider border transition-colors rounded-none disabled:opacity-40 flex items-center justify-center gap-1.5 ${
-                  status === opt.value
-                    ? "bg-black text-white border-black"
-                    : "bg-white text-zinc-600 border-zinc-300 hover:border-black hover:text-black"
+                className={`px-3 py-1 text-[11px] font-semibold uppercase tracking-wider border transition-all rounded-md disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer ${
+                  isActive
+                    ? "bg-emerald-900 text-white border-emerald-900 shadow-2xs"
+                    : "bg-white text-zinc-700 border-zinc-300 hover:border-emerald-600 hover:bg-emerald-50/50 hover:text-emerald-900"
                 }`}
               >
                 {isCurrentPending ? (
                   <>
-                    <Spinner size={10} color={status === opt.value ? "white" : "currentColor"} />
+                    <Spinner size={10} color={isActive ? "white" : "currentColor"} />
                     <span>{opt.label}</span>
                   </>
                 ) : (
@@ -293,7 +295,7 @@ export function DocumentStatusPanel({
             <button
               type="button"
               disabled
-              className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider border bg-rose-600 text-white border-rose-600 rounded-none cursor-not-allowed"
+              className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider border bg-rose-600 text-white border-rose-600 rounded-md cursor-not-allowed"
             >
               Cancelled
             </button>
@@ -301,9 +303,19 @@ export function DocumentStatusPanel({
         </div>
       </div>
 
-      {/* PORTAL LINK + EMAIL */}
-      <div className="border-t border-zinc-200 pt-4 space-y-3">
-        <p className="text-[10px] text-zinc-400 uppercase font-semibold">Client Delivery Actions</p>
+      {/* CLIENT DELIVERY ACTIONS & SHARING POPOVER */}
+      <div className="border-t border-zinc-200/80 pt-4 space-y-3">
+        <div className="flex justify-between items-center">
+          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Client Delivery &amp; Distribution</p>
+          {status !== "DRAFT" && (
+            <span
+              title="Issued or Paid documents cannot be deleted. Raise a Credit Note to reverse financial value."
+              className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider flex items-center gap-1"
+            >
+              🔒 Audit Protected
+            </span>
+          )}
+        </div>
 
         {portalLink && (
           <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
@@ -312,33 +324,20 @@ export function DocumentStatusPanel({
               href={portalLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-black underline underline-offset-2 font-bold text-[11px] break-all hover:no-underline"
+              className="text-emerald-800 underline underline-offset-2 font-bold text-xs break-all hover:text-emerald-950"
             >
               {portalLink}
             </a>
           </div>
         )}
 
-        <div className="flex flex-wrap gap-3">
-          {portalLink && (
-            <button
-              type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(portalLink);
-                setMessage({ type: "success", text: "Portal link copied to clipboard." });
-                toast.success("Portal link copied to clipboard.");
-              }}
-              className="border border-black bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-50 transition-colors rounded-none"
-            >
-              Copy Portal Link
-            </button>
-          )}
-
+        <div className="flex flex-wrap items-center gap-2">
+          {/* PRIMARY DIRECT DISPATCH CTA */}
           <button
             type="button"
             disabled={sending}
             onClick={handleSendEmail}
-            className="border border-black bg-black text-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-900 transition-colors rounded-none disabled:bg-zinc-400"
+            className="btn-primary-modern px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider disabled:bg-zinc-400 disabled:opacity-50"
           >
             {sending ? (
               <span className="flex items-center justify-center gap-1.5">
@@ -350,114 +349,138 @@ export function DocumentStatusPanel({
             )}
           </button>
 
-          {portalLink && (
-            <a
-              href={portalLink.replace("/portal/invoice/", "/portal/pdf/")}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border border-zinc-300 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:border-black hover:bg-zinc-50 transition-colors rounded-none no-underline text-black"
+          {/* SHARE & EXPORT POPOVER DROPDOWN */}
+          <div className="relative inline-block text-left">
+            <button
+              type="button"
+              onClick={() => setIsShareOpen(!isShareOpen)}
+              className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 shadow-2xs"
             >
-              Download PDF
-            </a>
-          )}
+              <span>Share &amp; Export</span>
+              <span className="text-[9px] opacity-70">{isShareOpen ? "▲" : "▼"}</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setShowThermalModal(true)}
-            className="border border-black bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-black hover:text-white transition-colors rounded-none flex items-center gap-1.5"
-          >
-            <span>🖨️</span>
-            <span>Thermal Slip</span>
-          </button>
+            {isShareOpen && (
+              <div className="absolute left-0 sm:left-auto sm:right-0 mt-1.5 w-56 bg-white border border-zinc-200/80 rounded-xl shadow-xl z-40 p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                  Export &amp; Share
+                </div>
 
-          <button
-            type="button"
-            disabled={duplicateDocMutation.isPending}
-            onClick={() => {
-              duplicateDocMutation.mutate(documentId, {
-                onSuccess: (data) => {
-                  if (data.documentId) {
-                    router.push(`/workspaces/${shopSlug}/documents/${data.documentId}`);
-                  }
-                },
-              });
-            }}
-            className="border border-zinc-400 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:border-black transition-colors rounded-none disabled:opacity-50"
-          >
-            {duplicateDocMutation.isPending ? (
-              <span className="flex items-center justify-center gap-1.5">
-                <Spinner size={10} />
-                <span>Duplicating...</span>
-              </span>
-            ) : (
-              "Duplicate"
-            )}
-          </button>
+                {portalLink && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(portalLink);
+                      setMessage({ type: "success", text: "Portal link copied to clipboard." });
+                      toast.success("Portal link copied to clipboard.");
+                      setIsShareOpen(false);
+                    }}
+                    className="w-full text-left px-2.5 py-2 text-xs font-medium text-zinc-800 hover:bg-emerald-50 hover:text-emerald-950 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+                  >
+                    <span>🔗</span> Copy Portal Link
+                  </button>
+                )}
 
-          {status === "DRAFT" && (
-            <Link
-              href={`/workspaces/${shopSlug}/documents/${documentId}/edit`}
-              className="border border-black bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-50 transition-colors rounded-none no-underline text-black inline-block"
-            >
-              Edit Draft
-            </Link>
-          )}
+                {portalLink && (
+                  <a
+                    href={portalLink.replace("/portal/invoice/", "/portal/pdf/")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsShareOpen(false)}
+                    className="w-full text-left px-2.5 py-2 text-xs font-medium text-zinc-800 hover:bg-emerald-50 hover:text-emerald-950 rounded-lg transition-colors flex items-center gap-2 no-underline"
+                  >
+                    <span>📄</span> Download PDF
+                  </a>
+                )}
 
-          {status === "DRAFT" ? (
-            showDeleteConfirm ? (
-              <div className="flex gap-2 items-center animate-in fade-in zoom-in-95">
-                <span className="text-[10px] text-rose-600 font-bold uppercase">Purge?</span>
                 <button
                   type="button"
-                  disabled={deleteDocMutation.isPending}
                   onClick={() => {
-                    deleteDocMutation.mutate(documentId, {
-                      onSuccess: () => {
-                        router.push(`/workspaces/${shopSlug}/documents`);
+                    setShowThermalModal(true);
+                    setIsShareOpen(false);
+                  }}
+                  className="w-full text-left px-2.5 py-2 text-xs font-medium text-zinc-800 hover:bg-emerald-50 hover:text-emerald-950 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  <span>🖨️</span> Print Thermal Slip
+                </button>
+
+                <button
+                  type="button"
+                  disabled={duplicateDocMutation.isPending}
+                  onClick={() => {
+                    setIsShareOpen(false);
+                    duplicateDocMutation.mutate(documentId, {
+                      onSuccess: (data) => {
+                        if (data.documentId) {
+                          router.push(`/workspaces/${shopSlug}/documents/${data.documentId}`);
+                        }
                       },
                     });
                   }}
-                  className="bg-rose-600 text-white px-3 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-700 transition-colors disabled:opacity-50"
+                  className="w-full text-left px-2.5 py-2 text-xs font-medium text-zinc-800 hover:bg-emerald-50 hover:text-emerald-950 rounded-lg transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  {deleteDocMutation.isPending ? (
-                    <span className="flex items-center justify-center gap-1.5">
-                      <Spinner size={10} color="white" />
-                      <span>Deleting...</span>
-                    </span>
-                  ) : (
-                    "Yes, Delete"
-                  )}
+                  <span>📋</span> {duplicateDocMutation.isPending ? "Duplicating..." : "Duplicate Document"}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="border border-zinc-300 bg-white text-zinc-500 px-3 py-2 text-[11px] font-bold uppercase tracking-wider hover:border-black hover:text-black transition-colors"
-                >
-                  No
-                </button>
+
+                {status === "DRAFT" && (
+                  <div className="border-t border-zinc-100 my-1 pt-1">
+                    <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                      Draft Management
+                    </div>
+                    <Link
+                      href={`/workspaces/${shopSlug}/documents/${documentId}/edit`}
+                      onClick={() => setIsShareOpen(false)}
+                      className="w-full text-left px-2.5 py-2 text-xs font-medium text-zinc-800 hover:bg-zinc-100 rounded-lg transition-colors flex items-center gap-2 no-underline"
+                    >
+                      <span>✏️</span> Edit Draft
+                    </Link>
+
+                    {showDeleteConfirm ? (
+                      <div className="p-2 bg-rose-50 rounded-lg space-y-1.5 mt-1">
+                        <span className="text-[10px] text-rose-700 font-bold uppercase block">Purge this draft?</span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            disabled={deleteDocMutation.isPending}
+                            onClick={() => {
+                              deleteDocMutation.mutate(documentId, {
+                                onSuccess: () => {
+                                  router.push(`/workspaces/${shopSlug}/documents`);
+                                },
+                              });
+                            }}
+                            className="bg-rose-600 hover:bg-rose-700 text-white px-2 py-1 text-[10px] font-semibold uppercase rounded-md"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowDeleteConfirm(false)}
+                            className="btn-secondary-modern px-2 py-1 text-[10px] font-semibold uppercase"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="w-full text-left px-2.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+                      >
+                        <span>🗑️</span> Delete Draft
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                className="border border-rose-600 text-rose-600 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-600 hover:text-white transition-colors"
-              >
-                Delete Draft
-              </button>
-            )
-          ) : (
-            <span
-              title="Issued or Paid documents cannot be deleted. Raise a Credit Note to reverse financial value."
-              className="border border-zinc-200 bg-zinc-100 text-zinc-400 px-3 py-2 text-[10px] font-bold uppercase tracking-wider cursor-not-allowed select-none"
-            >
-              🔒 Deletion Blocked (Audit Protected)
-            </span>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       {/* KRA eTIMS / CONTROL UNIT SERIAL NUMBER (OPTIONAL STATUTORY FIELD) */}
-      <div className="border border-zinc-200/80 p-4 bg-zinc-50/50 rounded space-y-2">
+      <div className="border border-zinc-200/80 p-4 bg-zinc-50/50 rounded-lg space-y-2">
         <div className="flex justify-between items-center">
           <span className="text-[10px] font-semibold uppercase text-black">Statutory KRA eTIMS CU Serial Number</span>
           {isFiscalDocType(docType) && requiresEtims && !cuNumber ? (

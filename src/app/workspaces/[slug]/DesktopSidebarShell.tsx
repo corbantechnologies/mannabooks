@@ -100,7 +100,7 @@ export function DesktopSidebarShell({
     >
       {/* GLOBAL EDITORIAL SIDEBAR (1024px+) */}
       <aside
-        className={`hidden lg:flex flex-col justify-between bg-white h-screen sticky top-0 shrink-0 border-r border-zinc-200/80 transition-all duration-300 ease-in-out z-20 ${
+        className={`hidden lg:flex flex-col justify-between bg-white h-screen sticky top-0 shrink-0 border-r border-zinc-200/80 shadow-[2px_0_12px_-3px_rgba(0,0,0,0.04)] transition-all duration-300 ease-in-out z-20 ${
           isCollapsed
             ? "w-0 -translate-x-full overflow-hidden border-none opacity-0 pointer-events-none"
             : "w-64 translate-x-0 opacity-100"
@@ -233,7 +233,7 @@ export function DesktopSidebarShell({
       {/* CORE WORKSPACE DASHBOARD VIEWPORT STREAM */}
       <main className="flex-1 flex flex-col min-w-0 bg-white transition-all duration-300">
         {/* DESKTOP HEADER NAVBAR */}
-        <header className="hidden lg:flex border-b border-zinc-200/80 bg-white h-14 shrink-0 items-center justify-between px-6 sticky top-0 z-30 select-none">
+        <header className="hidden lg:flex border-b border-zinc-200/80 bg-white/95 backdrop-blur-xs h-13 shrink-0 items-center justify-between px-6 sticky top-0 z-30 select-none shadow-[0_1px_4px_0_rgba(0,0,0,0.03)]">
           <div className="flex items-center gap-3 text-xs font-sans font-medium text-zinc-500">
             {/* COLLAPSE / EXPAND TOGGLE BUTTON */}
             <button

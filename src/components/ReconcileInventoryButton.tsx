@@ -56,10 +56,10 @@ export function ReconcileInventoryButton({
         onClick={handleReconcile}
         disabled={loading}
         title="Sync and fix location stock discrepancies with current catalog quantities"
-        className="inline-flex items-center gap-1 text-[11px] font-sans font-semibold text-zinc-600 hover:text-black px-2.5 py-1 rounded border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors disabled:opacity-50"
+        className="btn-secondary-modern px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider flex items-center gap-1 disabled:opacity-50"
       >
         <span className={loading ? "animate-spin" : ""}>⚡</span>
-        <span>{loading ? "Syncing..." : "Sync Location Balances"}</span>
+        <span>{loading ? "Syncing..." : "Sync Locations"}</span>
       </button>
     );
   }
@@ -70,7 +70,7 @@ export function ReconcileInventoryButton({
       onClick={handleReconcile}
       disabled={loading}
       title="Scan all products and synchronize location stock with catalog quantities"
-      className="inline-flex items-center gap-1.5 border border-zinc-300 bg-white hover:bg-zinc-50 text-black px-3.5 py-2 font-mono text-xs font-semibold uppercase rounded transition-colors shadow-2xs disabled:opacity-50"
+      className="btn-secondary-modern px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider flex items-center gap-1.5 disabled:opacity-50"
     >
       <span className={loading ? "animate-spin" : ""}>⚡</span>
       <span>{loading ? "Syncing..." : "Sync & Reconcile Stock"}</span>

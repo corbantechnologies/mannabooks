@@ -71,31 +71,31 @@ export function RecurringInvoicesClient({
   const activeCount = invoices.filter((i) => i.isRecurring).length;
 
   return (
-    <div className="space-y-8 font-mono text-xs selection:bg-black selection:text-white">
+    <div className="space-y-8 selection:bg-black selection:text-white">
       {/* HEADER TOP BAR */}
       <div className="border-b border-zinc-200/80 pb-6 space-y-2">
         <Link
           href={`/workspaces/${shopSlug}/documents`}
-          className="font-sans text-xs font-bold text-zinc-400 hover:underline block"
+          className="text-xs font-bold text-zinc-400 hover:underline block"
         >
           ← Back to Billing &amp; Invoices
         </Link>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">
+            <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
               Automated Subscription &amp; Retainer Billing
             </span>
-            <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
+            <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black">
               Recurring Invoices Management
             </h1>
-            <p className="text-xs text-zinc-500 font-sans mt-0.5">
+            <p className="text-xs text-zinc-500 mt-0.5">
               Automate periodic retainer invoicing for ongoing client contracts and subscriptions.
             </p>
           </div>
 
           <Link
             href={`/workspaces/${shopSlug}/documents/new`}
-            className="px-4 py-2 bg-black text-white rounded-lg text-xs font-bold uppercase hover:bg-zinc-800 transition-colors shadow-sm"
+            className="btn-primary-modern px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider shadow-2xs"
           >
             + Create New Invoice
           </Link>
@@ -104,21 +104,21 @@ export function RecurringInvoicesClient({
 
       {/* KPI METRICS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card-modern p-5 space-y-1 border-l-4 border-black bg-white">
+        <div className="card-modern p-5 space-y-1 border-l-4 border-zinc-900 bg-white">
           <p className="text-[10px] text-zinc-400 uppercase font-bold">Active Recurring Series</p>
           <p className="text-2xl font-bold font-mono tracking-tight text-black">{activeCount}</p>
-          <p className="text-[10px] text-zinc-500 font-sans">{invoices.length} total registered templates</p>
+          <p className="text-[10px] text-zinc-500">{invoices.length} total registered templates</p>
         </div>
 
-        <div className="card-modern p-5 space-y-1 border-l-4 border-emerald-500 bg-white">
+        <div className="card-modern p-5 space-y-1 border-l-4 border-emerald-600 bg-white">
           <p className="text-[10px] text-zinc-400 uppercase font-bold">Upcoming Next 30 Days</p>
           <p className="text-2xl font-bold font-mono tracking-tight text-emerald-700">
             {invoices.filter((i) => i.isRecurring && i.nextRecurringDate && new Date(i.nextRecurringDate) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)).length}
           </p>
-          <p className="text-[10px] text-zinc-500 font-sans">Scheduled auto-generation cycles</p>
+          <p className="text-[10px] text-zinc-500">Scheduled auto-generation cycles</p>
         </div>
 
-        <div className="card-modern p-5 space-y-1 border-l-4 border-blue-500 bg-white">
+        <div className="card-modern p-5 space-y-1 border-l-4 border-blue-600 bg-white">
           <p className="text-[10px] text-zinc-400 uppercase font-bold">Recurring Pipeline MRR</p>
           <p className="text-2xl font-bold font-mono tracking-tight text-blue-700">
             {formatCurrency(
@@ -126,28 +126,28 @@ export function RecurringInvoicesClient({
               currency
             )}
           </p>
-          <p className="text-[10px] text-zinc-500 font-sans">Monthly contract volume potential</p>
+          <p className="text-[10px] text-zinc-500">Monthly contract volume potential</p>
         </div>
       </div>
 
       {/* RECURRING TEMPLATES TABLE */}
       <div className="card-modern overflow-x-auto bg-white">
-        <table className="w-full text-left font-mono text-xs border-collapse">
+        <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-              <th className="p-4 border-r border-zinc-200">Template Serial</th>
-              <th className="p-4 border-r border-zinc-200">Client</th>
-              <th className="p-4 border-r border-zinc-200 text-center">Frequency</th>
-              <th className="p-4 border-r border-zinc-200 text-right">Cycle Amount</th>
-              <th className="p-4 border-r border-zinc-200">Next Scheduled Run</th>
-              <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-              <th className="p-4 text-center">Actions</th>
+            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600 text-[11px]">
+              <th className="p-3.5 border-r border-zinc-200">Template Serial</th>
+              <th className="p-3.5 border-r border-zinc-200">Client</th>
+              <th className="p-3.5 border-r border-zinc-200 text-center">Frequency</th>
+              <th className="p-3.5 border-r border-zinc-200 text-right">Cycle Amount</th>
+              <th className="p-3.5 border-r border-zinc-200">Next Scheduled Run</th>
+              <th className="p-3.5 border-r border-zinc-200 text-center">Status</th>
+              <th className="p-3.5 text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200/80 bg-white">
             {invoices.map((inv) => (
               <tr key={inv.id} className="hover:bg-zinc-50/80 transition-colors">
-                <td className="p-4 border-r border-zinc-200/80">
+                <td className="p-3.5 border-r border-zinc-200/80 font-mono">
                   <Link
                     href={`/workspaces/${shopSlug}/documents/${inv.id}`}
                     className="font-bold text-black uppercase hover:underline"
@@ -155,25 +155,25 @@ export function RecurringInvoicesClient({
                     {inv.docNumber} ➔
                   </Link>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80">
-                  <span className="font-bold font-sans text-sm text-black block uppercase">{inv.clientName}</span>
+                <td className="p-3.5 border-r border-zinc-200/80">
+                  <span className="font-bold text-xs text-black block uppercase">{inv.clientName}</span>
                   <span className="text-zinc-400 text-[10px] block">{inv.clientEmail}</span>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-center">
-                  <span className="px-2 py-0.5 bg-zinc-100 border border-zinc-200 rounded font-bold uppercase text-[10px]">
+                <td className="p-3.5 border-r border-zinc-200/80 text-center">
+                  <span className="badge-zinc text-[10px]">
                     {inv.recurringInterval || "MONTHLY"}
                   </span>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-right font-black text-black text-sm">
+                <td className="p-3.5 border-r border-zinc-200/80 text-right font-mono font-bold text-black text-xs">
                   {formatCurrency(parseFloat(inv.grandTotal), inv.currency)}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80">
+                <td className="p-3.5 border-r border-zinc-200/80">
                   {inv.nextRecurringDate ? (
                     <div>
-                      <span className="font-bold text-black block">
+                      <span className="font-semibold text-black block">
                         {new Date(inv.nextRecurringDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                       </span>
-                      <span className="text-[10px] text-zinc-500 font-sans">
+                      <span className="text-[10px] text-zinc-500">
                         {Math.ceil((new Date(inv.nextRecurringDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days away
                       </span>
                     </div>
@@ -181,26 +181,22 @@ export function RecurringInvoicesClient({
                     <span className="text-zinc-400 italic">—</span>
                   )}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-center">
+                <td className="p-3.5 border-r border-zinc-200/80 text-center">
                   <button
                     type="button"
                     onClick={() => handleToggle(inv)}
-                    className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase transition-colors cursor-pointer ${
-                      inv.isRecurring
-                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                        : "bg-zinc-100 text-zinc-500 border border-zinc-200"
-                    }`}
+                    className={`${inv.isRecurring ? "badge-emerald" : "badge-zinc"} cursor-pointer hover:opacity-80 transition-opacity`}
                   >
                     {inv.isRecurring ? "✓ Active" : "⏸ Paused"}
                   </button>
                 </td>
-                <td className="p-4 text-center">
-                  <div className="flex items-center justify-center gap-2">
+                <td className="p-3.5 text-center">
+                  <div className="flex items-center justify-center gap-1.5">
                     <button
                       type="button"
                       disabled={generatingId === inv.id}
                       onClick={() => handleGenerateNow(inv)}
-                      className="px-2.5 py-1 bg-black text-white hover:bg-zinc-800 rounded text-[10px] font-bold uppercase transition-colors disabled:opacity-50 flex items-center gap-1"
+                      className="btn-primary-modern px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1"
                     >
                       {generatingId === inv.id ? (
                         <>

@@ -286,7 +286,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                             <button
                                 type="submit"
                                 disabled={status === "LOADING" || isUploading}
-                                className="bg-black hover:bg-zinc-800 text-white font-bold py-2.5 px-6 rounded-lg text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                                className="btn-primary-modern py-2.5 px-6 text-xs font-semibold uppercase disabled:opacity-50 flex items-center justify-center gap-1.5"
                             >
                                 {status === "LOADING" ? (
                                     <>
@@ -349,7 +349,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 {/* Category Pills */}
                 <div className="overflow-x-auto -mx-1 px-1 w-full sm:w-auto">
-                    <div className="flex border border-zinc-200 divide-x divide-zinc-200 bg-white font-mono text-[10px] uppercase w-fit rounded shadow-2xs">
+                    <div className="flex border border-zinc-200 divide-x divide-zinc-200 bg-white text-[10px] uppercase w-fit rounded-md overflow-hidden shadow-2xs">
                         {["ALL", "RENT", "UTILITIES", "FUEL", "MARKETING", "SALARIES", "OFFICE_SUPPLIES", "OTHER"].map((cat) => {
                             const isActive = activeCategory === cat;
                             return (
@@ -357,8 +357,8 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                                     key={cat}
                                     type="button"
                                     onClick={() => setActiveCategory(cat)}
-                                    className={`px-3 py-1.5 font-bold transition-colors whitespace-nowrap ${
-                                        isActive ? "bg-black text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"
+                                    className={`px-3 py-1.5 font-semibold transition-colors whitespace-nowrap cursor-pointer ${
+                                        isActive ? "bg-emerald-900 text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"
                                     }`}
                                 >
                                     {cat.replace("_", " ")}
@@ -392,21 +392,21 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                         {filteredExpenses.map(expense => (
                             <tr key={expense.id} className="hover:bg-zinc-50/80 transition-colors">
                                 <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-black">{expense.expenseDate.split('T')[0]}</td>
-                                <td className="p-4 border-r border-zinc-200/80 text-zinc-600">
+                                <td className="p-4 border-r border-zinc-200/80 text-zinc-600 font-sans">
                                     <div>{expense.description}</div>
                                     {expense.isNonDeductible && (
-                                        <span className="inline-block mt-1 font-mono text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">Non-Deductible</span>
+                                        <span className="inline-block mt-1 badge-amber text-[9px]">Non-Deductible</span>
                                     )}
                                 </td>
                                 <td className="p-4 border-r border-zinc-200/80">
-                                    <span className="inline-block px-2 py-1 bg-zinc-100 text-zinc-800 rounded text-[10px] font-bold tracking-wider uppercase">
+                                    <span className="badge-zinc">
                                         {expense.category}
                                     </span>
                                 </td>
                                 <td className="p-4 border-r border-zinc-200/80">
                                     {expense.paymentChannel ? (
                                         <div>
-                                            <span className="block text-xs font-bold text-black">{expense.paymentChannel.replace('_', ' ')}</span>
+                                            <span className="block text-xs font-semibold text-black">{expense.paymentChannel.replace('_', ' ')}</span>
                                             {expense.paymentReference && <span className="block text-[10px] font-mono text-zinc-500 mt-0.5">{expense.paymentReference}</span>}
                                         </div>
                                     ) : (
@@ -415,14 +415,14 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                                 </td>
                                 <td className="p-4 border-r border-zinc-200/80">
                                     {expense.receiptUrl ? (
-                                        <a href={expense.receiptUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-semibold underline underline-offset-2">
+                                        <a href={expense.receiptUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-800 hover:text-emerald-950 font-semibold underline underline-offset-2">
                                             View Receipt
                                         </a>
                                     ) : (
                                         <span className="text-zinc-400 italic">No receipt</span>
                                     )}
                                 </td>
-                                <td className="p-4 border-r border-zinc-200/80 text-right font-black text-sm text-black">
+                                <td className="p-4 border-r border-zinc-200/80 text-right font-black text-sm text-black font-mono">
                                     {formatCurrency(parseFloat(expense.amount), expense.currency)}
                                 </td>
                                 <td className="p-4 text-center">
@@ -439,19 +439,19 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                                                     }
                                                     setDeletingExpenseId(null);
                                                 }} 
-                                                className="bg-rose-600 text-white px-2 py-0.5 rounded font-sans text-[10px] font-bold hover:bg-rose-700 uppercase"
+                                                className="bg-rose-600 text-white px-2 py-0.5 rounded-md font-sans text-[10px] font-semibold hover:bg-rose-700 uppercase"
                                             >
                                                 Confirm
                                             </button>
                                             <button 
                                                 onClick={() => setDeletingExpenseId(null)} 
-                                                className="bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded font-sans text-[10px] font-bold hover:bg-zinc-200 uppercase"
+                                                className="btn-secondary-modern px-2 py-0.5 text-[10px] font-semibold uppercase"
                                             >
                                                 Cancel
                                             </button>
                                         </div>
                                     ) : (
-                                        <button onClick={() => setDeletingExpenseId(expense.id)} className="text-rose-500 hover:text-rose-700 text-xs font-bold uppercase tracking-wider">
+                                        <button onClick={() => setDeletingExpenseId(expense.id)} className="text-rose-600 hover:text-rose-800 text-xs font-semibold uppercase tracking-wider cursor-pointer">
                                             Delete
                                         </button>
                                     )}

@@ -63,7 +63,7 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
   );
 
   return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-mono text-xs">
+    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white">
 
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
@@ -76,13 +76,13 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
           <ReconcileInventoryButton shopId={shop.id} shopSlug={slug} />
           <Link
             href={`/workspaces/${slug}/inventory/adjustments`}
-            className="border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-black px-4 py-2 font-mono text-xs font-semibold uppercase rounded transition-colors"
+            className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase"
           >
             + Adjust Stock
           </Link>
           <Link
             href={`/workspaces/${slug}/inventory/transfers/new`}
-            className="bg-black text-white hover:bg-zinc-800 px-4 py-2 font-mono text-xs font-semibold uppercase rounded transition-colors"
+            className="btn-primary-modern px-3 py-1.5 text-xs font-semibold uppercase"
           >
             + New Transfer
           </Link>
@@ -171,7 +171,7 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
                       {entry.product?.sku && <span className="block text-[10px] text-zinc-400 font-mono">{entry.product.sku}</span>}
                     </td>
                     <td className="p-4 border-r border-zinc-200/80">
-                      <span className={`px-2 py-0.5 rounded border text-[10px] font-semibold uppercase ${MOVEMENT_TYPE_COLORS[entry.movementType] || "bg-zinc-100 text-zinc-500 border-zinc-200"}`}>
+                      <span className={`px-2 py-0.5 rounded-md border text-[10px] font-semibold uppercase ${MOVEMENT_TYPE_COLORS[entry.movementType] || "bg-zinc-100 text-zinc-500 border-zinc-200"}`}>
                         {MOVEMENT_TYPE_LABELS[entry.movementType] || entry.movementType}
                       </span>
                     </td>
@@ -214,7 +214,7 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
           }}>
             <button
               type="submit"
-              className="bg-black hover:bg-zinc-800 text-white font-mono text-[10px] uppercase font-bold px-4 py-2 rounded transition-colors shrink-0"
+              className="btn-primary-modern px-4 py-2 text-xs font-semibold uppercase shrink-0"
             >
               Initialize Ledger &rarr;
             </button>
@@ -237,7 +237,7 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
           }}>
             <button
               type="submit"
-              className="bg-blue-700 hover:bg-blue-800 text-white font-mono text-[10px] uppercase font-bold px-4 py-2 rounded transition-colors shrink-0"
+              className="bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold uppercase px-4 py-2 rounded-md transition-colors shrink-0"
             >
               Fix Location Data →
             </button>
@@ -256,7 +256,7 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
           </div>
           <Link
             href={`/workspaces/${slug}/inventory/locations`}
-            className="bg-amber-800 hover:bg-amber-900 text-white font-mono text-[10px] uppercase font-bold px-4 py-2 rounded transition-colors shrink-0"
+            className="bg-amber-800 hover:bg-amber-900 text-white text-xs font-semibold uppercase px-4 py-2 rounded-md transition-colors shrink-0"
           >
             Setup Locations →
           </Link>

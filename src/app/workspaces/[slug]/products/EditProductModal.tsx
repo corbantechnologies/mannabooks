@@ -93,10 +93,10 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-zinc-200/80 rounded-lg shadow-2xl w-full max-w-xl sm:max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 relative font-mono text-xs animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-zinc-200/80 rounded-xl shadow-2xl w-[95%] sm:w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 space-y-6 animate-in zoom-in-95 duration-150 text-left">
             
-            <div className="border-b border-zinc-100 pb-4 flex justify-between items-center">
+            <div className="flex justify-between items-start border-b border-zinc-200/80 pb-4">
               <div>
                 <h2 className="text-xl font-bold uppercase tracking-tight font-sans text-black">Edit Product / Service</h2>
                 <p className="font-sans text-xs text-zinc-400 mt-0.5">Update item details, pricing, and inventory tracking</p>
@@ -104,22 +104,22 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-zinc-400 hover:text-black text-sm font-bold px-2 py-1 rounded"
+                className="text-zinc-400 hover:text-black font-bold text-base cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleUpdate} className="space-y-5 font-mono text-xs">
+            <form onSubmit={handleUpdate} className="space-y-5 font-sans text-xs">
               
               {/* CLASSIFICATION & SKU ROW */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Item Classification</label>
+                  <label className="text-zinc-400 uppercase block font-semibold text-[10px]">Item Classification</label>
                   <select
                     value={itemType}
                     onChange={(e) => setItemType(e.target.value as any)}
-                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold h-10"
+                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-md text-xs font-semibold h-10"
                   >
                     <option value="PRODUCT">📦 Product (Tangible Good)</option>
                     <option value="SERVICE">🛠️ Service (Labor / Consulting)</option>
@@ -127,26 +127,26 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">SKU / Code Reference</label>
+                  <label className="text-zinc-400 uppercase block font-semibold text-[10px]">SKU / Code Reference</label>
                   <input
                     type="text"
                     value={sku}
                     onChange={(e) => setSku(e.target.value)}
                     placeholder="e.g. LAP-8935"
-                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:border-black uppercase text-xs rounded font-semibold h-10"
+                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black uppercase text-xs rounded-md font-semibold h-10 font-mono"
                   />
                 </div>
               </div>
 
               {/* PRODUCT NAME */}
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block font-semibold">Product Name / Description</label>
+                <label className="text-zinc-400 uppercase block font-semibold text-[10px]">Product Name / Description *</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Ergonomic Laptop Stand"
-                  className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-sans font-semibold h-10"
+                  className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-md text-xs font-sans font-semibold h-10"
                   required
                 />
               </div>
@@ -154,34 +154,34 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
               {/* PRICING & TAX ROW (3 COLS) */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Selling Price (KES)</label>
+                  <label className="text-zinc-400 uppercase block font-semibold text-[10px]">Selling Price (KES) *</label>
                   <input
                     type="number"
                     step="0.01"
                     value={unitPrice}
                     onChange={(e) => setUnitPrice(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:border-black font-semibold text-xs rounded h-10"
+                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black font-semibold text-xs rounded-md h-10"
                     required
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Cost Price / COGS (KES)</label>
+                  <label className="text-zinc-400 uppercase block font-semibold text-[10px]">Cost Price / COGS (KES)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={costPrice}
                     onChange={(e) => setCostPrice(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:border-black font-semibold text-xs rounded h-10"
+                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black font-semibold text-xs rounded-md h-10"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block font-semibold">Tax Type</label>
+                  <label className="text-zinc-400 uppercase block font-semibold text-[10px]">Tax Type</label>
                   <select
                     value={taxType}
                     onChange={(e) => setTaxType(e.target.value as any)}
-                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:border-black text-xs font-semibold rounded h-10"
+                    className="w-full px-3 py-2.5 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs font-semibold rounded-md h-10"
                   >
                     <option value="V_16">16% VAT</option>
                     <option value="V_0">0% VAT (Zero-Rated)</option>
@@ -191,7 +191,7 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
               </div>
 
               {/* INVENTORY TRACKING BLOCK */}
-              <div className="border border-zinc-200 bg-zinc-50 p-4 space-y-3 rounded-md">
+              <div className="border border-zinc-200 bg-zinc-50 p-4 space-y-3 rounded-lg">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -215,7 +215,7 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
                           <select
                             value={locationId}
                             onChange={(e) => setLocationId(e.target.value)}
-                            className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold h-9"
+                            className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-md text-xs font-semibold h-9"
                           >
                             {locations.map((loc) => (
                               <option key={loc.id} value={loc.id}>
@@ -224,7 +224,7 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
                             ))}
                           </select>
                         ) : (
-                          <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                          <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
                             <span className="text-amber-800 text-[10px] font-semibold uppercase">
                               Auto-creates "General Store" location
                             </span>
@@ -249,7 +249,7 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
                           min="0"
                           value={stockQuantity}
                           onChange={(e) => setStockQuantity(e.target.value)}
-                          className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold h-9"
+                          className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-md text-xs font-semibold h-9 font-mono"
                         />
                       </div>
                       <div className="space-y-1">
@@ -260,7 +260,7 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
                           min="1"
                           value={reorderThreshold}
                           onChange={(e) => setReorderThreshold(e.target.value)}
-                          className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold h-9"
+                          className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-md text-xs font-semibold h-9 font-mono"
                         />
                       </div>
                     </div>
@@ -285,7 +285,7 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
                           },
                         });
                       }}
-                      className="bg-rose-600 text-white px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                      className="bg-rose-600 text-white px-3 py-1.5 font-semibold uppercase text-xs rounded-md hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
                     >
                       {deleteProductMutation.isPending ? (
                         <>
@@ -299,7 +299,7 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
                     <button
                       type="button"
                       onClick={() => setShowDeleteConfirm(false)}
-                      className="bg-zinc-100 text-zinc-500 px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-zinc-200 transition-colors"
+                      className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase"
                     >
                       No
                     </button>
@@ -308,32 +308,32 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
                   <button
                     type="button"
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="border border-rose-200 bg-rose-50 text-rose-700 px-4 py-2 font-semibold uppercase hover:bg-rose-600 hover:text-white rounded transition-colors text-xs"
+                    className="border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 px-3 py-1.5 font-semibold uppercase text-xs rounded-md transition-colors"
                   >
-                    DELETE
+                    Delete Item
                   </button>
                 )}
 
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="btn-secondary-modern px-4 py-2 text-xs font-semibold uppercase"
+                    className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase"
                   >
-                    CANCEL
+                    Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="btn-primary-modern px-5 py-2 text-xs font-semibold uppercase disabled:bg-zinc-300"
+                    disabled={updateProductMutation.isPending}
+                    className="btn-primary-modern px-4 py-1.5 text-xs font-semibold uppercase disabled:opacity-50 flex items-center gap-1.5"
                   >
-                    {loading ? (
-                      <span className="flex items-center justify-center gap-1.5">
+                    {updateProductMutation.isPending ? (
+                      <>
                         <Spinner size={10} color="white" />
-                        <span>SAVING...</span>
-                      </span>
+                        <span>Saving...</span>
+                      </>
                     ) : (
-                      "SAVE CHANGES"
+                      "Save"
                     )}
                   </button>
                 </div>

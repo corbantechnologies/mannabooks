@@ -119,28 +119,28 @@ export function ProductFormClientSide({
                   <button
                     type="button"
                     onClick={() => setItemType("PRODUCT")}
-                    className={`py-3 px-4 rounded-lg border-2 text-left transition-all ${
+                    className={`py-3 px-4 rounded-lg border-2 text-left transition-all cursor-pointer ${
                       itemType === "PRODUCT"
-                        ? "border-black bg-black text-white"
-                        : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-400"
+                        ? "border-emerald-800 bg-emerald-900 text-white shadow-2xs"
+                        : "border-zinc-200 bg-white text-zinc-600 hover:border-emerald-600 hover:bg-emerald-50/40"
                     }`}
                   >
                     <div className="text-lg mb-0.5">📦</div>
                     <div className="font-bold uppercase text-xs">Product</div>
-                    <div className="text-[10px] opacity-70">Tangible / Physical Good</div>
+                    <div className="text-[10px] opacity-80">Tangible / Physical Good</div>
                   </button>
                   <button
                     type="button"
                     onClick={() => setItemType("SERVICE")}
-                    className={`py-3 px-4 rounded-lg border-2 text-left transition-all ${
+                    className={`py-3 px-4 rounded-lg border-2 text-left transition-all cursor-pointer ${
                       itemType === "SERVICE"
-                        ? "border-black bg-black text-white"
-                        : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-400"
+                        ? "border-emerald-800 bg-emerald-900 text-white shadow-2xs"
+                        : "border-zinc-200 bg-white text-zinc-600 hover:border-emerald-600 hover:bg-emerald-50/40"
                     }`}
                   >
                     <div className="text-lg mb-0.5">🛠️</div>
                     <div className="font-bold uppercase text-xs">Service</div>
-                    <div className="text-[10px] opacity-70">Labor / Consulting</div>
+                    <div className="text-[10px] opacity-80">Labor / Consulting</div>
                   </button>
                 </div>
               </div>
@@ -221,7 +221,7 @@ export function ProductFormClientSide({
                 <div className="border border-zinc-200 bg-zinc-50/60 p-4 space-y-3 rounded-lg">
                   <label className="flex items-center gap-3 cursor-pointer select-none">
                     <div
-                      className={`w-10 h-6 rounded-full transition-colors relative ${trackStock ? "bg-black" : "bg-zinc-300"}`}
+                      className={`w-10 h-6 rounded-full transition-colors relative ${trackStock ? "bg-emerald-800" : "bg-zinc-300"}`}
                       onClick={() => setTrackStock(!trackStock)}
                     >
                       <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${trackStock ? "left-5" : "left-1"}`} />

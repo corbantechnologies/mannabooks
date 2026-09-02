@@ -34,7 +34,7 @@ export default async function BillingSettingsPage({ params }: BillingSettingsPag
   }
 
   return (
-    <div className="p-4 sm:p-8 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white">
       <BillingSettingsClient
         shop={shop}
         planDetails={billingDataRes.planDetails}

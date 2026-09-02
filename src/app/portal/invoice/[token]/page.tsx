@@ -124,7 +124,7 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
   } catch (_) {}
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-6 sm:py-12 px-3 sm:px-6 font-mono text-xs text-black selection:bg-black selection:text-white">
+    <div className="min-h-screen bg-zinc-100/80 py-8 sm:py-14 px-3 sm:px-6 font-mono text-xs text-black selection:bg-black selection:text-white">
       <style>{`
         :root {
           --brand-primary: ${brandColor};
@@ -158,7 +158,7 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto card-modern p-6 sm:p-12 space-y-8 sm:space-y-10 shadow-sm">
+      <div className="max-w-3xl mx-auto bg-white border border-zinc-200/80 rounded-xl p-6 sm:p-12 space-y-8 sm:space-y-10 shadow-xl">
 
         {/* DOCUMENT JOURNEY CHAIN ON PORTAL */}
         {portalChain.length > 1 && (

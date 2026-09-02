@@ -208,7 +208,7 @@ export function PaymentHistorySubLedger({
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
           <form
             onSubmit={handleRecordPayment}
-            className="bg-white border border-zinc-300 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl font-mono text-xs"
+            className="bg-white border border-zinc-200/80 rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl font-mono text-xs"
           >
             <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
               <h3 className="font-bold text-sm uppercase text-black font-sans">
@@ -217,7 +217,7 @@ export function PaymentHistorySubLedger({
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-zinc-400 hover:text-black font-bold text-base"
+                className="text-zinc-400 hover:text-black font-bold text-base cursor-pointer"
               >
                 ✕
               </button>
@@ -236,7 +236,7 @@ export function PaymentHistorySubLedger({
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="e.g. 5000"
-                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm font-bold focus:outline-none focus:border-black"
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-md text-sm font-bold focus:outline-none focus:ring-1 focus:ring-black"
                 />
                 <div className="flex justify-between text-[10px] text-zinc-400 mt-1">
                   <span>Grand Total: {formatCurrency(totalBilled, currency)}</span>
@@ -252,7 +252,7 @@ export function PaymentHistorySubLedger({
                   <select
                     value={channel}
                     onChange={(e) => setChannel(e.target.value)}
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs uppercase focus:outline-none focus:border-black bg-white"
+                    className="w-full px-3 py-2 border border-zinc-300 rounded-md text-xs uppercase focus:outline-none focus:ring-1 focus:ring-black bg-white font-semibold"
                   >
                     <option value="MPESA">M-Pesa</option>
                     <option value="BANK">Bank Transfer</option>
@@ -270,7 +270,7 @@ export function PaymentHistorySubLedger({
                     type="date"
                     value={paymentDate}
                     onChange={(e) => setPaymentDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs focus:outline-none focus:border-black bg-white"
+                    className="w-full px-3 py-2 border border-zinc-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-black bg-white font-semibold"
                   />
                 </div>
               </div>
@@ -284,7 +284,7 @@ export function PaymentHistorySubLedger({
                   placeholder="e.g. QAB71239X or FT261900123"
                   value={reference}
                   onChange={(e) => setReference(e.target.value)}
-                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs uppercase focus:outline-none focus:border-black"
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-md text-xs uppercase focus:outline-none focus:ring-1 focus:ring-black font-semibold"
                 />
               </div>
 
@@ -297,7 +297,7 @@ export function PaymentHistorySubLedger({
                   placeholder="e.g. 50% initial installment via Till"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs font-sans focus:outline-none focus:border-black"
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-md text-xs font-sans focus:outline-none focus:ring-1 focus:ring-black"
                 />
               </div>
             </div>
@@ -306,14 +306,14 @@ export function PaymentHistorySubLedger({
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 border border-zinc-300 rounded-lg font-bold uppercase text-zinc-600 hover:bg-zinc-50 text-xs"
+                className="btn-secondary-modern px-4 py-2 text-xs font-semibold uppercase tracking-wider"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-4 py-2 bg-black text-white rounded-lg font-bold uppercase hover:bg-zinc-800 disabled:opacity-50 text-xs flex items-center gap-1.5"
+                className="btn-primary-modern px-4 py-2 text-xs font-semibold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1.5"
               >
                 {isSubmitting ? (
                   <>

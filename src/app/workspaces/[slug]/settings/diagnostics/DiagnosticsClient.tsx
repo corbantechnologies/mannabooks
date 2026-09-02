@@ -214,7 +214,7 @@ export function DiagnosticsClient({
                 type="button"
                 onClick={() => setShowPurgeConfirm(true)}
                 disabled={purging || !isGlEnabled}
-                className="btn-primary-modern bg-black text-white hover:bg-zinc-900 border border-black font-bold uppercase px-4 py-2.5 rounded-none disabled:opacity-40 disabled:cursor-not-allowed"
+                className="btn-primary-modern px-3.5 py-2 text-xs font-semibold uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Reset &amp; Purge GL
               </button>
@@ -238,7 +238,7 @@ export function DiagnosticsClient({
                   type="button"
                   onClick={handleRebuildLedger}
                   disabled={repairing}
-                  className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase px-4 py-2.5 border border-rose-600 rounded-none disabled:opacity-50"
+                  className="bg-rose-600 hover:bg-rose-700 text-white font-semibold uppercase px-3.5 py-2 text-xs rounded-md disabled:opacity-50"
                 >
                   {repairing ? "REBUILDING..." : "CONFIRM REBUILD"}
                 </button>
@@ -246,7 +246,7 @@ export function DiagnosticsClient({
                   type="button"
                   onClick={() => setShowRebuildConfirm(false)}
                   disabled={repairing}
-                  className="bg-white hover:bg-zinc-100 text-zinc-700 font-bold uppercase px-4 py-2.5 border border-zinc-300 rounded-none disabled:opacity-50"
+                  className="btn-secondary-modern px-3.5 py-2 text-xs font-semibold uppercase tracking-wider disabled:opacity-50"
                 >
                   CANCEL
                 </button>
@@ -256,7 +256,7 @@ export function DiagnosticsClient({
                 type="button"
                 onClick={() => setShowRebuildConfirm(true)}
                 disabled={repairing}
-                className="btn-primary-modern bg-black text-white hover:bg-zinc-900 border border-black font-bold uppercase px-4 py-2.5 rounded-none disabled:opacity-40 disabled:cursor-not-allowed"
+                className="btn-primary-modern px-3.5 py-2 text-xs font-semibold uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Rebuild &amp; Re-activate GL
               </button>

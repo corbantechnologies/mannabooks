@@ -35,7 +35,7 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
       where: eq(fiscalYears.shopId, shop.id),
   })) !== undefined;
 
-  const brandColor = shop.primaryColor || "#000000";
+  const brandColor = shop.primaryColor || "#064e3b";
   const isLifetime = Boolean(planDetails?.isLifetimePro || user.isSuperAdmin);
   const planName = isLifetime ? "LIFETIME PRO" : (planDetails?.planSpec.name || planDetails?.plan || "FREE").toUpperCase();
 
@@ -52,6 +52,13 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
         ::selection {
           background-color: ${brandColor} !important;
           color: #ffffff !important;
+        }
+        .btn-primary-modern, .btn-primary-emerald {
+          background-color: ${brandColor} !important;
+        }
+        .btn-secondary-modern:hover, .btn-secondary-emerald:hover {
+          border-color: ${brandColor} !important;
+          color: ${brandColor} !important;
         }
         .bg-black {
           background-color: ${brandColor} !important;

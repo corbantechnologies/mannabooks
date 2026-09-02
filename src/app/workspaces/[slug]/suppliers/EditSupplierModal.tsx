@@ -86,8 +86,8 @@ export function EditSupplierModal({
       )}
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-zinc-200/80 rounded-md shadow-xl w-[95%] sm:w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-6 font-mono text-xs animate-in zoom-in-95 duration-150 text-left">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-zinc-200/80 rounded-xl shadow-2xl w-[95%] sm:w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-6 animate-in zoom-in-95 duration-150 text-left">
             
             <div className="flex justify-between items-start border-b border-zinc-200/80 pb-4">
               <div>
@@ -97,20 +97,20 @@ export function EditSupplierModal({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-zinc-500 font-semibold hover:bg-zinc-100 px-2 py-0.5 border border-zinc-300 rounded text-xs"
+                className="text-zinc-400 hover:text-black font-bold text-base cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleUpdate} className="space-y-4 font-mono text-xs">
+            <form onSubmit={handleUpdate} className="space-y-4 font-sans text-xs">
               <div className="space-y-1">
-                <label className="text-black font-semibold uppercase block">Supplier Name</label>
+                <label className="text-black font-semibold uppercase block text-[10px]">Supplier Name *</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-md text-xs font-semibold"
                   required
                 />
               </div>
@@ -123,7 +123,7 @@ export function EditSupplierModal({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="orders@vendor.com (optional)"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-md text-xs"
                   />
                 </div>
                 <div className="space-y-1">
@@ -132,7 +132,7 @@ export function EditSupplierModal({
                     type="text"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-md text-xs font-mono"
                   />
                 </div>
               </div>
@@ -143,7 +143,7 @@ export function EditSupplierModal({
                   <select
                     value={supplierType}
                     onChange={(e) => setSupplierType(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black rounded-md text-xs font-semibold"
                   >
                     <option value="CORPORATE">Corporate</option>
                     <option value="INDIVIDUAL">Sole Proprietor</option>
@@ -158,7 +158,7 @@ export function EditSupplierModal({
                     value={taxPin}
                     onChange={(e) => setTaxPin(e.target.value)}
                     placeholder="Sole Prop (A...) or Corp (P...)"
-                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black uppercase text-xs rounded"
+                    className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black uppercase text-xs rounded-md font-mono"
                   />
                 </div>
               </div>
@@ -168,7 +168,7 @@ export function EditSupplierModal({
                 <select
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value)}
-                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black text-xs font-semibold uppercase rounded"
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs font-semibold uppercase rounded-md"
                 >
                   <option value="NET_30">Net 30 Days</option>
                   <option value="NET_15">Net 15 Days</option>
@@ -178,15 +178,15 @@ export function EditSupplierModal({
                 </select>
               </div>
 
-              <div className="flex items-center gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded">
+              <div className="flex items-center gap-2.5 p-3 bg-zinc-50 border border-zinc-200 rounded-md">
                 <input
                   type="checkbox"
                   id="editSupplierRequiresEtims"
                   checked={requiresEtims}
                   onChange={(e) => setRequiresEtims(e.target.checked)}
-                  className="accent-black w-4 h-4 cursor-pointer rounded-sm"
+                  className="accent-black w-4 h-4 cursor-pointer rounded"
                 />
-                <label htmlFor="editSupplierRequiresEtims" className="font-semibold uppercase text-[10px] cursor-pointer">
+                <label htmlFor="editSupplierRequiresEtims" className="font-semibold uppercase text-[10px] cursor-pointer select-none">
                   Requires KRA eTIMS / CU Fiscal Receipt
                 </label>
               </div>
@@ -211,7 +211,7 @@ export function EditSupplierModal({
                           },
                         });
                       }}
-                      className="bg-rose-600 text-white px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                      className="bg-rose-600 text-white px-3 py-1.5 font-semibold uppercase text-xs rounded-md hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
                     >
                       {deleteSupplierMutation.isPending ? (
                         <>
@@ -225,7 +225,7 @@ export function EditSupplierModal({
                     <button
                       type="button"
                       onClick={() => setShowDeleteConfirm(false)}
-                      className="bg-zinc-100 text-zinc-500 px-3 py-1.5 font-bold uppercase text-[10px] hover:bg-zinc-200 transition-colors"
+                      className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase"
                     >
                       No
                     </button>
@@ -234,9 +234,9 @@ export function EditSupplierModal({
                   <button
                     type="button"
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="border border-rose-200 bg-rose-50 text-rose-600 px-3 py-1.5 font-semibold uppercase hover:bg-rose-600 hover:text-white rounded transition-colors text-xs"
+                    className="border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 px-3 py-1.5 font-semibold uppercase text-xs rounded-md transition-colors"
                   >
-                    DELETE
+                    Delete Vendor
                   </button>
                 )}
 
@@ -246,26 +246,25 @@ export function EditSupplierModal({
                     onClick={() => setIsOpen(false)}
                     className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase"
                   >
-                    CANCEL
+                    Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={updateSupplierMutation.isPending}
-                    className="btn-primary-modern px-4 py-1.5 text-xs font-semibold uppercase disabled:bg-zinc-300"
+                    className="btn-primary-modern px-4 py-1.5 text-xs font-semibold uppercase disabled:opacity-50 flex items-center gap-1.5"
                   >
                     {updateSupplierMutation.isPending ? (
-                      <span className="flex items-center justify-center gap-1">
+                      <>
                         <Spinner size={10} color="white" />
-                        <span>SAVING...</span>
-                      </span>
+                        <span>Saving...</span>
+                      </>
                     ) : (
-                      "SAVE"
+                      "Save"
                     )}
                   </button>
                 </div>
               </div>
             </form>
-
           </div>
         </div>
       )}

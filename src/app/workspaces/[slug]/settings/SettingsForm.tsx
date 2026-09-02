@@ -760,7 +760,7 @@ export function SettingsForm({
               <button
                 type="submit"
                 disabled={updatePaymentMutation.isPending}
-                className="btn-primary-modern bg-black text-white px-6 py-2.5 font-semibold uppercase tracking-wider text-xs disabled:bg-zinc-300"
+                className="btn-primary-modern px-6 py-2.5 font-semibold uppercase tracking-wider text-xs disabled:bg-zinc-300"
               >
                 {updatePaymentMutation.isPending ? (
                   <span className="flex items-center justify-center gap-1.5">

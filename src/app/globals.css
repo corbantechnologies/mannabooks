@@ -75,18 +75,18 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    background-color: #064e3b;
+    background-color: var(--brand-primary, #064e3b);
     color: #ffffff;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease-out;
-    box-shadow: 0 1px 3px 0 rgba(6, 78, 59, 0.25);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.15);
   }
 
   .btn-primary-modern:hover {
-    background-color: #043d2e;
+    filter: brightness(0.92);
     transform: translateY(-0.5px);
-    box-shadow: 0 3px 8px -1px rgba(6, 78, 59, 0.35);
+    box-shadow: 0 3px 8px -1px rgba(0, 0, 0, 0.25);
   }
 
   .btn-primary-modern:active {
@@ -103,18 +103,18 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    background-color: #064e3b;
+    background-color: var(--brand-primary, #064e3b);
     color: #ffffff;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease-out;
-    box-shadow: 0 1px 3px 0 rgba(6, 78, 59, 0.25);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.15);
   }
 
   .btn-primary-emerald:hover {
-    background-color: #043d2e;
+    filter: brightness(0.92);
     transform: translateY(-0.5px);
-    box-shadow: 0 3px 8px -1px rgba(6, 78, 59, 0.35);
+    box-shadow: 0 3px 8px -1px rgba(0, 0, 0, 0.25);
   }
 
   .btn-primary-emerald:active {
@@ -141,9 +141,9 @@
   }
 
   .btn-secondary-modern:hover {
-    border-color: #a7f3d0;
-    background-color: #ecfdf5;
-    color: #064e3b;
+    border-color: var(--brand-primary, #a7f3d0);
+    background-color: #f8fafc;
+    color: var(--brand-primary, #064e3b);
   }
 
   .btn-secondary-modern:active {
@@ -161,16 +161,16 @@
     text-transform: uppercase;
     letter-spacing: 0.03em;
     background-color: #ffffff;
-    color: #064e3b;
-    border: 1px solid #a7f3d0;
+    color: var(--brand-primary, #064e3b);
+    border: 1px solid var(--brand-primary, #a7f3d0);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease-out;
   }
 
   .btn-secondary-emerald:hover {
-    background-color: #ecfdf5;
-    border-color: #064e3b;
+    background-color: #f8fafc;
+    border-color: var(--brand-primary, #064e3b);
   }
 
   .badge-emerald {

@@ -256,7 +256,7 @@ export function B2BInboxClient({
                             className={`px-3 py-1.5 font-semibold uppercase rounded flex items-center justify-center gap-1.5 transition-colors ${
                               isLogged
                                 ? "bg-zinc-100 text-zinc-400 border border-zinc-200"
-                                : "btn-primary-modern bg-black text-white hover:bg-zinc-800 border-none"
+                                : "btn-primary-modern text-[10px]"
                             }`}
                           >
                             {isPending ? (

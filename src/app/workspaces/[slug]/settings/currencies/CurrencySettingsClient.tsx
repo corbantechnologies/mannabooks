@@ -212,7 +212,7 @@ export function CurrencySettingsClient({
                 setSymbol("$");
                 fetchGuidanceRate("USD");
               }}
-              className="px-4 py-2 bg-black text-white rounded-lg text-xs font-bold uppercase hover:bg-zinc-800 transition-colors shadow-sm"
+              className="btn-primary-modern px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider"
             >
               + Add Currency
             </button>
@@ -221,14 +221,14 @@ export function CurrencySettingsClient({
       </div>
 
       {/* BASE CURRENCY SUMMARY CARD */}
-      <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-zinc-50 border border-zinc-200/80 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <span className="text-[10px] text-zinc-400 uppercase font-bold block">Primary Operating Base Currency</span>
-          <p className="text-lg font-black text-black font-sans mt-0.5">
+          <p className="text-base font-bold text-black font-sans mt-0.5">
             {baseCurrency} — All foreign currency documents are converted to {baseCurrency} in your general ledger.
           </p>
         </div>
-        <div className="px-3 py-1.5 bg-black text-white text-[11px] font-bold rounded uppercase">
+        <div className="badge-black text-[11px] px-3 py-1 font-semibold">
           Base: 1.0000 {baseCurrency}
         </div>
       </div>
@@ -345,14 +345,14 @@ export function CurrencySettingsClient({
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
-                className="px-4 py-2 border border-zinc-300 rounded-lg font-bold uppercase text-zinc-600 hover:bg-zinc-50 text-xs"
+                className="btn-secondary-modern px-3.5 py-2 text-xs font-semibold uppercase tracking-wider"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || !code || !exchangeRate}
-                className="px-4 py-2 bg-black text-white rounded-lg font-bold uppercase hover:bg-zinc-800 disabled:opacity-50 text-xs flex items-center gap-1.5"
+                className="btn-primary-modern px-3.5 py-2 text-xs font-semibold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1.5"
               >
                 {isSubmitting ? (
                   <>

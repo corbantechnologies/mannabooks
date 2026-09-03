@@ -43,7 +43,7 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
     <>
     <div
       style={{ "--brand-primary": brandColor } as React.CSSProperties}
-      className="flex flex-col lg:flex-row min-h-screen bg-white"
+      className="flex flex-col lg:flex-row min-h-screen portal-canvas"
     >
       <style>{`
         :root {
@@ -93,7 +93,7 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
         user={user}
         planName={planName}
         isLifetime={isLifetime}
-        sidebarChildren={<DesktopSideNav slug={slug} />}
+        sidebarChildren={<DesktopSideNav slug={slug} brandColor={brandColor} />}
         headerChildren={
           <>
             {user.isSuperAdmin && (

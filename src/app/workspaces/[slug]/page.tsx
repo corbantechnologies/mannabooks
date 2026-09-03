@@ -185,13 +185,6 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
             <ShoppingCartIcon />
             <span>POS Terminal</span>
           </Link>
-          <Link
-            href={`/workspaces/${slug}/documents/new`}
-            className="btn-primary-modern flex items-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>New Document</span>
-          </Link>
         </div>
       </div>
 

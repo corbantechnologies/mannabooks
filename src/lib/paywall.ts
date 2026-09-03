@@ -9,6 +9,9 @@ export interface PlanDefinition {
     priceKesMonthly: number;
     priceKesAnnually: number;
     annualDiscountPercent: number;
+    /** Promotional override — if set, shown as the current price with original slashed through */
+    discountedPriceMonthly?: number | null;
+    discountedPriceAnnually?: number | null;
     maxMembers: number;
     maxLocations: number;
     canTransferStock: boolean;
@@ -182,6 +185,8 @@ export async function getDynamicPlanSpecs(): Promise<Record<string, PlanDefiniti
                 priceKesMonthly: row.priceKesMonthly,
                 priceKesAnnually: row.priceKesAnnually,
                 annualDiscountPercent: row.annualDiscountPercent,
+                discountedPriceMonthly: row.discountedPriceMonthly ?? null,
+                discountedPriceAnnually: row.discountedPriceAnnually ?? null,
                 maxMembers: row.maxMembers === -1 ? Infinity : row.maxMembers,
                 maxLocations: row.maxLocations === -1 ? Infinity : row.maxLocations,
                 canTransferStock: row.canTransferStock,

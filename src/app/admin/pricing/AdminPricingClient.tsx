@@ -38,6 +38,8 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
     priceKesMonthly: 2500,
     priceKesAnnually: 24000,
     annualDiscountPercent: 20,
+    discountedPriceMonthly: null as number | null,
+    discountedPriceAnnually: null as number | null,
     maxMembers: 5,
     maxLocations: 5,
     canTransferStock: true,
@@ -104,6 +106,8 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
       priceKesMonthly: editingPlan.priceKesMonthly,
       priceKesAnnually: editingPlan.priceKesAnnually,
       annualDiscountPercent: editingPlan.annualDiscountPercent || 20,
+      discountedPriceMonthly: editingPlan.discountedPriceMonthly ?? null,
+      discountedPriceAnnually: editingPlan.discountedPriceAnnually ?? null,
       maxMembers: editingPlan.maxMembers === Infinity ? -1 : editingPlan.maxMembers,
       maxLocations: editingPlan.maxLocations === Infinity ? -1 : editingPlan.maxLocations,
       canTransferStock: editingPlan.canTransferStock,
@@ -145,6 +149,8 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
       priceKesMonthly: createPlanData.priceKesMonthly,
       priceKesAnnually: createPlanData.priceKesAnnually,
       annualDiscountPercent: createPlanData.annualDiscountPercent,
+      discountedPriceMonthly: createPlanData.discountedPriceMonthly ?? null,
+      discountedPriceAnnually: createPlanData.discountedPriceAnnually ?? null,
       maxMembers: createPlanData.maxMembers,
       maxLocations: createPlanData.maxLocations,
       canTransferStock: createPlanData.canTransferStock,
@@ -276,8 +282,11 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {plans.map((plan) => {
           const isAnnual = billingCycle === "ANNUAL";
-          const displayPrice = isAnnual ? plan.priceKesAnnually : plan.priceKesMonthly;
-          const monthlyEquivalent = isAnnual && plan.priceKesAnnually > 0 ? Math.round(plan.priceKesAnnually / 12) : plan.priceKesMonthly;
+          const originalPrice = isAnnual ? plan.priceKesAnnually : plan.priceKesMonthly;
+          const promoPrice = isAnnual ? plan.discountedPriceAnnually : plan.discountedPriceMonthly;
+          const hasDiscount = typeof promoPrice === "number" && promoPrice > 0 && promoPrice < originalPrice;
+          const displayPrice = hasDiscount ? promoPrice : originalPrice;
+          const monthlyEquivalent = isAnnual && displayPrice > 0 ? Math.round(displayPrice / 12) : displayPrice;
           const isCoreDefault = ["FREE", "BASIC", "PRO", "ENTERPRISE"].includes(plan.id);
 
           return (
@@ -310,7 +319,12 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
 
                 {/* PRICE DISPLAY */}
                 <div className="border-y border-zinc-100 py-4 space-y-1">
-                  <div className="flex items-baseline gap-1 font-mono">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono">
+                    {hasDiscount && (
+                      <span className="text-sm font-bold text-zinc-400 line-through">
+                        {formatCurrency(originalPrice, "KES")}
+                      </span>
+                    )}
                     <span className="text-2xl sm:text-3xl font-black text-black">
                       {displayPrice === 0 ? "FREE" : formatCurrency(displayPrice, "KES")}
                     </span>
@@ -319,8 +333,13 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
                         {isAnnual ? "/ yr" : "/ mo"}
                       </span>
                     )}
+                    {hasDiscount && (
+                      <span className="text-[9px] bg-rose-50 text-rose-600 border border-rose-200 px-1.5 py-0.5 rounded font-bold uppercase">
+                        PROMO
+                      </span>
+                    )}
                   </div>
-                  {isAnnual && plan.priceKesAnnually > 0 && (
+                  {isAnnual && displayPrice > 0 && (
                     <span className="text-[10px] text-emerald-700 font-mono font-bold block">
                       Equivalent to {formatCurrency(monthlyEquivalent, "KES")}/month
                     </span>
@@ -523,6 +542,43 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
                       onChange={(e) => setCreatePlanData({ ...createPlanData, priceKesAnnually: parseInt(e.target.value) || 0 })}
                       className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs font-mono font-bold text-emerald-900 focus:outline-none focus:border-black bg-white"
                     />
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-zinc-200/80 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-zinc-700 uppercase text-[10px] block">
+                      🏷️ Promotional / Slashed Discount Pricing (Optional)
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-sans">Leave blank for no promo discount</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-rose-600 uppercase block">Discounted Monthly Price (KES)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="50"
+                        value={createPlanData.discountedPriceMonthly ?? ""}
+                        onChange={(e) => setCreatePlanData({ ...createPlanData, discountedPriceMonthly: e.target.value === "" ? null : parseInt(e.target.value) || 0 })}
+                        placeholder="e.g. 1999 (slashes original)"
+                        className="w-full px-3 py-2 border border-rose-200 rounded-lg text-xs font-mono font-bold text-rose-700 focus:outline-none focus:border-rose-500 bg-white"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-rose-600 uppercase block">Discounted Annual Price (KES)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="100"
+                        value={createPlanData.discountedPriceAnnually ?? ""}
+                        onChange={(e) => setCreatePlanData({ ...createPlanData, discountedPriceAnnually: e.target.value === "" ? null : parseInt(e.target.value) || 0 })}
+                        placeholder="e.g. 18000 (slashes original)"
+                        className="w-full px-3 py-2 border border-rose-200 rounded-lg text-xs font-mono font-bold text-rose-700 focus:outline-none focus:border-rose-500 bg-white"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -804,6 +860,43 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
                       onChange={(e) => setEditingPlan({ ...editingPlan, priceKesAnnually: parseInt(e.target.value) || 0 })}
                       className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs font-mono font-bold text-emerald-900 focus:outline-none focus:border-black bg-white"
                     />
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-zinc-200/80 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-zinc-700 uppercase text-[10px] block">
+                      🏷️ Promotional / Slashed Discount Pricing (Optional)
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-sans">Leave blank for no promo discount</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-rose-600 uppercase block">Discounted Monthly Price (KES)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="50"
+                        value={editingPlan.discountedPriceMonthly ?? ""}
+                        onChange={(e) => setEditingPlan({ ...editingPlan, discountedPriceMonthly: e.target.value === "" ? null : parseInt(e.target.value) || 0 })}
+                        placeholder="e.g. 1999 (slashes original)"
+                        className="w-full px-3 py-2 border border-rose-200 rounded-lg text-xs font-mono font-bold text-rose-700 focus:outline-none focus:border-rose-500 bg-white"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-rose-600 uppercase block">Discounted Annual Price (KES)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="100"
+                        value={editingPlan.discountedPriceAnnually ?? ""}
+                        onChange={(e) => setEditingPlan({ ...editingPlan, discountedPriceAnnually: e.target.value === "" ? null : parseInt(e.target.value) || 0 })}
+                        placeholder="e.g. 18000 (slashes original)"
+                        className="w-full px-3 py-2 border border-rose-200 rounded-lg text-xs font-mono font-bold text-rose-700 focus:outline-none focus:border-rose-500 bg-white"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

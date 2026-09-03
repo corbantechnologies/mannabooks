@@ -14,6 +14,8 @@ export interface UpdatePlatformPlanInput {
     priceKesMonthly: number;
     priceKesAnnually: number;
     annualDiscountPercent: number;
+    discountedPriceMonthly?: number | null;
+    discountedPriceAnnually?: number | null;
     maxMembers: number; // -1 for unlimited
     maxLocations: number; // -1 for unlimited
     canTransferStock: boolean;
@@ -34,6 +36,8 @@ export interface CreatePlatformPlanInput {
     priceKesMonthly: number;
     priceKesAnnually?: number;
     annualDiscountPercent?: number;
+    discountedPriceMonthly?: number | null;
+    discountedPriceAnnually?: number | null;
     maxMembers: number;
     maxLocations: number;
     canTransferStock: boolean;
@@ -114,6 +118,8 @@ export async function createPlatformPlanAction(input: CreatePlatformPlanInput) {
             priceKesMonthly: monthly,
             priceKesAnnually: annual,
             annualDiscountPercent: discountPercent,
+            discountedPriceMonthly: input.discountedPriceMonthly ?? null,
+            discountedPriceAnnually: input.discountedPriceAnnually ?? null,
             maxMembers: input.maxMembers,
             maxLocations: input.maxLocations,
             canTransferStock: Boolean(input.canTransferStock),
@@ -177,6 +183,8 @@ export async function updatePlatformPlanAction(input: UpdatePlatformPlanInput) {
             priceKesMonthly: monthly,
             priceKesAnnually: annual,
             annualDiscountPercent: discountPercent,
+            discountedPriceMonthly: input.discountedPriceMonthly ?? null,
+            discountedPriceAnnually: input.discountedPriceAnnually ?? null,
             maxMembers: input.maxMembers,
             maxLocations: input.maxLocations,
             canTransferStock: Boolean(input.canTransferStock),
@@ -197,6 +205,8 @@ export async function updatePlatformPlanAction(input: UpdatePlatformPlanInput) {
                 priceKesMonthly: monthly,
                 priceKesAnnually: annual,
                 annualDiscountPercent: discountPercent,
+                discountedPriceMonthly: input.discountedPriceMonthly ?? null,
+                discountedPriceAnnually: input.discountedPriceAnnually ?? null,
                 maxMembers: input.maxMembers,
                 maxLocations: input.maxLocations,
                 canTransferStock: Boolean(input.canTransferStock),

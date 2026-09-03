@@ -34,11 +34,18 @@ export async function initiateSubscriptionPaymentAction(input: InitiatePaymentIn
 
         const months = Math.max(1, input.months || 1);
         let amount = 0;
-        if (months >= 12 && planSpec.priceKesAnnually > 0) {
-            amount = planSpec.priceKesAnnually;
+        const effectiveAnnual = (planSpec.discountedPriceAnnually && planSpec.discountedPriceAnnually > 0)
+            ? planSpec.discountedPriceAnnually
+            : planSpec.priceKesAnnually;
+        const effectiveMonthly = (planSpec.discountedPriceMonthly && planSpec.discountedPriceMonthly > 0)
+            ? planSpec.discountedPriceMonthly
+            : planSpec.priceKesMonthly;
+
+        if (months >= 12 && effectiveAnnual > 0) {
+            amount = effectiveAnnual;
         } else {
             const discountMultiplier = months >= 12 ? 0.8 : (months >= 3 ? 0.9 : 1.0);
-            amount = Math.round(planSpec.priceKesMonthly * months * discountMultiplier);
+            amount = Math.round(effectiveMonthly * months * discountMultiplier);
         }
 
         const shop = await db.query.shops.findFirst({

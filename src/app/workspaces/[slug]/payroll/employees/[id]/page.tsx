@@ -38,10 +38,10 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
   );
 
   return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-mono text-xs">
+    <div className="p-5 sm:p-7 space-y-6 font-mono text-xs">
       
       {/* BACK NAVIGATION AND HEADER */}
-      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
+      <div className="space-y-2">
         <Link
           href={`/workspaces/${slug}/payroll`}
           className="text-xs font-sans font-bold text-zinc-400 hover:underline block"
@@ -51,8 +51,8 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
           <div>
-            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Employee Payslips</span>
-            <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
+            <span className="text-xs text-zinc-400 font-medium">Employee Payslips</span>
+            <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">
               {employeeData.fullName}
             </h1>
             <p className="font-sans text-xs text-zinc-500 mt-0.5">ID: {employeeData.id}</p>
@@ -131,21 +131,21 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
           </span>
         </div>
 
-        <div className="card-modern overflow-x-auto">
+        <div className="surface overflow-x-auto">
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
-              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Payroll Ref</th>
-                <th className="p-4 border-r border-zinc-200">Date</th>
-                <th className="p-4 border-r border-zinc-200">Description</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Net Payout</th>
-                <th className="p-4 text-center">Actions</th>
+              <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                <th className="px-4 py-3 border-r border-zinc-100">Payroll Ref</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Date</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Description</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-right">Net Payout</th>
+                <th className="px-4 py-3 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200/80 bg-white">
+            <tbody className="bg-white">
               {employeeData.payrollHistory.map((item, idx) => (
-                <tr key={idx} className="hover:bg-zinc-50/80 transition-colors">
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider">
+                <tr key={idx} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                  <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider">
                     <Link
                       href={`/workspaces/${slug}/payroll/${item.voucherId}`}
                       className="hover:underline underline-offset-2"
@@ -153,16 +153,16 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
                       {item.docNumber}
                     </Link>
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
+                  <td className="px-4 py-3 border-r border-zinc-100 text-zinc-400">
                     {new Date(item.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-zinc-600 max-w-md truncate">
+                  <td className="p-4 border-r border-zinc-100 text-zinc-600 max-w-md truncate">
                     {item.description}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-emerald-700 text-right text-sm">
+                  <td className="p-4 border-r border-zinc-100 font-semibold text-emerald-700 text-right text-sm">
                     {formatCurrency(parseFloat(item.netPay), shop.currency)}
                   </td>
-                  <td className="p-4 text-center">
+                  <td className="px-4 py-3 text-center">
                     <Link
                       href={`/workspaces/${slug}/payroll/${item.voucherId}`}
                       className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"

@@ -1,4 +1,4 @@
-import { db } from "@/db";
+﻿import { db } from "@/db";
 import { shopMembers, shops, users } from "@/db/schema";
 import { verifyAndGetSession } from "@/lib/actions/auth";
 import { logoutAction } from "@/lib/actions/logout";
@@ -51,9 +51,9 @@ export default async function WorkspacesDirectoryPage() {
     <div className="min-h-screen bg-white text-black flex flex-col justify-between p-6 sm:p-12 md:p-16 selection:bg-black selection:text-white">
       
       {/* TOP META BAR */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 pb-6">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-6">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-semibold uppercase tracking-wider">Account Workspaces</span>
+          <span className="text-xs text-zinc-400 font-medium">Account Workspaces</span>
           <div className="flex items-center gap-3 mt-1">
             <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight font-sans text-black">
               Select Workspace
@@ -166,7 +166,7 @@ export default async function WorkspacesDirectoryPage() {
                   </span>
                   <span className={`border px-2.5 py-0.5 font-semibold uppercase rounded ${
                     member.shop.isVatRegistered 
-                      ? "bg-black text-white border-black" 
+                      ? "badge-emerald" 
                       : "border-zinc-200 text-zinc-400"
                   }`}>
                     {member.shop.isVatRegistered ? "VAT_ACTIVE (16%)" : "NON_VAT"}

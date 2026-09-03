@@ -63,10 +63,10 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
+    <div className="p-5 sm:p-7 space-y-6">
       
       {/* INTERFACE NAVIGATION HEADER */}
-      <div className="border-b border-zinc-200/80 pb-6 space-y-3">
+      <div className="space-y-3">
         <Link
           href={`/workspaces/${slug}/suppliers`}
           className="text-xs font-sans font-bold text-zinc-400 hover:underline inline-flex items-center gap-1"
@@ -77,7 +77,7 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Procurement Summary</span>
+              <span className="text-xs text-zinc-400 font-medium">Procurement Summary</span>
               {supplierRecord.requiresEtims && (
                 <span className="border border-amber-300 bg-amber-50 text-amber-900 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wide rounded">
                   eTIMS Required
@@ -158,22 +158,22 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
           </span>
         </div>
 
-        <div className="card-modern overflow-x-auto">
+        <div className="surface overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse font-mono">
             <thead>
-              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Document #</th>
-                <th className="p-4 border-r border-zinc-200">Document Type</th>
-                <th className="p-4 border-r border-zinc-200">Issue Date</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Total Amount</th>
-                <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-                <th className="p-4 text-center">Actions</th>
+              <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                <th className="px-4 py-3 border-r border-zinc-100">Document #</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Document Type</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Issue Date</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-right">Total Amount</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-center">Status</th>
+                <th className="px-4 py-3 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200/80 bg-white">
+            <tbody className="bg-white">
               {supplierDocuments.map((doc) => (
-                <tr key={doc.id} className="hover:bg-zinc-50/80 transition-colors">
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider">
+                <tr key={doc.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                  <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider">
                     <Link
                       href={`/workspaces/${slug}/documents/${doc.id}`}
                       className="hover:underline underline-offset-2"
@@ -181,28 +181,28 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
                       {doc.docNumber}
                     </Link>
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80">
+                  <td className="p-4 border-r border-zinc-100">
                     <span className="border border-zinc-300 px-2 py-0.5 text-[9px] font-semibold tracking-widest bg-white rounded">
                       {doc.type}
                     </span>
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
+                  <td className="px-4 py-3 border-r border-zinc-100 text-zinc-400">
                     {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-sm text-black text-right">
+                  <td className="px-4 py-3 border-r border-zinc-100 font-semibold text-sm text-zinc-900 text-right">
                     {formatCurrency(doc.grandTotal, shop.currency)}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-center">
+                  <td className="px-4 py-3 border-r border-zinc-100 text-center">
                     <span className={`border px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded ${
-                      doc.status === "PAID" ? "bg-black text-white border-black" :
+                      doc.status === "PAID" ? "badge-emerald" :
                       doc.status === "ISSUED" ? "bg-white text-black border-zinc-300" :
                       doc.status === "OVERDUE" ? "bg-rose-50 border-rose-300 text-rose-700" :
-                      "bg-zinc-50 text-zinc-400 border-zinc-200"
+                      "badge-zinc"
                     }`}>
                       {doc.status}
                     </span>
                   </td>
-                  <td className="p-4 text-center">
+                  <td className="px-4 py-3 text-center">
                     <Link
                       href={`/workspaces/${slug}/documents/${doc.id}`}
                       className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"

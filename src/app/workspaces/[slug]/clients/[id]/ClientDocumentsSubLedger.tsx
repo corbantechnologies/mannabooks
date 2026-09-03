@@ -65,7 +65,7 @@ export function ClientDocumentsSubLedger({
     <div className="space-y-4">
       {/* FILTER CONTROLS */}
       <div className="card-modern p-4 space-y-3 bg-white">
-        <div className="flex justify-between items-center border-b border-zinc-200/80 pb-2">
+        <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
           <div className="flex items-center gap-2">
             <span className="font-semibold uppercase tracking-tight text-xs text-black font-sans">
               Filter Client Documents
@@ -145,22 +145,22 @@ export function ClientDocumentsSubLedger({
       </div>
 
       {/* INSTANTLY FILTERED DOCUMENTS TABLE */}
-      <div className="card-modern overflow-x-auto">
+      <div className="surface overflow-x-auto">
         <table className="w-full text-left font-mono text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-              <th className="p-4 border-r border-zinc-200">Document #</th>
-              <th className="p-4 border-r border-zinc-200">Type</th>
-              <th className="p-4 border-r border-zinc-200">Date</th>
-              <th className="p-4 border-r border-zinc-200 text-right">Total Amount</th>
-              <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-              <th className="p-4 text-center">Actions</th>
+            <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+              <th className="px-4 py-3 border-r border-zinc-100">Document #</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Type</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Date</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">Total Amount</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-center">Status</th>
+              <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200/80 bg-white">
+          <tbody className="bg-white">
             {filteredDocs.map((doc) => (
-              <tr key={doc.id} className="hover:bg-zinc-50/80 transition-colors">
-                <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider">
+              <tr key={doc.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider">
                   <Link
                     href={`/workspaces/${slug}/documents/${doc.id}`}
                     className="hover:underline underline-offset-2"
@@ -168,18 +168,18 @@ export function ClientDocumentsSubLedger({
                     {doc.docNumber}
                   </Link>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80">
+                <td className="p-4 border-r border-zinc-100">
                   <span className="badge-zinc">
                     {doc.type}
                   </span>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-500 font-sans">
+                <td className="p-4 border-r border-zinc-100 text-zinc-500 font-sans">
                   {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 font-semibold text-sm text-black text-right font-mono">
+                <td className="p-4 border-r border-zinc-100 font-semibold text-sm text-black text-right font-mono">
                   {formatCurrency(doc.grandTotal, currency)}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-center">
+                <td className="px-4 py-3 border-r border-zinc-100 text-center">
                   <span
                     className={
                       doc.status === "PAID"
@@ -196,7 +196,7 @@ export function ClientDocumentsSubLedger({
                     {doc.status}
                   </span>
                 </td>
-                <td className="p-4 text-center">
+                <td className="px-4 py-3 text-center">
                   <Link
                     href={`/workspaces/${slug}/documents/${doc.id}`}
                     className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"

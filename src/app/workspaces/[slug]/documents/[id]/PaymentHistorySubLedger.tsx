@@ -117,9 +117,9 @@ export function PaymentHistorySubLedger({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-200/80 pb-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-100 pb-3">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Settlement &amp; Installments</span>
+          <span className="text-xs text-zinc-400 font-medium">Settlement &amp; Installments</span>
           <h3 className="font-bold uppercase tracking-tight text-sm font-mono text-black mt-0.5">
             Payment History &amp; Balance Ledger
           </h3>
@@ -147,10 +147,10 @@ export function PaymentHistorySubLedger({
       </div>
 
       {/* PAYMENTS SUB-TABLE */}
-      <div className="card-modern overflow-x-auto">
+      <div className="surface overflow-x-auto">
         <table className="w-full text-left font-mono text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+            <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
               <th className="p-3 border-r border-zinc-200">Date Paid</th>
               <th className="p-3 border-r border-zinc-200">Payment Channel</th>
               <th className="p-3 border-r border-zinc-200">Reference / Code</th>
@@ -159,24 +159,24 @@ export function PaymentHistorySubLedger({
               <th className="p-3 text-center">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200/80 bg-white">
+          <tbody className="bg-white">
             {payments.map((p) => (
-              <tr key={p.id} className="hover:bg-zinc-50/80 transition-colors">
-                <td className="p-3 border-r border-zinc-200/80 text-zinc-600">
+              <tr key={p.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                <td className="p-3 border-r border-zinc-100 text-zinc-600">
                   {new Date(p.paymentDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                 </td>
-                <td className="p-3 border-r border-zinc-200/80 font-bold uppercase">
+                <td className="p-3 border-r border-zinc-100 font-bold uppercase">
                   <span className="px-2 py-0.5 border border-zinc-200 bg-zinc-50 rounded text-[10px]">
                     {p.paymentChannel}
                   </span>
                 </td>
-                <td className="p-3 border-r border-zinc-200/80 font-bold text-black tracking-wide">
+                <td className="p-3 border-r border-zinc-100 font-bold text-black tracking-wide">
                   {p.paymentReference || "—"}
                 </td>
-                <td className="p-3 border-r border-zinc-200/80 font-sans text-xs text-zinc-500">
+                <td className="p-3 border-r border-zinc-100 font-sans text-xs text-zinc-500">
                   {p.notes || "—"}
                 </td>
-                <td className="p-3 border-r border-zinc-200/80 font-bold text-emerald-700 text-right">
+                <td className="p-3 border-r border-zinc-100 font-bold text-emerald-700 text-right">
                   {formatCurrency(p.amount, currency)}
                 </td>
                 <td className="p-3 text-center">
@@ -210,7 +210,7 @@ export function PaymentHistorySubLedger({
             onSubmit={handleRecordPayment}
             className="bg-white border border-zinc-200/80 rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl font-mono text-xs"
           >
-            <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
               <h3 className="font-bold text-sm uppercase text-black font-sans">
                 + Record Invoice Payment Installment
               </h3>

@@ -27,13 +27,13 @@ export default async function TransfersListPage({ params }: TransfersPageProps) 
   const transfers = await getStockTransfers(shop.id);
 
   return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-mono text-xs">
+    <div className="p-5 sm:p-7 space-y-6 font-mono text-xs">
 
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Inventory / Transfers</span>
-          <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Stock Transfers</h1>
+          <span className="text-xs text-zinc-400 font-medium">Inventory / Transfers</span>
+          <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Stock Transfers</h1>
           <p className="font-sans text-xs text-zinc-600 mt-1">
             Move stock between locations. Transfers create an immutable ledger trail (TRANSFER_OUT → TRANSFER_IN).
           </p>
@@ -47,53 +47,53 @@ export default async function TransfersListPage({ params }: TransfersPageProps) 
       </div>
 
       {/* TRANSFERS TABLE */}
-      <div className="card-modern overflow-x-auto">
+      <div className="surface overflow-x-auto">
         <table className="w-full text-left font-mono text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-              <th className="p-4 border-r border-zinc-200">Date</th>
-              <th className="p-4 border-r border-zinc-200">From</th>
-              <th className="p-4 border-r border-zinc-200">To</th>
-              <th className="p-4 border-r border-zinc-200">Items</th>
-              <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-              <th className="p-4 border-r border-zinc-200">Requested By</th>
-              <th className="p-4 text-center">Actions</th>
+            <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+              <th className="px-4 py-3 border-r border-zinc-100">Date</th>
+              <th className="px-4 py-3 border-r border-zinc-100">From</th>
+              <th className="px-4 py-3 border-r border-zinc-100">To</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Items</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-center">Status</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Requested By</th>
+              <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200/80 bg-white">
+          <tbody className="bg-white">
             {transfers.map((transfer) => (
-              <tr key={transfer.id} className="hover:bg-zinc-50/80 transition-colors">
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
+              <tr key={transfer.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                <td className="px-4 py-3 border-r border-zinc-100 text-zinc-400">
                   {new Date(transfer.createdAt).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 font-semibold text-black">
+                <td className="p-4 border-r border-zinc-100 font-semibold text-black">
                   {transfer.fromLocation?.name || "—"}
                   {transfer.fromLocation?.code && (
                     <span className="block text-[10px] text-zinc-400">{transfer.fromLocation.code}</span>
                   )}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 font-semibold text-black">
+                <td className="p-4 border-r border-zinc-100 font-semibold text-black">
                   {transfer.toLocation?.name || "—"}
                   {transfer.toLocation?.code && (
                     <span className="block text-[10px] text-zinc-400">{transfer.toLocation.code}</span>
                   )}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-600">
+                <td className="p-4 border-r border-zinc-100 text-zinc-600">
                   {transfer.items.length} product{transfer.items.length !== 1 ? "s" : ""}
                   <span className="block text-[10px] text-zinc-400">
                     {transfer.items.slice(0, 2).map(i => i.product?.name).join(", ")}
                     {transfer.items.length > 2 ? `… +${transfer.items.length - 2} more` : ""}
                   </span>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-center">
+                <td className="px-4 py-3 border-r border-zinc-100 text-center">
                   <span className={`px-2 py-0.5 rounded border text-[10px] font-semibold uppercase ${STATUS_STYLES[transfer.status] || ""}`}>
                     {transfer.status}
                   </span>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-600">
+                <td className="p-4 border-r border-zinc-100 text-zinc-600">
                   {transfer.requestedBy?.name || "—"}
                 </td>
-                <td className="p-4 text-center">
+                <td className="px-4 py-3 text-center">
                   <Link
                     href={`/workspaces/${slug}/inventory/transfers/${transfer.id}`}
                     className="border border-zinc-300 px-3 py-1.5 text-[10px] font-semibold uppercase rounded hover:border-black hover:bg-zinc-50 transition-colors inline-block"

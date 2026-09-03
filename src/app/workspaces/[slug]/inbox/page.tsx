@@ -25,12 +25,12 @@ export default async function B2BInboxPage({ params }: B2BInboxPageProps) {
   const inboxData = await getB2BInboxDocuments(shop.id);
 
   return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-mono text-xs">
+    <div className="p-5 sm:p-7 space-y-6 font-mono text-xs">
       
       {/* HEADER TITLE */}
-      <div className="border-b border-zinc-200/80 pb-6 space-y-1">
-        <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">B2B Shared Inbox</span>
-        <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
+      <div className="space-y-1">
+        <span className="text-xs text-zinc-400 font-medium">B2B Shared Inbox</span>
+        <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">
           Shared Inbox
         </h1>
         <p className="font-sans text-xs text-zinc-600">

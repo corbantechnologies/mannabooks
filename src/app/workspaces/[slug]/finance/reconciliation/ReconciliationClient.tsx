@@ -330,7 +330,7 @@ export default function ReconciliationClient({
                     <div className="card-modern overflow-x-auto border border-zinc-200 rounded-xl bg-white">
                         <table className="w-full text-left font-mono text-xs border-collapse">
                             <thead>
-                                <tr className="bg-zinc-50 border-b border-zinc-200 uppercase font-semibold text-zinc-600">
+                                <tr className="bg-zinc-50 border-b border-zinc-100 uppercase font-semibold text-zinc-600">
                                     <th className="p-3 border-r border-zinc-200">Date</th>
                                     <th className="p-3 border-r border-zinc-200">Ref / Details</th>
                                     <th className="p-3 border-r border-zinc-200 text-right">Amount</th>
@@ -398,7 +398,7 @@ export default function ReconciliationClient({
                     <div className="card-modern overflow-x-auto border border-zinc-200 rounded-xl bg-white">
                         <table className="w-full text-left font-mono text-xs border-collapse">
                             <thead>
-                                <tr className="bg-zinc-50 border-b border-zinc-200 uppercase font-semibold text-zinc-600">
+                                <tr className="bg-zinc-50 border-b border-zinc-100 uppercase font-semibold text-zinc-600">
                                     <th className="p-3 border-r border-zinc-200">Date</th>
                                     <th className="p-3 border-r border-zinc-200">GL Description</th>
                                     <th className="p-3 border-r border-zinc-200 text-right">Amount</th>

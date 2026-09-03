@@ -313,7 +313,7 @@ export default function IncomeTrackerClient({ shopId, currency, initialIncomes }
                 <div className="bg-white border border-zinc-200/80 rounded-xl overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left">
-                            <thead className="bg-zinc-50/50 border-b border-zinc-200/80 text-xs uppercase text-zinc-500 font-bold">
+                            <thead className="bg-zinc-50/50 border-b border-zinc-100 text-xs uppercase text-zinc-500 font-bold">
                                 <tr>
                                     <th className="px-6 py-4">Date</th>
                                     <th className="px-6 py-4">Description</th>

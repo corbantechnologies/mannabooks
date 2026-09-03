@@ -121,7 +121,7 @@ export function BillingSettingsClient({
     <div className="space-y-10 font-sans">
       
       {/* HEADER BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-6">
         <div>
           <div className="flex items-center gap-2 font-mono text-[10px] text-zinc-400 uppercase font-bold tracking-widest">
             <Link href={`/workspaces/${shop.slug}/settings`} className="hover:text-black underline">
@@ -405,7 +405,7 @@ export function BillingSettingsClient({
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono text-xs border-collapse">
               <thead>
-                <tr className="border-b border-zinc-200 bg-zinc-50 text-[10px] text-zinc-400 uppercase font-bold tracking-wider">
+                <tr className="border-b border-zinc-100 bg-zinc-50 text-[10px] text-zinc-400 uppercase font-bold tracking-wider">
                   <th className="py-3 px-4">Date</th>
                   <th className="py-3 px-4">Description</th>
                   <th className="py-3 px-4">M-Pesa Receipt</th>
@@ -423,7 +423,7 @@ export function BillingSettingsClient({
                   </tr>
                 ) : (
                   transactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-zinc-50/80 transition-colors">
+                    <tr key={tx.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
                       <td className="py-3 px-4 font-mono text-zinc-500 text-[11px]">
                         {new Date(tx.createdAt).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                       </td>
@@ -467,9 +467,9 @@ export function BillingSettingsClient({
           <div className="bg-white border border-zinc-300 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-6 animate-in zoom-in-95 font-sans">
             
             {/* MODAL HEADER */}
-            <div className="flex justify-between items-start border-b border-zinc-200 pb-3">
+            <div className="flex justify-between items-start border-b border-zinc-100 pb-3">
               <div>
-                <span className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Lipa Na M-Pesa Online</span>
+                <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Lipa Na M-Pesa Online</span>
                 <h3 className="text-lg font-black text-black uppercase">
                   {((PLAN_RANK_MAP[targetPlan.id.toUpperCase()] ?? 0) < (PLAN_RANK_MAP[planDetails.plan.toUpperCase()] ?? 0))
                     ? `Downgrade to ${targetPlan.name}`

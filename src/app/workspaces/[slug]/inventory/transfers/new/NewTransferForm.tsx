@@ -87,12 +87,12 @@ export function NewTransferForm({ shopId, shopSlug, shopCurrency, locations, tra
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white font-mono text-xs max-w-3xl">
+    <div className="p-5 sm:p-7 space-y-6 font-mono text-xs max-w-3xl">
 
       {/* HEADER */}
-      <div className="border-b border-zinc-200/80 pb-6">
-        <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Inventory / Transfers / New</span>
-        <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Create Stock Transfer</h1>
+      <div className="space-y-2">
+        <span className="text-xs text-zinc-400 font-medium">Inventory / Transfers / New</span>
+        <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Create Stock Transfer</h1>
         <p className="font-sans text-xs text-zinc-600 mt-1">
           A transfer starts as DRAFT. Dispatch it to deduct stock from source, then receive at destination to complete.
         </p>

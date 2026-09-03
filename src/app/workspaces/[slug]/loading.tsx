@@ -1,8 +1,8 @@
 // src/app/workspaces/[slug]/loading.tsx
 export default function WorkspaceLoadingSkeleton() {
   return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white animate-pulse">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
+    <div className="p-5 sm:p-7 space-y-6 animate-pulse">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="space-y-2">
           <div className="h-3 w-40 bg-zinc-200 rounded-md"></div>
           <div className="h-8 w-64 bg-zinc-200 rounded-md"></div>

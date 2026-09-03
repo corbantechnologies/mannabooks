@@ -27,12 +27,12 @@ export default async function AbcAnalysisPage({ params }: Props) {
   const totalRevenue = products.reduce((s, p) => s + p.totalRevenue, 0);
 
   return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-mono text-xs">
+    <div className="p-5 sm:p-7 space-y-6 font-mono text-xs">
 
       {/* HEADER */}
-      <div className="border-b border-zinc-200/80 pb-6">
-        <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Inventory / Reports</span>
-        <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">ABC Analysis</h1>
+      <div className="space-y-2">
+        <span className="text-xs text-zinc-400 font-medium">Inventory / Reports</span>
+        <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">ABC Analysis</h1>
         <p className="font-sans text-xs text-zinc-600 mt-1">
           Products ranked by revenue contribution using the Pareto principle. A = top 70%, B = next 20%, C = remaining 10%.
         </p>
@@ -69,40 +69,40 @@ export default async function AbcAnalysisPage({ params }: Props) {
           </div>
 
           {/* ABC TABLE */}
-          <div className="card-modern overflow-x-auto">
+          <div className="surface overflow-x-auto">
             <table className="w-full text-left font-mono text-xs border-collapse">
               <thead>
-                <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                  <th className="p-4 border-r border-zinc-200 text-center">Rank</th>
-                  <th className="p-4 border-r border-zinc-200">Product</th>
-                  <th className="p-4 border-r border-zinc-200">SKU</th>
-                  <th className="p-4 border-r border-zinc-200 text-right">Revenue</th>
-                  <th className="p-4 border-r border-zinc-200 text-right">Share %</th>
-                  <th className="p-4 border-r border-zinc-200 text-right">Cumulative %</th>
-                  <th className="p-4 border-r border-zinc-200 text-center">Tier</th>
+                <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                  <th className="px-4 py-3 border-r border-zinc-100 text-center">Rank</th>
+                  <th className="px-4 py-3 border-r border-zinc-100">Product</th>
+                  <th className="px-4 py-3 border-r border-zinc-100">SKU</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Revenue</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Share %</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Cumulative %</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-center">Tier</th>
                   <th className="p-4">Revenue Bar</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-200/80 bg-white">
+              <tbody className="bg-white">
                 {products.map((p, idx) => {
                   const style = TIER_STYLES[p.tier];
                   return (
-                    <tr key={p.productId} className="hover:bg-zinc-50/80 transition-colors">
-                      <td className="p-4 border-r border-zinc-200/80 text-center text-zinc-400 font-bold">{idx + 1}</td>
-                      <td className="p-4 border-r border-zinc-200/80 font-sans font-semibold text-black text-sm">{p.name}</td>
-                      <td className="p-4 border-r border-zinc-200/80 text-zinc-500 uppercase tracking-wider">
+                    <tr key={p.productId} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                      <td className="p-4 border-r border-zinc-100 text-center text-zinc-400 font-bold">{idx + 1}</td>
+                      <td className="p-4 border-r border-zinc-100 font-sans font-semibold text-black text-sm">{p.name}</td>
+                      <td className="p-4 border-r border-zinc-100 text-zinc-500 uppercase tracking-wider">
                         {p.sku || <span className="text-zinc-300 font-normal lowercase italic">—</span>}
                       </td>
-                      <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-black">
+                      <td className="p-4 border-r border-zinc-100 text-right font-semibold text-black">
                         {formatCurrency(p.totalRevenue, shop.currency)}
                       </td>
-                      <td className="p-4 border-r border-zinc-200/80 text-right text-zinc-600">
+                      <td className="p-4 border-r border-zinc-100 text-right text-zinc-600">
                         {p.revenueShare.toFixed(1)}%
                       </td>
-                      <td className="p-4 border-r border-zinc-200/80 text-right text-zinc-600">
+                      <td className="p-4 border-r border-zinc-100 text-right text-zinc-600">
                         {p.cumulativeShare.toFixed(1)}%
                       </td>
-                      <td className="p-4 border-r border-zinc-200/80 text-center">
+                      <td className="px-4 py-3 border-r border-zinc-100 text-center">
                         <span className={`px-2 py-0.5 rounded border text-[10px] font-bold uppercase ${style.badge}`}>
                           {p.tier}
                         </span>

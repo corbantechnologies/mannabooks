@@ -42,12 +42,12 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
   const lastProcessedVoucher = payrollVouchers[0];
 
   return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white">
+    <div className="p-5 sm:p-7 space-y-6">
       
       {/* HEADER & TOP ACTION BUTTONS */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Payroll Registry</span>
+          <span className="text-xs text-zinc-400 font-medium">Payroll Registry</span>
           <h1 className="text-xl font-semibold uppercase tracking-tight font-sans text-black">{shop.name} Payroll</h1>
           <p className="font-sans text-xs text-zinc-600">
             Log employee salaries, casual wages, sales commissions, and track statutory deductions.
@@ -107,23 +107,23 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
           <span className="text-[10px] text-zinc-400 uppercase font-semibold">Total Runs: {payrollVouchers.length}</span>
         </div>
 
-        <div className="card-modern overflow-x-auto">
+        <div className="surface overflow-x-auto">
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
-              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Payroll Ref</th>
-                <th className="p-4 border-r border-zinc-200">Issue Date</th>
-                <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Gross Earnings</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Deductions</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Net Pay</th>
-                <th className="p-4 text-center">Actions</th>
+              <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                <th className="px-4 py-3 border-r border-zinc-100">Payroll Ref</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Issue Date</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-center">Status</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-right">Gross Earnings</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-right">Deductions</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-right">Net Pay</th>
+                <th className="px-4 py-3 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200/80 bg-white">
+            <tbody className="bg-white">
               {payrollVouchers.map((doc) => (
-                <tr key={doc.id} className="hover:bg-zinc-50/80 transition-colors">
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider">
+                <tr key={doc.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                  <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider">
                     <Link
                       href={`/workspaces/${slug}/payroll/${doc.id}`}
                       className="hover:underline underline-offset-2"
@@ -131,26 +131,26 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
                       {doc.docNumber}
                     </Link>
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
+                  <td className="px-4 py-3 border-r border-zinc-100 text-zinc-400">
                     {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-center">
+                  <td className="px-4 py-3 border-r border-zinc-100 text-center">
                     <span className={
                       doc.status === "DRAFT" ? "badge-amber" : "badge-emerald"
                     }>
                       {doc.status}
                     </span>
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black text-right font-mono">
+                  <td className="p-4 border-r border-zinc-100 font-semibold text-black text-right font-mono">
                     {formatCurrency(parseFloat(doc.subTotal), shop.currency)}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-rose-600 font-semibold text-right font-mono">
+                  <td className="p-4 border-r border-zinc-100 text-rose-600 font-semibold text-right font-mono">
                     {formatCurrency(parseFloat(doc.taxAmount), shop.currency)}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-emerald-700 text-right text-sm font-mono">
+                  <td className="p-4 border-r border-zinc-100 font-semibold text-emerald-700 text-right text-sm font-mono">
                     {formatCurrency(parseFloat(doc.grandTotal), shop.currency)}
                   </td>
-                  <td className="p-4 text-center">
+                  <td className="px-4 py-3 text-center">
                     <Link
                       href={`/workspaces/${slug}/payroll/${doc.id}`}
                       className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"
@@ -180,23 +180,23 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
           <span className="text-[10px] text-zinc-400 uppercase font-semibold">Total: {staffList.length}</span>
         </div>
 
-        <div className="card-modern overflow-x-auto">
+        <div className="surface overflow-x-auto">
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
-              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Staff Full Name</th>
-                <th className="p-4 border-r border-zinc-200">National ID</th>
-                <th className="p-4 border-r border-zinc-200">KRA Tax PIN</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Base Salary</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Comm Rate</th>
-                <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-                <th className="p-4 text-center">Actions</th>
+              <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                <th className="px-4 py-3 border-r border-zinc-100">Staff Full Name</th>
+                <th className="px-4 py-3 border-r border-zinc-100">National ID</th>
+                <th className="px-4 py-3 border-r border-zinc-100">KRA Tax PIN</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-right">Base Salary</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-right">Comm Rate</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-center">Status</th>
+                <th className="px-4 py-3 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200/80 bg-white">
+            <tbody className="bg-white">
               {staffList.map((emp) => (
-                <tr key={emp.id} className="hover:bg-zinc-50/80 transition-colors">
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider font-sans text-sm">
+                <tr key={emp.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                  <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider font-sans text-sm">
                     <Link
                       href={`/workspaces/${slug}/payroll/employees/${emp.id}`}
                       className="hover:underline underline-offset-2"
@@ -204,26 +204,26 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
                       {emp.fullName}
                     </Link>
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-zinc-600">
+                  <td className="p-4 border-r border-zinc-100 text-zinc-600">
                     {emp.nationalId || "N/A"}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-zinc-600 uppercase font-semibold">
+                  <td className="p-4 border-r border-zinc-100 text-zinc-600 uppercase font-semibold">
                     {emp.kraPin || "N/A"}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black text-right font-mono">
+                  <td className="p-4 border-r border-zinc-100 font-semibold text-black text-right font-mono">
                     {formatCurrency(parseFloat(emp.baseSalary), shop.currency)}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-right text-zinc-600 font-mono">
+                  <td className="p-4 border-r border-zinc-100 text-right text-zinc-600 font-mono">
                     {parseFloat(emp.commissionRate).toFixed(1)}%
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-center">
+                  <td className="px-4 py-3 border-r border-zinc-100 text-center">
                     <span className={
                       emp.isActive ? "badge-black" : "badge-zinc text-zinc-400"
                     }>
                       {emp.isActive ? "ACTIVE" : "INACTIVE"}
                     </span>
                   </td>
-                  <td className="p-4 text-center">
+                  <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <Link
                         href={`/workspaces/${slug}/payroll/employees/${emp.id}`}

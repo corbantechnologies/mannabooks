@@ -56,13 +56,13 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
+    <div className="p-5 sm:p-7 space-y-6">
       
       {/* HEADER META STRIP */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Client Base</span>
-          <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Client Directory</h1>
+          <span className="text-xs text-zinc-400 font-medium">Client Base</span>
+          <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Client Directory</h1>
         </div>
         
         {/* Pass the server-side shopId directly down to the interactive handler */}
@@ -73,33 +73,33 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
       <ClientFilterBar />
 
       {/* LOG DATA TABLE */}
-      <div className="card-modern overflow-x-auto">
+      <div className="surface overflow-x-auto">
         <table className="w-full text-left font-mono text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-              <th className="p-4 border-r border-zinc-200">Client Name</th>
-              <th className="p-4 border-r border-zinc-200">Email Identifier</th>
-              <th className="p-4 border-r border-zinc-200">Phone Reference</th>
-              <th className="p-4 border-r border-zinc-200 font-mono">Classification</th>
-              <th className="p-4 border-r border-zinc-200 font-mono">Statutory Tax PIN</th>
+            <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+              <th className="px-4 py-3 border-r border-zinc-100">Client Name</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Email Identifier</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Phone Reference</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Classification</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Statutory Tax PIN</th>
               <th className="p-4 text-center font-mono">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200/80 bg-white">
+          <tbody className="bg-white">
             {clientList.map((c) => (
-              <tr key={c.id} className="hover:bg-zinc-50/80 transition-colors">
-                <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-black">
+              <tr key={c.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                <td className="px-4 py-3 border-r border-zinc-100 font-sans text-sm font-semibold text-zinc-900">
                   <Link href={`/workspaces/${slug}/clients/${c.id}`} className="hover:underline underline-offset-2">
                     {c.name}
                   </Link>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-600 font-sans">
+                <td className="p-4 border-r border-zinc-100 text-zinc-600 font-sans">
                   {c.email}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-600">
+                <td className="p-4 border-r border-zinc-100 text-zinc-600">
                   {c.phone || "—"}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80">
+                <td className="p-4 border-r border-zinc-100">
                   <span className={
                     c.clientType === "CORPORATE" ? "badge-black" :
                     c.clientType === "INDIVIDUAL" ? "badge-zinc" :
@@ -108,7 +108,7 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
                     {c.clientType}
                   </span>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-widest font-mono">
+                <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-widest font-mono">
                   {c.taxPin || <span className="text-zinc-300 font-normal italic">None</span>}
                   {c.requiresEtims && (
                     <span className="ml-2 badge-emerald text-[9px]">
@@ -116,7 +116,7 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
                     </span>
                   )}
                 </td>
-                <td className="p-4 text-center">
+                <td className="px-4 py-3 text-center">
                   <ClientRowPopover client={c} shopId={shop.id} shopSlug={slug} />
                 </td>
               </tr>

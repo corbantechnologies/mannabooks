@@ -19,10 +19,10 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
   if (!shop) notFound();
 
   return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-sans text-xs">
+    <div className="p-5 sm:p-7 space-y-6 font-sans text-xs">
       
       {/* HEADER BAR */}
-      <div className="border-b border-zinc-200 pb-6 space-y-2">
+      <div className="border-b border-zinc-100 pb-6 space-y-2">
         <span className="text-[10px] text-zinc-400 uppercase font-mono font-semibold">WORKSPACE OPERATING MANUAL</span>
         <h1 className="text-2xl font-bold uppercase tracking-tight text-black">{shop.name} Operator Guide</h1>
         <p className="text-xs text-zinc-600 max-w-3xl leading-relaxed">

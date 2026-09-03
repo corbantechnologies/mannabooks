@@ -149,7 +149,7 @@ export default function ClientStatementView({
     return (
         <div className="space-y-8">
             {/* BACK NAV & TOP HEADER */}
-            <div className="border-b border-zinc-200/80 pb-6 space-y-2 print:hidden">
+            <div className="space-y-2 print:hidden">
                 <Link
                     href={`/workspaces/${shopSlug}/clients/${clientId}`}
                     className="font-sans text-xs font-bold text-zinc-400 hover:underline block"
@@ -158,10 +158,10 @@ export default function ClientStatementView({
                 </Link>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">
+                        <span className="text-xs text-zinc-400 font-medium">
                             Accounts Receivable Ledger
                         </span>
-                        <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
+                        <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">
                             Statement of Account — {data?.clientName || "Client"}
                         </h1>
                         <p className="text-xs text-zinc-500 mt-0.5">
@@ -201,7 +201,7 @@ export default function ClientStatementView({
             {isEmailModalOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
                     <div className="bg-white border border-zinc-300 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-                        <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+                        <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
                             <h3 className="font-bold font-mono text-sm uppercase text-black">
                                 ✉ Email Statement to Client
                             </h3>
@@ -380,7 +380,7 @@ export default function ClientStatementView({
                     {/* FORMAL PRINTABLE STATEMENT CONTAINER */}
                     <div className="border border-zinc-200 rounded-2xl overflow-hidden bg-white shadow-sm print:border-0 print:shadow-none">
                         {/* CORPORATE STATEMENT HEADER */}
-                        <div className="p-8 border-b border-zinc-200 space-y-6">
+                        <div className="p-8 border-b border-zinc-100 space-y-6">
                             <div className="flex justify-between items-start">
                                 <div>
                                     <h2 className="text-2xl font-black font-sans uppercase tracking-tight text-black">
@@ -427,19 +427,19 @@ export default function ClientStatementView({
                         <div className="overflow-x-auto">
                             <table className="w-full text-left font-mono text-xs border-collapse">
                                 <thead>
-                                    <tr className="bg-zinc-50 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                                        <th className="p-4 border-r border-zinc-200">Date</th>
-                                        <th className="p-4 border-r border-zinc-200">Reference</th>
-                                        <th className="p-4 border-r border-zinc-200">Type</th>
-                                        <th className="p-4 border-r border-zinc-200">Description</th>
-                                        <th className="p-4 border-r border-zinc-200 text-right">Debit ({data.currency})</th>
-                                        <th className="p-4 border-r border-zinc-200 text-right">Credit ({data.currency})</th>
+                                    <tr className="bg-zinc-50 border-b border-zinc-100 uppercase tracking-wider font-semibold text-zinc-600">
+                                        <th className="px-4 py-3 border-r border-zinc-100">Date</th>
+                                        <th className="px-4 py-3 border-r border-zinc-100">Reference</th>
+                                        <th className="px-4 py-3 border-r border-zinc-100">Type</th>
+                                        <th className="px-4 py-3 border-r border-zinc-100">Description</th>
+                                        <th className="px-4 py-3 border-r border-zinc-100 text-right">Debit ({data.currency})</th>
+                                        <th className="px-4 py-3 border-r border-zinc-100 text-right">Credit ({data.currency})</th>
                                         <th className="p-4 text-right">Balance ({data.currency})</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-zinc-200 bg-white">
                                     {data.lines.map((line, idx) => (
-                                        <tr key={idx} className="hover:bg-zinc-50/80 transition-colors">
+                                        <tr key={idx} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
                                             <td className="p-4 border-r border-zinc-200 text-zinc-600 whitespace-nowrap">
                                                 {line.date}
                                             </td>
@@ -451,7 +451,7 @@ export default function ClientStatementView({
                                                     {line.reference}
                                                 </Link>
                                             </td>
-                                            <td className="p-4 border-r border-zinc-200">
+                                            <td className="px-4 py-3 border-r border-zinc-100">
                                                 <span className="border border-zinc-300 px-2 py-0.5 text-[9px] font-semibold uppercase rounded bg-zinc-50">
                                                     {line.docType}
                                                 </span>

@@ -49,7 +49,7 @@ export default function TaxComputationClient({ shopId, year: initialYear, curren
             <div className="flex gap-2 items-center">
                 {[initialYear - 1, initialYear, initialYear + 1].map(y => (
                     <button key={y} onClick={() => loadYear(y)}
-                        className={`px-4 py-2 rounded-lg font-mono text-xs uppercase font-bold border transition-colors ${year === y ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"}`}>
+                        className={`px-4 py-2 rounded-lg font-mono text-xs uppercase font-bold border transition-colors ${year === y ? "badge-emerald" : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"}`}>
                         Year {y}
                     </button>
                 ))}

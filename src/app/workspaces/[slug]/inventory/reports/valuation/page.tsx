@@ -20,12 +20,12 @@ export default async function StockValuationPage({ params }: Props) {
   const outOfStockRows = rows.filter(r => r.currentQty <= 0);
 
   return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-mono text-xs">
+    <div className="p-5 sm:p-7 space-y-6 font-mono text-xs">
 
       {/* HEADER */}
-      <div className="border-b border-zinc-200/80 pb-6">
-        <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Inventory / Reports</span>
-        <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Stock Valuation Report</h1>
+      <div className="space-y-2">
+        <span className="text-xs text-zinc-400 font-medium">Inventory / Reports</span>
+        <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Stock Valuation Report</h1>
         <p className="font-sans text-xs text-zinc-600 mt-1">
           Current on-hand inventory valued at weighted average cost. FIFO layers from the stock ledger.
         </p>
@@ -53,47 +53,47 @@ export default async function StockValuationPage({ params }: Props) {
       </div>
 
       {/* VALUATION TABLE */}
-      <div className="card-modern overflow-x-auto">
+      <div className="surface overflow-x-auto">
         <table className="w-full text-left font-mono text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-              <th className="p-4 border-r border-zinc-200">#</th>
-              <th className="p-4 border-r border-zinc-200">Product</th>
-              <th className="p-4 border-r border-zinc-200">SKU</th>
-              <th className="p-4 border-r border-zinc-200">Location</th>
-              <th className="p-4 border-r border-zinc-200 text-right">Qty on Hand</th>
-              <th className="p-4 border-r border-zinc-200 text-right">Avg Unit Cost</th>
-              <th className="p-4 border-r border-zinc-200 text-right">Total Value</th>
-              <th className="p-4 text-center">Stock Status</th>
+            <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+              <th className="px-4 py-3 border-r border-zinc-100">#</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Product</th>
+              <th className="px-4 py-3 border-r border-zinc-100">SKU</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Location</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">Qty on Hand</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">Avg Unit Cost</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">Total Value</th>
+              <th className="px-4 py-3 text-center">Stock Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200/80 bg-white">
+          <tbody className="bg-white">
             {rows.map((row, idx) => (
               <tr
                 key={row.productId}
                 className={`hover:bg-zinc-50/80 transition-colors ${row.currentQty <= 0 ? "bg-rose-50/40" : row.isLowStock ? "bg-amber-50/40" : ""}`}
               >
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-400">{idx + 1}</td>
-                <td className="p-4 border-r border-zinc-200/80 font-sans font-semibold text-black text-sm">
+                <td className="p-4 border-r border-zinc-100 text-zinc-400">{idx + 1}</td>
+                <td className="p-4 border-r border-zinc-100 font-sans font-semibold text-black text-sm">
                   {row.productName}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-500 uppercase tracking-wider">
+                <td className="p-4 border-r border-zinc-100 text-zinc-500 uppercase tracking-wider">
                   {row.sku || <span className="text-zinc-300 font-normal lowercase italic">—</span>}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-600">{row.locationName}</td>
-                <td className="p-4 border-r border-zinc-200/80 text-right font-semibold">
+                <td className="p-4 border-r border-zinc-100 text-zinc-600">{row.locationName}</td>
+                <td className="p-4 border-r border-zinc-100 text-right font-semibold">
                   <span className={row.currentQty <= 0 ? "text-rose-700" : row.isLowStock ? "text-amber-800" : "text-black"}>
                     {row.currentQty.toFixed(2)}
                   </span>
                   <span className="block text-[10px] text-zinc-400">Reorder at: {row.reorderThreshold.toFixed(2)}</span>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-right text-zinc-700">
+                <td className="p-4 border-r border-zinc-100 text-right text-zinc-700">
                   {formatCurrency(row.avgUnitCost, shop.currency)}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-right font-bold text-black">
+                <td className="p-4 border-r border-zinc-100 text-right font-bold text-black">
                   {formatCurrency(row.totalValue, shop.currency)}
                 </td>
-                <td className="p-4 text-center">
+                <td className="px-4 py-3 text-center">
                   {row.currentQty <= 0
                     ? <span className="bg-rose-100 text-rose-900 border-rose-300 border px-2 py-0.5 rounded text-[10px] font-bold uppercase">Out of Stock</span>
                     : row.isLowStock

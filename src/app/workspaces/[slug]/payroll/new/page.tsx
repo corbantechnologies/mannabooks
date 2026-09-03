@@ -30,8 +30,8 @@ export default async function NewPayrollPage({ params }: NewPayrollPageProps) {
   return (
     <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white font-mono">
       <div>
-        <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Run Payroll</span>
-        <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Master Payroll Matrix</h1>
+        <span className="text-xs text-zinc-400 font-medium">Run Payroll</span>
+        <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Master Payroll Matrix</h1>
         <p className="font-sans text-xs text-zinc-600">
           Compile gross wages, allowances, commissions, and statutory deductions for all active staff.
         </p>

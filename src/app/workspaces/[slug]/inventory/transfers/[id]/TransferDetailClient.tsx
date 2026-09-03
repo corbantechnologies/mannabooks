@@ -117,10 +117,10 @@ export function TransferDetailClient({ transfer, shopSlug, shopCurrency }: Props
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white font-mono text-xs max-w-4xl">
+    <div className="p-5 sm:p-7 space-y-6 font-mono text-xs max-w-4xl">
 
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
             <Link
@@ -203,34 +203,34 @@ export function TransferDetailClient({ transfer, shopSlug, shopCurrency }: Props
       )}
 
       {/* LINE ITEMS TABLE */}
-      <div className="card-modern overflow-x-auto">
-        <div className="border-b border-zinc-200 px-5 py-3 bg-zinc-50/80 flex justify-between items-center">
+      <div className="surface overflow-x-auto">
+        <div className="border-b border-zinc-100 px-5 py-3 bg-zinc-50/80 flex justify-between items-center">
           <h2 className="font-sans font-bold text-sm uppercase tracking-tight">Transfer Items</h2>
           <span className="text-[10px] text-zinc-400">{transfer.items.length} product{transfer.items.length !== 1 ? "s" : ""}</span>
         </div>
         <table className="w-full text-left font-mono text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50/50 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-              <th className="p-4 border-r border-zinc-200">Product</th>
-              <th className="p-4 border-r border-zinc-200 text-right">Qty Requested</th>
-              <th className="p-4 border-r border-zinc-200 text-right">
+            <tr className="bg-zinc-50/50 border-b border-zinc-100 uppercase tracking-wider font-semibold text-zinc-600">
+              <th className="px-4 py-3 border-r border-zinc-100">Product</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">Qty Requested</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">
                 {transfer.status === "IN_TRANSIT" ? "Qty to Receive" : "Qty Received"}
               </th>
-              <th className="p-4 border-r border-zinc-200 text-right">Cost Price</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">Cost Price</th>
               <th className="p-4">Notes</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200/80 bg-white">
+          <tbody className="bg-white">
             {transfer.items.map((item: any) => (
               <tr key={item.id} className="hover:bg-zinc-50/60 transition-colors">
-                <td className="p-4 border-r border-zinc-200/80 font-sans font-semibold text-black text-sm">
+                <td className="p-4 border-r border-zinc-100 font-sans font-semibold text-black text-sm">
                   {item.product?.name || "—"}
                   {item.product?.sku && <span className="block text-[10px] text-zinc-400 font-mono">{item.product.sku}</span>}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-right font-semibold">
+                <td className="p-4 border-r border-zinc-100 text-right font-semibold">
                   {parseFloat(item.quantityRequested).toFixed(2)}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-right">
+                <td className="p-4 border-r border-zinc-100 text-right">
                   {transfer.status === "IN_TRANSIT" ? (
                     <input
                       type="number"
@@ -247,7 +247,7 @@ export function TransferDetailClient({ transfer, shopSlug, shopCurrency }: Props
                     </span>
                   )}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-right text-zinc-600">
+                <td className="p-4 border-r border-zinc-100 text-right text-zinc-600">
                   {item.product?.costPrice ? formatCurrency(item.product.costPrice, "KES") : "—"}
                 </td>
                 <td className="p-4 text-zinc-500 italic">

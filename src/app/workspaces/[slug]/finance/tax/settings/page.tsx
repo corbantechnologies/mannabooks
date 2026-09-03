@@ -17,10 +17,10 @@ export default async function TaxSettingsPage({ params }: { params: Promise<{ sl
     });
 
     return (
-        <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
-            <div className="border-b border-zinc-200/80 pb-6">
-                <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Tax Configurations</span>
-                <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Tax Profile & Settings</h1>
+        <div className="p-5 sm:p-7 space-y-6">
+            <div className="space-y-2">
+                <span className="text-xs text-zinc-400 font-medium">Tax Configurations</span>
+                <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Tax Profile & Settings</h1>
                 <p className="text-sm text-zinc-500 mt-1">Configure your workspace's tax regime, rates, and active Fiscal Years for KRA compliance.</p>
             </div>
 

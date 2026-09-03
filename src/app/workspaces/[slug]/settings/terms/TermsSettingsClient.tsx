@@ -154,7 +154,7 @@ export function TermsSettingsClient({
   return (
     <div className="space-y-8 font-mono text-xs max-w-5xl">
       {/* HEADER WITH BREADCRUMB */}
-      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
+      <div className="space-y-2">
         <Link
           href={`/workspaces/${shopSlug}/settings`}
           className="text-xs font-sans font-bold text-zinc-400 hover:text-black transition-colors block"
@@ -226,7 +226,7 @@ export function TermsSettingsClient({
       {/* ADD / EDIT TERM FORM */}
       {showTermForm && (
         <form onSubmit={handleTermSubmit} className="card-modern p-6 bg-zinc-50/80 border-2 border-black space-y-4 animate-in fade-in slide-in-from-top-2 duration-150">
-          <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+          <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
             <h2 className="font-semibold uppercase tracking-wider text-xs text-black font-sans flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-black" />
               <span>{editingTermId ? "Edit Commercial Term Clause" : "Define New Commercial Term Clause"}</span>

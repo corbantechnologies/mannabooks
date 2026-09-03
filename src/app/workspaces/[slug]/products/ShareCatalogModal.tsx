@@ -135,7 +135,7 @@ export function ShareCatalogModal({
           <div className="bg-white border border-zinc-200/80 rounded-xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             
             {/* MODAL HEADER */}
-            <div className="flex items-center justify-between border-b border-zinc-200/80 pb-4">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
               <div>
                 <span className="text-[10px] uppercase font-semibold text-zinc-400 tracking-wider block">
                   {isCurated ? `Curated Product Selection (${count} Items)` : "Full Product Showcase"}
@@ -235,7 +235,7 @@ export function ShareCatalogModal({
                 onSubmit={handleSendEmail}
                 className="bg-zinc-50 border border-blue-200 rounded-xl p-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200"
               >
-                <div className="flex items-center justify-between border-b border-zinc-200/80 pb-2">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">📧</span>
                     <h3 className="font-bold text-xs uppercase font-sans text-zinc-900">

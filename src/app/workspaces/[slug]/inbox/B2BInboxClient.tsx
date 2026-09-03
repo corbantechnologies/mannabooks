@@ -132,7 +132,7 @@ export function B2BInboxClient({
       <div className="card-modern bg-white overflow-hidden">
         
         {/* UPPER TABS & ARCHIVE SELECTOR */}
-        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center border-b border-zinc-200/80 bg-zinc-50">
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center border-b border-zinc-100 bg-zinc-50">
           <div className="flex flex-1">
             <button
               type="button"

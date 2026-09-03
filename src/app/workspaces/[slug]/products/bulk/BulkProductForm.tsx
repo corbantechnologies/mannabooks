@@ -109,7 +109,7 @@ export function BulkProductForm({ shopId, shopSlug }: BulkProductFormProps) {
       
       <div className="card-modern overflow-x-auto p-0">
         <table className="w-full text-left font-mono text-xs">
-          <thead className="bg-zinc-50 border-b border-zinc-200">
+          <thead className="bg-zinc-50 border-b border-zinc-100">
             <tr>
               <th className="p-3 font-semibold text-zinc-600 border-r border-zinc-200">No.</th>
               <th className="p-3 font-semibold text-zinc-600 border-r border-zinc-200 min-w-[200px]">Item Name *</th>

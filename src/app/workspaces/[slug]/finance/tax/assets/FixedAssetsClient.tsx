@@ -189,7 +189,7 @@ export default function FixedAssetsClient({ shopId, shopSlug, initialAssets, cur
             <div className="border border-zinc-200 rounded-xl overflow-hidden">
                 <div className="overflow-x-auto">
                     <div className="min-w-[800px]">
-                        <div className="grid grid-cols-[2fr_1.5fr_1fr_1.2fr_1.2fr_1fr] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
+                        <div className="grid grid-cols-[2fr_1.5fr_1fr_1.2fr_1.2fr_1fr] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-100">
                             <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Asset</span>
                             <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Class</span>
                             <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Acquired</span>

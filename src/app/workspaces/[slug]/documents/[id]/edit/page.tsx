@@ -60,7 +60,7 @@ export default async function EditDocumentPage({ params }: EditDocumentPageProps
     <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white font-mono text-xs">
       
       {/* PAGE HEADER WITH BACK LINK */}
-      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
+      <div className="space-y-2">
         <Link
           href={`/workspaces/${slug}/documents/${doc.id}`}
           className="text-xs font-sans font-bold text-zinc-400 hover:text-black transition-colors block"

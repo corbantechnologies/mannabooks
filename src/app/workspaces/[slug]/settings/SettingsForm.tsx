@@ -595,7 +595,7 @@ export function SettingsForm({
 
       {/* ── PAYMENT METHODS ── */}
       <div className="card-modern bg-white">
-        <div className="p-6 border-b border-zinc-200/80 space-y-1">
+        <div className="p-6 border-b border-zinc-100 space-y-1">
           <h2 className="font-sans font-semibold uppercase tracking-wider text-sm text-black">Payment Methods</h2>
           <p className="font-sans text-xs text-zinc-500 normal-case">
             These appear on client-facing invoices as remittance instructions.
@@ -604,7 +604,7 @@ export function SettingsForm({
 
         {/* Existing Methods List */}
         {initialMethods.length > 0 && (
-          <div className="divide-y divide-zinc-200/80 border-b border-zinc-200/80">
+          <div className="divide-y divide-zinc-200/80 border-b border-zinc-100">
             {initialMethods.map((pm) => (
               <div key={pm.id} className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 font-mono text-xs">
                 <div>
@@ -801,7 +801,7 @@ export function SettingsForm({
                   onClick={() => setPmCategory(cat.id as any)}
                   className={`py-2 px-3 text-[11px] font-semibold uppercase border rounded transition-colors ${
                     pmCategory === cat.id
-                      ? "bg-black text-white border-black"
+                      ? "badge-emerald"
                       : "bg-white text-zinc-600 border-zinc-300 hover:border-black hover:text-black"
                   }`}
                 >

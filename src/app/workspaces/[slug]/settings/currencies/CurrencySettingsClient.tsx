@@ -164,7 +164,7 @@ export function CurrencySettingsClient({
   return (
     <div className="space-y-8 font-mono text-xs selection:bg-black selection:text-white">
       {/* HEADER TOP BAR */}
-      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
+      <div className="space-y-2">
         <Link
           href={`/workspaces/${shopSlug}/settings`}
           className="font-sans text-xs font-bold text-zinc-400 hover:underline block"
@@ -173,10 +173,10 @@ export function CurrencySettingsClient({
         </Link>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">
+            <span className="text-xs text-zinc-400 font-medium">
               Financial Configuration
             </span>
-            <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
+            <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">
               Multi-Currency &amp; Exchange Rates
             </h1>
             <p className="text-xs text-zinc-500 font-sans mt-0.5">
@@ -240,7 +240,7 @@ export function CurrencySettingsClient({
             onSubmit={handleSave}
             className="bg-white border border-zinc-300 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl font-mono text-xs text-left"
           >
-            <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
               <div>
                 <span className="text-[10px] text-zinc-400 uppercase font-bold block">Currency Setup</span>
                 <h3 className="font-bold text-sm uppercase text-black font-sans">
@@ -270,7 +270,7 @@ export function CurrencySettingsClient({
                       onClick={() => handlePresetSelect(p.code)}
                       className={`px-2 py-1 rounded text-[10px] uppercase font-bold border transition-colors ${
                         code === p.code
-                          ? "bg-black text-white border-black"
+                          ? "badge-emerald"
                           : "bg-zinc-50 text-zinc-600 border-zinc-200 hover:border-zinc-400"
                       }`}
                     >
@@ -372,35 +372,35 @@ export function CurrencySettingsClient({
       <div className="card-modern overflow-x-auto bg-white">
         <table className="w-full text-left font-mono text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-              <th className="p-4 border-r border-zinc-200">Currency</th>
-              <th className="p-4 border-r border-zinc-200">Code &amp; Symbol</th>
-              <th className="p-4 border-r border-zinc-200 text-right">Fixed Exchange Rate</th>
-              <th className="p-4 border-r border-zinc-200 text-right">100 Unit Value</th>
-              <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-              <th className="p-4 text-center">Actions</th>
+            <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+              <th className="px-4 py-3 border-r border-zinc-100">Currency</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Code &amp; Symbol</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">Fixed Exchange Rate</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">100 Unit Value</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-center">Status</th>
+              <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200/80 bg-white">
+          <tbody className="bg-white">
             {currencies.map((curr) => {
               const rateNum = parseFloat(curr.exchangeRate);
               return (
-                <tr key={curr.id} className="hover:bg-zinc-50/80 transition-colors">
-                  <td className="p-4 border-r border-zinc-200/80 font-bold text-black font-sans text-sm">
+                <tr key={curr.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                  <td className="p-4 border-r border-zinc-100 font-bold text-black font-sans text-sm">
                     {curr.name}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80">
+                  <td className="p-4 border-r border-zinc-100">
                     <span className="bg-zinc-100 text-zinc-800 border border-zinc-200 px-2 py-0.5 rounded font-bold uppercase text-[10px]">
                       {curr.code} ({curr.symbol})
                     </span>
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-right font-black text-black">
+                  <td className="p-4 border-r border-zinc-100 text-right font-black text-black">
                     1 {curr.code} = {rateNum.toFixed(4)} {baseCurrency}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-right text-zinc-600">
+                  <td className="p-4 border-r border-zinc-100 text-right text-zinc-600">
                     {formatCurrency(100 * rateNum, baseCurrency)}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-center">
+                  <td className="px-4 py-3 border-r border-zinc-100 text-center">
                     <button
                       type="button"
                       onClick={() => handleToggle(curr)}
@@ -413,7 +413,7 @@ export function CurrencySettingsClient({
                       {curr.isEnabled ? "✓ Active" : "Disabled"}
                     </button>
                   </td>
-                  <td className="p-4 text-center">
+                  <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <button
                         type="button"

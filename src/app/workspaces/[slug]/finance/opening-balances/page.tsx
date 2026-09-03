@@ -18,10 +18,10 @@ export default async function OpeningBalancesPage({ params }: { params: Promise<
     const filteredAccounts = accounts.filter(a => a.code !== "3200");
 
     return (
-        <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
-            <div className="border-b border-zinc-200/80 pb-6">
-                <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Declare Opening Balances</span>
-                <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Opening Balances</h1>
+        <div className="p-5 sm:p-7 space-y-6">
+            <div className="space-y-2">
+                <span className="text-xs text-zinc-400 font-medium">Declare Opening Balances</span>
+                <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Opening Balances</h1>
                 <p className="text-sm text-zinc-500 mt-1 max-w-2xl">
                     Enter the balance of each account <strong>as of a specific date</strong> — typically the last day before your go-live on Manna Books.
                     These post as journal entries against account <strong>3200 Opening Balances</strong>.

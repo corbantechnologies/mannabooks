@@ -63,13 +63,13 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
   );
 
   return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white">
+    <div className="p-5 sm:p-7 space-y-6">
 
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Inventory Management</span>
-          <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Stock Overview</h1>
+          <span className="text-xs text-zinc-400 font-medium">Inventory Management</span>
+          <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Stock Overview</h1>
           <p className="font-sans text-xs text-zinc-600 mt-1">Real-time inventory levels, valuation, and recent movements across all locations.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -143,42 +143,42 @@ export default async function InventoryOverviewPage({ params }: InventoryPagePro
           </Link>
         </div>
 
-        <div className="card-modern overflow-x-auto">
+        <div className="surface overflow-x-auto">
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
-              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Date & Time</th>
-                <th className="p-4 border-r border-zinc-200">Product</th>
-                <th className="p-4 border-r border-zinc-200">Type</th>
-                <th className="p-4 border-r border-zinc-200">Location</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Qty</th>
+              <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                <th className="px-4 py-3 border-r border-zinc-100">Date & Time</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Product</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Type</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Location</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-right">Qty</th>
                 <th className="p-4 text-right">Balance After</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200/80 bg-white">
+            <tbody className="bg-white">
               {overview.recentMovements.map((entry: any) => {
                 const isOutflow = ["SALE", "ADJUSTMENT_OUT", "TRANSFER_OUT", "VOID"].includes(entry.movementType);
                 return (
-                  <tr key={entry.id} className="hover:bg-zinc-50/80 transition-colors">
-                    <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
+                  <tr key={entry.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                    <td className="px-4 py-3 border-r border-zinc-100 text-zinc-400">
                       {new Date(entry.createdAt).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                       <span className="block text-[10px] text-zinc-400">
                         {new Date(entry.createdAt).toLocaleTimeString("en-KE", { timeStyle: "short" })}
                       </span>
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 font-sans font-semibold text-black text-sm">
+                    <td className="p-4 border-r border-zinc-100 font-sans font-semibold text-black text-sm">
                       {entry.product?.name || "—"}
                       {entry.product?.sku && <span className="block text-[10px] text-zinc-400 font-mono">{entry.product.sku}</span>}
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80">
+                    <td className="p-4 border-r border-zinc-100">
                       <span className={`px-2 py-0.5 rounded-md border text-[10px] font-semibold uppercase ${MOVEMENT_TYPE_COLORS[entry.movementType] || "bg-zinc-100 text-zinc-500 border-zinc-200"}`}>
                         {MOVEMENT_TYPE_LABELS[entry.movementType] || entry.movementType}
                       </span>
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 text-zinc-600">
+                    <td className="p-4 border-r border-zinc-100 text-zinc-600">
                       {entry.location?.name || <span className="text-zinc-400 italic">Default</span>}
                     </td>
-                    <td className={`p-4 border-r border-zinc-200/80 font-semibold text-right ${isOutflow ? "text-rose-700" : "text-emerald-700"}`}>
+                    <td className={`p-4 border-r border-zinc-100 font-semibold text-right ${isOutflow ? "text-rose-700" : "text-emerald-700"}`}>
                       {isOutflow ? "-" : "+"}{parseFloat(entry.quantity).toFixed(2)}
                     </td>
                     <td className="p-4 font-semibold text-right text-black">

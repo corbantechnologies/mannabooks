@@ -53,7 +53,7 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
     <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white">
       
       {/* PAGE HEADER WITH BACK LINK */}
-      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
+      <div className="space-y-2">
         <Link
           href={`/workspaces/${slug}/documents`}
           className="text-xs font-sans font-bold text-zinc-400 hover:text-black transition-colors block"

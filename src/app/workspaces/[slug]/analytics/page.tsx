@@ -36,10 +36,10 @@ export default async function WorkspaceAnalyticsPage({ params }: AnalyticsPagePr
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
+    <div className="p-5 sm:p-7 space-y-6">
       <div>
-        <span className="font-sans text-xs text-zinc-400 font-semibold uppercase tracking-wider">Reports &amp; Performance</span>
-        <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">{shop.name} Analytics</h1>
+        <span className="text-xs text-zinc-400 font-medium">Reports &amp; Performance</span>
+        <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">{shop.name} Analytics</h1>
       </div>
 
       <AnalyticsClientView

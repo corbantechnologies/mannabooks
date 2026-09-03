@@ -56,7 +56,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
     <div className={`space-y-8 font-mono text-xs selection:bg-black selection:text-white transition-opacity duration-300 ${loading ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
       
       {/* TIMEFRAME SELECTOR */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-100 pb-5">
         <div className="flex-1 min-w-0">
           <span className="text-[10px] text-zinc-400 block uppercase font-semibold">Date Range</span>
           <p className="font-sans text-xs text-zinc-500 mt-0.5">Select a timeframe to filter your reports.</p>
@@ -293,7 +293,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
 
       {/* KRA VAT RETURN TRACKER */}
       <div className="bg-white border border-zinc-200/80 rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse inline-block" />
@@ -377,14 +377,14 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
         {/* Expandable Outstanding Invoices List */}
         {showArDetails && data.outstandingInvoices && data.outstandingInvoices.length > 0 && (
           <div className="border border-zinc-200 bg-white rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
-            <div className="px-4 py-3 bg-zinc-50 border-b border-zinc-200 flex justify-between items-center">
+            <div className="px-4 py-3 bg-zinc-50 border-b border-zinc-100 flex justify-between items-center">
               <span className="font-bold uppercase text-[10px] text-zinc-500">Unpaid Invoices Breakdown</span>
               <span className="text-[9px] text-zinc-400 uppercase font-semibold">{data.outstandingInvoices.length} outstanding invoice(s)</span>
             </div>
             <div className="overflow-x-auto max-h-[350px]">
               <table className="w-full text-left font-mono text-[11px] border-collapse">
                 <thead>
-                  <tr className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 uppercase tracking-wider">
+                  <tr className="bg-zinc-50 border-b border-zinc-100 text-zinc-500 uppercase tracking-wider">
                     <th className="p-3 border-r border-zinc-200">Doc Number</th>
                     <th className="p-3 border-r border-zinc-200">Client / Customer</th>
                     <th className="p-3 border-r border-zinc-200">Issue Date</th>
@@ -392,7 +392,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
                     <th className="p-3 text-right">Outstanding Valuation</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 bg-white">
+                <tbody className="bg-white">
                   {data.outstandingInvoices.map((inv: any) => {
                     let ageColor = "text-emerald-700 font-semibold";
                     if (inv.ageInDays > 90) ageColor = "text-rose-700 font-bold";
@@ -401,7 +401,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
 
                     return (
                       <tr key={inv.id} className="hover:bg-zinc-50/50 transition-colors">
-                        <td className="p-3 border-r border-zinc-200/80 font-bold">
+                        <td className="p-3 border-r border-zinc-100 font-bold">
                           <a
                             href={`/workspaces/${shopSlug}/documents/${inv.id}`}
                             className="underline hover:no-underline text-black"
@@ -409,13 +409,13 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
                             {inv.docNumber} ➔
                           </a>
                         </td>
-                        <td className="p-3 border-r border-zinc-200/80 font-sans font-semibold uppercase text-zinc-800">
+                        <td className="p-3 border-r border-zinc-100 font-sans font-semibold uppercase text-zinc-800">
                           {inv.clientName}
                         </td>
-                        <td className="p-3 border-r border-zinc-200/80 text-zinc-500">
+                        <td className="p-3 border-r border-zinc-100 text-zinc-500">
                           {new Date(inv.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                         </td>
-                        <td className={`p-3 border-r border-zinc-200/80 text-center ${ageColor}`}>
+                        <td className={`p-3 border-r border-zinc-100 text-center ${ageColor}`}>
                           {inv.ageInDays} d
                         </td>
                         <td className="p-3 text-right font-bold text-black font-sans">
@@ -436,7 +436,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
         
         {/* QUOTATION CONVERSION FUNNEL */}
         <div className="bg-white border border-zinc-200/80 rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-zinc-200/80 pb-3">
+          <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
             <div>
               <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans flex items-center gap-2">
                 <span>🎯</span>
@@ -495,7 +495,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
 
         {/* PRODUCT VS SERVICE REVENUE SPLIT */}
         <div className="bg-white border border-zinc-200/80 rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
-          <div className="border-b border-zinc-200/80 pb-3">
+          <div className="border-b border-zinc-100 pb-3">
             <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans flex items-center gap-2">
               <span>⚖️</span>
               <span>Products vs. Services</span>
@@ -559,7 +559,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
         
         {/* TOP 10 CLIENTS BY REVENUE */}
         <div className="bg-white border border-zinc-200/80 rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
-          <div className="border-b border-zinc-200/80 pb-3 flex justify-between items-center">
+          <div className="border-b border-zinc-100 pb-3 flex justify-between items-center">
             <div>
               <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans">Top 10 Clients by Revenue</h2>
               <p className="font-sans text-[10px] text-zinc-400 mt-0.5">Clients ranked by total revenue contribution.</p>
@@ -610,7 +610,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
 
         {/* TOP PRODUCTS */}
         <div className="bg-white border border-zinc-200/80 rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
-          <div className="border-b border-zinc-200/80 pb-3">
+          <div className="border-b border-zinc-100 pb-3">
             <h2 className="font-bold uppercase text-sm tracking-wider text-black font-sans">Top Selling Products</h2>
             <p className="font-sans text-[10px] text-zinc-400 mt-0.5">Bestselling catalog items by revenue share.</p>
           </div>

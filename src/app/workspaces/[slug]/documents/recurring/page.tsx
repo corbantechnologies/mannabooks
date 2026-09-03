@@ -23,7 +23,7 @@ export default async function RecurringInvoicesPage({ params }: RecurringInvoice
   const recurringInvoices = await getRecurringInvoices(shop.id);
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
+    <div className="p-5 sm:p-7 space-y-6">
       <RecurringInvoicesClient
         shopId={shop.id}
         shopSlug={slug}

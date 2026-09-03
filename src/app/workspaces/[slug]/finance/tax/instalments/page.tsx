@@ -12,10 +12,10 @@ export default async function InstalmentsPage({ params }: { params: Promise<{ sl
 
     if (!shop.isCitActive) {
         return (
-            <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
-                <div className="border-b border-zinc-200/80 pb-6">
-                    <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Instalment Taxes</span>
-                    <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Instalment Tax Schedule</h1>
+            <div className="p-5 sm:p-7 space-y-6">
+                <div className="space-y-2">
+                    <span className="text-xs text-zinc-400 font-medium">Instalment Taxes</span>
+                    <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Instalment Tax Schedule</h1>
                 </div>
                 <div className="border border-zinc-200 rounded-xl p-8 text-center max-w-xl mx-auto space-y-4 bg-white">
                     <div className="text-4xl">💰</div>
@@ -43,10 +43,10 @@ export default async function InstalmentsPage({ params }: { params: Promise<{ sl
     const instalmentsRequired = estTax >= 30000;
 
     return (
-        <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
-            <div className="border-b border-zinc-200/80 pb-6">
-                <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Instalment Taxes</span>
-                <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Instalment Tax Schedule</h1>
+        <div className="p-5 sm:p-7 space-y-6">
+            <div className="space-y-2">
+                <span className="text-xs text-zinc-400 font-medium">Instalment Taxes</span>
+                <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Instalment Tax Schedule</h1>
                 <p className="text-sm text-zinc-500 mt-1">
                     Manage your quarterly instalment tax schedule. Required if estimated tax liability is KES 30,000 or more.
                 </p>

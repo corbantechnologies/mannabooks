@@ -137,7 +137,6 @@ export async function createPlatformPlanAction(input: CreatePlatformPlanInput) {
 
         revalidatePath("/pricing");
         revalidatePath("/admin/pricing");
-        revalidatePath("/admin/workspaces");
 
         return { success: true, message: `Created new plan tier "${input.name || rawId}" successfully.` };
     } catch (error: any) {
@@ -224,7 +223,6 @@ export async function updatePlatformPlanAction(input: UpdatePlatformPlanInput) {
 
         revalidatePath("/pricing");
         revalidatePath("/admin/pricing");
-        revalidatePath("/admin/workspaces");
 
         return { success: true, message: `Updated ${input.name} plan successfully.` };
     } catch (error: any) {
@@ -252,7 +250,6 @@ export async function deletePlatformPlanAction(planId: string) {
 
         revalidatePath("/pricing");
         revalidatePath("/admin/pricing");
-        revalidatePath("/admin/workspaces");
 
         return { success: true, message: `Deleted plan tier "${targetId}".` };
     } catch (error: any) {

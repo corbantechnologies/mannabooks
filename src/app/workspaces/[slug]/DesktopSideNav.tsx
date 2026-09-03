@@ -4,101 +4,156 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import {
+  LayoutDashboard,
+  FileText,
+  RefreshCw,
+  Inbox,
+  ShoppingCart,
+  Users,
+  User,
+  Truck,
+  Package,
+  Warehouse,
+  BarChart2,
+  MapPin,
+  SlidersHorizontal,
+  ArrowLeftRight,
+  TrendingUp,
+  TrendingDown,
+  History,
+  AlertTriangle,
+  PieChart,
+  BookOpen,
+  Briefcase,
+  FileCheck,
+  Calculator,
+  BarChart,
+  Settings,
+  CreditCard,
+  Globe,
+  BookMarked,
+  Wrench,
+  ShieldCheck,
+  ChevronDown,
+  DollarSign,
+  FileBarChart,
+  Scale,
+  Landmark,
+  Building2,
+  Layers,
+} from "lucide-react";
 
 interface DesktopSideNavProps {
   slug: string;
+  brandColor?: string;
 }
+
+type ChildItem = {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  exact?: boolean;
+};
 
 type NavItem = {
   label: string;
   href?: string;
   exact?: boolean;
-  children?: { href: string; label: string; exact?: boolean }[];
+  icon: React.ElementType;
+  children?: ChildItem[];
 };
 
-export function DesktopSideNav({ slug }: DesktopSideNavProps) {
+export function DesktopSideNav({ slug, brandColor = "#064e3b" }: DesktopSideNavProps) {
   const pathname = usePathname();
 
   const navItems: NavItem[] = [
-    { href: `/workspaces/${slug}`, label: "Overview", exact: true },
+    { href: `/workspaces/${slug}`, label: "Overview", icon: LayoutDashboard, exact: true },
     {
       label: "Billing & Invoices",
+      icon: FileText,
       children: [
-        { href: `/workspaces/${slug}/documents`, label: "All Documents", exact: true },
-        { href: `/workspaces/${slug}/documents/recurring`, label: "Recurring Invoices" },
-      ]
+        { href: `/workspaces/${slug}/documents`, label: "All Documents", icon: FileText, exact: true },
+        { href: `/workspaces/${slug}/documents/recurring`, label: "Recurring", icon: RefreshCw },
+      ],
     },
-    { href: `/workspaces/${slug}/inbox`, label: "Shared Inbox" },
-    { href: `/workspaces/${slug}/pos`, label: "Point of Sale (POS)" },
-    { 
-      label: "Contacts", 
+    { href: `/workspaces/${slug}/inbox`, label: "Shared Inbox", icon: Inbox },
+    { href: `/workspaces/${slug}/pos`, label: "Point of Sale", icon: ShoppingCart },
+    {
+      label: "Contacts",
+      icon: Users,
       children: [
-        { href: `/workspaces/${slug}/clients`, label: "Clients" },
-        { href: `/workspaces/${slug}/suppliers`, label: "Suppliers" },
-      ]
+        { href: `/workspaces/${slug}/clients`, label: "Clients", icon: User },
+        { href: `/workspaces/${slug}/suppliers`, label: "Suppliers", icon: Truck },
+      ],
     },
-    { href: `/workspaces/${slug}/products`, label: "Product Catalog" },
+    { href: `/workspaces/${slug}/products`, label: "Product Catalog", icon: Package },
     {
       label: "Inventory",
+      icon: Warehouse,
       children: [
-        { href: `/workspaces/${slug}/inventory`, label: "Stock Overview", exact: true },
-        { href: `/workspaces/${slug}/inventory/locations`, label: "Locations" },
-        { href: `/workspaces/${slug}/inventory/adjustments`, label: "Adjustments" },
-        { href: `/workspaces/${slug}/inventory/transfers`, label: "Transfers" },
-        { href: `/workspaces/${slug}/inventory/reports/valuation`, label: "Stock Valuation" },
-        { href: `/workspaces/${slug}/inventory/reports/movement`, label: "Movement History" },
-        { href: `/workspaces/${slug}/inventory/reports/low-stock`, label: "Low Stock Alerts" },
-        { href: `/workspaces/${slug}/inventory/reports/abc`, label: "ABC Analysis" },
-      ]
+        { href: `/workspaces/${slug}/inventory`, label: "Stock Overview", icon: BarChart2, exact: true },
+        { href: `/workspaces/${slug}/inventory/locations`, label: "Locations", icon: MapPin },
+        { href: `/workspaces/${slug}/inventory/adjustments`, label: "Adjustments", icon: SlidersHorizontal },
+        { href: `/workspaces/${slug}/inventory/transfers`, label: "Transfers", icon: ArrowLeftRight },
+        { href: `/workspaces/${slug}/inventory/reports/valuation`, label: "Valuation", icon: DollarSign },
+        { href: `/workspaces/${slug}/inventory/reports/movement`, label: "Movement History", icon: History },
+        { href: `/workspaces/${slug}/inventory/reports/low-stock`, label: "Low Stock", icon: AlertTriangle },
+        { href: `/workspaces/${slug}/inventory/reports/abc`, label: "ABC Analysis", icon: PieChart },
+      ],
     },
     {
       label: "Cash Book",
+      icon: BookOpen,
       children: [
-        { href: `/workspaces/${slug}/incomes`, label: "Other Income" },
-        { href: `/workspaces/${slug}/expenses`, label: "Operating Expenses" },
-      ]
+        { href: `/workspaces/${slug}/incomes`, label: "Other Income", icon: TrendingUp },
+        { href: `/workspaces/${slug}/expenses`, label: "Expenses", icon: TrendingDown },
+      ],
     },
     {
       label: "Payroll",
+      icon: Briefcase,
       children: [
-        { href: `/workspaces/${slug}/payroll`, label: "Payroll Vouchers" },
-        { href: `/workspaces/${slug}/employees`, label: "Employees" },
-      ]
+        { href: `/workspaces/${slug}/payroll`, label: "Payroll Vouchers", icon: FileCheck },
+        { href: `/workspaces/${slug}/employees`, label: "Employees", icon: Users },
+      ],
     },
     {
       label: "Accounting",
+      icon: Calculator,
       children: [
-        { href: `/workspaces/${slug}/finance/tax/settings`, label: "Tax Profile" },
-        { href: `/workspaces/${slug}/finance/tax/computation`, label: "Tax Computation" },
-        { href: `/workspaces/${slug}/finance/accounts`, label: "Chart of Accounts" },
-        { href: `/workspaces/${slug}/finance/opening-balances`, label: "Opening Balances" },
-        { href: `/workspaces/${slug}/finance/ledger`, label: "Journal Entries" },
-        { href: `/workspaces/${slug}/finance/reconciliation`, label: "Bank Reconciliation" },
-        { href: `/workspaces/${slug}/finance/periods`, label: "Accounting Periods" },
-        { href: `/workspaces/${slug}/finance/budgets`, label: "Operating Budgets" },
-        { href: `/workspaces/${slug}/finance/reports/pl`, label: "P&L Statement" },
-        { href: `/workspaces/${slug}/finance/reports/balance-sheet`, label: "Balance Sheet" },
-        { href: `/workspaces/${slug}/finance/reports/cashflow`, label: "Cash Flow" },
-        { href: `/workspaces/${slug}/finance/reports/trial-balance`, label: "Trial Balance" },
-        { href: `/workspaces/${slug}/finance/reports/payables-aging`, label: "Payables Aging (AP)" },
-        { href: `/workspaces/${slug}/finance/tax/assets`, label: "Fixed Assets Register" },
-        { href: `/workspaces/${slug}/finance/tax/instalments`, label: "Instalment Tax" },
-        { href: `/workspaces/${slug}/finance/tax/tot`, label: "Turnover Tax (TOT)" },
-      ]
+        { href: `/workspaces/${slug}/finance/tax/settings`, label: "Tax Profile", icon: ShieldCheck },
+        { href: `/workspaces/${slug}/finance/tax/computation`, label: "Tax Computation", icon: FileBarChart },
+        { href: `/workspaces/${slug}/finance/accounts`, label: "Chart of Accounts", icon: Layers },
+        { href: `/workspaces/${slug}/finance/opening-balances`, label: "Opening Balances", icon: Scale },
+        { href: `/workspaces/${slug}/finance/ledger`, label: "Journal Entries", icon: BookMarked },
+        { href: `/workspaces/${slug}/finance/reconciliation`, label: "Bank Reconciliation", icon: Landmark },
+        { href: `/workspaces/${slug}/finance/periods`, label: "Accounting Periods", icon: RefreshCw },
+        { href: `/workspaces/${slug}/finance/budgets`, label: "Operating Budgets", icon: BarChart2 },
+        { href: `/workspaces/${slug}/finance/reports/pl`, label: "P&L Statement", icon: TrendingUp },
+        { href: `/workspaces/${slug}/finance/reports/balance-sheet`, label: "Balance Sheet", icon: Scale },
+        { href: `/workspaces/${slug}/finance/reports/cashflow`, label: "Cash Flow", icon: BarChart },
+        { href: `/workspaces/${slug}/finance/reports/trial-balance`, label: "Trial Balance", icon: FileBarChart },
+        { href: `/workspaces/${slug}/finance/reports/payables-aging`, label: "Payables Aging (AP)", icon: AlertTriangle },
+        { href: `/workspaces/${slug}/finance/tax/assets`, label: "Fixed Assets", icon: Building2 },
+        { href: `/workspaces/${slug}/finance/tax/instalments`, label: "Instalment Tax", icon: DollarSign },
+        { href: `/workspaces/${slug}/finance/tax/tot`, label: "Turnover Tax (TOT)", icon: Globe },
+      ],
     },
-    { href: `/workspaces/${slug}/analytics`, label: "Analytics" },
+    { href: `/workspaces/${slug}/analytics`, label: "Analytics", icon: BarChart },
     {
       label: "Settings",
+      icon: Settings,
       children: [
-        { href: `/workspaces/${slug}/team`, label: "Team Management" },
-        { href: `/workspaces/${slug}/settings/billing`, label: "Billing & Plans" },
-        { href: `/workspaces/${slug}/settings`, label: "Workspace Details", exact: true },
-        { href: `/workspaces/${slug}/settings/currencies`, label: "Multi-Currency Rates" },
-        { href: `/workspaces/${slug}/settings/terms`, label: "Commercial Terms" },
-        { href: `/workspaces/${slug}/settings/diagnostics`, label: "GL Diagnostics" },
-        { href: `/workspaces/${slug}/guide`, label: "Operator Guide" },
-      ]
-    }
+        { href: `/workspaces/${slug}/team`, label: "Team Management", icon: Users },
+        { href: `/workspaces/${slug}/settings/billing`, label: "Billing & Plans", icon: CreditCard },
+        { href: `/workspaces/${slug}/settings`, label: "Workspace Details", icon: Settings, exact: true },
+        { href: `/workspaces/${slug}/settings/currencies`, label: "Multi-Currency", icon: Globe },
+        { href: `/workspaces/${slug}/settings/terms`, label: "Commercial Terms", icon: FileText },
+        { href: `/workspaces/${slug}/settings/diagnostics`, label: "GL Diagnostics", icon: Wrench },
+        { href: `/workspaces/${slug}/guide`, label: "Operator Guide", icon: BookMarked },
+      ],
+    },
   ];
 
   function isActive(href: string, exact?: boolean) {
@@ -106,64 +161,147 @@ export function DesktopSideNav({ slug }: DesktopSideNavProps) {
     return pathname === href || pathname.startsWith(href + "/");
   }
 
+  // Compute which sections should start open
+  const getInitialOpen = () => {
+    const open = new Set<number>();
+    navItems.forEach((item, idx) => {
+      if (item.children) {
+        const hasActive = item.children.some((c) => isActive(c.href, c.exact));
+        if (hasActive) open.add(idx);
+      }
+    });
+    return open;
+  };
+
+  const [openSections, setOpenSections] = useState<Set<number>>(getInitialOpen);
+
+  // Re-compute on navigation
+  useEffect(() => {
+    setOpenSections(getInitialOpen());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  function toggleSection(idx: number) {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  }
+
   return (
-    <nav className="flex flex-col gap-0.5 font-sans text-[13px] font-medium tracking-normal text-zinc-600">
+    <nav className="flex flex-col gap-0 font-sans text-[13px]">
       {navItems.map((item, idx) => {
+        /* ── Section with children ── */
         if (item.children) {
-          const isChildActive = item.children.some(child => isActive(child.href, child.exact));
+          const isOpen = openSections.has(idx);
+          const isChildActive = item.children.some((c) => isActive(c.href, c.exact));
+          const Icon = item.icon;
+
           return (
-            <details key={idx} className="group" open={isChildActive}>
-              <summary className="px-3 py-2 border border-transparent rounded cursor-pointer transition-all hover:bg-zinc-50 hover:text-black list-none flex justify-between items-center select-none">
-                <span>{item.label}</span>
-                <svg className="w-3 h-3 text-zinc-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-              </summary>
-              <div className="pl-6 pr-2 py-1 flex flex-col gap-1 mt-1 border-l border-zinc-200 ml-4">
-                {item.children.map(child => {
-                  const active = isActive(child.href, child.exact);
-                  return (
-                    <Link
-                      key={child.href}
-                      href={child.href}
-                      className={`px-3 py-1.5 border rounded transition-all block ${
-                        active
-                          ? "border-black bg-black text-white"
-                          : "border-transparent text-zinc-500 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800"
-                      }`}
-                    >
-                      {child.label}
-                    </Link>
-                  );
-                })}
+            <div key={idx} className="flex flex-col">
+              {/* Group header button */}
+              <button
+                type="button"
+                onClick={() => toggleSection(idx)}
+                className="sidebar-item w-full text-left"
+                style={isChildActive ? { color: "#d1d5db" } : {}}
+              >
+                <Icon
+                  className="w-[15px] h-[15px] shrink-0"
+                  strokeWidth={1.75}
+                  style={{ color: isChildActive ? brandColor : undefined }}
+                />
+                <span className="flex-1 truncate">{item.label}</span>
+                <ChevronDown
+                  className="w-3 h-3 shrink-0 transition-transform duration-200"
+                  style={{
+                    transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    color: "#4b5563",
+                  }}
+                />
+              </button>
+
+              {/* Children accordion — CSS grid trick for smooth animation */}
+              <div
+                className={`grid transition-all duration-200 ease-out ${
+                  isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                }`}
+              >
+                <div className="overflow-hidden">
+                  <div
+                    className="ml-[13px] pl-3 flex flex-col gap-0.5 pt-0.5 pb-1"
+                    style={{ borderLeft: "1px solid rgba(255,255,255,0.07)" }}
+                  >
+                    {item.children.map((child) => {
+                      const active = isActive(child.href, child.exact);
+                      const ChildIcon = child.icon;
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className="sidebar-item"
+                          style={
+                            active
+                              ? {
+                                  backgroundColor: `color-mix(in srgb, ${brandColor} 18%, transparent)`,
+                                  color: brandColor,
+                                  fontWeight: 600,
+                                }
+                              : {}
+                          }
+                        >
+                          <ChildIcon
+                            className="w-[13px] h-[13px] shrink-0"
+                            strokeWidth={2}
+                            style={{ color: active ? brandColor : "#4b5563" }}
+                          />
+                          <span className="truncate text-[12px]">{child.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </details>
+            </div>
           );
         }
 
+        /* ── Standalone link ── */
         const active = item.href ? isActive(item.href, item.exact) : false;
+        const Icon = item.icon;
+
         return (
           <Link
             key={item.href}
             href={item.href!}
-            className={`px-3 py-2 border rounded transition-all block ${
+            className="sidebar-item"
+            style={
               active
-                ? "border-black bg-black text-white"
-                : "border-transparent hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800"
-            }`}
+                ? {
+                    backgroundColor: `color-mix(in srgb, ${brandColor} 18%, transparent)`,
+                    color: brandColor,
+                    fontWeight: 600,
+                  }
+                : {}
+            }
           >
-            {item.label}
+            <Icon
+              className="w-[15px] h-[15px] shrink-0"
+              strokeWidth={1.75}
+              style={{ color: active ? brandColor : undefined }}
+            />
+            <span className="truncate">{item.label}</span>
+            {active && (
+              <span
+                className="ml-auto w-1.5 h-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: brandColor }}
+              />
+            )}
           </Link>
         );
       })}
-
-      <div className="mt-6 pt-5 border-t border-zinc-200/80">
-        <Link
-          href="/workspaces"
-          className="px-3 py-2 border border-zinc-200 text-zinc-500 rounded transition-all flex items-center gap-2 hover:border-black hover:bg-zinc-50 hover:text-black"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"/></svg>
-          Switch Workspace
-        </Link>
-      </div>
     </nav>
   );
 }

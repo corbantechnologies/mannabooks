@@ -11,6 +11,10 @@ import { LowStockAlertBanner } from "@/components/LowStockAlertBanner";
 import { getRecurringInvoices } from "@/lib/actions/recurring";
 import { RecurringInvoicesWidget } from "./RecurringInvoicesWidget";
 import { QuickCreatePopover } from "./QuickCreatePopover";
+import {
+  TrendingUp, Clock, Star, Activity, ChevronRight,
+  FileText, Receipt, FileCheck, AlertCircle, Plus
+} from "lucide-react";
 
 interface WorkspaceOverviewPageProps {
   params: Promise<{ slug: string }>;
@@ -158,31 +162,40 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
   );
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
+    <div className="p-5 sm:p-7 space-y-6">
 
-      {/* HEADER WITH QUICK ACTIONS */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
+      {/* ── PAGE HEADER ───────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Executive Cockpit</span>
-          <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
-            {shop.name} Overview
+          <p className="text-xs text-zinc-400 font-medium">
+            {new Date().toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          </p>
+          <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">
+            {shop.name}
           </h1>
         </div>
 
-        {/* QUICK ACTION POPOVER & SHORTCUTS */}
+        {/* Quick actions */}
         <div className="flex items-center gap-2">
           <QuickCreatePopover slug={slug} />
           <Link
             href={`/workspaces/${slug}/pos`}
-            className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5"
+            className="btn-secondary-modern flex items-center gap-1.5"
           >
-            <span>🧾</span>
+            <ShoppingCartIcon />
             <span>POS Terminal</span>
+          </Link>
+          <Link
+            href={`/workspaces/${slug}/documents/new`}
+            className="btn-primary-modern flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Document</span>
           </Link>
         </div>
       </div>
 
-      {/* ONBOARDING TRACKER */}
+      {/* ── ONBOARDING TRACKER ────────────────────────────────── */}
       <OnboardingTracker
         shopSlug={slug}
         shopId={shop.id}
@@ -194,7 +207,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
         hasDocuments={allDocs.length > 0}
       />
 
-      {/* LOW STOCK ALERT BANNER (DISMISSIBLE) */}
+      {/* ── LOW STOCK ALERT ───────────────────────────────────── */}
       <LowStockAlertBanner
         items={lowStockItems.map((p) => ({
           name: p.name,
@@ -206,179 +219,241 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
         actionLabel="Restock Inventory →"
       />
 
-      {/* PRIMARY KPI METRIC CARDS */}
+      {/* ── KPI STAT CARDS ────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* MTD Revenue */}
-        <div className="card-modern p-5 space-y-2 border-l-4 border-emerald-500 bg-white">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Revenue MTD</span>
-            <span className="text-xs">💰</span>
+
+        {/* Revenue MTD */}
+        <div className="stat-card p-5">
+          <div
+            className="absolute inset-0 opacity-[0.07] pointer-events-none"
+            style={{ background: "radial-gradient(circle at 110% -10%, #10b981 0%, transparent 55%)" }}
+          />
+          <div className="relative">
+            <div className="flex items-start justify-between mb-3">
+              <div className="p-2 rounded-lg bg-emerald-50">
+                <TrendingUp className="w-4 h-4 text-emerald-600" strokeWidth={2} />
+              </div>
+              <span className="text-[10px] text-zinc-400 font-medium">This month</span>
+            </div>
+            <p className="text-[22px] font-bold font-mono tracking-tight text-zinc-900 leading-none">
+              {formatCurrency(revenueMtd, shop.currency)}
+            </p>
+            <p className="text-[11px] font-medium text-zinc-500 mt-1.5">Revenue collected</p>
+            <p className="text-[10px] text-zinc-400 mt-0.5">
+              All-time:{" "}
+              <span className="font-semibold text-zinc-600">
+                {formatCurrency(totalRevenueAllTime, shop.currency)}
+              </span>
+            </p>
           </div>
-          <p className="text-2xl font-bold font-mono tracking-tight text-emerald-700">
-            {formatCurrency(revenueMtd, shop.currency)}
-          </p>
-          <p className="font-sans text-[11px] text-zinc-500">
-            All-time: <span className="font-semibold text-black">{formatCurrency(totalRevenueAllTime, shop.currency)}</span>
-          </p>
         </div>
 
-        {/* Accounts Receivable & Overdue */}
-        <div className="card-modern p-5 space-y-2 border-l-4 border-amber-500 bg-white">
-          <div className="flex items-center justify-between">
-            <span className="font-sans text-[10px] text-zinc-400 uppercase font-bold">Unpaid Invoices (A/R)</span>
-            <span className="text-xs">⏳</span>
-          </div>
-          <p className="text-2xl font-bold font-mono tracking-tight text-black">
-            {formatCurrency(pendingReceivables, shop.currency)}
-          </p>
-          <div className="flex items-center justify-between text-[11px] font-sans">
-            <span className="text-rose-600 font-semibold">
-              {overdueCount > 0 ? `⚠️ ${overdueCount} overdue (${formatCurrency(overdueReceivables, shop.currency)})` : "✓ 0 overdue"}
-            </span>
+        {/* Unpaid Invoices A/R */}
+        <div className="stat-card p-5">
+          <div
+            className="absolute inset-0 opacity-[0.07] pointer-events-none"
+            style={{ background: "radial-gradient(circle at 110% -10%, #f59e0b 0%, transparent 55%)" }}
+          />
+          <div className="relative">
+            <div className="flex items-start justify-between mb-3">
+              <div className="p-2 rounded-lg bg-amber-50">
+                <Clock className="w-4 h-4 text-amber-600" strokeWidth={2} />
+              </div>
+              <span className="text-[10px] text-zinc-400 font-medium">Outstanding</span>
+            </div>
+            <p className="text-[22px] font-bold font-mono tracking-tight text-zinc-900 leading-none">
+              {formatCurrency(pendingReceivables, shop.currency)}
+            </p>
+            <p className="text-[11px] font-medium text-zinc-500 mt-1.5">Pending collections</p>
+            {overdueCount > 0 ? (
+              <p className="text-[10px] text-rose-500 font-semibold mt-0.5">
+                <AlertCircle className="w-3 h-3 inline mr-0.5" />
+                {overdueCount} overdue — {formatCurrency(overdueReceivables, shop.currency)}
+              </p>
+            ) : (
+              <p className="text-[10px] text-emerald-500 font-medium mt-0.5">✓ No overdue invoices</p>
+            )}
           </div>
         </div>
 
         {/* Top Client */}
-        <div className="card-modern p-5 space-y-2 border-l-4 border-blue-500 bg-white">
-          <div className="flex items-center justify-between">
-            <span className="font-sans text-[10px] text-zinc-400 uppercase font-bold">Top Client</span>
-            <span className="text-xs">👑</span>
+        <div className="stat-card p-5">
+          <div
+            className="absolute inset-0 opacity-[0.06] pointer-events-none"
+            style={{ background: "radial-gradient(circle at 110% -10%, #3b82f6 0%, transparent 55%)" }}
+          />
+          <div className="relative">
+            <div className="flex items-start justify-between mb-3">
+              <div className="p-2 rounded-lg bg-blue-50">
+                <Star className="w-4 h-4 text-blue-500" strokeWidth={2} />
+              </div>
+              <span className="text-[10px] text-zinc-400 font-medium">All-time LTV</span>
+            </div>
+            {topClient ? (
+              <>
+                <p
+                  className="text-[17px] font-bold text-zinc-900 leading-tight truncate"
+                  title={topClient.name}
+                >
+                  {topClient.name}
+                </p>
+                <p className="text-[11px] font-medium text-zinc-500 mt-1.5">Top client</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5 font-mono">
+                  {formatCurrency(topClient.totalPaid, shop.currency)} lifetime
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-[15px] font-semibold text-zinc-300">No data yet</p>
+                <p className="text-[11px] text-zinc-400 mt-1.5">Appears after first paid invoice</p>
+              </>
+            )}
           </div>
-          {topClient ? (
-            <>
-              <p className="text-lg font-bold font-sans tracking-tight text-black truncate" title={topClient.name}>
-                {topClient.name}
-              </p>
-              <p className="font-mono text-[11px] text-zinc-500">
-                LTV: <span className="font-semibold text-black">{formatCurrency(topClient.totalPaid, shop.currency)}</span>
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-sm font-bold text-zinc-400 font-sans">No client revenue yet</p>
-              <p className="font-sans text-[11px] text-zinc-400">Recorded after first paid invoice</p>
-            </>
-          )}
         </div>
 
-        {/* Pipeline Summary */}
-        <div className="card-modern p-5 space-y-2 border-l-4 border-black bg-white">
-          <div className="flex items-center justify-between">
-            <span className="font-sans text-[10px] text-zinc-400 uppercase font-bold">Active Pipeline</span>
-            <span className="text-xs">📋</span>
-          </div>
-          <p className="text-2xl font-bold font-mono tracking-tight text-black">
-            {openQuotesCount} <span className="text-xs font-normal text-zinc-500 font-sans">Open Quotes</span>
-          </p>
-          <div className="flex items-center justify-between text-[11px] font-sans">
-            <span className="text-zinc-500">{clientCountRes[0]?.value || 0} active clients</span>
-            <Link href={`/workspaces/${slug}/documents?view=pipeline`} className="text-black font-semibold hover:underline">
-              Pipeline →
-            </Link>
+        {/* Active Pipeline */}
+        <div className="stat-card p-5">
+          <div
+            className="absolute inset-0 opacity-[0.06] pointer-events-none"
+            style={{ background: "radial-gradient(circle at 110% -10%, #8b5cf6 0%, transparent 55%)" }}
+          />
+          <div className="relative">
+            <div className="flex items-start justify-between mb-3">
+              <div className="p-2 rounded-lg bg-violet-50">
+                <Activity className="w-4 h-4 text-violet-500" strokeWidth={2} />
+              </div>
+              <Link
+                href={`/workspaces/${slug}/documents?view=pipeline`}
+                className="text-[10px] text-zinc-400 font-medium hover:text-zinc-700 no-underline transition-colors"
+              >
+                View →
+              </Link>
+            </div>
+            <p className="text-[22px] font-bold font-mono tracking-tight text-zinc-900 leading-none">
+              {openQuotesCount}
+            </p>
+            <p className="text-[11px] font-medium text-zinc-500 mt-1.5">Open quotations</p>
+            <p className="text-[10px] text-zinc-400 mt-0.5">
+              {clientCountRes[0]?.value || 0} active clients
+            </p>
           </div>
         </div>
       </div>
 
-      {/* 30-DAY REVENUE TRAJECTORY CHART */}
+      {/* ── 30-DAY REVENUE CHART ──────────────────────────────── */}
       <DashboardRevenueChart weeks={weeks} currency={shop.currency} />
 
-      {/* RECURRING INVOICES WIDGET */}
+      {/* ── RECURRING INVOICES ────────────────────────────────── */}
       {recurringInvoices.length > 0 && (
         <RecurringInvoicesWidget slug={slug} currency={shop.currency} recurringInvoices={recurringInvoices} />
       )}
 
-      {/* RECENT TRANSACTIONS STREAM */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
+      {/* ── RECENT TRANSACTIONS ───────────────────────────────── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
           <div>
-            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Recent Activity</span>
-            <h2 className="font-sans font-semibold uppercase tracking-tight text-sm text-black mt-0.5">
-              Recent Invoices &amp; Receipts
+            <p className="text-xs text-zinc-400 font-medium">Recent Activity</p>
+            <h2 className="text-[15px] font-semibold text-zinc-900 mt-0.5">
+              Latest Invoices &amp; Receipts
             </h2>
           </div>
           <Link
             href={`/workspaces/${slug}/documents`}
-            className="font-mono text-xs font-semibold uppercase underline hover:no-underline text-black"
+            className="text-[12px] font-semibold text-zinc-500 hover:text-zinc-900 transition-colors no-underline flex items-center gap-1"
           >
-            View All Documents →
+            <span>View all</span>
+            <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        <div className="card-modern overflow-x-auto">
-          <table className="w-full text-left font-mono text-xs border-collapse">
-            <thead>
-              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Document #</th>
-                <th className="p-4 border-r border-zinc-200">Type</th>
-                <th className="p-4 border-r border-zinc-200">Client / Recipient</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Grand Total</th>
-                <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-                <th className="p-4 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200/80 bg-white">
-              {recentDocs.map((doc) => (
-                <tr key={doc.id} className="hover:bg-zinc-50/80 transition-colors">
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold uppercase text-black">
-                    <Link href={`/workspaces/${slug}/documents/${doc.id}`} className="hover:underline">
-                      {doc.docNumber}
-                    </Link>
-                  </td>
-                  <td className="p-4 border-r border-zinc-200/80">
-                    <span className="badge-zinc">
-                      {doc.type}
-                    </span>
-                  </td>
-                  <td className="p-4 border-r border-zinc-200/80 uppercase font-sans font-semibold text-zinc-900">
-                    {doc.client ? (
-                      <Link href={`/workspaces/${slug}/clients/${doc.client.id}`} className="hover:underline text-black">
-                        {doc.client.name} ➔
-                      </Link>
-                    ) : doc.supplier ? (
-                      <Link href={`/workspaces/${slug}/suppliers/${doc.supplier.id}`} className="hover:underline text-zinc-700">
-                        {doc.supplier.name} ➔
-                      </Link>
-                    ) : (
-                      "Walk-in Customer"
-                    )}
-                  </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-black font-mono">
-                    {formatCurrency(doc.grandTotal, shop.currency)}
-                  </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-center">
-                    <span className={
-                      doc.status === "PAID" ? "badge-emerald" :
-                      doc.status === "ISSUED" ? "badge-zinc" :
-                      doc.status === "OVERDUE" ? "badge-rose" :
-                      doc.status === "PARTIALLY_PAID" ? "badge-amber" :
-                      "badge-zinc text-zinc-400"
-                    }>
-                      {doc.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    <Link
-                      href={`/workspaces/${slug}/documents/${doc.id}`}
-                      className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"
-                    >
-                      View Details
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+        {/* Row card list */}
+        <div className="space-y-2">
+          {recentDocs.map((doc) => {
+            const docTypeIcon =
+              doc.type === "RECEIPT" ? Receipt :
+              doc.type === "QUOTATION" ? FileCheck :
+              FileText;
+            const DocTypeIcon = docTypeIcon;
 
-              {recentDocs.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
-                    No recent transactions recorded yet.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+            const statusColor =
+              doc.status === "PAID" ? "badge-emerald" :
+              doc.status === "OVERDUE" ? "badge-rose" :
+              doc.status === "PARTIALLY_PAID" ? "badge-amber" :
+              "badge-zinc";
+
+            return (
+              <Link
+                key={doc.id}
+                href={`/workspaces/${slug}/documents/${doc.id}`}
+                className="flex items-center gap-3 sm:gap-4 p-3.5 bg-white rounded-xl border border-zinc-100 hover:border-zinc-200 hover:shadow-sm transition-all group no-underline"
+              >
+                {/* Type icon */}
+                <div className="w-8 h-8 rounded-lg bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0 group-hover:border-zinc-200 transition-colors">
+                  <DocTypeIcon className="w-3.5 h-3.5 text-zinc-400" strokeWidth={2} />
+                </div>
+
+                {/* Doc info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-mono text-[12px] font-bold text-zinc-900">
+                      {doc.docNumber}
+                    </span>
+                    <span className="badge-zinc">{doc.type}</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 truncate mt-0.5 font-medium">
+                    {doc.client
+                      ? doc.client.name
+                      : doc.supplier
+                      ? doc.supplier.name
+                      : "Walk-in Customer"}
+                  </p>
+                </div>
+
+                {/* Amount + Status */}
+                <div className="text-right shrink-0 hidden sm:block">
+                  <p className="font-mono text-[13px] font-bold text-zinc-900">
+                    {formatCurrency(doc.grandTotal, shop.currency)}
+                  </p>
+                  <span className={`${statusColor} mt-1`}>{doc.status}</span>
+                </div>
+
+                {/* Date (hidden on mobile) */}
+                <p className="text-[10px] text-zinc-400 font-mono shrink-0 hidden md:block w-20 text-right">
+                  {new Date(doc.issueDate).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
+                </p>
+
+                {/* Arrow */}
+                <ChevronRight className="w-4 h-4 text-zinc-300 group-hover:text-zinc-500 transition-colors shrink-0" />
+              </Link>
+            );
+          })}
+
+          {recentDocs.length === 0 && (
+            <div className="bg-white rounded-xl border border-zinc-100 p-10 text-center">
+              <FileText className="w-8 h-8 text-zinc-200 mx-auto mb-3" strokeWidth={1.5} />
+              <p className="text-sm font-medium text-zinc-400">No recent transactions yet</p>
+              <Link
+                href={`/workspaces/${slug}/documents/new`}
+                className="btn-primary-modern mt-4 inline-flex"
+              >
+                Create your first document
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
     </div>
   );
 }
+
+// Inline POS icon to avoid adding it to the top import list
+function ShoppingCartIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+    </svg>
+  );
+}
+

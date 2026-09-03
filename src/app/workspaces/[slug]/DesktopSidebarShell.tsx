@@ -3,6 +3,7 @@
 import { useState, useEffect, createContext, useContext } from "react";
 import Link from "next/link";
 import { logoutAction } from "@/lib/actions/logout";
+import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 interface SidebarContextType {
   isCollapsed: boolean;
@@ -60,7 +61,6 @@ export function DesktopSidebarShell({
       ) {
         return;
       }
-
       if ((e.ctrlKey && e.key.toLowerCase() === "b") || e.key === "[") {
         e.preventDefault();
         setIsCollapsed((prev) => {
@@ -83,6 +83,17 @@ export function DesktopSidebarShell({
     });
   }
 
+  // Initials from name
+  const shopInitial = (shop.shortName || shop.name || "W").charAt(0).toUpperCase();
+  const userInitial = (user.name || "U").charAt(0).toUpperCase();
+  const brandColor = shop.primaryColor || "#064e3b";
+
+  const planBadgeStyle = isLifetime
+    ? { bg: "#fef3c7", border: "#fcd34d", color: "#78350f" }
+    : planName === "PRO"
+    ? { bg: "#ecfdf5", border: "#a7f3d0", color: "#065f46" }
+    : { bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.12)", color: "#6b7280" };
+
   return (
     <SidebarContext.Provider
       value={{
@@ -98,174 +109,213 @@ export function DesktopSidebarShell({
         },
       }}
     >
-      {/* GLOBAL EDITORIAL SIDEBAR (1024px+) */}
+      {/* ───────────────────────────────────────────────────────
+          DARK SIDEBAR (desktop 1024px+)
+      ─────────────────────────────────────────────────────── */}
       <aside
-        className={`hidden lg:flex flex-col justify-between bg-white h-screen sticky top-0 shrink-0 border-r border-zinc-200/80 shadow-[2px_0_12px_-3px_rgba(0,0,0,0.04)] transition-all duration-300 ease-in-out z-20 ${
+        className={`hidden lg:flex flex-col h-screen sticky top-0 shrink-0 z-20 transition-all duration-300 ease-in-out ${
           isCollapsed
-            ? "w-0 -translate-x-full overflow-hidden border-none opacity-0 pointer-events-none"
-            : "w-64 translate-x-0 opacity-100"
+            ? "w-0 overflow-hidden opacity-0 pointer-events-none"
+            : "w-[230px]"
         }`}
+        style={{
+          backgroundColor: "var(--sidebar-bg, #0f1117)",
+          borderRight: "1px solid var(--sidebar-border, rgba(255,255,255,0.07))",
+        }}
       >
-        {/* 1. STICKY TOP WORKSPACE HEADER (SHRINK-0) */}
-        <div className="p-5 border-b border-zinc-200/80 bg-white shrink-0 space-y-3 w-64 select-none">
-          <div className="flex justify-between items-center">
-            <span className="font-sans text-[10px] uppercase tracking-wider text-zinc-400 block font-bold">
+        {/* ── 1. Workspace Identity Header ───────────────────── */}
+        <div
+          className="p-4 shrink-0 select-none"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          {/* Top row: label + Switch + collapse */}
+          <div className="flex items-center justify-between mb-3.5">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
               Workspace
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Link
                 href="/workspaces"
-                className="font-sans text-[10px] uppercase font-bold text-black underline hover:no-underline"
+                className="text-[10px] font-semibold text-zinc-500 hover:text-zinc-300 uppercase tracking-wide transition-colors no-underline"
               >
                 Switch
               </Link>
               <button
                 type="button"
                 onClick={toggleSidebar}
-                title="Close sidebar ([ or Ctrl+B)"
-                className="p-1 text-zinc-400 hover:text-black rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                title="Collapse sidebar ([ or Ctrl+B)"
+                className="p-1 text-zinc-600 hover:text-zinc-300 rounded-md hover:bg-white/10 transition-all cursor-pointer bg-transparent border-none"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                </svg>
+                <PanelLeftClose className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Shop logo + name */}
+          <div className="flex items-center gap-2.5">
             {shop.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={shop.logoUrl}
                 alt={shop.name}
-                className="w-8 h-8 object-contain border border-zinc-200 p-0.5 bg-white rounded shrink-0"
+                className="w-9 h-9 rounded-lg object-contain shrink-0"
+                style={{ backgroundColor: "rgba(255,255,255,0.08)", padding: "3px" }}
               />
             ) : (
-              <span
-                className="w-3.5 h-3.5 border border-black/30 rounded-sm shrink-0 inline-block"
-                style={{ backgroundColor: shop.primaryColor || "#000000" }}
-              />
+              <div
+                className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-white font-bold text-sm"
+                style={{ backgroundColor: brandColor }}
+              >
+                {shopInitial}
+              </div>
             )}
             <div className="min-w-0">
-              <h2 className="font-sans font-semibold uppercase tracking-tight text-sm truncate block leading-none">
+              <h2 className="text-white font-semibold text-[13px] truncate leading-tight">
                 {shop.shortName || shop.name}
               </h2>
-              {shop.phone && (
-                <p className="font-mono text-[9px] text-zinc-500 truncate mt-0.5">{shop.phone}</p>
-              )}
-              {shop.code && (
-                <div className="inline-block border border-zinc-200 font-mono text-[9px] px-1.5 py-0.5 uppercase tracking-tight text-zinc-600 bg-zinc-50 rounded-sm mt-1 mr-1 font-semibold">
-                  CODE: {shop.code}
-                </div>
-              )}
               {shop.taxPin ? (
-                <div className="inline-block border border-zinc-200 font-mono text-[9px] px-1.5 py-0.5 uppercase tracking-tight text-zinc-600 bg-zinc-50 rounded-sm mt-1 font-semibold">
+                <p className="text-zinc-600 text-[10px] font-mono truncate mt-0.5">
                   PIN: {shop.taxPin}
-                </div>
-              ) : (
-                <span className="font-sans text-[10px] text-amber-600 block mt-1 font-medium">
-                  Tax PIN missing
-                </span>
-              )}
+                </p>
+              ) : shop.code ? (
+                <p className="text-zinc-600 text-[10px] font-mono truncate mt-0.5">
+                  CODE: {shop.code}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>
 
-        {/* 2. SCROLLABLE APPLICATION DIRECTORY LINKS */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-2 w-64">
-          <span className="font-sans text-[10px] uppercase tracking-wider text-zinc-400 block mb-3 font-bold">
-            Menu
-          </span>
+        {/* ── 2. Scrollable Nav ──────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5 min-w-0"
+             style={{ scrollbarWidth: "none" }}>
           {sidebarChildren}
         </div>
 
-        {/* 3. STICKY BOTTOM FOOTER OPERATOR & PLAN */}
-        <div className="p-5 border-t border-zinc-200/80 bg-zinc-50/50 shrink-0 flex flex-col gap-2 font-sans text-xs w-64 select-none">
+        {/* ── 3. Operator Footer ────────────────────────────── */}
+        <div
+          className="p-3.5 shrink-0 select-none"
+          style={{
+            borderTop: "1px solid rgba(255,255,255,0.07)",
+            backgroundColor: "rgba(0,0,0,0.25)",
+          }}
+        >
+          {/* Super-admin shortcut */}
           {user.isSuperAdmin && (
             <Link
               href="/admin"
-              className="bg-black hover:bg-zinc-800 text-amber-300 border border-amber-500/40 px-3 py-2 rounded-lg font-mono text-[10px] font-bold uppercase tracking-wider flex items-center justify-between no-underline transition-all shadow-xs mb-1"
+              className="flex items-center justify-between px-3 py-2 rounded-lg mb-3 no-underline transition-all"
+              style={{
+                backgroundColor: "rgba(245, 158, 11, 0.12)",
+                border: "1px solid rgba(245, 158, 11, 0.3)",
+                color: "#fcd34d",
+              }}
             >
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide">
                 <span>👑</span>
                 <span>Super Admin</span>
               </span>
-              <span>Terminal &rarr;</span>
+              <span className="text-[10px] opacity-60">→</span>
             </Link>
           )}
 
-          <div className="space-y-1">
-            <span className="text-zinc-400 block text-[10px] uppercase font-bold">Active Operator</span>
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-black truncate">{user.name}</span>
+          {/* Operator row */}
+          <div className="flex items-center gap-2.5">
+            {/* Avatar */}
+            <div
+              className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white font-bold text-[11px]"
+              style={{ backgroundColor: brandColor }}
+            >
+              {userInitial}
             </div>
-            {/* PLAN SUBSCRIPTION BADGE */}
-            <div className="pt-1">
+            <div className="min-w-0 flex-1">
+              <p className="text-white text-[12px] font-semibold truncate leading-tight">
+                {user.name}
+              </p>
               <Link
                 href={`/workspaces/${slug}/settings/billing`}
-                className="inline-flex items-center gap-1 font-mono text-[9px] font-bold px-2 py-0.5 rounded border transition-all no-underline"
+                className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border no-underline mt-0.5 transition-opacity hover:opacity-80"
                 style={{
-                  backgroundColor: isLifetime ? "#fef3c7" : planName === "PRO" ? "#ecfdf5" : "#f4f4f5",
-                  borderColor: isLifetime ? "#fcd34d" : planName === "PRO" ? "#a7f3d0" : "#e4e4e7",
-                  color: isLifetime ? "#78350f" : planName === "PRO" ? "#065f46" : "#3f3f46",
+                  backgroundColor: planBadgeStyle.bg,
+                  borderColor: planBadgeStyle.border,
+                  color: planBadgeStyle.color,
                 }}
               >
                 <span>{isLifetime ? "👑" : "⚡"}</span>
                 <span>{planName}</span>
-                <span className="text-[8px] opacity-70">→</span>
               </Link>
             </div>
           </div>
-          <div className="text-[10px] text-zinc-400 border-t border-zinc-200/80 pt-2 flex justify-between items-center">
-            <span>Manna v2026.4</span>
+
+          {/* Version + logout */}
+          <div
+            className="flex items-center justify-between mt-3 pt-2.5"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <span className="text-zinc-700 text-[10px] font-mono">v2026.4</span>
             <form action={logoutAction}>
               <button
                 type="submit"
-                className="text-rose-600 font-bold hover:underline cursor-pointer bg-transparent border-none p-0 uppercase text-[9px] tracking-wide"
+                className="text-rose-500 hover:text-rose-400 text-[10px] font-semibold uppercase tracking-wide transition-colors cursor-pointer bg-transparent border-none"
               >
-                Logout
+                Sign out
               </button>
             </form>
           </div>
         </div>
       </aside>
 
-      {/* CORE WORKSPACE DASHBOARD VIEWPORT STREAM */}
-      <main className="flex-1 flex flex-col min-w-0 bg-white transition-all duration-300">
-        {/* DESKTOP HEADER NAVBAR */}
-        <header className="hidden lg:flex border-b border-zinc-200/80 bg-white/95 backdrop-blur-xs h-13 shrink-0 items-center justify-between px-6 sticky top-0 z-30 select-none shadow-[0_1px_4px_0_rgba(0,0,0,0.03)]">
-          <div className="flex items-center gap-3 text-xs font-sans font-medium text-zinc-500">
-            {/* COLLAPSE / EXPAND TOGGLE BUTTON */}
+      {/* ───────────────────────────────────────────────────────
+          MAIN CONTENT AREA
+      ─────────────────────────────────────────────────────── */}
+      <main
+        className="flex-1 flex flex-col min-w-0 transition-all duration-300"
+        style={{ backgroundColor: "var(--portal-canvas, #f4f5f7)" }}
+      >
+        {/* ── Desktop top header bar ─────────────────────────── */}
+        <header
+          className="hidden lg:flex items-center justify-between px-5 shrink-0 sticky top-0 z-30 select-none"
+          style={{
+            height: "52px",
+            backgroundColor: "rgba(244, 245, 247, 0.92)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            borderBottom: "1px solid #e2e4e8",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+          }}
+        >
+          {/* Left: collapse toggle + breadcrumb */}
+          <div className="flex items-center gap-2.5 text-sm font-sans">
             <button
               type="button"
               onClick={toggleSidebar}
               title={isCollapsed ? "Expand Sidebar ([ or Ctrl+B)" : "Collapse Sidebar ([ or Ctrl+B)"}
-              className="p-1.5 -ml-1 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-md transition-colors flex items-center gap-1 font-mono text-[10px] font-bold uppercase border border-zinc-200 cursor-pointer"
+              className="p-1.5 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200/60 rounded-lg transition-all flex items-center justify-center cursor-pointer border-none bg-transparent"
             >
-              <svg
-                className={`w-4 h-4 transition-transform duration-200 ${isCollapsed ? "rotate-180" : ""}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-              </svg>
-              {isCollapsed && <span className="hidden sm:inline">Sidebar</span>}
+              {isCollapsed ? (
+                <PanelLeftOpen className="w-4 h-4" />
+              ) : (
+                <PanelLeftClose className="w-4 h-4" />
+              )}
             </button>
 
-            <span className="text-zinc-400">Workspace</span>
-            <span className="text-zinc-300">/</span>
-            <span className="text-black font-semibold">{shop.name}</span>
-            {shop.code && (
-              <span className="ml-1 font-mono text-[10px] px-1.5 py-0.5 border border-zinc-200 bg-zinc-50 text-zinc-600 rounded-sm font-semibold">
-                {shop.code}
-              </span>
-            )}
+            <div className="flex items-center gap-1.5">
+              <span className="text-zinc-400 font-medium text-[13px]">Workspaces</span>
+              <ChevronRight className="w-3 h-3 text-zinc-300" />
+              <span className="text-zinc-900 font-semibold text-[13px]">{shop.name}</span>
+              {shop.code && (
+                <span className="font-mono text-[10px] px-1.5 py-0.5 bg-white border border-zinc-200 text-zinc-500 rounded-md">
+                  {shop.code}
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">{headerChildren}</div>
+          {/* Right: actions injected from layout */}
+          <div className="flex items-center gap-2.5">{headerChildren}</div>
         </header>
 
+        {/* ── Page content ───────────────────────────────────── */}
         <div className="flex-1 overflow-y-auto">{contentChildren}</div>
       </main>
     </SidebarContext.Provider>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { type PlanDefinition } from "@/lib/paywall";
 import {
   updatePlatformPlanAction,
@@ -22,6 +22,11 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
   const router = useRouter();
   const [plans, setPlans] = useState<PlanDefinition[]>(initialPlans);
   const [billingCycle, setBillingCycle] = useState<"MONTHLY" | "ANNUAL">("MONTHLY");
+
+  // Keep plans state in sync when server component revalidates
+  useEffect(() => {
+    setPlans(initialPlans);
+  }, [initialPlans]);
 
   // Edit Modal State
   const [editingPlan, setEditingPlan] = useState<PlanDefinition | null>(null);
@@ -96,6 +101,16 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
     e.preventDefault();
     if (!editingPlan) return;
 
+    const previousPlans = [...plans];
+    const updatedPlan: PlanDefinition = {
+      ...editingPlan,
+      features: featureInputs,
+    };
+
+    // Instantly update the UI and close modal without waiting
+    setPlans((prev) => prev.map((p) => (p.id === editingPlan.id ? updatedPlan : p)));
+    setEditingPlan(null);
+
     setIsSaving(true);
     const toastId = toast.loading(`Saving ${editingPlan.name} plan...`);
 
@@ -125,10 +140,11 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
 
     if (res.success) {
       toast.success(res.message || "Plan updated!", { id: toastId });
-      setEditingPlan(null);
       router.refresh();
     } else {
       toast.error(res.error || "Failed to update plan.", { id: toastId });
+      // Revert if server action failed
+      setPlans(previousPlans);
     }
   }
 
@@ -138,6 +154,32 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
       toast.error("Please fill in the Plan Code ID and Plan Name.");
       return;
     }
+
+    const previousPlans = [...plans];
+    const newPlan: PlanDefinition = {
+      id: createPlanData.id.toUpperCase(),
+      name: createPlanData.name,
+      tagline: createPlanData.tagline,
+      priceKesMonthly: createPlanData.priceKesMonthly,
+      priceKesAnnually: createPlanData.priceKesAnnually,
+      annualDiscountPercent: createPlanData.annualDiscountPercent,
+      discountedPriceMonthly: createPlanData.discountedPriceMonthly ?? null,
+      discountedPriceAnnually: createPlanData.discountedPriceAnnually ?? null,
+      maxMembers: createPlanData.maxMembers === -1 ? Infinity : createPlanData.maxMembers,
+      maxLocations: createPlanData.maxLocations === -1 ? Infinity : createPlanData.maxLocations,
+      canTransferStock: createPlanData.canTransferStock,
+      hasGeneralLedger: createPlanData.hasGeneralLedger,
+      hasReconciliation: createPlanData.hasReconciliation,
+      hasStatutoryPayroll: createPlanData.hasStatutoryPayroll,
+      hasApiAccess: createPlanData.hasApiAccess,
+      badge: createPlanData.badge || null,
+      isHighlighted: createPlanData.isHighlighted,
+      features: createFeatures,
+    };
+
+    // Instantly append to preview and close modal
+    setPlans((prev) => [...prev, newPlan]);
+    setIsCreating(false);
 
     setIsSaving(true);
     const toastId = toast.loading(`Creating new tier ${createPlanData.name}...`);
@@ -167,26 +209,33 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
 
     if (res.success) {
       toast.success(res.message || "New plan created!", { id: toastId });
-      setIsCreating(false);
       router.refresh();
     } else {
       toast.error(res.error || "Failed to create plan.", { id: toastId });
+      setPlans(previousPlans);
     }
   }
 
   async function handleConfirmDelete() {
     if (!planToDelete) return;
-    setIsDeleting(true);
-    const toastId = toast.loading(`Deleting ${planToDelete.name} plan...`);
-    const res = await deletePlatformPlanAction(planToDelete.id);
-    setIsDeleting(false);
+    const previousPlans = [...plans];
+    const target = planToDelete;
+
+    // Instantly remove from preview and close modal
+    setPlans((prev) => prev.filter((p) => p.id !== target.id));
     setPlanToDelete(null);
+
+    setIsDeleting(true);
+    const toastId = toast.loading(`Deleting ${target.name} plan...`);
+    const res = await deletePlatformPlanAction(target.id);
+    setIsDeleting(false);
 
     if (res.success) {
       toast.success(res.message || "Plan deleted.", { id: toastId });
       router.refresh();
     } else {
       toast.error(res.error || "Failed to delete plan.", { id: toastId });
+      setPlans(previousPlans);
     }
   }
 

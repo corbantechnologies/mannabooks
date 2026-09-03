@@ -96,7 +96,7 @@ export function QuickRestockModal({
             onSubmit={handleRestock}
             className="bg-white border border-zinc-200/80 rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl text-xs text-left"
           >
-            <div className="flex items-center justify-between border-b border-zinc-200/80 pb-3">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
               <div>
                 <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Inventory Replenishment</span>
                 <h3 className="font-bold text-sm uppercase text-black font-sans truncate" title={product.name}>

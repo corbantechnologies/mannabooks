@@ -174,7 +174,7 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
     return (
         <div className="max-w-4xl border border-zinc-200 rounded-xl overflow-hidden bg-white">
             {/* Header Tabs */}
-            <div className="flex border-b border-zinc-200 bg-zinc-50">
+            <div className="flex border-b border-zinc-100 bg-zinc-50">
                 <button
                     onClick={() => setActiveTab("tax")}
                     className={`px-6 py-4 font-mono text-xs uppercase font-bold tracking-wider border-b-2 transition-all ${

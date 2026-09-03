@@ -84,8 +84,11 @@ export function PricingClientView({ plans }: PricingClientViewProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
           {plans.map((plan) => {
             const isHighlight = Boolean(plan.isHighlighted);
-            const displayPrice = isAnnual ? plan.priceKesAnnually : plan.priceKesMonthly;
-            const monthlyEquivalent = isAnnual && plan.priceKesAnnually > 0 ? Math.round(plan.priceKesAnnually / 12) : plan.priceKesMonthly;
+            const originalPrice = isAnnual ? plan.priceKesAnnually : plan.priceKesMonthly;
+            const promoPrice = isAnnual ? plan.discountedPriceAnnually : plan.discountedPriceMonthly;
+            const hasDiscount = typeof promoPrice === "number" && promoPrice > 0 && promoPrice < originalPrice;
+            const displayPrice = hasDiscount ? promoPrice : originalPrice;
+            const monthlyEquivalent = isAnnual && displayPrice > 0 ? Math.round(displayPrice / 12) : displayPrice;
 
             return (
               <div
@@ -110,7 +113,12 @@ export function PricingClientView({ plans }: PricingClientViewProps) {
                     {plan.name}
                   </h2>
                   
-                  <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 mb-1">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-1">
+                    {hasDiscount && (
+                      <span className={`text-base font-mono font-bold line-through ${isHighlight ? "text-emerald-200/60" : "text-zinc-400"}`}>
+                        {formatCurrency(originalPrice, "KES")}
+                      </span>
+                    )}
                     <span className="text-2xl sm:text-3xl font-black tracking-tight">
                       {displayPrice === 0 ? "Free" : formatCurrency(displayPrice, "KES")}
                     </span>
@@ -119,9 +127,14 @@ export function PricingClientView({ plans }: PricingClientViewProps) {
                         {isAnnual ? "/ year" : "/ month"}
                       </span>
                     )}
+                    {hasDiscount && (
+                      <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded uppercase ${isHighlight ? "bg-emerald-400/20 text-emerald-200 border border-emerald-300/30" : "bg-rose-50 text-rose-600 border border-rose-200"}`}>
+                        Save {Math.round(((originalPrice - displayPrice) / originalPrice) * 100)}%
+                      </span>
+                    )}
                   </div>
 
-                  {isAnnual && plan.priceKesAnnually > 0 && (
+                  {isAnnual && displayPrice > 0 && (
                     <span className={`text-[11px] font-mono font-bold block ${isHighlight ? "text-emerald-300" : "text-emerald-700"}`}>
                       (equiv. {formatCurrency(monthlyEquivalent, "KES")}/mo)
                     </span>

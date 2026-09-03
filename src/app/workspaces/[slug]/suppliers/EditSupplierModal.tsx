@@ -89,7 +89,7 @@ export function EditSupplierModal({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-zinc-200/80 rounded-xl shadow-2xl w-[95%] sm:w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-6 animate-in zoom-in-95 duration-150 text-left">
             
-            <div className="flex justify-between items-start border-b border-zinc-200/80 pb-4">
+            <div className="flex justify-between items-start border-b border-zinc-100 pb-4">
               <div>
                 <h3 className="font-semibold uppercase tracking-tight text-base font-sans text-black">Edit Supplier Profile</h3>
                 <p className="text-[10px] text-zinc-400 uppercase font-semibold">id: {supplier.id}</p>

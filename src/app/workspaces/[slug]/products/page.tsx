@@ -63,13 +63,13 @@ export default async function WorkspaceProductsPage({ params, searchParams }: Pr
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-12 selection:bg-black selection:text-white">
+    <div className="p-5 sm:p-7 space-y-6">
       
       {/* ACTION BLOCK TOP BAR */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Products &amp; Inventory</span>
-          <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Product Catalog</h1>
+          <span className="text-xs text-zinc-400 font-medium">Products &amp; Inventory</span>
+          <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Product Catalog</h1>
         </div>
         <div className="flex items-center gap-2.5">
           {/* Inject interactive creation portal block */}

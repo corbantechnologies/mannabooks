@@ -304,8 +304,8 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
 
             {/* CATEGORY BREAKDOWN CARDS */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="card-modern p-4 space-y-1 border-l-2 border-black bg-white">
-                    <p className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Total Operating Expenses</p>
+                <div className="stat-card p-4 space-y-1 bg-white">
+                    <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Total Operating Expenses</p>
                     <p className="font-mono text-lg font-black text-black leading-tight">
                         {formatCurrency(totalExpensesSum, shopCurrency)}
                     </p>
@@ -313,7 +313,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                 </div>
 
                 <div className="card-modern p-4 space-y-1 border-l-2 border-blue-500 bg-white">
-                    <p className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Top Expense Category</p>
+                    <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Top Expense Category</p>
                     <p className="font-mono text-lg font-black text-blue-700 leading-tight">
                         {(() => {
                             const entries = Object.entries(categoryBreakdown).sort((a, b) => b[1] - a[1]);
@@ -329,7 +329,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                 </div>
 
                 <div className="card-modern p-4 space-y-1 border-l-2 border-amber-500 bg-white">
-                    <p className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Tax Non-Deductible</p>
+                    <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Tax Non-Deductible</p>
                     <p className="font-mono text-lg font-black text-amber-800 leading-tight">
                         {formatCurrency(nonDeductibleSum, shopCurrency)}
                     </p>
@@ -337,7 +337,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                 </div>
 
                 <div className="card-modern p-4 space-y-1 border-l-2 border-emerald-500 bg-white">
-                    <p className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Category Scope</p>
+                    <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Category Scope</p>
                     <p className="font-mono text-lg font-black text-emerald-700 leading-tight">
                         {Object.keys(categoryBreakdown).length} Categories
                     </p>
@@ -375,35 +375,35 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                 )}
             </div>
 
-            <div className="card-modern overflow-x-auto">
+            <div className="surface overflow-x-auto">
                 <table className="w-full text-left font-mono text-xs border-collapse">
                     <thead>
-                        <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                            <th className="p-4 border-r border-zinc-200">Date</th>
-                            <th className="p-4 border-r border-zinc-200">Description</th>
-                            <th className="p-4 border-r border-zinc-200">Category</th>
-                            <th className="p-4 border-r border-zinc-200">Payment</th>
-                            <th className="p-4 border-r border-zinc-200">Receipt</th>
-                            <th className="p-4 border-r border-zinc-200 text-right">Amount</th>
-                            <th className="p-4 text-center">Actions</th>
+                        <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                            <th className="px-4 py-3 border-r border-zinc-100">Date</th>
+                            <th className="px-4 py-3 border-r border-zinc-100">Description</th>
+                            <th className="px-4 py-3 border-r border-zinc-100">Category</th>
+                            <th className="px-4 py-3 border-r border-zinc-100">Payment</th>
+                            <th className="px-4 py-3 border-r border-zinc-100">Receipt</th>
+                            <th className="px-4 py-3 border-r border-zinc-100 text-right">Amount</th>
+                            <th className="px-4 py-3 text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-200/80 bg-white">
+                    <tbody className="bg-white">
                         {filteredExpenses.map(expense => (
-                            <tr key={expense.id} className="hover:bg-zinc-50/80 transition-colors">
-                                <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-black">{expense.expenseDate.split('T')[0]}</td>
-                                <td className="p-4 border-r border-zinc-200/80 text-zinc-600 font-sans">
+                            <tr key={expense.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                                <td className="px-4 py-3 border-r border-zinc-100 font-sans text-sm font-semibold text-zinc-900">{expense.expenseDate.split('T')[0]}</td>
+                                <td className="p-4 border-r border-zinc-100 text-zinc-600 font-sans">
                                     <div>{expense.description}</div>
                                     {expense.isNonDeductible && (
                                         <span className="inline-block mt-1 badge-amber text-[9px]">Non-Deductible</span>
                                     )}
                                 </td>
-                                <td className="p-4 border-r border-zinc-200/80">
+                                <td className="p-4 border-r border-zinc-100">
                                     <span className="badge-zinc">
                                         {expense.category}
                                     </span>
                                 </td>
-                                <td className="p-4 border-r border-zinc-200/80">
+                                <td className="p-4 border-r border-zinc-100">
                                     {expense.paymentChannel ? (
                                         <div>
                                             <span className="block text-xs font-semibold text-black">{expense.paymentChannel.replace('_', ' ')}</span>
@@ -413,7 +413,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                                         <span className="text-zinc-400 text-xs italic">—</span>
                                     )}
                                 </td>
-                                <td className="p-4 border-r border-zinc-200/80">
+                                <td className="p-4 border-r border-zinc-100">
                                     {expense.receiptUrl ? (
                                         <a href={expense.receiptUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-800 hover:text-emerald-950 font-semibold underline underline-offset-2">
                                             View Receipt
@@ -422,10 +422,10 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                                         <span className="text-zinc-400 italic">No receipt</span>
                                     )}
                                 </td>
-                                <td className="p-4 border-r border-zinc-200/80 text-right font-black text-sm text-black font-mono">
+                                <td className="p-4 border-r border-zinc-100 text-right font-black text-sm text-black font-mono">
                                     {formatCurrency(parseFloat(expense.amount), expense.currency)}
                                 </td>
-                                <td className="p-4 text-center">
+                                <td className="px-4 py-3 text-center">
                                     {deletingExpenseId === expense.id ? (
                                         <div className="flex justify-center items-center gap-1.5 animate-in fade-in zoom-in-95">
                                             <button 

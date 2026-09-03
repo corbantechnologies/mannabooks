@@ -167,7 +167,7 @@ export default function AccountingPeriodsClient({ shopId, shopSlug, isGlEnabled,
                     <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white shadow-sm">
                         <div className="overflow-x-auto">
                             <div className="min-w-[700px]">
-                                <div className="grid grid-cols-[1.2fr_1.4fr_1.4fr_auto] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
+                                <div className="grid grid-cols-[1.2fr_1.4fr_1.4fr_auto] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-100">
                                     <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Period</span>
                                     <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Date Range</span>
                                     <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Closed By</span>
@@ -237,7 +237,7 @@ export default function AccountingPeriodsClient({ shopId, shopSlug, isGlEnabled,
                             </div>
                         ) : periodDetails ? (
                             <>
-                                <div className="flex items-start justify-between border-b border-zinc-200 pb-4">
+                                <div className="flex items-start justify-between border-b border-zinc-100 pb-4">
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <h2 className="text-xl font-bold font-sans text-black">
@@ -308,7 +308,7 @@ export default function AccountingPeriodsClient({ shopId, shopSlug, isGlEnabled,
                                     <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white">
                                         <div className="overflow-x-auto max-h-72">
                                             <table className="w-full text-left font-mono text-xs border-collapse">
-                                                <thead className="sticky top-0 bg-zinc-50 border-b border-zinc-200 uppercase text-[10px] text-zinc-500 font-semibold">
+                                                <thead className="sticky top-0 bg-zinc-50 border-b border-zinc-100 uppercase text-[10px] text-zinc-500 font-semibold">
                                                     <tr>
                                                         <th className="p-2.5">Date</th>
                                                         <th className="p-2.5">Description</th>

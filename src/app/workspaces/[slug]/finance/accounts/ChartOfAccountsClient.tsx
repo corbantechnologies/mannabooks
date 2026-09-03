@@ -212,7 +212,7 @@ export default function ChartOfAccountsClient({ shopId, shopSlug, isGlEnabled, g
                 if (group.length === 0) return null;
                 return (
                     <div key={type} className="border border-zinc-200 rounded-xl overflow-hidden">
-                        <div className={`px-4 py-2.5 border-b border-zinc-200 flex items-center gap-2 ${TYPE_COLORS[type]}`}>
+                        <div className={`px-4 py-2.5 border-b border-zinc-100 flex items-center gap-2 ${TYPE_COLORS[type]}`}>
                             <span className={`font-mono text-xs font-bold uppercase border px-2 py-0.5 rounded-full ${TYPE_COLORS[type]}`}>{type}</span>
                             <span className="text-xs font-medium">{group.length} accounts</span>
                         </div>

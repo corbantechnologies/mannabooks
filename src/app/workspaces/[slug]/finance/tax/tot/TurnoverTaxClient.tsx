@@ -36,7 +36,7 @@ export default function TurnoverTaxClient({ shopId, year: initialYear, quarters:
             <div className="flex gap-2 items-center">
                 {[initialYear - 1, initialYear, initialYear + 1].map(y => (
                     <button key={y} onClick={() => loadYear(y)}
-                        className={`px-4 py-2 rounded-lg font-mono text-xs uppercase font-bold border transition-colors ${year === y ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"}`}>
+                        className={`px-4 py-2 rounded-lg font-mono text-xs uppercase font-bold border transition-colors ${year === y ? "badge-emerald" : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"}`}>
                         Year {y}
                     </button>
                 ))}
@@ -66,7 +66,7 @@ export default function TurnoverTaxClient({ shopId, year: initialYear, quarters:
                     <div className="border border-zinc-200 rounded-xl overflow-hidden">
                         <div className="overflow-x-auto">
                             <div className="min-w-[600px]">
-                                <div className="grid grid-cols-[80px_2fr_1.5fr_1.5fr] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
+                                <div className="grid grid-cols-[80px_2fr_1.5fr_1.5fr] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-100">
                                     <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Quarter</span>
                                     <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Period</span>
                                     <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">Gross Sales</span>

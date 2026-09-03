@@ -220,7 +220,7 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
 
       {/* SPREADSHEET LEDGER CONTAINER ROW MATRIX */}
       <div className="card-modern bg-white">
-        <div className="bg-zinc-50/80 border-b border-zinc-200/80 px-4 py-3 flex justify-between items-center">
+        <div className="bg-zinc-50/80 border-b border-zinc-100 px-4 py-3 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <span className="font-semibold uppercase tracking-wider text-black font-sans text-xs">
               Staff Disbursement Spreadsheet Matrix ({rows.length} Active Rows)
@@ -241,7 +241,7 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
             <thead>
-              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+              <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
                 <th className="p-3 border-r border-zinc-200">Employee Name</th>
                 <th className="p-3 border-r border-zinc-200 text-right">Base Pay ({shop.currency})</th>
                 <th className="p-3 border-r border-zinc-200 text-right">Allowances</th>
@@ -260,10 +260,10 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
                 <th className="p-3 text-center">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200/80 bg-white">
+            <tbody className="bg-white">
               {rowsWithCalcs.map((row) => (
-                <tr key={row.id} className="hover:bg-zinc-50/80 transition-colors">
-                  <td className="p-2 border-r border-zinc-200/80">
+                <tr key={row.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                  <td className="p-2 border-r border-zinc-100">
                     <input
                       type="text"
                       value={row.fullName}
@@ -274,7 +274,7 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
                   </td>
 
                   {/* FLUID INTERACTIVE CELL INPUTS */}
-                  <td className="p-2 border-r border-zinc-200/80">
+                  <td className="p-2 border-r border-zinc-100">
                     <input
                       type="number"
                       step="0.01"
@@ -285,7 +285,7 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
                       className="w-24 border border-zinc-300 p-1.5 bg-white text-right font-semibold focus:border-black focus:outline-none rounded text-xs"
                     />
                   </td>
-                  <td className="p-2 border-r border-zinc-200/80">
+                  <td className="p-2 border-r border-zinc-100">
                     <input
                       type="number"
                       step="0.01"
@@ -296,7 +296,7 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
                       className="w-20 border border-zinc-300 p-1.5 bg-white text-right focus:border-black focus:outline-none rounded text-xs"
                     />
                   </td>
-                  <td className="p-2 border-r border-zinc-200/80">
+                  <td className="p-2 border-r border-zinc-100">
                     <input
                       type="number"
                       step="0.01"
@@ -307,7 +307,7 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
                       className="w-20 border border-zinc-300 p-1.5 bg-white text-right focus:border-black focus:outline-none rounded text-xs"
                     />
                   </td>
-                  <td className="p-2 border-r border-zinc-200/80">
+                  <td className="p-2 border-r border-zinc-100">
                     <input
                       type="number"
                       step="0.01"
@@ -320,28 +320,28 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
                   </td>
 
                   {/* REACTIVE METRIC LABELS */}
-                  <td className="p-3 border-r border-zinc-200/80 bg-zinc-50 font-semibold text-black text-right">
+                  <td className="p-3 border-r border-zinc-100 bg-zinc-50 font-semibold text-black text-right">
                     {formatCurrency(row.computed.grossSalary, shop.currency)}
                   </td>
 
                   {mode === "KENYA_STATUTORY" && (
                     <>
-                      <td className="p-3 border-r border-zinc-200/80 text-rose-600 font-semibold text-right">
+                      <td className="p-3 border-r border-zinc-100 text-rose-600 font-semibold text-right">
                         {row.computed.paye > 0 ? formatCurrency(row.computed.paye, shop.currency) : "0.00 (Relief)"}
                       </td>
-                      <td className="p-3 border-r border-zinc-200/80 text-zinc-600 text-right">
+                      <td className="p-3 border-r border-zinc-100 text-zinc-600 text-right">
                         {formatCurrency(row.computed.shif, shop.currency)}
                       </td>
-                      <td className="p-3 border-r border-zinc-200/80 text-zinc-600 text-right">
+                      <td className="p-3 border-r border-zinc-100 text-zinc-600 text-right">
                         {formatCurrency(row.computed.housingLevy, shop.currency)}
                       </td>
-                      <td className="p-3 border-r border-zinc-200/80 text-zinc-600 text-right">
+                      <td className="p-3 border-r border-zinc-100 text-zinc-600 text-right">
                         {formatCurrency(row.computed.nssf, shop.currency)}
                       </td>
                     </>
                   )}
 
-                  <td className="p-3 border-r border-zinc-200/80 bg-zinc-900 text-emerald-400 font-semibold text-right">
+                  <td className="p-3 border-r border-zinc-100 bg-zinc-900 text-emerald-400 font-semibold text-right">
                     {formatCurrency(row.computed.netPay, shop.currency)}
                   </td>
 

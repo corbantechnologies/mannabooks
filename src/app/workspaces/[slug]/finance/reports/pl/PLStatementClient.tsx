@@ -91,7 +91,7 @@ export default function PLStatementClient({ shopId, initialData, currency }: Pro
             <div className="flex flex-wrap gap-2 items-center">
                 {PERIODS.map(p => (
                     <button key={p.value} onClick={() => loadPeriod(p.value)}
-                        className={`px-4 py-2 rounded-lg font-mono text-xs uppercase font-bold border transition-colors ${period === p.value ? "bg-black text-white border-black" : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"}`}>
+                        className={`px-4 py-2 rounded-lg font-mono text-xs uppercase font-bold border transition-colors ${period === p.value ? "badge-emerald" : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"}`}>
                         {p.label}
                     </button>
                 ))}

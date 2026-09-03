@@ -129,7 +129,7 @@ export default function OpeningBalancesClient({ shopId, shopSlug, accounts }: Pr
                 if (group.length === 0) return null;
                 return (
                     <div key={type} className="border border-zinc-200 rounded-xl overflow-hidden">
-                        <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
+                        <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-50 border-b border-zinc-100">
                             <span className="font-mono text-xs font-bold uppercase text-zinc-600">{type} Accounts</span>
                             <span className="text-xs text-zinc-400">{TYPE_HINT[type]}</span>
                         </div>

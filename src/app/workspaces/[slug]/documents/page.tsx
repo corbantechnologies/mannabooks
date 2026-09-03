@@ -134,13 +134,13 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
   ).length;
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
+    <div className="p-5 sm:p-7 space-y-6">
       
       {/* HEADER SECTION AREA */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Transaction Stream</span>
-          <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Billing &amp; Invoices</h1>
+          <span className="text-xs text-zinc-400 font-medium">Transaction Stream</span>
+          <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Billing &amp; Invoices</h1>
         </div>
         
         <Link
@@ -153,23 +153,23 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
 
       {/* STATS STRIP */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="card-modern p-4 space-y-1 border-l-2 border-amber-400">
-          <p className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Outstanding</p>
+        <div className="stat-card p-4 space-y-1">
+          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Outstanding</p>
           <p className="font-mono text-lg font-black text-black leading-tight">{formatCurrency(outstanding, shop.currency)}</p>
           <p className="text-[10px] text-zinc-500 font-sans">Issued &amp; partial invoices</p>
         </div>
-        <div className="card-modern p-4 space-y-1 border-l-2 border-rose-400">
-          <p className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Overdue</p>
+        <div className="stat-card p-4 space-y-1">
+          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Overdue</p>
           <p className="font-mono text-lg font-black text-rose-600 leading-tight">{overdueCount}</p>
           <p className="text-[10px] text-zinc-500 font-sans">Past due date invoices</p>
         </div>
-        <div className="card-modern p-4 space-y-1 border-l-2 border-emerald-400">
-          <p className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Paid This Month</p>
+        <div className="stat-card p-4 space-y-1">
+          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Paid This Month</p>
           <p className="font-mono text-lg font-black text-emerald-700 leading-tight">{formatCurrency(paidThisMonth, shop.currency)}</p>
           <p className="text-[10px] text-zinc-500 font-sans">Collected in {now.toLocaleString("en-KE", { month: "long" })}</p>
         </div>
-        <div className="card-modern p-4 space-y-1 border-l-2 border-blue-400">
-          <p className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Open Quotes</p>
+        <div className="stat-card p-4 space-y-1">
+          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Open Quotes</p>
           <p className="font-mono text-lg font-black text-blue-700 leading-tight">{openQuotes}</p>
           <p className="text-[10px] text-zinc-500 font-sans">Awaiting conversion</p>
         </div>
@@ -236,32 +236,32 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
         />
       ) : (
         /* TABLE VIEW */
-        <div className="card-modern overflow-x-auto">
+        <div className="surface overflow-x-auto">
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
-              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                <th className="p-4 border-r border-zinc-200">Serial No</th>
-                <th className="p-4 border-r border-zinc-200">Type</th>
-                <th className="p-4 border-r border-zinc-200">Client / Party</th>
-                <th className="p-4 border-r border-zinc-200">Date Issued</th>
-                <th className="p-4 border-r border-zinc-200 text-right">Total</th>
-                <th className="p-4 text-center">Status</th>
+              <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                <th className="px-4 py-3 border-r border-zinc-100">Serial No</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Type</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Client / Party</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Date Issued</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-right">Total</th>
+                <th className="px-4 py-3 text-center">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200/80 bg-white">
+            <tbody className="bg-white">
               {streamLedger.map((doc) => (
-                <tr key={doc.id} className="hover:bg-zinc-50/80 transition-colors group cursor-pointer">
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-wider">
+                <tr key={doc.id} className="hover:bg-zinc-50 transition-colors group cursor-pointer border-b border-zinc-100/80 last:border-0">
+                  <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider">
                     <Link href={`/workspaces/${slug}/documents/${doc.id}`} className="hover:underline">
                       {doc.docNumber}
                     </Link>
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80">
-                    <span className="border border-zinc-200 px-1.5 py-0.5 text-[9px] font-semibold tracking-widest bg-zinc-50 rounded">
+                  <td className="p-4 border-r border-zinc-100">
+                    <span className="badge-zinc">
                       {doc.type}
                     </span>
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-zinc-900">
+                  <td className="px-4 py-3 border-r border-zinc-100 font-sans text-sm font-semibold text-zinc-900">
                     {doc.client ? (
                       <Link
                         href={`/workspaces/${slug}/clients/${doc.client.id}`}
@@ -280,19 +280,19 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
                       doc.type === "PAYROLL_VOUCHER" ? "Staff Payroll" : "Walk-in Customer"
                     )}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
+                  <td className="px-4 py-3 border-r border-zinc-100 text-zinc-400">
                     {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-sm text-black text-right">
+                  <td className="px-4 py-3 border-r border-zinc-100 font-semibold text-sm text-zinc-900 text-right">
                     {formatCurrency(doc.grandTotal, shop.currency)}
                   </td>
-                  <td className="p-4 text-center">
+                  <td className="px-4 py-3 text-center">
                     <div className="flex flex-col gap-1 items-center">
                       <span className={`border px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded ${
-                        doc.status === "PAID" ? "bg-black text-white border-black" :
-                        doc.status === "ISSUED" ? "bg-white text-black border-zinc-300 font-semibold" :
-                        doc.status === "OVERDUE" ? "bg-rose-50 border-rose-300 text-rose-700 font-semibold" :
-                        "bg-zinc-50 text-zinc-400 border-zinc-200"
+                        doc.status === "PAID" ? "badge-emerald" :
+                        doc.status === "ISSUED" ? "badge-zinc" :
+                        doc.status === "OVERDUE" ? "badge-rose" :
+                        "badge-zinc"
                       }`}>
                         {doc.status}
                       </span>
@@ -310,7 +310,9 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
                 <tr>
                   <td colSpan={6} className="p-16 text-center">
                     <div className="space-y-3">
-                      <div className="text-4xl">📋</div>
+                      <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center mx-auto mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      </div>
                       <p className="font-bold text-zinc-800 text-sm font-sans">
                         {activeType !== "ALL"
                           ? `No ${DOC_TYPE_TABS.find(t => t.key === activeType)?.label || activeType}s found`

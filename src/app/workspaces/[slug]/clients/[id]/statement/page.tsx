@@ -30,7 +30,7 @@ export default async function ClientStatementPage({
     const data = result.success ? result.data : null;
 
     return (
-        <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
+        <div className="p-5 sm:p-7 space-y-6">
             <ClientStatementView
                 shopId={shop.id}
                 shopSlug={slug}

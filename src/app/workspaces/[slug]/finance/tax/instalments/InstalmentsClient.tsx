@@ -125,7 +125,7 @@ export default function InstalmentsClient({ shopId, shopSlug, year, estimatedTax
                     <div className="border border-zinc-200 rounded-xl overflow-hidden">
                         <div className="overflow-x-auto">
                             <div className="min-w-[700px]">
-                                <div className="grid grid-cols-[80px_1fr_1.2fr_1.2fr_120px] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
+                                <div className="grid grid-cols-[80px_1fr_1.2fr_1.2fr_120px] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-100">
                                     <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Instalment</span>
                                     <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold">Due Date</span>
                                     <span className="font-mono text-[9px] uppercase text-zinc-400 font-semibold text-right">Est. Liability</span>

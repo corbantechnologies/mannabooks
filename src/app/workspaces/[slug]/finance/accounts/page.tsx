@@ -21,11 +21,11 @@ export default async function ChartOfAccountsPage({ params }: { params: Promise<
     const accounts = shop.isGlEnabled ? await getChartOfAccounts(shop.id) : [];
 
     return (
-        <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
+        <div className="p-5 sm:p-7 space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Chart of Accounts</span>
-                    <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Chart of Accounts</h1>
+                    <span className="text-xs text-zinc-400 font-medium">Chart of Accounts</span>
+                    <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Chart of Accounts</h1>
                 </div>
             </div>
 

@@ -246,26 +246,26 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
                 </div>
             )}
 
-            <div className="card-modern overflow-x-auto">
+            <div className="surface overflow-x-auto">
                 <table className="w-full text-left font-sans text-xs border-collapse">
                     <thead>
-                        <tr className="bg-zinc-50 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-500 text-[10px]">
-                            <th className="p-4 border-r border-zinc-200">Name</th>
-                            <th className="p-4 border-r border-zinc-200">Email</th>
-                            <th className="p-4 border-r border-zinc-200">Role</th>
-                            <th className="p-4 border-r border-zinc-200">Permissions</th>
-                            <th className="p-4 text-center">Actions</th>
+                        <tr className="bg-zinc-50 border-b border-zinc-100 uppercase tracking-wider font-semibold text-zinc-500 text-[10px]">
+                            <th className="px-4 py-3 border-r border-zinc-100">Name</th>
+                            <th className="px-4 py-3 border-r border-zinc-100">Email</th>
+                            <th className="px-4 py-3 border-r border-zinc-100">Role</th>
+                            <th className="px-4 py-3 border-r border-zinc-100">Permissions</th>
+                            <th className="px-4 py-3 text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-200/80 bg-white">
+                    <tbody className="bg-white">
                         {initialMembers.map(member => {
                             const perms = member.customPermissions || {};
                             const activePermCount = Object.values(perms).filter(Boolean).length;
                             return (
-                                <tr key={member.id} className="hover:bg-zinc-50/80 transition-colors">
-                                    <td className="p-4 border-r border-zinc-200/80 font-semibold uppercase tracking-tight text-black">{member.name}</td>
-                                    <td className="p-4 border-r border-zinc-200/80 text-zinc-600 font-mono text-[11px]">{member.email}</td>
-                                    <td className="p-4 border-r border-zinc-200/80">
+                                <tr key={member.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                                    <td className="p-4 border-r border-zinc-100 font-semibold uppercase tracking-tight text-black">{member.name}</td>
+                                    <td className="p-4 border-r border-zinc-100 text-zinc-600 font-mono text-[11px]">{member.email}</td>
+                                    <td className="p-4 border-r border-zinc-100">
                                         <span className={`inline-block px-2.5 py-1 rounded text-[10px] font-bold font-mono tracking-wider ${
                                             member.role === 'OWNER' ? 'bg-black text-white' : 
                                             member.role === 'EMPLOYEE' ? 'bg-blue-100 text-blue-800' :
@@ -274,7 +274,7 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
                                             {member.role}
                                         </span>
                                     </td>
-                                    <td className="p-4 border-r border-zinc-200/80 text-[11px]">
+                                    <td className="p-4 border-r border-zinc-100 text-[11px]">
                                         {member.role === 'OWNER' || member.role === 'ADMIN' ? (
                                             <span className="text-zinc-500 font-medium italic">Full Admin Access</span>
                                         ) : member.role === 'EMPLOYEE' ? (
@@ -285,7 +285,7 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
                                             <span className="text-zinc-500 font-medium">{member.role} Preset</span>
                                         )}
                                     </td>
-                                    <td className="p-4 text-center">
+                                    <td className="px-4 py-3 text-center">
                                         <div className="flex items-center justify-center gap-3">
                                             {member.role !== 'OWNER' && (
                                                 <button
@@ -323,7 +323,7 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
                         onSubmit={handleSaveEdit}
                         className="bg-white border border-zinc-300 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl text-left font-sans"
                     >
-                        <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+                        <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
                             <div>
                                 <h3 className="font-bold text-base text-black">
                                     Edit Permissions: {editingMember.name}
@@ -399,27 +399,27 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
             {initialInvites.length > 0 && (
                 <div className="mt-8">
                     <h3 className="font-bold text-black uppercase text-xs mb-3">Pending Invitations</h3>
-                    <div className="card-modern overflow-x-auto">
+                    <div className="surface overflow-x-auto">
                         <table className="w-full text-left font-sans text-xs border-collapse">
                             <thead>
-                                <tr className="bg-zinc-50 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-500 text-[10px]">
-                                    <th className="p-4 border-r border-zinc-200">Email</th>
-                                    <th className="p-4 border-r border-zinc-200">Role</th>
-                                    <th className="p-4 border-r border-zinc-200">Status</th>
-                                    <th className="p-4 border-r border-zinc-200">Sent On</th>
-                                    <th className="p-4 text-center">Actions</th>
+                                <tr className="bg-zinc-50 border-b border-zinc-100 uppercase tracking-wider font-semibold text-zinc-500 text-[10px]">
+                                    <th className="px-4 py-3 border-r border-zinc-100">Email</th>
+                                    <th className="px-4 py-3 border-r border-zinc-100">Role</th>
+                                    <th className="px-4 py-3 border-r border-zinc-100">Status</th>
+                                    <th className="px-4 py-3 border-r border-zinc-100">Sent On</th>
+                                    <th className="px-4 py-3 text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-zinc-200/80 bg-white">
+                            <tbody className="bg-white">
                                 {initialInvites.map(invite => (
-                                    <tr key={invite.id} className="hover:bg-zinc-50/80 transition-colors">
-                                        <td className="p-4 border-r border-zinc-200/80 font-mono text-[11px] text-black">{invite.email}</td>
-                                        <td className="p-4 border-r border-zinc-200/80">
+                                    <tr key={invite.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                                        <td className="p-4 border-r border-zinc-100 font-mono text-[11px] text-black">{invite.email}</td>
+                                        <td className="p-4 border-r border-zinc-100">
                                             <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold font-mono tracking-wider bg-zinc-100 text-zinc-800 uppercase">
                                                 {invite.role}
                                             </span>
                                         </td>
-                                        <td className="p-4 border-r border-zinc-200/80">
+                                        <td className="p-4 border-r border-zinc-100">
                                             <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold font-mono tracking-wider uppercase ${
                                                 invite.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-800' :
                                                 invite.status === 'REVOKED' ? 'bg-rose-100 text-rose-800' :
@@ -428,10 +428,10 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
                                                 {invite.status}
                                             </span>
                                         </td>
-                                        <td className="p-4 border-r border-zinc-200/80 text-zinc-600 font-mono text-[11px]">
+                                        <td className="p-4 border-r border-zinc-100 text-zinc-600 font-mono text-[11px]">
                                             {invite.createdAt.split('T')[0]}
                                         </td>
-                                        <td className="p-4 text-center">
+                                        <td className="px-4 py-3 text-center">
                                             {invite.status === 'PENDING' ? (
                                                 <button onClick={() => handleRevoke(invite.id)} className="text-amber-600 hover:text-amber-800 text-xs font-bold uppercase tracking-wider cursor-pointer">
                                                     Revoke

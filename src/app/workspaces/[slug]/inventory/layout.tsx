@@ -26,7 +26,7 @@ export default async function InventoryLayout({ children, params }: InventoryLay
   return (
     <div className="flex flex-col min-h-full">
       {/* INVENTORY SUB-NAVIGATION STRIP */}
-      <div className="border-b border-zinc-200/80 bg-zinc-50 px-4 sm:px-8 sticky top-0 z-20">
+      <div className="border-b border-zinc-100 bg-zinc-50 px-4 sm:px-8 sticky top-0 z-20">
         <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
           {subNav.map((item) => (
             <Link

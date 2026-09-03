@@ -28,10 +28,10 @@ export default async function GeneralLedgerPage({ params }: { params: Promise<{ 
     ]);
 
     return (
-        <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
-            <div className="border-b border-zinc-200/80 pb-6">
-                <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Journal Entries</span>
-                <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Journal Entries</h1>
+        <div className="p-5 sm:p-7 space-y-6">
+            <div className="space-y-2">
+                <span className="text-xs text-zinc-400 font-medium">Journal Entries</span>
+                <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Journal Entries</h1>
                 <p className="text-sm text-zinc-500 mt-1">
                     Complete double-entry journal. Use <strong>Post Manual Entry</strong> to record historical transactions
                     (e.g. Railway, Google Cloud subscriptions paid before Manna Books go-live).

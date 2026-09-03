@@ -121,7 +121,7 @@ export function BillingSettingsClient({
     <div className="space-y-10 font-sans">
       
       {/* HEADER BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-6">
         <div>
           <div className="flex items-center gap-2 font-mono text-[10px] text-zinc-400 uppercase font-bold tracking-widest">
             <Link href={`/workspaces/${shop.slug}/settings`} className="hover:text-black underline">
@@ -279,9 +279,23 @@ export function BillingSettingsClient({
             const isUpgrade = targetRank > currentRank;
             const isDowngrade = targetRank < currentRank;
             const isCurrent = planDetails.plan.toUpperCase() === plan.id.toUpperCase() && !planDetails.isLifetimePro;
-            const calculatedTotal = (selectedDuration >= 12 && plan.priceKesAnnually > 0)
+
+            const effectiveMonthly = (plan.discountedPriceMonthly && plan.discountedPriceMonthly > 0)
+              ? plan.discountedPriceMonthly
+              : plan.priceKesMonthly;
+            const effectiveAnnually = (plan.discountedPriceAnnually && plan.discountedPriceAnnually > 0)
+              ? plan.discountedPriceAnnually
+              : plan.priceKesAnnually;
+
+            const baseTotal = (selectedDuration >= 12 && plan.priceKesAnnually > 0)
               ? plan.priceKesAnnually
               : Math.round(plan.priceKesMonthly * selectedDuration * discountMultiplier);
+
+            const calculatedTotal = (selectedDuration >= 12 && effectiveAnnually > 0)
+              ? effectiveAnnually
+              : Math.round(effectiveMonthly * selectedDuration * discountMultiplier);
+
+            const hasDiscount = calculatedTotal < baseTotal && calculatedTotal > 0;
 
             return (
               <div
@@ -306,13 +320,23 @@ export function BillingSettingsClient({
 
                   {/* PRICE DISPLAY */}
                   <div className="border-y border-zinc-100 py-4 space-y-1">
-                    <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 font-mono">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono">
+                      {hasDiscount && (
+                        <span className="text-sm font-bold text-zinc-400 line-through">
+                          {formatCurrency(baseTotal, "KES")}
+                        </span>
+                      )}
                       <span className="text-xl sm:text-2xl font-black text-black">
                         {plan.priceKesMonthly === 0 ? "FREE" : formatCurrency(calculatedTotal, "KES")}
                       </span>
                       {plan.priceKesMonthly > 0 && (
                         <span className="text-xs text-zinc-500 whitespace-nowrap">
                           / {selectedDuration === 1 ? "mo" : `${selectedDuration} mos`}
+                        </span>
+                      )}
+                      {hasDiscount && (
+                        <span className="text-[9px] bg-rose-50 text-rose-600 border border-rose-200 px-1.5 py-0.5 rounded font-bold uppercase">
+                          PROMO
                         </span>
                       )}
                     </div>
@@ -405,7 +429,7 @@ export function BillingSettingsClient({
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono text-xs border-collapse">
               <thead>
-                <tr className="border-b border-zinc-200 bg-zinc-50 text-[10px] text-zinc-400 uppercase font-bold tracking-wider">
+                <tr className="border-b border-zinc-100 bg-zinc-50 text-[10px] text-zinc-400 uppercase font-bold tracking-wider">
                   <th className="py-3 px-4">Date</th>
                   <th className="py-3 px-4">Description</th>
                   <th className="py-3 px-4">M-Pesa Receipt</th>
@@ -423,7 +447,7 @@ export function BillingSettingsClient({
                   </tr>
                 ) : (
                   transactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-zinc-50/80 transition-colors">
+                    <tr key={tx.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
                       <td className="py-3 px-4 font-mono text-zinc-500 text-[11px]">
                         {new Date(tx.createdAt).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                       </td>
@@ -462,144 +486,156 @@ export function BillingSettingsClient({
       </div>
 
       {/* M-PESA STK PUSH CHECKOUT MODAL */}
-      {targetPlan && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-zinc-300 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-6 animate-in zoom-in-95 font-sans">
-            
-            {/* MODAL HEADER */}
-            <div className="flex justify-between items-start border-b border-zinc-200 pb-3">
-              <div>
-                <span className="font-mono text-[10px] text-zinc-400 uppercase font-bold">Lipa Na M-Pesa Online</span>
-                <h3 className="text-lg font-black text-black uppercase">
-                  {((PLAN_RANK_MAP[targetPlan.id.toUpperCase()] ?? 0) < (PLAN_RANK_MAP[planDetails.plan.toUpperCase()] ?? 0))
-                    ? `Downgrade to ${targetPlan.name}`
-                    : ((PLAN_RANK_MAP[targetPlan.id.toUpperCase()] ?? 0) > (PLAN_RANK_MAP[planDetails.plan.toUpperCase()] ?? 0))
-                    ? `Upgrade to ${targetPlan.name}`
-                    : `Renew ${targetPlan.name}`}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={handleCloseModal}
-                className="text-zinc-400 hover:text-black font-bold p-1 text-base"
-              >
-                ✕
-              </button>
-            </div>
+      {targetPlan && (() => {
+        const effectiveTargetMonthly = (targetPlan.discountedPriceMonthly && targetPlan.discountedPriceMonthly > 0)
+          ? targetPlan.discountedPriceMonthly
+          : targetPlan.priceKesMonthly;
+        const effectiveTargetAnnually = (targetPlan.discountedPriceAnnually && targetPlan.discountedPriceAnnually > 0)
+          ? targetPlan.discountedPriceAnnually
+          : targetPlan.priceKesAnnually;
+        const targetTotalAmount = (selectedDuration >= 12 && effectiveTargetAnnually > 0)
+          ? effectiveTargetAnnually
+          : Math.round(effectiveTargetMonthly * selectedDuration * discountMultiplier);
 
-            {/* PAYMENT SUCCESS STATE */}
-            {paymentSuccessReceipt ? (
-              <div className="text-center space-y-4 py-4 font-mono">
-                <div className="w-14 h-14 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto text-2xl">
-                  ✓
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-lg font-bold font-sans text-black uppercase">Payment Successful!</h4>
-                  <p className="text-xs text-zinc-600">
-                    Receipt Ref: <strong className="text-black">{paymentSuccessReceipt}</strong>
-                  </p>
-                  <p className="text-xs text-emerald-700 font-bold mt-2">
+        return (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <div className="bg-white border border-zinc-300 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-6 animate-in zoom-in-95 font-sans">
+              
+              {/* MODAL HEADER */}
+              <div className="flex justify-between items-start border-b border-zinc-100 pb-3">
+                <div>
+                  <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Lipa Na M-Pesa Online</span>
+                  <h3 className="text-lg font-black text-black uppercase">
                     {((PLAN_RANK_MAP[targetPlan.id.toUpperCase()] ?? 0) < (PLAN_RANK_MAP[planDetails.plan.toUpperCase()] ?? 0))
-                      ? `Your workspace plan has been switched to ${targetPlan.name}.`
-                      : `Your workspace has been upgraded to ${targetPlan.name}. All features are now unlocked!`}
-                  </p>
+                      ? `Downgrade to ${targetPlan.name}`
+                      : ((PLAN_RANK_MAP[targetPlan.id.toUpperCase()] ?? 0) > (PLAN_RANK_MAP[planDetails.plan.toUpperCase()] ?? 0))
+                      ? `Upgrade to ${targetPlan.name}`
+                      : `Renew ${targetPlan.name}`}
+                  </h3>
                 </div>
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="w-full bg-black text-white font-bold uppercase text-xs py-3 rounded-lg mt-4"
+                  className="text-zinc-400 hover:text-black font-bold p-1 text-base"
                 >
-                  Done &amp; Continue
+                  ✕
                 </button>
               </div>
-            ) : isPolling ? (
-              /* POLLING / WAITING FOR USER PIN STATE */
-              <div className="text-center space-y-5 py-4 font-mono">
-                <div className="w-14 h-14 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <div className="space-y-1">
-                  <h4 className="text-base font-bold font-sans text-black uppercase">Check Your Phone</h4>
-                  <p className="text-xs text-zinc-600">
-                    An M-Pesa STK push prompt for <strong>{formatCurrency((selectedDuration >= 12 && targetPlan.priceKesAnnually > 0) ? targetPlan.priceKesAnnually : Math.round(targetPlan.priceKesMonthly * selectedDuration * discountMultiplier), "KES")}</strong> was dispatched to <strong>{phoneNumber}</strong>.
-                  </p>
-                  <p className="text-xs text-zinc-400 pt-2">
-                    Please enter your 4-digit M-Pesa PIN on your phone to authorize.
-                  </p>
-                  <div className="text-xs font-bold text-amber-700 pt-1">
-                    Waiting for confirmation... ({pollCountdown}s)
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="text-xs text-zinc-400 hover:text-black underline pt-2"
-                >
-                  Cancel or Retry
-                </button>
-              </div>
-            ) : (
-              /* STK FORM STATE */
-              <form onSubmit={handleInitiateStk} className="space-y-5 font-mono text-xs">
-                
-                {/* SUMMARY ROW */}
-                <div className="bg-zinc-50 border border-zinc-200 p-4 rounded-xl space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Plan Tier:</span>
-                    <span className="font-bold text-black">{targetPlan.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Billing Duration:</span>
-                    <span className="font-bold text-black">{selectedDuration} Month{selectedDuration > 1 ? "s" : ""}</span>
-                  </div>
-                  <div className="flex justify-between border-t border-zinc-200 pt-2 text-sm">
-                    <span className="font-bold text-black">Total Amount:</span>
-                    <span className="font-black text-emerald-900">
-                      {formatCurrency((selectedDuration >= 12 && targetPlan.priceKesAnnually > 0) ? targetPlan.priceKesAnnually : Math.round(targetPlan.priceKesMonthly * selectedDuration * discountMultiplier), "KES")}
-                    </span>
-                  </div>
-                </div>
 
-                {/* PHONE NUMBER INPUT */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-zinc-700 uppercase block">
-                    M-Pesa Mobile Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="e.g. 0712345678 or 2547..."
-                    required
-                    className="w-full px-3.5 py-2.5 border border-zinc-300 rounded-lg text-sm font-mono focus:outline-none focus:border-black bg-white"
-                  />
-                  <p className="text-[10px] text-zinc-400">
-                    A secure prompt will appear instantly on this phone to enter your PIN.
-                  </p>
-                </div>
-
-                <div className="pt-2 border-t border-zinc-200 flex justify-end gap-2">
+              {/* PAYMENT SUCCESS STATE */}
+              {paymentSuccessReceipt ? (
+                <div className="text-center space-y-4 py-4 font-mono">
+                  <div className="w-14 h-14 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto text-2xl">
+                    ✓
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-lg font-bold font-sans text-black uppercase">Payment Successful!</h4>
+                    <p className="text-xs text-zinc-600">
+                      Receipt Ref: <strong className="text-black">{paymentSuccessReceipt}</strong>
+                    </p>
+                    <p className="text-xs text-emerald-700 font-bold mt-2">
+                      {((PLAN_RANK_MAP[targetPlan.id.toUpperCase()] ?? 0) < (PLAN_RANK_MAP[planDetails.plan.toUpperCase()] ?? 0))
+                        ? `Your workspace plan has been switched to ${targetPlan.name}.`
+                        : `Your workspace has been upgraded to ${targetPlan.name}. All features are now unlocked!`}
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={handleCloseModal}
-                    className="px-4 py-2.5 border border-zinc-300 hover:bg-zinc-100 font-bold uppercase text-[11px] rounded-lg"
+                    className="w-full bg-black text-white font-bold uppercase text-xs py-3 rounded-lg mt-4"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmittingStk}
-                    className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold uppercase text-[11px] px-5 py-2.5 rounded-lg shadow-sm disabled:opacity-50 flex items-center gap-1.5"
-                  >
-                    <span>⚡</span>
-                    <span>{isSubmittingStk ? "Sending STK..." : "Send STK Push"}</span>
+                    Done &amp; Continue
                   </button>
                 </div>
+              ) : isPolling ? (
+                /* POLLING / WAITING FOR USER PIN STATE */
+                <div className="text-center space-y-5 py-4 font-mono">
+                  <div className="w-14 h-14 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <div className="space-y-1">
+                    <h4 className="text-base font-bold font-sans text-black uppercase">Check Your Phone</h4>
+                    <p className="text-xs text-zinc-600">
+                      An M-Pesa STK push prompt for <strong>{formatCurrency(targetTotalAmount, "KES")}</strong> was dispatched to <strong>{phoneNumber}</strong>.
+                    </p>
+                    <p className="text-xs text-zinc-400 pt-2">
+                      Please enter your 4-digit M-Pesa PIN on your phone to authorize.
+                    </p>
+                    <div className="text-xs font-bold text-amber-700 pt-1">
+                      Waiting for confirmation... ({pollCountdown}s)
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="text-xs text-zinc-400 hover:text-black underline pt-2"
+                  >
+                    Cancel or Retry
+                  </button>
+                </div>
+              ) : (
+                /* STK FORM STATE */
+                <form onSubmit={handleInitiateStk} className="space-y-5 font-mono text-xs">
+                  
+                  {/* SUMMARY ROW */}
+                  <div className="bg-zinc-50 border border-zinc-200 p-4 rounded-xl space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Plan Tier:</span>
+                      <span className="font-bold text-black">{targetPlan.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Billing Duration:</span>
+                      <span className="font-bold text-black">{selectedDuration} Month{selectedDuration > 1 ? "s" : ""}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-zinc-200 pt-2 text-sm">
+                      <span className="font-bold text-black">Total Amount:</span>
+                      <span className="font-black text-emerald-900">
+                        {formatCurrency(targetTotalAmount, "KES")}
+                      </span>
+                    </div>
+                  </div>
 
-              </form>
-            )}
+                  {/* PHONE NUMBER INPUT */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-zinc-700 uppercase block">
+                      M-Pesa Mobile Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="e.g. 0712345678 or 2547..."
+                      required
+                      className="w-full px-3.5 py-2.5 border border-zinc-300 rounded-lg text-sm font-mono focus:outline-none focus:border-black bg-white"
+                    />
+                    <p className="text-[10px] text-zinc-400">
+                      A secure prompt will appear instantly on this phone to enter your PIN.
+                    </p>
+                  </div>
 
+                  <div className="pt-2 border-t border-zinc-200 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCloseModal}
+                      className="px-4 py-2.5 border border-zinc-300 hover:bg-zinc-100 font-bold uppercase text-[11px] rounded-lg"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingStk}
+                      className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold uppercase text-[11px] px-5 py-2.5 rounded-lg shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+                    >
+                      <span>⚡</span>
+                      <span>{isSubmittingStk ? "Sending STK..." : "Send STK Push"}</span>
+                    </button>
+                  </div>
+
+                </form>
+              )}
+
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
     </div>
   );

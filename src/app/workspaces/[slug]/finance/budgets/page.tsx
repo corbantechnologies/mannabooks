@@ -28,10 +28,10 @@ export default async function BudgetsPage({
     const budgetLines = shop.isGlEnabled ? await getBudgetsWithActuals(shop.id, month, year) : [];
 
     return (
-        <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
-            <div className="border-b border-zinc-200/80 pb-6">
-                <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Operating Budgets</span>
-                <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Monthly Budgets</h1>
+        <div className="p-5 sm:p-7 space-y-6">
+            <div className="space-y-2">
+                <span className="text-xs text-zinc-400 font-medium">Operating Budgets</span>
+                <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Monthly Budgets</h1>
                 <p className="text-sm text-zinc-500 mt-1">
                     Set monthly spending limits per expense category. Alerts fire at 80% and 100%.
                 </p>

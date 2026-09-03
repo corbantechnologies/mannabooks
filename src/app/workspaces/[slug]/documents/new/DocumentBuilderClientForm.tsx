@@ -567,7 +567,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
 
       {/* LINE ITEMS MATRIX */}
       <div className="bg-white border border-zinc-200/80 rounded-lg shadow-sm overflow-hidden space-y-0">
-        <div className="bg-zinc-50 border-b border-zinc-200 px-6 py-3.5 flex justify-between items-center">
+        <div className="bg-zinc-50 border-b border-zinc-100 px-6 py-3.5 flex justify-between items-center">
           <h2 className="font-sans text-sm font-bold uppercase tracking-tight text-black">
             2. Line Item Execution Ledger
           </h2>

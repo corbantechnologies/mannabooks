@@ -146,7 +146,7 @@ export function DiagnosticsClient({
       {/* HEADER SECTION */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Ledger Maintenance</span>
+          <span className="text-xs text-zinc-400 font-medium">Ledger Maintenance</span>
           <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">General Ledger Diagnostics</h1>
         </div>
         <Link
@@ -297,7 +297,7 @@ export function DiagnosticsClient({
       {showCleanSlateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white border border-zinc-200 rounded-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div className="space-y-1 border-b border-zinc-200 pb-4">
+            <div className="space-y-1 border-b border-zinc-100 pb-4">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-xs uppercase font-bold text-rose-600 tracking-wider">
                   ⚠️ Destructive Operation
@@ -464,7 +464,7 @@ export function DiagnosticsClient({
           <div className="border-t border-zinc-200/80 pt-4 overflow-x-auto">
             <table className="w-full text-left font-mono text-xs border-collapse">
               <thead>
-                <tr className="bg-zinc-50 border-b border-zinc-200 uppercase font-semibold text-zinc-600">
+                <tr className="bg-zinc-50 border-b border-zinc-100 uppercase font-semibold text-zinc-600">
                   <th className="p-3 border-r border-zinc-200">Backup Date</th>
                   <th className="p-3 border-r border-zinc-200 text-center">Entries Count</th>
                   <th className="p-3 border-r border-zinc-200">Notes</th>
@@ -476,13 +476,13 @@ export function DiagnosticsClient({
                   const isExpanded = expandedSnapshotId === snap.id;
                   return (
                     <tr key={snap.id} className="hover:bg-zinc-50/50 transition-colors">
-                      <td className="p-3 border-r border-zinc-200/80 font-semibold text-zinc-900">
+                      <td className="p-3 border-r border-zinc-100 font-semibold text-zinc-900">
                         {new Date(snap.createdAt).toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" })}
                       </td>
-                      <td className="p-3 border-r border-zinc-200/80 text-center text-black font-bold">
+                      <td className="p-3 border-r border-zinc-100 text-center text-black font-bold">
                         {snap.entryCount}
                       </td>
-                      <td className="p-3 border-r border-zinc-200/80 text-zinc-500 text-[11px]">
+                      <td className="p-3 border-r border-zinc-100 text-zinc-500 text-[11px]">
                         {snap.notes || "GL Reset Snapshot"}
                       </td>
                       <td className="p-3 text-center">

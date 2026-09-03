@@ -101,7 +101,7 @@ export function PayablesAgingClient({
   return (
     <div className="space-y-8 font-mono text-xs selection:bg-black selection:text-white">
       {/* HEADER TOP BAR */}
-      <div className="border-b border-zinc-200/80 pb-6 space-y-2 print:hidden">
+      <div className="space-y-2 print:hidden">
         <Link
           href={`/workspaces/${shopSlug}/finance/reports/pl`}
           className="font-sans text-xs font-bold text-zinc-400 hover:underline block"
@@ -110,10 +110,10 @@ export function PayablesAgingClient({
         </Link>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">
+            <span className="text-xs text-zinc-400 font-medium">
               Procurement &amp; Payables Intelligence
             </span>
-            <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">
+            <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">
               Accounts Payable (AP) Aging Report
             </h1>
             <p className="text-xs text-zinc-500 font-sans mt-0.5">
@@ -198,24 +198,24 @@ export function PayablesAgingClient({
       <div className="card-modern overflow-x-auto bg-white">
         <table className="w-full text-left font-mono text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-              <th className="p-4 border-r border-zinc-200">Supplier Entity</th>
-              <th className="p-4 border-r border-zinc-200 text-center">Terms</th>
-              <th className="p-4 border-r border-zinc-200 text-right">Current (0–30d)</th>
-              <th className="p-4 border-r border-zinc-200 text-right">31–60 Days</th>
-              <th className="p-4 border-r border-zinc-200 text-right">61–90 Days</th>
-              <th className="p-4 border-r border-zinc-200 text-right">90+ Days</th>
-              <th className="p-4 border-r border-zinc-200 text-right">Total Payable</th>
-              <th className="p-4 text-center">Breakdown</th>
+            <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+              <th className="px-4 py-3 border-r border-zinc-100">Supplier Entity</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-center">Terms</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">Current (0–30d)</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">31–60 Days</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">61–90 Days</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">90+ Days</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">Total Payable</th>
+              <th className="px-4 py-3 text-center">Breakdown</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200/80 bg-white">
+          <tbody className="bg-white">
             {filteredData.map((s) => {
               const isExpanded = expandedSupplierId === s.supplierId;
               return (
                 <React.Fragment key={s.supplierId}>
-                  <tr className="hover:bg-zinc-50/80 transition-colors">
-                    <td className="p-4 border-r border-zinc-200/80">
+                  <tr className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                    <td className="p-4 border-r border-zinc-100">
                       <Link
                         href={`/workspaces/${shopSlug}/suppliers/${s.supplierId}`}
                         className="font-bold text-black font-sans uppercase hover:underline text-sm block"
@@ -224,25 +224,25 @@ export function PayablesAgingClient({
                       </Link>
                       {s.taxPin && <span className="text-[10px] text-zinc-400 block">PIN: {s.taxPin}</span>}
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 text-center text-zinc-500 uppercase text-[10px]">
+                    <td className="p-4 border-r border-zinc-100 text-center text-zinc-500 uppercase text-[10px]">
                       {s.paymentTerms || "NET_30"}
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-black">
+                    <td className="p-4 border-r border-zinc-100 text-right font-semibold text-black">
                       {s.currentAmount > 0 ? formatCurrency(s.currentAmount, currency) : "—"}
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-amber-800">
+                    <td className="p-4 border-r border-zinc-100 text-right font-semibold text-amber-800">
                       {s.days31to60 > 0 ? formatCurrency(s.days31to60, currency) : "—"}
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-rose-600">
+                    <td className="p-4 border-r border-zinc-100 text-right font-semibold text-rose-600">
                       {s.days61to90 > 0 ? formatCurrency(s.days61to90, currency) : "—"}
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 text-right font-black text-rose-700">
+                    <td className="p-4 border-r border-zinc-100 text-right font-black text-rose-700">
                       {s.days90Plus > 0 ? formatCurrency(s.days90Plus, currency) : "—"}
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 text-right font-bold text-sm text-black">
+                    <td className="p-4 border-r border-zinc-100 text-right font-bold text-sm text-black">
                       {formatCurrency(s.totalPayable, currency)}
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="px-4 py-3 text-center">
                       <button
                         type="button"
                         onClick={() => setExpandedSupplierId(isExpanded ? null : s.supplierId)}
@@ -256,7 +256,7 @@ export function PayablesAgingClient({
                   {/* EXPANDABLE DOCUMENT BREAKDOWN */}
                   {isExpanded && (
                     <tr className="bg-zinc-50/50">
-                      <td colSpan={8} className="p-4 pl-8 border-b border-zinc-200">
+                      <td colSpan={8} className="p-4 pl-8 border-b border-zinc-100">
                         <div className="space-y-2">
                           <p className="text-[10px] text-zinc-500 uppercase font-bold">
                             Open Procurement Invoices &amp; Orders for {s.supplierName}:
@@ -264,7 +264,7 @@ export function PayablesAgingClient({
                           <div className="border border-zinc-200 rounded-lg overflow-hidden bg-white">
                             <table className="w-full text-left font-mono text-[11px]">
                               <thead>
-                                <tr className="bg-zinc-100/70 border-b border-zinc-200 text-zinc-500 uppercase text-[9px]">
+                                <tr className="bg-zinc-100/70 border-b border-zinc-100 text-zinc-500 uppercase text-[9px]">
                                   <th className="p-2">Doc Serial</th>
                                   <th className="p-2">Type</th>
                                   <th className="p-2">Issue Date</th>
@@ -325,13 +325,13 @@ export function PayablesAgingClient({
             <tfoot>
               <tr className="bg-zinc-100/80 font-bold border-t-2 border-zinc-300">
                 <td className="p-4 uppercase text-black">Total Aggregate Payables</td>
-                <td className="p-4 text-center">—</td>
+                <td className="px-4 py-3 text-center">—</td>
                 <td className="p-4 text-right text-black">{formatCurrency(totals.current, currency)}</td>
                 <td className="p-4 text-right text-amber-900">{formatCurrency(totals.days31to60, currency)}</td>
                 <td className="p-4 text-right text-rose-700">{formatCurrency(totals.days61to90, currency)}</td>
                 <td className="p-4 text-right text-rose-900">{formatCurrency(totals.days90Plus, currency)}</td>
                 <td className="p-4 text-right text-black text-sm">{formatCurrency(totals.grandTotal, currency)}</td>
-                <td className="p-4 text-center">—</td>
+                <td className="px-4 py-3 text-center">—</td>
               </tr>
             </tfoot>
           )}

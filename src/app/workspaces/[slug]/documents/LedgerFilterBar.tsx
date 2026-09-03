@@ -56,7 +56,7 @@ export function LedgerFilterBar({ clients }: LedgerFilterBarProps) {
 
   return (
     <div className="card-modern p-4 space-y-4 font-mono text-xs">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-zinc-200/80 pb-3">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-zinc-100 pb-3">
         <div className="flex items-center gap-2">
           <span className="font-semibold uppercase tracking-tight text-xs text-black font-sans">Filter &amp; Search Ledger</span>
           {isPending && <span className="text-[10px] text-zinc-400 animate-pulse uppercase font-semibold">Searching...</span>}

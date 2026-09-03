@@ -43,7 +43,7 @@ export function ProductFilterBar() {
 
   return (
     <div className="card-modern p-4 space-y-3 font-mono text-xs">
-      <div className="flex justify-between items-center border-b border-zinc-200/80 pb-2">
+      <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
         <div className="flex items-center gap-2">
           <span className="font-semibold uppercase tracking-tight text-xs text-black font-sans">Search Product Catalog</span>
           {isPending && <span className="text-[10px] text-zinc-400 animate-pulse uppercase font-semibold">Searching...</span>}

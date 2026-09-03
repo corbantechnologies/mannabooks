@@ -73,7 +73,7 @@ export function RecurringInvoicesClient({
   return (
     <div className="space-y-8 selection:bg-black selection:text-white">
       {/* HEADER TOP BAR */}
-      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
+      <div className="space-y-2">
         <Link
           href={`/workspaces/${shopSlug}/documents`}
           className="text-xs font-bold text-zinc-400 hover:underline block"
@@ -134,7 +134,7 @@ export function RecurringInvoicesClient({
       <div className="card-modern overflow-x-auto bg-white">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600 text-[11px]">
+            <tr className="bg-zinc-50/80 border-b border-zinc-100 uppercase tracking-wider font-semibold text-zinc-600 text-[11px]">
               <th className="p-3.5 border-r border-zinc-200">Template Serial</th>
               <th className="p-3.5 border-r border-zinc-200">Client</th>
               <th className="p-3.5 border-r border-zinc-200 text-center">Frequency</th>
@@ -144,10 +144,10 @@ export function RecurringInvoicesClient({
               <th className="p-3.5 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200/80 bg-white">
+          <tbody className="bg-white">
             {invoices.map((inv) => (
-              <tr key={inv.id} className="hover:bg-zinc-50/80 transition-colors">
-                <td className="p-3.5 border-r border-zinc-200/80 font-mono">
+              <tr key={inv.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                <td className="p-3.5 border-r border-zinc-100 font-mono">
                   <Link
                     href={`/workspaces/${shopSlug}/documents/${inv.id}`}
                     className="font-bold text-black uppercase hover:underline"
@@ -155,19 +155,19 @@ export function RecurringInvoicesClient({
                     {inv.docNumber} ➔
                   </Link>
                 </td>
-                <td className="p-3.5 border-r border-zinc-200/80">
+                <td className="p-3.5 border-r border-zinc-100">
                   <span className="font-bold text-xs text-black block uppercase">{inv.clientName}</span>
                   <span className="text-zinc-400 text-[10px] block">{inv.clientEmail}</span>
                 </td>
-                <td className="p-3.5 border-r border-zinc-200/80 text-center">
+                <td className="p-3.5 border-r border-zinc-100 text-center">
                   <span className="badge-zinc text-[10px]">
                     {inv.recurringInterval || "MONTHLY"}
                   </span>
                 </td>
-                <td className="p-3.5 border-r border-zinc-200/80 text-right font-mono font-bold text-black text-xs">
+                <td className="p-3.5 border-r border-zinc-100 text-right font-mono font-bold text-black text-xs">
                   {formatCurrency(parseFloat(inv.grandTotal), inv.currency)}
                 </td>
-                <td className="p-3.5 border-r border-zinc-200/80">
+                <td className="p-3.5 border-r border-zinc-100">
                   {inv.nextRecurringDate ? (
                     <div>
                       <span className="font-semibold text-black block">
@@ -181,7 +181,7 @@ export function RecurringInvoicesClient({
                     <span className="text-zinc-400 italic">—</span>
                   )}
                 </td>
-                <td className="p-3.5 border-r border-zinc-200/80 text-center">
+                <td className="p-3.5 border-r border-zinc-100 text-center">
                   <button
                     type="button"
                     onClick={() => handleToggle(inv)}

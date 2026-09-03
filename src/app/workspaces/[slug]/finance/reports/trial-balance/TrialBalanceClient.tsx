@@ -88,7 +88,7 @@ export default function TrialBalanceClient({ isGlEnabled, currency, initialRows,
             {/* Trial Balance Table */}
             <div className="border border-zinc-200 rounded-xl overflow-hidden">
                 {/* Header */}
-                <div className="grid grid-cols-[80px_1fr_100px_130px_130px_130px] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
+                <div className="grid grid-cols-[80px_1fr_100px_130px_130px_130px] gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-100">
                     <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Code</span>
                     <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Account</span>
                     <span className="font-mono text-[10px] uppercase text-zinc-400 font-semibold">Type</span>

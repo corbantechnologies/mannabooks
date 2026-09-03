@@ -55,12 +55,12 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
   });
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
+    <div className="p-5 sm:p-7 space-y-6">
       {/* HEADER + CTA */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Supplier Registry</span>
-          <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Supplier Network</h1>
+          <span className="text-xs text-zinc-400 font-medium">Supplier Registry</span>
+          <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Supplier Network</h1>
         </div>
 
         <SupplierFormClientSide shopId={shop.id} shopSlug={slug} />
@@ -70,23 +70,23 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
       <SupplierFilterBar />
 
       {/* SUPPLIER REGISTRY TABLE */}
-      <div className="card-modern overflow-x-auto">
+      <div className="surface overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-              <th className="p-4 border-r border-zinc-200">Supplier / Vendor Name</th>
-              <th className="p-4 border-r border-zinc-200">Email Contact</th>
-              <th className="p-4 border-r border-zinc-200">Telephone</th>
-              <th className="p-4 border-r border-zinc-200">Type</th>
-              <th className="p-4 border-r border-zinc-200">KRA Tax PIN</th>
-              <th className="p-4 border-r border-zinc-200 text-center">Terms</th>
-              <th className="p-4 text-center">Actions</th>
+            <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+              <th className="px-4 py-3 border-r border-zinc-100">Supplier / Vendor Name</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Email Contact</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Telephone</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Type</th>
+              <th className="px-4 py-3 border-r border-zinc-100">KRA Tax PIN</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-center">Terms</th>
+              <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200/80 bg-white">
+          <tbody className="bg-white">
             {supplierList.map((sup) => (
-              <tr key={sup.id} className="hover:bg-zinc-50/80 transition-colors">
-                <td className="p-4 border-r border-zinc-200/80 font-semibold uppercase">
+              <tr key={sup.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                <td className="p-4 border-r border-zinc-100 font-semibold uppercase">
                   <Link
                     href={`/workspaces/${slug}/suppliers/${sup.id}`}
                     className="hover:underline text-black font-sans text-sm tracking-tight"
@@ -94,13 +94,13 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
                     {sup.name}
                   </Link>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-600 font-sans">
+                <td className="p-4 border-r border-zinc-100 text-zinc-600 font-sans">
                   {sup.email}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-600 font-mono">
+                <td className="p-4 border-r border-zinc-100 text-zinc-600 font-mono">
                   {sup.phone || "—"}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80">
+                <td className="p-4 border-r border-zinc-100">
                   <span className={
                     sup.supplierType === "CORPORATE" ? "badge-black" :
                     sup.supplierType === "INDIVIDUAL" ? "badge-zinc" :
@@ -109,7 +109,7 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
                     {sup.supplierType}
                   </span>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 font-semibold text-black tracking-widest font-mono">
+                <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-widest font-mono">
                   {sup.taxPin || <span className="text-zinc-300 font-normal italic">None</span>}
                   {sup.requiresEtims && (
                     <span className="ml-2 badge-emerald text-[9px]">
@@ -117,7 +117,7 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
                     </span>
                   )}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-center font-semibold text-[10px] font-mono">
+                <td className="p-4 border-r border-zinc-100 text-center font-semibold text-[10px] font-mono">
                   {sup.paymentTerms || "NET_30"}
                 </td>
                 <td className="p-4 text-center font-mono">

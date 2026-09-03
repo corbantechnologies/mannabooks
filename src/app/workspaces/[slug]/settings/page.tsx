@@ -20,7 +20,7 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white font-sans">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200 pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-100 pb-4">
         <div>
           <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider">System Configuration</span>
           <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tighter mt-1 text-black">Workspace Settings</h1>

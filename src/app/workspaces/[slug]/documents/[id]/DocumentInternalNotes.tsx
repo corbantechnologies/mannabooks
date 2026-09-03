@@ -81,9 +81,9 @@ export function DocumentInternalNotes({
 
   return (
     <div className="card-modern p-5 sm:p-6 bg-white space-y-4 font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-zinc-200/80 pb-3">
+      <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Audit Trail</span>
+          <span className="text-xs text-zinc-400 font-medium">Audit Trail</span>
           <h3 className="font-bold uppercase tracking-tight text-sm font-sans text-black mt-0.5 flex items-center gap-1.5">
             <span>🔒</span>
             <span>Internal Notes &amp; Activity Log</span>

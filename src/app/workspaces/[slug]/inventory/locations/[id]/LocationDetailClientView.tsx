@@ -155,10 +155,10 @@ export function LocationDetailClientView({
   }, [items, searchQuery, statusFilter]);
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white font-mono text-xs">
+    <div className="p-5 sm:p-7 space-y-6 font-mono text-xs">
 
       {/* BREADCRUMB & HEADER */}
-      <div className="space-y-3 border-b border-zinc-200/80 pb-6">
+      <div className="space-y-3 border-b border-zinc-100 pb-6">
         <Link
           href={`/workspaces/${shopSlug}/inventory/locations`}
           className="text-zinc-500 hover:text-black transition-colors inline-flex items-center gap-1 font-semibold uppercase text-[10px]"
@@ -268,7 +268,7 @@ export function LocationDetailClientView({
       </div>
 
       {/* TABS NAVIGATION */}
-      <div className="flex border-b border-zinc-200 gap-6">
+      <div className="flex border-b border-zinc-100 gap-6">
         <button
           onClick={() => setActiveTab("inventory")}
           className={`pb-3 font-mono text-xs font-semibold uppercase tracking-wider transition-colors border-b-2 -mb-px ${
@@ -340,42 +340,42 @@ export function LocationDetailClientView({
           </div>
 
           {/* INVENTORY TABLE */}
-          <div className="card-modern overflow-x-auto">
+          <div className="surface overflow-x-auto">
             <table className="w-full text-left font-mono text-xs border-collapse">
               <thead>
-                <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                  <th className="p-4 border-r border-zinc-200">Product</th>
-                  <th className="p-4 border-r border-zinc-200">SKU</th>
-                  <th className="p-4 border-r border-zinc-200 text-right">Selling Price</th>
-                  <th className="p-4 border-r border-zinc-200 text-right">Cost Price</th>
-                  <th className="p-4 border-r border-zinc-200 text-right">Location Qty</th>
-                  <th className="p-4 border-r border-zinc-200 text-right">Location Value</th>
-                  <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-                  <th className="p-4 text-center">Actions</th>
+                <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                  <th className="px-4 py-3 border-r border-zinc-100">Product</th>
+                  <th className="px-4 py-3 border-r border-zinc-100">SKU</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Selling Price</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Cost Price</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Location Qty</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Location Value</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-center">Status</th>
+                  <th className="px-4 py-3 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-200/80 bg-white">
+              <tbody className="bg-white">
                 {filteredItems.map((item) => (
-                  <tr key={item.productId} className="hover:bg-zinc-50/80 transition-colors">
-                    <td className="p-4 border-r border-zinc-200/80 font-sans font-semibold text-black text-sm">
+                  <tr key={item.productId} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                    <td className="p-4 border-r border-zinc-100 font-sans font-semibold text-black text-sm">
                       {item.name}
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 text-zinc-600 font-mono uppercase">
+                    <td className="p-4 border-r border-zinc-100 text-zinc-600 font-mono uppercase">
                       {item.sku || <span className="text-zinc-300 italic font-normal lowercase">unassigned</span>}
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-black">
+                    <td className="p-4 border-r border-zinc-100 text-right font-semibold text-black">
                       {formatCurrency(item.unitPrice, shopCurrency)}
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 text-right text-zinc-500">
+                    <td className="p-4 border-r border-zinc-100 text-right text-zinc-500">
                       {item.costPrice > 0 ? formatCurrency(item.costPrice, shopCurrency) : "—"}
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 text-right font-bold text-sm text-black">
+                    <td className="p-4 border-r border-zinc-100 text-right font-bold text-sm text-black">
                       {item.quantity.toFixed(2)}
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-emerald-700">
+                    <td className="p-4 border-r border-zinc-100 text-right font-semibold text-emerald-700">
                       {formatCurrency(item.totalValue, shopCurrency)}
                     </td>
-                    <td className="p-4 border-r border-zinc-200/80 text-center">
+                    <td className="px-4 py-3 border-r border-zinc-100 text-center">
                       {item.isOutOfStock ? (
                         <span className="bg-rose-100 text-rose-800 border border-rose-300 px-2 py-0.5 rounded font-semibold text-[10px] uppercase">
                           Out of Stock
@@ -390,7 +390,7 @@ export function LocationDetailClientView({
                         </span>
                       )}
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="px-4 py-3 text-center">
                       <Link
                         href={`/workspaces/${shopSlug}/inventory/adjustments`}
                         className="border border-zinc-300 px-2.5 py-1 text-[10px] font-semibold uppercase rounded hover:border-black hover:bg-zinc-50 transition-colors"
@@ -417,48 +417,48 @@ export function LocationDetailClientView({
       {/* TAB 2: MOVEMENT LEDGER */}
       {activeTab === "movements" && (
         <div className="space-y-4">
-          <div className="card-modern overflow-x-auto">
+          <div className="surface overflow-x-auto">
             <table className="w-full text-left font-mono text-xs border-collapse">
               <thead>
-                <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                  <th className="p-4 border-r border-zinc-200">Date & Time</th>
-                  <th className="p-4 border-r border-zinc-200">Product</th>
-                  <th className="p-4 border-r border-zinc-200">Movement Type</th>
-                  <th className="p-4 border-r border-zinc-200 text-right">Quantity</th>
-                  <th className="p-4 border-r border-zinc-200 text-right">Balance After</th>
-                  <th className="p-4 border-r border-zinc-200">User / Created By</th>
+                <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                  <th className="px-4 py-3 border-r border-zinc-100">Date & Time</th>
+                  <th className="px-4 py-3 border-r border-zinc-100">Product</th>
+                  <th className="px-4 py-3 border-r border-zinc-100">Movement Type</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Quantity</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Balance After</th>
+                  <th className="px-4 py-3 border-r border-zinc-100">User / Created By</th>
                   <th className="p-4">Notes / Reference</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-200/80 bg-white">
+              <tbody className="bg-white">
                 {recentMovements.map((entry: any) => {
                   const isOutflow = ["SALE", "ADJUSTMENT_OUT", "TRANSFER_OUT", "VOID"].includes(entry.movementType);
                   return (
-                    <tr key={entry.id} className="hover:bg-zinc-50/80 transition-colors">
-                      <td className="p-4 border-r border-zinc-200/80 text-zinc-500 whitespace-nowrap">
+                    <tr key={entry.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                      <td className="p-4 border-r border-zinc-100 text-zinc-500 whitespace-nowrap">
                         {new Date(entry.createdAt).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                         <span className="block text-[10px] text-zinc-400">
                           {new Date(entry.createdAt).toLocaleTimeString("en-KE", { timeStyle: "short" })}
                         </span>
                       </td>
-                      <td className="p-4 border-r border-zinc-200/80 font-sans font-semibold text-black text-sm">
+                      <td className="p-4 border-r border-zinc-100 font-sans font-semibold text-black text-sm">
                         {entry.product?.name || "—"}
                         {entry.product?.sku && (
                           <span className="block text-[10px] text-zinc-400 font-mono">{entry.product.sku}</span>
                         )}
                       </td>
-                      <td className="p-4 border-r border-zinc-200/80">
+                      <td className="p-4 border-r border-zinc-100">
                         <span className={`px-2 py-0.5 rounded border text-[10px] font-semibold uppercase ${MOVEMENT_TYPE_COLORS[entry.movementType] || "bg-zinc-100 text-zinc-500 border-zinc-200"}`}>
                           {MOVEMENT_TYPE_LABELS[entry.movementType] || entry.movementType}
                         </span>
                       </td>
-                      <td className={`p-4 border-r border-zinc-200/80 font-semibold text-right ${isOutflow ? "text-rose-700" : "text-emerald-700"}`}>
+                      <td className={`p-4 border-r border-zinc-100 font-semibold text-right ${isOutflow ? "text-rose-700" : "text-emerald-700"}`}>
                         {isOutflow ? "-" : "+"}{parseFloat(entry.quantity).toFixed(2)}
                       </td>
-                      <td className="p-4 border-r border-zinc-200/80 font-semibold text-right text-black">
+                      <td className="p-4 border-r border-zinc-100 font-semibold text-right text-black">
                         {entry.runningBalance !== null ? parseFloat(entry.runningBalance).toFixed(2) : "—"}
                       </td>
-                      <td className="p-4 border-r border-zinc-200/80 text-zinc-600 font-sans">
+                      <td className="p-4 border-r border-zinc-100 text-zinc-600 font-sans">
                         {entry.createdBy?.name || "System"}
                       </td>
                       <td className="p-4 text-zinc-500">
@@ -484,38 +484,38 @@ export function LocationDetailClientView({
       {/* TAB 3: TRANSFERS */}
       {activeTab === "transfers" && (
         <div className="space-y-4">
-          <div className="card-modern overflow-x-auto">
+          <div className="surface overflow-x-auto">
             <table className="w-full text-left font-mono text-xs border-collapse">
               <thead>
-                <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-                  <th className="p-4 border-r border-zinc-200">Direction</th>
-                  <th className="p-4 border-r border-zinc-200">Origin / Source</th>
-                  <th className="p-4 border-r border-zinc-200">Destination</th>
-                  <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-                  <th className="p-4 border-r border-zinc-200 text-center">Items Count</th>
-                  <th className="p-4 border-r border-zinc-200">Date Initiated</th>
-                  <th className="p-4 text-center">Actions</th>
+                <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                  <th className="px-4 py-3 border-r border-zinc-100">Direction</th>
+                  <th className="px-4 py-3 border-r border-zinc-100">Origin / Source</th>
+                  <th className="px-4 py-3 border-r border-zinc-100">Destination</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-center">Status</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-center">Items Count</th>
+                  <th className="px-4 py-3 border-r border-zinc-100">Date Initiated</th>
+                  <th className="px-4 py-3 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-200/80 bg-white">
+              <tbody className="bg-white">
                 {transfers.map((t: any) => {
                   const isOutbound = t.fromLocationId === location.id;
                   return (
-                    <tr key={t.id} className="hover:bg-zinc-50/80 transition-colors">
-                      <td className="p-4 border-r border-zinc-200/80">
+                    <tr key={t.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                      <td className="p-4 border-r border-zinc-100">
                         <span className={`px-2 py-0.5 rounded border text-[10px] font-semibold uppercase ${
                           isOutbound ? "bg-purple-100 text-purple-900 border-purple-300" : "bg-indigo-100 text-indigo-900 border-indigo-300"
                         }`}>
                           {isOutbound ? "↗ OUTBOUND" : "↙ INBOUND"}
                         </span>
                       </td>
-                      <td className="p-4 border-r border-zinc-200/80 font-sans font-semibold text-black">
+                      <td className="p-4 border-r border-zinc-100 font-sans font-semibold text-black">
                         {t.fromLocation?.name || "—"}
                       </td>
-                      <td className="p-4 border-r border-zinc-200/80 font-sans font-semibold text-black">
+                      <td className="p-4 border-r border-zinc-100 font-sans font-semibold text-black">
                         {t.toLocation?.name || "—"}
                       </td>
-                      <td className="p-4 border-r border-zinc-200/80 text-center">
+                      <td className="px-4 py-3 border-r border-zinc-100 text-center">
                         <span className={`px-2 py-0.5 rounded border text-[10px] font-semibold uppercase ${
                           t.status === "COMPLETED" ? "bg-emerald-100 text-emerald-900 border-emerald-300" :
                           t.status === "IN_TRANSIT" ? "bg-amber-100 text-amber-900 border-amber-300" :
@@ -525,13 +525,13 @@ export function LocationDetailClientView({
                           {t.status}
                         </span>
                       </td>
-                      <td className="p-4 border-r border-zinc-200/80 text-center font-semibold text-black">
+                      <td className="p-4 border-r border-zinc-100 text-center font-semibold text-black">
                         {t.items?.length || 0} product(s)
                       </td>
-                      <td className="p-4 border-r border-zinc-200/80 text-zinc-500">
+                      <td className="px-4 py-3 border-r border-zinc-100 text-zinc-400">
                         {new Date(t.createdAt).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                       </td>
-                      <td className="p-4 text-center">
+                      <td className="px-4 py-3 text-center">
                         <Link
                           href={`/workspaces/${shopSlug}/inventory/transfers`}
                           className="text-[10px] font-semibold uppercase text-black hover:underline"

@@ -78,10 +78,10 @@ export function ProductsTableClient({
       )}
 
       {/* DATA LEDGER GRID */}
-      <div className="card-modern overflow-x-auto">
+      <div className="surface overflow-x-auto">
         <table className="w-full text-left font-mono text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+            <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
               <th className="p-4 border-r border-zinc-200 w-10 text-center">
                 <input
                   type="checkbox"
@@ -91,17 +91,17 @@ export function ProductsTableClient({
                   title="Select all products"
                 />
               </th>
-              <th className="p-4 border-r border-zinc-200">Item Description</th>
-              <th className="p-4 border-r border-zinc-200">Type</th>
-              <th className="p-4 border-r border-zinc-200">SKU / Code Reference</th>
-              <th className="p-4 border-r border-zinc-200">Selling Price</th>
-              <th className="p-4 border-r border-zinc-200">Cost &amp; Profit Margin</th>
-              <th className="p-4 border-r border-zinc-200">Stock Inventory Level</th>
-              <th className="p-4 border-r border-zinc-200">Default Tax Flag</th>
-              <th className="p-4 text-center">Actions</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Item Description</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Type</th>
+              <th className="px-4 py-3 border-r border-zinc-100">SKU / Code Reference</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Selling Price</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Cost &amp; Profit Margin</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Stock Inventory Level</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Default Tax Flag</th>
+              <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200/80 bg-white">
+          <tbody className="bg-white">
             {catalogList.map((p) => {
               const isChecked = selectedIds.includes(p.id);
               const qty = parseFloat(p.stockQuantity || "0");
@@ -117,7 +117,7 @@ export function ProductsTableClient({
                     isChecked ? "bg-zinc-50/90 font-medium" : "hover:bg-zinc-50/80"
                   }`}
                 >
-                  <td className="p-4 border-r border-zinc-200/80 text-center">
+                  <td className="px-4 py-3 border-r border-zinc-100 text-center">
                     <input
                       type="checkbox"
                       checked={isChecked}
@@ -125,10 +125,10 @@ export function ProductsTableClient({
                       className="rounded border-zinc-300 text-black focus:ring-black cursor-pointer"
                     />
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-sans text-sm font-semibold uppercase tracking-tight text-black">
+                  <td className="px-4 py-3 border-r border-zinc-100 font-sans text-sm font-semibold text-zinc-900">
                     {p.name}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80">
+                  <td className="p-4 border-r border-zinc-100">
                     {p.itemType === "SERVICE" ? (
                       <span className="badge-zinc">
                         Service
@@ -139,13 +139,13 @@ export function ProductsTableClient({
                       </span>
                     )}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-zinc-500 tracking-wider">
+                  <td className="p-4 border-r border-zinc-100 text-zinc-500 tracking-wider">
                     {p.sku || <span className="text-zinc-300 italic font-normal">None</span>}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 font-semibold text-sm text-black">
+                  <td className="p-4 border-r border-zinc-100 font-semibold text-sm text-black">
                     {formatCurrency(p.unitPrice, shop.currency)}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-xs">
+                  <td className="p-4 border-r border-zinc-100 text-xs">
                     {costPrice > 0 ? (
                       <div>
                         <span className="block text-zinc-500 font-mono text-[10px]">
@@ -159,7 +159,7 @@ export function ProductsTableClient({
                       <span className="text-zinc-400 italic text-[10px]">N/A (Cost 0)</span>
                     )}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80 text-xs">
+                  <td className="p-4 border-r border-zinc-100 text-xs">
                     {p.itemType === "SERVICE" || !p.trackStock ? (
                       <span className="text-zinc-400 italic font-normal">Service (Untracked)</span>
                     ) : qty <= 0 ? (
@@ -212,7 +212,7 @@ export function ProductsTableClient({
                       </div>
                     )}
                   </td>
-                  <td className="p-4 border-r border-zinc-200/80">
+                  <td className="p-4 border-r border-zinc-100">
                     <span className={
                       p.defaultTaxType === "V_16" ? "badge-black" :
                       p.defaultTaxType === "V_0" ? "badge-zinc" :
@@ -222,7 +222,7 @@ export function ProductsTableClient({
                        p.defaultTaxType === "V_0" ? "Zero Rated" : "Tax Exempt"}
                     </span>
                   </td>
-                  <td className="p-4 text-center">
+                  <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       <EditProductModal product={p} shopId={shop.id} shopSlug={shopSlug} locations={locations} />
                     </div>

@@ -252,9 +252,9 @@ export function DocumentStatusPanel({
 
   return (
     <div className="card-modern p-4 sm:p-6 space-y-5 font-mono text-xs">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-100 pb-4">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Manage Lifecycle</span>
+          <span className="text-xs text-zinc-400 font-medium">Manage Lifecycle</span>
           <h3 className="font-semibold uppercase tracking-tight text-sm mt-1 text-black font-sans">Status &amp; Actions</h3>
           {parentDocument && (
             <p className="text-[10px] text-zinc-500 mt-1">

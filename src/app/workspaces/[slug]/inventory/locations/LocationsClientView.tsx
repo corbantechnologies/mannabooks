@@ -119,13 +119,13 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
   const totalAllValuation = initialLocations.reduce((sum, l) => sum + l.totalValuation, 0);
 
   return (
-    <div className="p-4 sm:p-8 space-y-10 selection:bg-black selection:text-white font-mono text-xs">
+    <div className="p-5 sm:p-7 space-y-6 font-mono text-xs">
 
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Inventory / Locations</span>
-          <h1 className="text-xl font-semibold uppercase tracking-tight mt-1 text-black font-sans">Stock Locations</h1>
+          <span className="text-xs text-zinc-400 font-medium">Inventory / Locations</span>
+          <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Stock Locations</h1>
           <p className="font-sans text-xs text-zinc-600 mt-1">
             Physical storage locations — warehouses, branches, shop floors. Click any location to view its stock inventory, valuation, and movements.
           </p>
@@ -237,24 +237,24 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
       )}
 
       {/* LOCATIONS TABLE */}
-      <div className="card-modern overflow-x-auto">
+      <div className="surface overflow-x-auto">
         <table className="w-full text-left font-mono text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
-              <th className="p-4 border-r border-zinc-200">Location Name</th>
-              <th className="p-4 border-r border-zinc-200">Code</th>
-              <th className="p-4 border-r border-zinc-200 text-right">Products</th>
-              <th className="p-4 border-r border-zinc-200 text-right">On-Hand Units</th>
-              <th className="p-4 border-r border-zinc-200 text-right">Stock Value</th>
-              <th className="p-4 border-r border-zinc-200 text-center">Default</th>
-              <th className="p-4 border-r border-zinc-200 text-center">Status</th>
-              <th className="p-4 text-center">Actions</th>
+            <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+              <th className="px-4 py-3 border-r border-zinc-100">Location Name</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Code</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">Products</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">On-Hand Units</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-right">Stock Value</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-center">Default</th>
+              <th className="px-4 py-3 border-r border-zinc-100 text-center">Status</th>
+              <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200/80 bg-white">
+          <tbody className="bg-white">
             {initialLocations.map((loc) => (
               <tr key={loc.id} className="hover:bg-zinc-50/80 transition-colors group">
-                <td className="p-4 border-r border-zinc-200/80">
+                <td className="p-4 border-r border-zinc-100">
                   <Link
                     href={`/workspaces/${shopSlug}/inventory/locations/${loc.id}`}
                     className="font-sans font-bold text-black text-sm hover:underline flex items-center gap-1.5"
@@ -266,10 +266,10 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
                     Added {new Date(loc.createdAt).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                   </span>
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-zinc-600 uppercase tracking-wider font-semibold">
+                <td className="p-4 border-r border-zinc-100 text-zinc-600 uppercase tracking-wider font-semibold">
                   {loc.code || <span className="text-zinc-300 italic font-normal lowercase">unassigned</span>}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-black">
+                <td className="p-4 border-r border-zinc-100 text-right font-semibold text-black">
                   {loc.totalProducts} items
                   {loc.lowStockCount > 0 && (
                     <span className="block text-[10px] text-amber-700 font-normal">
@@ -277,27 +277,27 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
                     </span>
                   )}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-black">
+                <td className="p-4 border-r border-zinc-100 text-right font-semibold text-black">
                   {loc.totalUnits.toFixed(2)}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-right font-semibold text-emerald-700">
+                <td className="p-4 border-r border-zinc-100 text-right font-semibold text-emerald-700">
                   {formatCurrency(loc.totalValuation, shopCurrency)}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-center">
+                <td className="px-4 py-3 border-r border-zinc-100 text-center">
                   {loc.isDefault ? (
                     <span className="bg-black text-white text-[10px] px-2 py-0.5 rounded font-semibold uppercase">DEFAULT</span>
                   ) : (
                     <span className="text-zinc-400 text-[10px]">—</span>
                   )}
                 </td>
-                <td className="p-4 border-r border-zinc-200/80 text-center">
+                <td className="px-4 py-3 border-r border-zinc-100 text-center">
                   <span className={`text-[10px] px-2 py-0.5 rounded border font-semibold uppercase ${
                     loc.isActive ? "bg-emerald-100 text-emerald-900 border-emerald-300" : "bg-zinc-100 text-zinc-400 border-zinc-200"
                   }`}>
                     {loc.isActive ? "ACTIVE" : "ARCHIVED"}
                   </span>
                 </td>
-                <td className="p-4 text-center">
+                <td className="px-4 py-3 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <Link
                       href={`/workspaces/${shopSlug}/inventory/locations/${loc.id}`}

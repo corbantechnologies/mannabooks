@@ -121,7 +121,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
   const portalLink = tokenRecord ? `${appUrl}/portal/invoice/${tokenRecord.token}` : null;
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 selection:bg-black selection:text-white">
+    <div className="p-5 sm:p-7 space-y-6">
 
       {/* POST-CONVERSION SUCCESS BANNER */}
       {converted && fromDoc && (
@@ -133,7 +133,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
       )}
 
       {/* BACK NAV + HEADER */}
-      <div className="border-b border-zinc-200/80 pb-6 space-y-2">
+      <div className="space-y-2">
         <Link
           href={`/workspaces/${slug}/documents`}
           className="font-sans text-xs font-bold text-zinc-400 hover:text-black hover:underline block"
@@ -142,7 +142,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         </Link>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
           <div>
-            <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider">Transaction Detail</span>
+            <span className="text-xs text-zinc-400 font-medium">Transaction Detail</span>
             <h1 className="text-3xl font-bold uppercase tracking-tighter mt-1">{doc.docNumber}</h1>
             <p className="font-sans text-xs text-zinc-500 mt-0.5">Party: <span className="font-semibold text-black">{party.name}</span></p>
           </div>
@@ -266,7 +266,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         <div className="card-modern overflow-x-auto overflow-hidden">
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
-              <tr className="bg-zinc-50/80 border-b border-zinc-200 uppercase tracking-wider font-semibold text-zinc-600">
+              <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
                 <th className="p-3.5 border-r border-zinc-200">Description</th>
                 <th className="p-3.5 border-r border-zinc-200 text-center">Qty</th>
                 <th className="p-3.5 border-r border-zinc-200 text-right">Unit Rate</th>
@@ -275,10 +275,10 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
                 <th className="p-3.5 text-right">Total</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200/80 bg-white">
+            <tbody className="bg-white">
               {doc.items.map((item) => (
                 <tr key={item.id} className="hover:bg-zinc-50/70 transition-colors">
-                  <td className="p-3.5 border-r border-zinc-200/80 font-sans text-sm">
+                  <td className="p-3.5 border-r border-zinc-100 font-sans text-sm">
                     <div className="font-semibold text-black">{item.description}</div>
                     {item.notes && (
                       <div className="text-[10px] text-zinc-500 italic mt-0.5 font-mono">
@@ -286,14 +286,14 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
                       </div>
                     )}
                   </td>
-                  <td className="p-3.5 border-r border-zinc-200/80 text-center">{item.quantity}</td>
-                  <td className="p-3.5 border-r border-zinc-200/80 text-right font-bold">{formatCurrency(item.unitPrice, shop.currency)}</td>
-                  <td className="p-3.5 border-r border-zinc-200/80 text-center">
+                  <td className="p-3.5 border-r border-zinc-100 text-center">{item.quantity}</td>
+                  <td className="p-3.5 border-r border-zinc-100 text-right font-bold">{formatCurrency(item.unitPrice, shop.currency)}</td>
+                  <td className="p-3.5 border-r border-zinc-100 text-center">
                     <span className="badge-zinc">
                       {item.taxType === "V_16" ? "16% VAT" : item.taxType === "V_0" ? "0% ZERO" : "EXEMPT"}
                     </span>
                   </td>
-                  <td className="p-3.5 border-r border-zinc-200/80 text-right text-zinc-600">{formatCurrency(item.taxAmount, shop.currency)}</td>
+                  <td className="p-3.5 border-r border-zinc-100 text-right text-zinc-600">{formatCurrency(item.taxAmount, shop.currency)}</td>
                   <td className="p-3.5 text-right font-bold text-black">{formatCurrency(item.itemTotal, shop.currency)}</td>
                 </tr>
               ))}
@@ -320,7 +320,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         if (parsedTerms.length === 0) return null;
         return (
           <div className="border border-zinc-200 bg-zinc-50/70 p-4 rounded-lg space-y-2 font-mono text-xs">
-            <span className="text-black font-bold uppercase tracking-tight text-[11px] block border-b border-zinc-200 pb-1 flex items-center gap-1.5">
+            <span className="text-black font-bold uppercase tracking-tight text-[11px] block border-b border-zinc-100 pb-1 flex items-center gap-1.5">
               <span>📜</span>
               <span>Commercial Terms &amp; Conditions Attached:</span>
             </span>

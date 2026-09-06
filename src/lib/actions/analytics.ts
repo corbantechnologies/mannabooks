@@ -563,6 +563,7 @@ export async function getWorkspaceAnalyticsData(
     const convertedQuotes = allQuotes.filter((q) => 
       q.clientPortalResponse === "ACCEPTED" || 
       q.status === "PAID" || 
+      q.status === "CONFIRMED" ||       // Explicitly CONFIRMED via Quote→Invoice conversion
       allDocs.some((inv) => inv.parentDocumentId === q.id)
     );
     const totalQuotesAcceptedOrConverted = convertedQuotes.length;

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency, calculateDocumentTotals } from "@/lib/utils";
 import { createBillingDocument } from "@/lib/actions/documents";
+import { createClientProfile } from "@/lib/actions/clients";
 import { toast } from "react-hot-toast";
 import { ThermalReceiptModal, type ThermalReceiptData } from "@/components/ThermalReceiptModal";
 
@@ -11,6 +12,7 @@ interface WalkInSalesTerminalProps {
   shop: any;
   shopSlug: string;
   products: any[];
+  clients?: any[]; // Pre-fetched client list for search
 }
 
 interface PosBasketItem {
@@ -23,21 +25,84 @@ interface PosBasketItem {
   trackStock: boolean;
 }
 
-export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTerminalProps) {
+export function WalkInSalesTerminal({ shop, shopSlug, products, clients = [] }: WalkInSalesTerminalProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [paymentChannel, setPaymentChannel] = useState<"CASH" | "MPESA" | "BANK" | "OTHER">("MPESA");
   const [paymentReference, setPaymentReference] = useState("");
   const [customerNote, setCustomerNote] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerTaxPin, setCustomerTaxPin] = useState("");
+  const [saveCustomer, setSaveCustomer] = useState(false);
   const [amountTendered, setAmountTendered] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [mobileView, setMobileView] = useState<"catalog" | "basket">("catalog");
   const [completedReceipt, setCompletedReceipt] = useState<ThermalReceiptData | null>(null);
   const [showReceiptModal, setShowReceiptModal] = useState<boolean>(false);
 
+  // Client search state
+  const [clientQuery, setClientQuery] = useState("");
+  const [clientResults, setClientResults] = useState<any[]>([]);
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const clientSearchRef = useRef<HTMLDivElement>(null);
+
+  // VAT toggle — session-only, available for ALL shops regardless of registration status
+  const [isVatEnabled, setIsVatEnabled] = useState<boolean>(shop.isVatRegistered ?? false);
+
   // Basket Items
   const [basket, setBasket] = useState<PosBasketItem[]>([]);
+
+  // Debounced client search
+  useEffect(() => {
+    if (!clientQuery.trim()) {
+      setClientResults([]);
+      return;
+    }
+    const q = clientQuery.toLowerCase();
+    const results = clients.filter(
+      (c) =>
+        c.name?.toLowerCase().includes(q) ||
+        c.email?.toLowerCase().includes(q) ||
+        c.phone?.toLowerCase().includes(q)
+    ).slice(0, 8);
+    setClientResults(results);
+  }, [clientQuery, clients]);
+
+  // Close client dropdown on outside click
+  useEffect(() => {
+    function handleOutsideClick(e: MouseEvent) {
+      if (clientSearchRef.current && !clientSearchRef.current.contains(e.target as Node)) {
+        setShowClientDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  function selectClient(client: any) {
+    setSelectedClientId(client.id);
+    setCustomerName(client.name || "");
+    setCustomerEmail(client.email || "");
+    setCustomerPhone(client.phone || "");
+    setCustomerTaxPin(client.taxPin || "");
+    setClientQuery(client.name);
+    setShowClientDropdown(false);
+    setSaveCustomer(false); // Already exists, no need to save
+  }
+
+  function clearClientSelection() {
+    setSelectedClientId(null);
+    setCustomerName("");
+    setCustomerEmail("");
+    setCustomerPhone("");
+    setCustomerTaxPin("");
+    setClientQuery("");
+    setClientResults([]);
+  }
+
 
   // Filter Catalog
   const filteredProducts = products.filter((p) => {
@@ -88,14 +153,14 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
     setBasket(basket.filter((_, i) => i !== index));
   }
 
-  // Summary Math
+  // Summary Math — uses session VAT toggle (not necessarily shop.isVatRegistered)
   const totals = calculateDocumentTotals({
     items: basket.map((item) => ({
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       taxType: item.taxType,
     })),
-    isShopVatRegistered: shop.isVatRegistered,
+    isShopVatRegistered: isVatEnabled,
   });
 
   const tenderedNum = parseFloat(amountTendered) || 0;
@@ -110,10 +175,28 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
     setLoading(true);
     const toastId = toast.loading("Processing walk-in sale & printing receipt...");
 
+    // If user wants to save a new customer, create them first
+    let resolvedClientId = selectedClientId || undefined;
+    if (!selectedClientId && saveCustomer && customerName.trim()) {
+      const clientRes = await createClientProfile({
+        shopId: shop.id,
+        shopSlug,
+        name: customerName.trim(),
+        clientType: "INDIVIDUAL",
+        email: customerEmail.trim() || undefined,
+        phone: customerPhone.trim() || undefined,
+        taxPin: customerTaxPin.trim() || undefined,
+      });
+      if (clientRes.success && clientRes.clientId) {
+        resolvedClientId = clientRes.clientId;
+      }
+    }
+
     const res = await createBillingDocument({
       shopId: shop.id,
       shopSlug,
       type: "RECEIPT",
+      clientId: resolvedClientId,
       customerEmail: customerEmail.trim() || undefined,
       notes: customerNote.trim() || undefined,
       items: basket.map((item) => ({
@@ -130,6 +213,7 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
       toast.error(res.error || "Failed to complete walk-in sale.", { id: toastId });
     } else {
       toast.success(`⚡ Walk-in Sale Completed! (${res.serial})`, { id: toastId });
+      const displayName = customerName.trim() || customerEmail.trim() || "Walk-in Customer";
       setCompletedReceipt({
         shopName: shop.name,
         shopShortName: shop.shortName,
@@ -142,7 +226,9 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
         docNumber: res.serial || "RCT-001",
         docType: "RECEIPT",
         issueDate: new Date(),
-        customerName: customerEmail.trim() || "Walk-in Customer",
+        customerName: displayName,
+        customerPhone: customerPhone.trim() || undefined,
+        customerTaxPin: customerTaxPin.trim() || undefined,
         items: basket.map((item) => ({
           description: item.description,
           quantity: item.quantity,
@@ -167,6 +253,12 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
       setPaymentReference("");
       setCustomerNote("");
       setCustomerEmail("");
+      setCustomerName("");
+      setCustomerPhone("");
+      setCustomerTaxPin("");
+      setClientQuery("");
+      setSelectedClientId(null);
+      setSaveCustomer(false);
     }
   }
 
@@ -448,15 +540,115 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
                 />
               )}
 
-              {/* CUSTOMER EMAIL & NOTES */}
+              {/* CUSTOMER SECTION */}
               <div className="space-y-3">
-                <input
-                  type="email"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  placeholder="Customer Email (For digital receipt)..."
-                  className="w-full px-3 py-2 border border-zinc-200 bg-white rounded-lg focus:outline-none focus:border-black font-sans text-xs"
-                />
+                <label className="text-[10px] text-zinc-400 uppercase block font-semibold">Customer (Optional)</label>
+
+                {/* CLIENT SEARCH */}
+                <div className="relative" ref={clientSearchRef}>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={clientQuery}
+                      onChange={(e) => {
+                        setClientQuery(e.target.value);
+                        setShowClientDropdown(true);
+                        if (!e.target.value.trim()) clearClientSelection();
+                      }}
+                      onFocus={() => clientQuery.trim() && setShowClientDropdown(true)}
+                      placeholder="🔍 Search existing clients..."
+                      className="flex-1 px-3 py-2 border border-zinc-200 bg-white rounded-lg focus:outline-none focus:border-black font-sans text-xs"
+                    />
+                    {selectedClientId && (
+                      <button
+                        type="button"
+                        onClick={clearClientSelection}
+                        className="px-2 py-1.5 text-[10px] font-bold text-rose-600 border border-rose-200 bg-rose-50 rounded-lg hover:bg-rose-100 transition-colors whitespace-nowrap"
+                      >
+                        ✕ Clear
+                      </button>
+                    )}
+                  </div>
+
+                  {/* DROPDOWN RESULTS */}
+                  {showClientDropdown && clientResults.length > 0 && (
+                    <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-xl shadow-xl overflow-hidden">
+                      {clientResults.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onMouseDown={() => selectClient(c)}
+                          className="w-full text-left px-3 py-2.5 hover:bg-emerald-50 transition-colors border-b border-zinc-100 last:border-0"
+                        >
+                          <span className="font-sans text-xs font-bold text-black block">{c.name}</span>
+                          <span className="font-sans text-[10px] text-zinc-500">
+                            {[c.email, c.phone, c.taxPin ? `PIN: ${c.taxPin}` : null].filter(Boolean).join(" · ")}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* NEW CUSTOMER FIELDS (shown when no client selected) */}
+                {!selectedClientId && (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="Full Name..."
+                        className="w-full px-3 py-2 border border-zinc-200 bg-white rounded-lg focus:outline-none focus:border-black font-sans text-xs"
+                      />
+                      <input
+                        type="tel"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        placeholder="Phone (e.g. 0712...)"
+                        className="w-full px-3 py-2 border border-zinc-200 bg-white rounded-lg focus:outline-none focus:border-black font-sans text-xs"
+                      />
+                    </div>
+                    <input
+                      type="email"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      placeholder="Email (for digital receipt)..."
+                      className="w-full px-3 py-2 border border-zinc-200 bg-white rounded-lg focus:outline-none focus:border-black font-sans text-xs"
+                    />
+                    <input
+                      type="text"
+                      value={customerTaxPin}
+                      onChange={(e) => setCustomerTaxPin(e.target.value.toUpperCase())}
+                      placeholder="KRA/Tax PIN (e.g. A123456789B)..."
+                      className="w-full px-3 py-2 border border-zinc-200 bg-white rounded-lg focus:outline-none focus:border-black font-mono text-xs uppercase"
+                    />
+                    {customerName.trim() && (
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={saveCustomer}
+                          onChange={(e) => setSaveCustomer(e.target.checked)}
+                          className="w-3.5 h-3.5 accent-emerald-700 cursor-pointer"
+                        />
+                        <span className="font-sans text-[10px] text-zinc-600 font-medium">
+                          Save as client record for future lookups
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                )}
+
+                {/* Show selected client card */}
+                {selectedClientId && (
+                  <div className="bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">
+                    <span className="font-sans text-[10px] font-bold text-emerald-900 block">{customerName}</span>
+                    <span className="font-sans text-[10px] text-emerald-700">
+                      {[customerEmail, customerPhone, customerTaxPin ? `PIN: ${customerTaxPin}` : null].filter(Boolean).join(" · ") || "No contact info"}
+                    </span>
+                  </div>
+                )}
+
                 <textarea
                   value={customerNote}
                   onChange={(e) => setCustomerNote(e.target.value)}
@@ -474,10 +666,27 @@ export function WalkInSalesTerminal({ shop, shopSlug, products }: WalkInSalesTer
                   <span>Sub-Total:</span>
                   <span className="font-semibold text-black">{formatCurrency(totals.subTotal, shop.currency)}</span>
                 </div>
-                <div className="flex justify-between text-zinc-500">
-                  <span>VAT ({shop.isVatRegistered ? "16%" : "0%"}):</span>
+
+                {/* VAT TOGGLE — available for all shops */}
+                <div className="flex justify-between items-center">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <div
+                      onClick={() => setIsVatEnabled(!isVatEnabled)}
+                      className={`relative w-8 h-4 rounded-full transition-colors cursor-pointer ${
+                        isVatEnabled ? "bg-emerald-600" : "bg-zinc-300"
+                      }`}
+                    >
+                      <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${
+                        isVatEnabled ? "translate-x-4" : "translate-x-0"
+                      }`} />
+                    </div>
+                    <span className={`text-[10px] font-semibold uppercase ${isVatEnabled ? "text-emerald-700" : "text-zinc-500"}`}>
+                      VAT ({isVatEnabled ? "16%" : "0%"})
+                    </span>
+                  </label>
                   <span className="font-semibold text-black">{formatCurrency(totals.taxAmount, shop.currency)}</span>
                 </div>
+
                 <div className="flex justify-between text-black font-bold text-sm pt-2 border-t border-zinc-200">
                   <span className="uppercase">Total Payable:</span>
                   <span className="text-base font-extrabold">{formatCurrency(totals.grandTotal, shop.currency)}</span>

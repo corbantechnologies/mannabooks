@@ -1,7 +1,7 @@
 // src/app/workspaces/[slug]/pos/page.tsx
 import { db } from "@/db";
-import { products, shops } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { products, shops, clients } from "@/db/schema";
+import { eq, desc, asc, and, ne } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { WalkInSalesTerminal } from "./WalkInSalesTerminal";
 import Link from "next/link";
@@ -25,10 +25,20 @@ export default async function WalkInSalesPage({ params }: WalkInSalesPageProps) 
   }
 
   // 3. Fetch active product catalog for instant selection
-  const productRegistry = await db.query.products.findMany({
-    where: eq(products.shopId, shop.id),
-    orderBy: [desc(products.createdAt)],
-  });
+  const [productRegistry, shopClients] = await Promise.all([
+    db.query.products.findMany({
+      where: eq(products.shopId, shop.id),
+      orderBy: [desc(products.createdAt)],
+    }),
+    db.query.clients.findMany({
+      where: and(
+        eq(clients.shopId, shop.id),
+        ne(clients.name, "Walk-in Customer") // Exclude anonymous walk-in records
+      ),
+      orderBy: [asc(clients.name)],
+      columns: { id: true, name: true, email: true, phone: true, taxPin: true },
+    }),
+  ]);
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white font-mono text-xs">
@@ -64,6 +74,7 @@ export default async function WalkInSalesPage({ params }: WalkInSalesPageProps) 
           shop={shop}
           shopSlug={slug}
           products={productRegistry}
+          clients={shopClients}
         />
       </Suspense>
     </div>

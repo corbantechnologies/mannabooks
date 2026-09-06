@@ -343,9 +343,41 @@ interface UpdateDocumentStatusInput {
     documentId: string;
     shopId: string;
     shopSlug: string;
-    status: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED";
+    status: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED" | "CANCELLED" | "CONFIRMED";
     paymentChannel?: string;
     paymentReference?: string;
+}
+
+/**
+ * Returns the set of valid statuses a given document type may transition into.
+ * This enforces the per-document state machine at the action layer.
+ */
+function getAllowedStatuses(type: DocumentType): string[] {
+    switch (type) {
+        case "QUOTATION":
+            // Quotes can be confirmed (converted to invoice) or cancelled.
+            // They CANNOT be OVERDUE, PAID, or RECEIVED.
+            return ["DRAFT", "ISSUED", "CONFIRMED", "CANCELLED"];
+        case "INVOICE":
+            return ["DRAFT", "ISSUED", "OVERDUE", "PAID", "CANCELLED"];
+        case "RECEIPT":
+        case "CREDIT_NOTE":
+        case "PAYMENT_VOUCHER":
+        case "PAYROLL_VOUCHER":
+            // These documents are immutably PAID on creation
+            return ["PAID"];
+        case "LPO":
+        case "PO":
+            return ["DRAFT", "ISSUED", "RECEIVED", "PAID", "CANCELLED"];
+        case "GOODS_RECEIVED_NOTE":
+            return ["RECEIVED", "PAID"];
+        case "DELIVERY_NOTE":
+        case "DEBIT_NOTE":
+            // Informational documents, status is set on creation
+            return ["ISSUED", "CANCELLED"];
+        default:
+            return ["DRAFT", "ISSUED", "OVERDUE", "PAID", "RECEIVED", "CANCELLED"];
+    }
 }
 
 /**
@@ -363,11 +395,28 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
             return { success: false, error: "Document not found or access denied." };
         }
 
+        // PER-TYPE STATE MACHINE GUARD: Block invalid transitions for this document type
+        const allowedStatuses = getAllowedStatuses(existing.type as DocumentType);
+        if (!allowedStatuses.includes(input.status)) {
+            return {
+                success: false,
+                error: `Status '${input.status}' is not valid for a ${existing.type} document. Allowed: ${allowedStatuses.join(", ")}.`
+            };
+        }
+
         // PERMANENT SETTLEMENT GUARD: Block reverting PAID documents
         if (existing.status === "PAID" && input.status !== "PAID") {
             return {
                 success: false,
                 error: "Statutory Rule: Settled PAID documents cannot be reverted. Issue a Credit Note to reverse value."
+            };
+        }
+
+        // CONFIRMED GUARD: Block reverting a CONFIRMED (accepted/converted) quotation
+        if (existing.status === "CONFIRMED" && input.status !== "CONFIRMED") {
+            return {
+                success: false,
+                error: "This quotation has already been confirmed and converted to an invoice. It cannot be reverted."
             };
         }
 
@@ -594,11 +643,13 @@ export async function convertDocumentAction(
                     paymentChannel: "RECEIPT_ISSUED",
                 });
             } else if (targetType === "INVOICE" && sourceDoc.type === "QUOTATION") {
+                // Mark the source quotation as CONFIRMED — it has been accepted by the client
+                // and formally converted into a tax invoice.
                 await updateDocumentStatus({
                     documentId: sourceDoc.id,
                     shopId,
                     shopSlug,
-                    status: "ISSUED",
+                    status: "CONFIRMED",
                 });
             } else if (targetType === "GOODS_RECEIVED_NOTE" && (sourceDoc.type === "PO" || sourceDoc.type === "LPO")) {
                 await updateDocumentStatus({

@@ -43,10 +43,11 @@ export function DocumentActionsPopover({
   async function handleCancelQuotation() {
     setLoading(true);
     setConfirmCancel(false);
+    setIsOpen(false); // Close popover before action so router.refresh() works cleanly
     try {
       const res = await cancelQuotationAction(shopId, documentId, shopSlug);
       if (res.success) {
-        toast.success("Quotation has been successfully cancelled.");
+        toast.success("Quotation cancelled successfully.");
         router.refresh();
       } else {
         toast.error(res.error || "Failed to cancel quotation.");
@@ -82,7 +83,14 @@ export function DocumentActionsPopover({
     try {
       const res = await convertDocumentAction(documentId, targetType, shopId, shopSlug);
       if (res.success) {
-        toast.success(`Generated ${targetType} (${res.serial}) successfully.`);
+        // Context-aware success message
+        if (targetType === "INVOICE" && docType === "QUOTATION") {
+          toast.success(`✓ Quotation confirmed! Invoice (${res.serial}) created.`);
+        } else if (targetType === "RECEIPT" && docType === "INVOICE") {
+          toast.success(`✓ Receipt (${res.serial}) issued. Invoice marked as PAID.`);
+        } else {
+          toast.success(`✓ ${targetType} (${res.serial}) generated successfully.`);
+        }
         const params = new URLSearchParams({ converted: docType, from: res.serial || "" });
         router.push(`/workspaces/${shopSlug}/documents/${res.newDocumentId}?${params.toString()}`);
       } else {

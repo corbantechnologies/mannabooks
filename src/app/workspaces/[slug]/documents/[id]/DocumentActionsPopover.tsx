@@ -22,7 +22,7 @@ interface DocumentActionsPopoverProps {
   docType: DocumentType;
   items: DocumentItem[];
   kraCuInvoiceNumber?: string | null;
-  status: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED" | "CANCELLED";
+  status: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED" | "CANCELLED" | "CONFIRMED";
 }
 
 export function DocumentActionsPopover({
@@ -125,46 +125,50 @@ export function DocumentActionsPopover({
           {/* QUOTATION CONVERSIONS */}
           {docType === "QUOTATION" && (
             <>
-              {status !== "CANCELLED" && (
-                <button
-                  onClick={() => handleConvert("INVOICE")}
-                  className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
-                >
-                  <span>📄</span> Convert to Tax Invoice
-                </button>
-              )}
-
-              {status !== "CANCELLED" ? (
-                confirmCancel ? (
-                  <div className="bg-rose-50 p-2.5 flex flex-col gap-1.5 border-t border-zinc-100">
-                    <span className="text-[10px] text-rose-700 font-bold uppercase block px-1 leading-tight">Cancel this quotation?</span>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={handleCancelQuotation}
-                        className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 font-semibold uppercase text-[10px] rounded-md transition-colors cursor-pointer"
-                      >
-                        Confirm
-                      </button>
-                      <button
-                        onClick={() => setConfirmCancel(false)}
-                        className="btn-secondary-modern px-2 py-1 text-[10px] font-semibold uppercase"
-                      >
-                        Keep Quote
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setConfirmCancel(true)}
-                    className="w-full text-left px-3.5 py-2.5 hover:bg-rose-50 text-rose-600 font-semibold text-[11px] transition-colors border-t border-zinc-100 cursor-pointer flex items-center gap-2"
-                  >
-                    <span>✕</span> Cancel Quotation
-                  </button>
-                )
-              ) : (
+              {status === "CONFIRMED" ? (
+                <div className="px-3.5 py-2 text-[10px] text-emerald-700 italic font-semibold">
+                  ✓ Confirmed &amp; Converted to Invoice
+                </div>
+              ) : status === "CANCELLED" ? (
                 <div className="px-3.5 py-2 text-[10px] text-zinc-400 italic font-semibold">
                   Quotation Cancelled
                 </div>
+              ) : (
+                <>
+                  <button
+                    onClick={() => handleConvert("INVOICE")}
+                    className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
+                  >
+                    <span>📄</span> Convert to Tax Invoice
+                  </button>
+
+                  {confirmCancel ? (
+                    <div className="bg-rose-50 p-2.5 flex flex-col gap-1.5 border-t border-zinc-100">
+                      <span className="text-[10px] text-rose-700 font-bold uppercase block px-1 leading-tight">Cancel this quotation?</span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={handleCancelQuotation}
+                          className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 font-semibold uppercase text-[10px] rounded-md transition-colors cursor-pointer"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => setConfirmCancel(false)}
+                          className="btn-secondary-modern px-2 py-1 text-[10px] font-semibold uppercase"
+                        >
+                          Keep Quote
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmCancel(true)}
+                      className="w-full text-left px-3.5 py-2.5 hover:bg-rose-50 text-rose-600 font-semibold text-[11px] transition-colors border-t border-zinc-100 cursor-pointer flex items-center gap-2"
+                    >
+                      <span>✕</span> Cancel Quotation
+                    </button>
+                  )}
+                </>
               )}
             </>
           )}

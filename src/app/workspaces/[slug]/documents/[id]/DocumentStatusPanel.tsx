@@ -113,6 +113,7 @@ export function DocumentStatusPanel({
   portalLink,
   clientEmail,
   docNumber,
+  dueDate,
   kraCuInvoiceNumber,
   requiresEtims = false,
   initialPaymentChannel = "",
@@ -134,7 +135,7 @@ export function DocumentStatusPanel({
   issueDate,
 }: DocumentStatusPanelProps) {
   const router = useRouter();
-  const [status, setStatus] = useState<"DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED" | "CANCELLED" | "CONFIRMED">(currentStatus as any);
+  const [status, setStatus] = useState<"DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED" | "CANCELLED" | "CONFIRMED">(currentStatus as any);
   const [cuNumber, setCuNumber] = useState(kraCuInvoiceNumber || "");
   const [paymentChannel, setPaymentChannel] = useState(initialPaymentChannel || "");
   const [paymentReference, setPaymentReference] = useState(initialPaymentReference || "");

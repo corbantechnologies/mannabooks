@@ -27,7 +27,7 @@ export const invitationStatusEnum = pgEnum('invitation_status', ['PENDING', 'ACC
 export const accountTypeEnum = pgEnum('account_type', ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE']);
 export const periodStatusEnum = pgEnum('period_status', ['OPEN', 'CLOSED']);
 export const journalSourceEnum = pgEnum('journal_source', ['document', 'expense', 'income', 'payroll', 'manual', 'migrated']);
-export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'ISSUED', 'OVERDUE', 'PAID', 'PARTIALLY_PAID', 'RECEIVED', 'CANCELLED']);
+export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'ISSUED', 'OVERDUE', 'PAID', 'PARTIALLY_PAID', 'RECEIVED', 'CANCELLED', 'CONFIRMED']);
 export const taxRegimeEnum = pgEnum('tax_regime', ['CIT', 'TOT', 'EXEMPT']);
 export const assetClassEnum = pgEnum('asset_class', ['CLASS_1', 'CLASS_2', 'CLASS_3', 'CLASS_4', 'BUILDING']);
 

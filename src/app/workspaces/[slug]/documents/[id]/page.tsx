@@ -374,6 +374,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         portalLink={portalLink}
         clientEmail={party.email}
         docNumber={doc.docNumber}
+        dueDate={doc.dueDate}
         kraCuInvoiceNumber={doc.kraCuInvoiceNumber}
         requiresEtims={doc.requiresEtims}
         initialPaymentChannel={doc.paymentChannel || doc.payments?.[0]?.paymentChannel || ""}

@@ -89,6 +89,10 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
     let issuedAmount = 0;
 
     allDocs.forEach((d) => {
+      const isSales = d.type === "INVOICE" || d.type === "RECEIPT";
+      if (!isSales) return;
+      if (d.type === "RECEIPT" && d.parentDocumentId) return;
+
       const issueTime = new Date(d.issueDate).getTime();
       const val = parseFloat(d.grandTotal || "0");
       if (issueTime >= start.getTime() && issueTime <= end.getTime()) {
@@ -123,31 +127,39 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
   allDocs.forEach((d) => {
     const val = parseFloat(d.grandTotal || "0");
     const docDate = new Date(d.issueDate);
+    const isSales = d.type === "INVOICE" || d.type === "RECEIPT";
+    const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
 
-    if (d.status === "PAID" || d.type === "RECEIPT") {
-      totalRevenueAllTime += val;
-      if (docDate >= startOfMonth) {
-        revenueMtd += val;
-      }
-      if (d.client) {
-        if (!clientRevenueMap[d.client.id]) {
-          clientRevenueMap[d.client.id] = { name: d.client.name, totalPaid: 0 };
+    if (!isReceiptFromInvoice && (d.status === "PAID" || d.type === "RECEIPT")) {
+      if (isSales) {
+        totalRevenueAllTime += val;
+        if (docDate >= startOfMonth) {
+          revenueMtd += val;
         }
-        clientRevenueMap[d.client.id].totalPaid += val;
+        if (d.client) {
+          if (!clientRevenueMap[d.client.id]) {
+            clientRevenueMap[d.client.id] = { name: d.client.name, totalPaid: 0 };
+          }
+          clientRevenueMap[d.client.id].totalPaid += val;
+        }
       }
     } else if (d.status === "ISSUED" || d.status === "PARTIALLY_PAID") {
-      pendingReceivables += val;
-      if (d.dueDate && new Date(d.dueDate) < now) {
+      if (isSales) {
+        pendingReceivables += val;
+        if (d.dueDate && new Date(d.dueDate) < now) {
+          overdueReceivables += val;
+          overdueCount += 1;
+        }
+      }
+    } else if (d.status === "OVERDUE") {
+      if (isSales) {
+        pendingReceivables += val;
         overdueReceivables += val;
         overdueCount += 1;
       }
-    } else if (d.status === "OVERDUE") {
-      pendingReceivables += val;
-      overdueReceivables += val;
-      overdueCount += 1;
     }
 
-    if (d.type === "QUOTATION" && d.status !== "CANCELLED") {
+    if (d.type === "QUOTATION" && d.status !== "CANCELLED" && d.status !== "CONFIRMED") {
       openQuotesCount += 1;
     }
   });

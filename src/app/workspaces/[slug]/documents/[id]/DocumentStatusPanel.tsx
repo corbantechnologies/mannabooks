@@ -26,12 +26,13 @@ interface DocumentStatusPanelProps {
   documentId: string;
   shopId: string;
   shopSlug: string;
-  currentStatus: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED" | "CANCELLED";
+  currentStatus: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED" | "CANCELLED" | "CONFIRMED";
   docType: DocumentType;
   items: DocumentItem[];
   portalLink: string | null;
   clientEmail: string;
   docNumber: string;
+  dueDate?: string | Date | null;
   kraCuInvoiceNumber?: string | null;
   requiresEtims?: boolean;
   initialPaymentChannel?: string | null;
@@ -53,19 +54,54 @@ interface DocumentStatusPanelProps {
   issueDate?: string | Date;
 }
 
-const DEFAULT_STATUS_OPTIONS = [
-  { value: "DRAFT", label: "Draft" },
-  { value: "ISSUED", label: "Issued" },
-  { value: "OVERDUE", label: "Overdue" },
-  { value: "PAID", label: "Paid" },
-];
+// Per-type status state machines — defines what options are shown in the UI
+function getStatusOptions(docType: DocumentType): { value: string; label: string; color: string }[] {
+  switch (docType) {
+    case "QUOTATION":
+      return [
+        { value: "DRAFT",     label: "Draft",     color: "zinc" },
+        { value: "ISSUED",    label: "Issued",    color: "blue" },
+      ];
+    case "INVOICE":
+      return [
+        { value: "DRAFT",    label: "Draft",    color: "zinc" },
+        { value: "ISSUED",   label: "Issued",   color: "blue" },
+        { value: "OVERDUE",  label: "Overdue",  color: "amber" },
+        { value: "PAID",     label: "Paid",     color: "emerald" },
+      ];
+    case "LPO":
+    case "PO":
+      return [
+        { value: "DRAFT",    label: "Draft",    color: "zinc" },
+        { value: "ISSUED",   label: "Issued",   color: "blue" },
+        { value: "RECEIVED", label: "Received", color: "purple" },
+        { value: "PAID",     label: "Paid",     color: "emerald" },
+      ];
+    case "GOODS_RECEIVED_NOTE":
+      return [
+        { value: "RECEIVED", label: "Received", color: "purple" },
+        { value: "PAID",     label: "Paid",     color: "emerald" },
+      ];
+    // Immutable documents — no status toggle rendered
+    case "RECEIPT":
+    case "CREDIT_NOTE":
+    case "PAYMENT_VOUCHER":
+    case "PAYROLL_VOUCHER":
+    case "DELIVERY_NOTE":
+    case "DEBIT_NOTE":
+      return [];
+    default:
+      return [
+        { value: "DRAFT",  label: "Draft",  color: "zinc" },
+        { value: "ISSUED", label: "Issued", color: "blue" },
+      ];
+  }
+}
 
-const SUPPLIER_STATUS_OPTIONS = [
-  { value: "DRAFT", label: "Draft" },
-  { value: "ISSUED", label: "Issued" },
-  { value: "RECEIVED", label: "Received" },
-  { value: "PAID", label: "Paid" },
-];
+// Whether a document type has immutable status (set on creation, never changed)
+function isImmutableDoc(docType: DocumentType): boolean {
+  return ["RECEIPT", "CREDIT_NOTE", "PAYMENT_VOUCHER", "PAYROLL_VOUCHER"].includes(docType);
+}
 
 export function DocumentStatusPanel({
   documentId,
@@ -77,6 +113,7 @@ export function DocumentStatusPanel({
   portalLink,
   clientEmail,
   docNumber,
+  dueDate,
   kraCuInvoiceNumber,
   requiresEtims = false,
   initialPaymentChannel = "",
@@ -98,7 +135,7 @@ export function DocumentStatusPanel({
   issueDate,
 }: DocumentStatusPanelProps) {
   const router = useRouter();
-  const [status, setStatus] = useState<"DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED" | "CANCELLED">(currentStatus as any);
+  const [status, setStatus] = useState<"DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED" | "CANCELLED" | "CONFIRMED">(currentStatus as any);
   const [cuNumber, setCuNumber] = useState(kraCuInvoiceNumber || "");
   const [paymentChannel, setPaymentChannel] = useState(initialPaymentChannel || "");
   const [paymentReference, setPaymentReference] = useState(initialPaymentReference || "");
@@ -107,6 +144,16 @@ export function DocumentStatusPanel({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showThermalModal, setShowThermalModal] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+
+  // Computed: is this quotation "Outdated" (past its validity date but not cancelled/confirmed)?
+  const isOutdatedQuote = docType === "QUOTATION" &&
+    dueDate != null &&
+    new Date(dueDate) < new Date() &&
+    status !== "CANCELLED" &&
+    status !== "CONFIRMED";
+
+  const statusOptions = getStatusOptions(docType);
+  const immutable = isImmutableDoc(docType);
 
   const updateStatusMutation = useUpdateDocumentStatus(shopId, shopSlug);
   const duplicateDocMutation = useDuplicateDocument(shopId, shopSlug);
@@ -129,7 +176,7 @@ export function DocumentStatusPanel({
     }
   }
 
-  async function handleStatusUpdate(newStatus: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED") {
+  async function handleStatusUpdate(newStatus: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED" | "CANCELLED" | "CONFIRMED") {
     if (newStatus === status) return;
     updateStatusMutation.mutate(
       { documentId, status: newStatus },
@@ -281,82 +328,114 @@ export function DocumentStatusPanel({
         />
       </div>
 
-      {/* STATUS TOGGLE */}
+      {/* STATUS TOGGLE — document-type aware state machine */}
       <div className="space-y-3">
-        <div className="flex justify-between items-center">
-          <p className="text-[10px] text-zinc-400 uppercase font-semibold">Update Document Status</p>
-          {status === "PAID" && (
-            <span className="text-[9px] text-zinc-400 italic">PAID status is final. Use Credit Note to reverse.</span>
-          )}
-          {status === "CANCELLED" && (
-            <span className="text-[9px] text-rose-600 italic">CANCELLED status is final. Document is voided.</span>
-          )}
-        </div>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <p className="text-[10px] text-zinc-400 uppercase font-semibold">Document Status</p>
+            {/* Terminal / immutable status messages */}
+            {status === "PAID" && (
+              <span className="text-[9px] text-zinc-400 italic">PAID is final. Use Credit Note to reverse.</span>
+            )}
+            {status === "CANCELLED" && (
+              <span className="text-[9px] text-rose-600 italic">CANCELLED — document is voided.</span>
+            )}
+            {status === "CONFIRMED" && (
+              <span className="text-[9px] text-emerald-700 italic font-semibold">✓ CONFIRMED — converted to invoice.</span>
+            )}
+          </div>
 
-        {/* QUICK RECEIVE ACTION FOR LPO / PO */}
-        {(docType === "LPO" || docType === "PO") && status !== "RECEIVED" && status !== "PAID" && status !== "CANCELLED" && (
-          <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <div>
-              <p className="font-sans text-xs font-bold text-emerald-900">📦 Goods Delivered from Supplier?</p>
-              <p className="font-sans text-[11px] text-emerald-700 mt-0.5">
-                Marking as received will automatically increment your product and warehouse location stock.
-              </p>
+          {/* Outdated quote banner */}
+          {isOutdatedQuote && (
+            <div className="bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg flex items-center gap-2">
+              <span className="text-amber-600 text-sm">⚠</span>
+              <div>
+                <p className="font-sans text-xs font-bold text-amber-900">This quotation is Outdated</p>
+                <p className="font-sans text-[11px] text-amber-700 mt-0.5">The validity date has passed. Convert to Invoice or cancel this quote.</p>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => handleStatusUpdate("RECEIVED")}
-              disabled={updateStatusMutation.isPending}
-              className="bg-emerald-700 hover:bg-emerald-800 text-white font-sans text-xs font-semibold px-3.5 py-1.5 rounded transition-colors shrink-0 shadow-2xs"
-            >
-              {updateStatusMutation.isPending && updateStatusMutation.variables?.status === "RECEIVED" ? "Receiving..." : "Mark as Received"}
-            </button>
-          </div>
-        )}
+          )}
 
-        {status === "RECEIVED" && (docType === "LPO" || docType === "PO" || docType === "GOODS_RECEIVED_NOTE") && (
-          <div className="bg-emerald-50 border border-emerald-200 px-3 py-2 rounded text-xs font-semibold text-emerald-900 flex items-center gap-2 font-sans">
-            <span>✓</span>
-            <span>Goods marked as received. Inventory quantities and location balances have been credited.</span>
-          </div>
-        )}
-
-        <div className="flex flex-wrap gap-1.5">
-          {(["LPO", "PO", "GOODS_RECEIVED_NOTE", "PAYMENT_VOUCHER"].includes(docType) ? SUPPLIER_STATUS_OPTIONS : DEFAULT_STATUS_OPTIONS).map((opt) => {
-            const isBlocked = (status === "PAID" || status === "CANCELLED") && opt.value !== status;
-            const isCurrentPending = updateStatusMutation.isPending && updateStatusMutation.variables?.status === opt.value;
-            const isActive = status === opt.value;
-            return (
+          {/* QUICK RECEIVE ACTION FOR LPO / PO */}
+          {(docType === "LPO" || docType === "PO") && status !== "RECEIVED" && status !== "PAID" && status !== "CANCELLED" && (
+            <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <p className="font-sans text-xs font-bold text-emerald-900">📦 Goods Delivered from Supplier?</p>
+                <p className="font-sans text-[11px] text-emerald-700 mt-0.5">
+                  Marking as received will automatically increment your product and warehouse location stock.
+                </p>
+              </div>
               <button
-                key={opt.value}
                 type="button"
-                disabled={updateStatusMutation.isPending || isBlocked}
-                onClick={() => handleStatusUpdate(opt.value as any)}
-                className={`px-3 py-1 text-[11px] font-semibold uppercase tracking-wider border transition-all rounded-md disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer ${
-                  isActive
-                    ? "bg-emerald-900 text-white border-emerald-900 shadow-2xs"
-                    : "bg-white text-zinc-700 border-zinc-300 hover:border-emerald-600 hover:bg-emerald-50/50 hover:text-emerald-900"
-                }`}
+                onClick={() => handleStatusUpdate("RECEIVED")}
+                disabled={updateStatusMutation.isPending}
+                className="bg-emerald-700 hover:bg-emerald-800 text-white font-sans text-xs font-semibold px-3.5 py-1.5 rounded transition-colors shrink-0 shadow-2xs"
               >
-                {isCurrentPending ? (
-                  <>
-                    <Spinner size={10} color={isActive ? "white" : "currentColor"} />
-                    <span>{opt.label}</span>
-                  </>
-                ) : (
-                  opt.label
-                )}
+                {updateStatusMutation.isPending && updateStatusMutation.variables?.status === "RECEIVED" ? "Receiving..." : "Mark as Received"}
               </button>
-            );
-          })}
+            </div>
+          )}
 
-          {status === "CANCELLED" && (
-            <button
-              type="button"
-              disabled
-              className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider border bg-rose-600 text-white border-rose-600 rounded-md cursor-not-allowed"
-            >
-              Cancelled
-            </button>
+          {status === "RECEIVED" && (docType === "LPO" || docType === "PO" || docType === "GOODS_RECEIVED_NOTE") && (
+            <div className="bg-emerald-50 border border-emerald-200 px-3 py-2 rounded text-xs font-semibold text-emerald-900 flex items-center gap-2 font-sans">
+              <span>✓</span>
+              <span>Goods marked as received. Inventory quantities and location balances have been credited.</span>
+            </div>
+          )}
+
+          {/* IMMUTABLE DOCS — just show their permanent status badge */}
+          {immutable ? (
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider border rounded-md bg-emerald-900 text-white border-emerald-900 shadow-2xs">
+                ✓ {status}
+              </span>
+              <span className="text-[10px] text-zinc-400 italic">This document type is permanently settled on creation.</span>
+            </div>
+          ) : status === "CONFIRMED" ? (
+            /* CONFIRMED QUOTATION — locked, show conversion badge */
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider border rounded-md bg-blue-900 text-white border-blue-900 shadow-2xs">
+                ✓ Confirmed & Converted
+              </span>
+            </div>
+          ) : status === "CANCELLED" ? (
+            /* CANCELLED — locked */
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider border rounded-md bg-rose-600 text-white border-rose-600 shadow-2xs cursor-not-allowed">
+                Cancelled
+              </span>
+            </div>
+          ) : (
+            /* INTERACTIVE STATUS TOGGLES */
+            <div className="flex flex-wrap gap-1.5">
+              {statusOptions.map((opt) => {
+                const isBlocked = status === "PAID" && opt.value !== status;
+                const isCurrentPending = updateStatusMutation.isPending && updateStatusMutation.variables?.status === opt.value;
+                const isActive = status === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    disabled={updateStatusMutation.isPending || isBlocked}
+                    onClick={() => handleStatusUpdate(opt.value as any)}
+                    className={`px-3 py-1 text-[11px] font-semibold uppercase tracking-wider border transition-all rounded-md disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer ${
+                      isActive
+                        ? "bg-emerald-900 text-white border-emerald-900 shadow-2xs"
+                        : "bg-white text-zinc-700 border-zinc-300 hover:border-emerald-600 hover:bg-emerald-50/50 hover:text-emerald-900"
+                    }`}
+                  >
+                    {isCurrentPending ? (
+                      <>
+                        <Spinner size={10} color={isActive ? "white" : "currentColor"} />
+                        <span>{opt.label}</span>
+                      </>
+                    ) : (
+                      opt.label
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>

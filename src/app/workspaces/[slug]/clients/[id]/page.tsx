@@ -52,21 +52,30 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
     ),
   });
 
-  // 3. Compute structural customer performance aggregations with absolute precision
+  // 3. Compute structural customer performance aggregations with absolute precision.
+  //
+  // Revenue model: every cash collection flows through a RECEIPT document.
+  // When an invoice is converted to a receipt, the invoice becomes PAID and a
+  // child RECEIPT is created with parentDocumentId pointing to the invoice.
+  // Counting both would double the LTV — so we ONLY count RECEIPTs for settled
+  // revenue and only count UNPAID invoices for outstanding A/R.
   const performanceMetrics = clientRecord.documents.reduce(
     (acc, doc) => {
       const value = parseFloat(doc.grandTotal);
       if (doc.type === "RECEIPT") {
+        // All cash received — standalone receipts AND invoice-derived receipts.
         acc.lifetimeValue += value;
       } else if (doc.type === "INVOICE") {
-        if (doc.status === "PAID") {
-          acc.lifetimeValue += value;
-        } else if (doc.status === "ISSUED") {
+        // PAID invoices: do NOT add to LTV — the receipt already captured that cash.
+        if (doc.status === "ISSUED" || doc.status === "PARTIALLY_PAID") {
           acc.outstandingLiability += value;
         } else if (doc.status === "OVERDUE") {
           acc.outstandingLiability += value;
           acc.overdueLiability += value;
         }
+      } else if (doc.type === "CREDIT_NOTE" && doc.status === "PAID") {
+        // Deduct credit notes from lifetime value (refunds reduce earned revenue).
+        acc.lifetimeValue -= value;
       }
       return acc;
     },

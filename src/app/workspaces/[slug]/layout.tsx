@@ -43,7 +43,7 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
     <>
     <div
       style={{ "--brand-primary": brandColor } as React.CSSProperties}
-      className="flex flex-col lg:flex-row min-h-screen portal-canvas"
+      className="flex flex-col lg:flex-row min-h-screen portal-canvas overflow-x-hidden"
     >
       <style>{`
         :root {

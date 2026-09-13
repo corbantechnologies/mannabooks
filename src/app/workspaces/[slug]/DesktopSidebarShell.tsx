@@ -315,8 +315,8 @@ export function DesktopSidebarShell({
           <div className="flex items-center gap-2.5">{headerChildren}</div>
         </header>
 
-        {/* ── Page content ───────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto">{contentChildren}</div>
+        {/* ── Page content ───────────────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">{contentChildren}</div>
       </main>
     </SidebarContext.Provider>
   );

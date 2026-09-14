@@ -269,7 +269,7 @@ export function DesktopSidebarShell({
           MAIN CONTENT AREA
       ─────────────────────────────────────────────────────── */}
       <main
-        className="flex-1 flex flex-col min-w-0 transition-all duration-300"
+        className="flex-1 flex flex-col min-w-0 overflow-x-hidden transition-all duration-300"
         style={{ backgroundColor: "var(--portal-canvas, #f4f5f7)" }}
       >
         {/* ── Desktop top header bar ─────────────────────────── */}

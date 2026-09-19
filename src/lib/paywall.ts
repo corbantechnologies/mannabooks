@@ -125,7 +125,6 @@ export const PLAN_SPECS: Record<string, PlanDefinition> = {
             "Unlimited Team Members & Locations",
             "Dedicated Support & Custom SLAs",
             "Automated Offsite Backup Snapshots",
-            "Direct eTIMS VSCU API Connectivity",
         ],
     },
 };

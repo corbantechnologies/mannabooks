@@ -319,11 +319,13 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
         client?.taxPin ? React.createElement(ReactPDF.Text, { key: "pin", style: { fontSize: 7.5, color: "#000000", fontWeight: "bold" } }, "Tax PIN: " + client.taxPin) : null
     ].filter(Boolean);
 
+    const hasVat = Boolean(shop?.isVatRegistered || parseFloat(doc.taxAmount || "0") > 0);
+
     const totalBoxChildren = [
         React.createElement(
             ReactPDF.View,
             { key: "sub", style: styles.totalRow },
-            React.createElement(ReactPDF.Text, { style: { color: "#71717a", fontSize: 7.5 } }, "Subtotal:"),
+            React.createElement(ReactPDF.Text, { style: { color: "#71717a", fontSize: 7.5 } }, hasVat ? "Subtotal (Excl. VAT):" : "Subtotal:"),
             React.createElement(ReactPDF.Text, { style: { fontSize: 7.5 } }, formatCurrency(doc.subTotal, shop?.currency))
         ),
         parseFloat(doc.taxAmount) > 0 ? React.createElement(
@@ -370,28 +372,36 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
             React.createElement(ReactPDF.Text, { style: styles.colMain }, "DESCRIPTION / ITEM"),
             React.createElement(ReactPDF.Text, { style: styles.colQty }, "QTY"),
             React.createElement(ReactPDF.Text, { style: styles.colRate }, "UNIT PRICE"),
-            React.createElement(ReactPDF.Text, { style: styles.colTotal }, "TOTAL AMOUNT")
+            React.createElement(ReactPDF.Text, { style: styles.colTotal }, hasVat ? "NET AMOUNT" : "TOTAL AMOUNT")
         ),
 
         // Table Rows Body Container
         React.createElement(
             ReactPDF.View,
             { key: "tableBody", style: { width: "100%" } },
-            (doc.items || []).map((item: any, idx: number) =>
-                React.createElement(
+            (doc.items || []).map((item: any, idx: number) => {
+                const qty = parseFloat(item.quantity) || 1;
+                const unitPrice = parseFloat(item.unitPrice) || 0;
+                const netLineTotal = qty * unitPrice;
+                const taxLabel = item.taxType === "V_16" || parseFloat(item.taxAmount || "0") > 0
+                    ? "16% VAT"
+                    : (item.taxType === "V_0" ? "0% Zero-Rated" : (item.taxType === "EXEMPT" ? "VAT Exempt" : null));
+
+                return React.createElement(
                     ReactPDF.View,
                     { key: item.id || idx, style: styles.tableRow },
                     React.createElement(
                         ReactPDF.View,
                         { style: styles.colMain },
                         React.createElement(ReactPDF.Text, null, String(item.description || "")),
-                        item.notes ? React.createElement(ReactPDF.Text, { style: { fontSize: 6.5, color: "#71717a", marginTop: 1.5, fontStyle: "italic" } }, `(${item.notes})`) : null
+                        item.notes ? React.createElement(ReactPDF.Text, { style: { fontSize: 6.5, color: "#71717a", marginTop: 1.5, fontStyle: "italic" } }, `(${item.notes})`) : null,
+                        hasVat && taxLabel ? React.createElement(ReactPDF.Text, { style: { fontSize: 6.2, color: "#71717a", marginTop: 1.5 } }, `Tax: ${taxLabel}`) : null
                     ),
                     React.createElement(ReactPDF.Text, { style: styles.colQty }, String(item.quantity || "1")),
                     React.createElement(ReactPDF.Text, { style: styles.colRate }, formatCurrency(item.unitPrice, shop?.currency)),
-                    React.createElement(ReactPDF.Text, { style: styles.colTotal }, formatCurrency(item.itemTotal, shop?.currency))
-                )
-            )
+                    React.createElement(ReactPDF.Text, { style: styles.colTotal }, formatCurrency(hasVat ? netLineTotal : item.itemTotal, shop?.currency))
+                );
+            })
         ),
 
         // Footer Section

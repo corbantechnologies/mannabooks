@@ -123,6 +123,8 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
     portalChain.push(...(await fetchPortalChain(rootId)));
   } catch (_) {}
 
+  const hasVat = Boolean(shop.isVatRegistered || parseFloat(doc.taxAmount || "0") > 0);
+
   return (
     <div className="min-h-screen bg-zinc-100/80 py-8 sm:py-14 px-3 sm:px-6 font-mono text-xs text-black selection:bg-black selection:text-white">
       <style>{`
@@ -268,25 +270,41 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
                 <div className="col-span-6">Description / Core Deliverable</div>
                 <div className="col-span-2 text-center">Qty</div>
                 <div className="col-span-2 text-right">Unit Rate</div>
-                <div className="col-span-2 text-right">Line Total</div>
+                <div className="col-span-2 text-right">{hasVat ? "Net Amount" : "Line Total"}</div>
               </div>
               
               <div className="divide-y divide-zinc-200 bg-white">
-                {doc.items.map((item) => (
-                  <div key={item.id} className="grid grid-cols-12 p-3 items-center font-sans text-xs">
-                    <div className="col-span-6 font-bold text-black uppercase tracking-tight">
-                      <div>{item.description}</div>
-                      {item.notes && (
-                        <div className="text-[10px] text-zinc-500 italic mt-0.5 font-mono lowercase">
-                          ({item.notes})
-                        </div>
-                      )}
+                {doc.items.map((item) => {
+                  const qty = parseFloat(item.quantity) || 1;
+                  const unitPrice = parseFloat(item.unitPrice) || 0;
+                  const netTotal = qty * unitPrice;
+                  const taxLabel = item.taxType === "V_16" || parseFloat(item.taxAmount || "0") > 0
+                    ? "16% VAT"
+                    : (item.taxType === "V_0" ? "0% Zero-Rated" : (item.taxType === "EXEMPT" ? "VAT Exempt" : null));
+
+                  return (
+                    <div key={item.id} className="grid grid-cols-12 p-3 items-center font-sans text-xs">
+                      <div className="col-span-6 font-bold text-black uppercase tracking-tight">
+                        <div>{item.description}</div>
+                        {item.notes && (
+                          <div className="text-[10px] text-zinc-500 italic mt-0.5 font-mono lowercase">
+                            ({item.notes})
+                          </div>
+                        )}
+                        {hasVat && taxLabel && (
+                          <div className="text-[10px] text-zinc-500 font-mono normal-case mt-0.5 font-normal">
+                            Tax: <span className="font-semibold text-zinc-700">{taxLabel}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="col-span-2 text-center font-mono text-xs">{item.quantity}</div>
+                      <div className="col-span-2 text-right font-mono text-xs">{formatCurrency(item.unitPrice, shop.currency)}</div>
+                      <div className="col-span-2 text-right font-mono text-xs font-bold text-black">
+                        {formatCurrency(hasVat ? netTotal : item.itemTotal, shop.currency)}
+                      </div>
                     </div>
-                    <div className="col-span-2 text-center font-mono text-xs">{item.quantity}</div>
-                    <div className="col-span-2 text-right font-mono text-xs">{formatCurrency(item.unitPrice, shop.currency)}</div>
-                    <div className="col-span-2 text-right font-mono text-xs font-bold text-black">{formatCurrency(item.itemTotal, shop.currency)}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -390,13 +408,15 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
 
           <div className="md:col-span-6 border border-black bg-white p-4 space-y-2 ml-auto w-full max-w-sm">
             <div className="flex justify-between text-zinc-500">
-              <span>Gross Sub-Total:</span>
+              <span>{hasVat ? "Sub-Total (Excl. VAT):" : "Gross Sub-Total:"}</span>
               <span className="font-bold text-black">{formatCurrency(doc.subTotal, doc.currency || shop.currency)}</span>
             </div>
-            <div className="flex justify-between text-zinc-500">
-              <span>Statutory VAT Levy:</span>
-              <span className="font-bold text-black">{formatCurrency(doc.taxAmount, doc.currency || shop.currency)}</span>
-            </div>
+            {parseFloat(doc.taxAmount || "0") > 0 && (
+              <div className="flex justify-between text-zinc-500">
+                <span>Statutory VAT (16%):</span>
+                <span className="font-bold text-black">{formatCurrency(doc.taxAmount, doc.currency || shop.currency)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-black font-bold text-sm pt-2 border-t-2 border-black">
               <span>TOTAL {doc.type === "QUOTATION" ? "ESTIMATE:" : "OUTSTANDING:"}</span>
               <span className="underline underline-offset-2 decoration-double">{formatCurrency(doc.grandTotal, doc.currency || shop.currency)}</span>

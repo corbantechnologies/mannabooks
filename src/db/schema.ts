@@ -58,13 +58,13 @@ export const shops = pgTable('shops', {
     id: uuid('id').defaultRandom().primaryKey(),
     ownerId: uuid('owner_id').references(() => users.id).notNull(), // The user who created/owns the shop
     name: text('name').notNull(),
-    shortName: varchar('short_name', { length: 50 }), // Optional short trading alias e.g. Corban Tech
+    shortName: varchar('short_name', { length: 50 }), // Optional short trading alias e.g. Manna Books
     slug: varchar('slug', { length: 100 }).notNull().unique(),
     code: varchar('code', { length: 10 }).unique(),
     currency: varchar('currency', { length: 3 }).default('KES').notNull(),
     phone: varchar('phone', { length: 30 }), // Business phone contact e.g. +254 712 345 678
-    website: varchar('website', { length: 255 }), // Business website URL e.g. https://corbantechnologies.org
-    email: varchar('email', { length: 255 }), // Business email contact e.g. billing@corbantechnologies.org
+    website: varchar('website', { length: 255 }), // Business website URL e.g. https://mannabooks.co.ke
+    email: varchar('email', { length: 255 }), // Business email contact e.g. billing@mannabooks.co.ke
     logoUrl: text('logo_url'),
     primaryColor: varchar('primary_color', { length: 20 }).default('#000000').notNull(), // Sleek Black default, custom hex, or palette
     taxPin: varchar('tax_pin', { length: 30 }), // e.g., KRA PIN (A... for personal/sole prop, P... for company)

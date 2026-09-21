@@ -312,7 +312,8 @@ export function SettingsForm({
               type="text"
               value={businessName}
               onChange={(e) => setBusinessName(e.target.value)}
-              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs"
+              placeholder="e.g., Manna Books LTD"
+              className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
               required
             />
           </div>
@@ -323,7 +324,7 @@ export function SettingsForm({
               type="text"
               value={shortName}
               onChange={(e) => setShortName(e.target.value)}
-              placeholder="e.g. Corban Tech"
+              placeholder="e.g., Manna Books"
               className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
             />
           </div>
@@ -346,7 +347,7 @@ export function SettingsForm({
               type="text"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="e.g. +254 712 345"
+              placeholder="e.g., +254 712 345 678"
               className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
             />
           </div>
@@ -357,7 +358,7 @@ export function SettingsForm({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="billing@company.com"
+              placeholder="billing@mannabooks.co.ke"
               className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs font-mono"
             />
           </div>
@@ -368,7 +369,7 @@ export function SettingsForm({
               type="url"
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
-              placeholder="https://company.org"
+              placeholder="https://mannabooks.co.ke"
               className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded font-mono text-[11px]"
             />
           </div>
@@ -843,7 +844,7 @@ export function SettingsForm({
                       type="text"
                       value={accountName}
                       onChange={(e) => setAccountName(e.target.value)}
-                      placeholder="e.g., Ventures of Africa LTD"
+                      placeholder="e.g., Manna Books LTD"
                       className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                       required
                     />
@@ -895,7 +896,7 @@ export function SettingsForm({
                       type="text"
                       value={storeName}
                       onChange={(e) => setStoreName(e.target.value)}
-                      placeholder="e.g., Ventures of Africa"
+                      placeholder="e.g., Manna Books"
                       className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                     />
                   </div>
@@ -951,7 +952,7 @@ export function SettingsForm({
                   <textarea
                     value={customInstructions}
                     onChange={(e) => setCustomInstructions(e.target.value)}
-                    placeholder="e.g., Send PayPal payment to billing@domain.com or issue cheque to Ventures of Africa LTD."
+                    placeholder="e.g., Send PayPal payment to billing@mannabooks.co.ke or issue cheque to Manna Books LTD."
                     className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs h-20 font-sans"
                     required
                   ></textarea>

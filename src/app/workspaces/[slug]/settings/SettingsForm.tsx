@@ -291,7 +291,6 @@ export function SettingsForm({
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
       {/* ── BUSINESS PROFILE FORM ── */}
       <form onSubmit={handleProfileSubmit} className="space-y-6 font-mono text-xs card-modern p-6 bg-white">
         <h2 className="font-semibold uppercase tracking-wider text-sm text-black font-sans">Business Profile</h2>
@@ -990,7 +989,6 @@ export function SettingsForm({
           </form>
         )}
       </div>
-    </div>
 
     {/* ── COMMERCIAL TERMS & CONDITIONS LINK ── */}
     <div className="card-modern p-6 bg-white font-mono text-xs space-y-4">

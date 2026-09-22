@@ -299,8 +299,8 @@ export async function getShopPlanDetails(shopId: string): Promise<ShopPlanDetail
         db.select({ value: count() }).from(stockLocations).where(eq(stockLocations.shopId, shopId)),
     ]);
 
-    const currentMembersCount = memberCountRes[0]?.value || 1;
-    const currentLocationsCount = locationCountRes[0]?.value || 1;
+    const currentMembersCount = memberCountRes[0]?.value ?? 1;
+    const currentLocationsCount = locationCountRes[0]?.value ?? 0;
 
     const enterpriseSpec = dynamicSpecs.ENTERPRISE || PLAN_SPECS.ENTERPRISE;
     const freeSpec = dynamicSpecs.FREE || PLAN_SPECS.FREE;

@@ -95,7 +95,10 @@ export async function createPlatformPlanAction(input: CreatePlatformPlanInput) {
         }
 
         const monthly = Math.max(0, Number(input.priceKesMonthly) || 0);
-        const discountPercent = Math.max(0, Math.min(99, Number(input.annualDiscountPercent) || 20));
+        const rawDiscount = input.annualDiscountPercent !== undefined && input.annualDiscountPercent !== null && !isNaN(Number(input.annualDiscountPercent))
+            ? Number(input.annualDiscountPercent)
+            : 20;
+        const discountPercent = Math.max(0, Math.min(99, rawDiscount));
         let annual = Number(input.priceKesAnnually);
         if ((!annual || annual <= 0) && monthly > 0) {
             annual = Math.round(monthly * 12 * (1 - discountPercent / 100));
@@ -162,7 +165,10 @@ export async function updatePlatformPlanAction(input: UpdatePlatformPlanInput) {
 
         const monthly = Math.max(0, Number(input.priceKesMonthly) || 0);
         let annual = Number(input.priceKesAnnually);
-        const discountPercent = Math.max(0, Math.min(99, Number(input.annualDiscountPercent) || 20));
+        const rawDiscount = input.annualDiscountPercent !== undefined && input.annualDiscountPercent !== null && !isNaN(Number(input.annualDiscountPercent))
+            ? Number(input.annualDiscountPercent)
+            : 20;
+        const discountPercent = Math.max(0, Math.min(99, rawDiscount));
 
         // If annual is not provided or 0 for a paid plan, auto-calculate with discount
         if ((!annual || annual <= 0) && monthly > 0) {

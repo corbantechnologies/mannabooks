@@ -191,7 +191,7 @@ export async function getAdminWorkspacesList(input?: GetAdminWorkspacesInput) {
                         isLifetimePro: shop.owner.isLifetimePro,
                         isSuperAdmin: shop.owner.isSuperAdmin,
                     } : null,
-                    memberCount: shop.members?.length || 1,
+                    memberCount: shop.members?.length ?? 0,
                     documentCount: docCountRes[0]?.value || 0,
                     turnover: parseFloat(turnoverRes[0]?.sum || "0"),
                 };

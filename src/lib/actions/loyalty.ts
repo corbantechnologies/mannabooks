@@ -327,12 +327,14 @@ export async function accrueDocumentLoyalty(documentId: string) {
         if (!accountResult.success || !accountResult.data) return { success: false, error: "Account not found." };
 
         const account = accountResult.data;
-        const earnRate = parseFloat(program.earnRateKes) || 100;
+        const parsedEarnRate = parseFloat(program.earnRateKes);
+        const earnRate = (!Number.isNaN(parsedEarnRate) && parsedEarnRate > 0) ? parsedEarnRate : 100;
         const grossAmount = parseFloat(doc.grandTotal || "0");
 
         if (grossAmount <= 0) return { success: true };
 
-        const multiplier = account.tier ? parseFloat(account.tier.pointsMultiplier) || 1 : 1;
+        const parsedMultiplier = account.tier ? parseFloat(account.tier.pointsMultiplier) : 1;
+        const multiplier = !Number.isNaN(parsedMultiplier) ? parsedMultiplier : 1;
         const pointsEarned = Math.floor((grossAmount / earnRate) * multiplier);
 
         if (pointsEarned <= 0) return { success: true };
@@ -415,7 +417,8 @@ export async function redeemLoyaltyPoints(
             };
         }
 
-        const pointValue = parseFloat(program.pointValueKes) || 1.0;
+        const parsedPointValue = parseFloat(program.pointValueKes);
+        const pointValue = (!Number.isNaN(parsedPointValue) && parsedPointValue >= 0) ? parsedPointValue : 1.0;
         const discountKes = pointsToRedeem * pointValue;
         const newRunningPoints = account.currentPoints - pointsToRedeem;
 

@@ -161,7 +161,7 @@ export function AdminWorkspaceDetailClient({ shop, docStats, recentDocs }: Admin
           {/* TEAM MEMBERS CARD */}
           <div className="bg-white border border-zinc-200/80 rounded-xl p-5 shadow-xs space-y-4">
             <h3 className="font-bold text-xs uppercase text-zinc-400 tracking-wider">
-              👥 Authorized Team Members ({shop.members?.length || 1})
+              👥 Authorized Team Members ({shop.members?.length ?? 0})
             </h3>
 
             <div className="divide-y divide-zinc-100">

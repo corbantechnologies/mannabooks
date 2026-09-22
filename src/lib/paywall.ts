@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { shops, shopMembers, stockLocations, platformPlans } from "@/db/schema";
-import { count, eq, asc } from "drizzle-orm";
+import { count, eq, asc, and } from "drizzle-orm";
 
 export interface PlanDefinition {
     id: string; // 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE' | custom tier ID
@@ -186,8 +186,8 @@ export async function getDynamicPlanSpecs(): Promise<Record<string, PlanDefiniti
                 annualDiscountPercent: row.annualDiscountPercent,
                 discountedPriceMonthly: row.discountedPriceMonthly ?? null,
                 discountedPriceAnnually: row.discountedPriceAnnually ?? null,
-                maxMembers: row.maxMembers === -1 ? Infinity : row.maxMembers,
-                maxLocations: row.maxLocations === -1 ? Infinity : row.maxLocations,
+                maxMembers: row.maxMembers === -1 ? Infinity : Math.max(1, Number(row.maxMembers ?? 1)),
+                maxLocations: row.maxLocations === -1 ? Infinity : Math.max(1, Number(row.maxLocations ?? 1)),
                 canTransferStock: row.canTransferStock,
                 hasGeneralLedger: row.hasGeneralLedger,
                 hasReconciliation: row.hasReconciliation,
@@ -260,7 +260,7 @@ export async function getShopPlanDetails(shopId: string): Promise<ShopPlanDetail
         ? "PRO"
         : (userPlan && userPlan !== "FREE" ? userPlan : (shopPlan && shopPlan !== "FREE" ? shopPlan : "FREE"));
 
-    const effectivePlanKey = (rawPlan in dynamicSpecs) ? rawPlan : "FREE";
+    const effectivePlanKey = (rawPlan in dynamicSpecs || rawPlan in PLAN_SPECS) ? rawPlan : "FREE";
     const baseSpec = dynamicSpecs[effectivePlanKey] || PLAN_SPECS[effectivePlanKey] || PLAN_SPECS.FREE;
 
     const rawExpiry = shop.owner?.subscriptionExpiresAt || shop.subscriptionExpiresAt;
@@ -293,14 +293,14 @@ export async function getShopPlanDetails(shopId: string): Promise<ShopPlanDetail
         ? Math.max(0, Math.ceil((expiresAt.getTime() - nowMs) / (1000 * 60 * 60 * 24)))
         : null;
 
-    // Count active members and locations
+    // Count active members and locations (strictly active records only)
     const [memberCountRes, locationCountRes] = await Promise.all([
-        db.select({ value: count() }).from(shopMembers).where(eq(shopMembers.shopId, shopId)),
-        db.select({ value: count() }).from(stockLocations).where(eq(stockLocations.shopId, shopId)),
+        db.select({ value: count() }).from(shopMembers).where(and(eq(shopMembers.shopId, shopId), eq(shopMembers.isActive, true))),
+        db.select({ value: count() }).from(stockLocations).where(and(eq(stockLocations.shopId, shopId), eq(stockLocations.isActive, true))),
     ]);
 
-    const currentMembersCount = memberCountRes[0]?.value ?? 1;
-    const currentLocationsCount = locationCountRes[0]?.value ?? 0;
+    const currentMembersCount = Number(memberCountRes[0]?.value ?? 0);
+    const currentLocationsCount = Number(locationCountRes[0]?.value ?? 0);
 
     const enterpriseSpec = dynamicSpecs.ENTERPRISE || PLAN_SPECS.ENTERPRISE;
     const freeSpec = dynamicSpecs.FREE || PLAN_SPECS.FREE;
@@ -350,8 +350,9 @@ export async function assertCanAddMember(shopId: string) {
     if (!details) throw new Error("Target workspace not found.");
 
     if (!details.canAddMember) {
+        const maxDisplay = details.planSpec.maxMembers === Infinity ? "Unlimited" : details.planSpec.maxMembers;
         throw new Error(
-            `Workspace member limit reached (${details.currentMembersCount}/${details.planSpec.maxMembers}). Upgrade your plan to invite additional team members.`
+            `Workspace member limit reached (${details.currentMembersCount}/${maxDisplay}). Upgrade your plan to invite additional team members.`
         );
     }
 }
@@ -364,8 +365,9 @@ export async function assertCanAddLocation(shopId: string) {
     if (!details) throw new Error("Target workspace not found.");
 
     if (!details.canAddLocation) {
+        const maxDisplay = details.planSpec.maxLocations === Infinity ? "Unlimited" : details.planSpec.maxLocations;
         throw new Error(
-            `Stock location limit reached (${details.currentLocationsCount}/${details.planSpec.maxLocations}). Basic supports up to 3 locations; upgrade to Professional for unlimited warehouses.`
+            `Stock location limit reached (${details.currentLocationsCount}/${maxDisplay}). Basic supports up to 3 locations; upgrade to Professional for unlimited warehouses.`
         );
     }
 }

@@ -120,7 +120,7 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
       tagline: editingPlan.tagline,
       priceKesMonthly: editingPlan.priceKesMonthly,
       priceKesAnnually: editingPlan.priceKesAnnually,
-      annualDiscountPercent: editingPlan.annualDiscountPercent || 20,
+      annualDiscountPercent: editingPlan.annualDiscountPercent ?? 20,
       discountedPriceMonthly: editingPlan.discountedPriceMonthly ?? null,
       discountedPriceAnnually: editingPlan.discountedPriceAnnually ?? null,
       maxMembers: editingPlan.maxMembers === Infinity ? -1 : editingPlan.maxMembers,
@@ -555,7 +555,7 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
                       value={createPlanData.priceKesMonthly}
                       onChange={(e) => {
                         const monthly = parseInt(e.target.value) || 0;
-                        const discount = createPlanData.annualDiscountPercent || 20;
+                        const discount = createPlanData.annualDiscountPercent ?? 20;
                         const annual = monthly > 0 ? Math.round(monthly * 12 * (1 - discount / 100)) : 0;
                         setCreatePlanData({ ...createPlanData, priceKesMonthly: monthly, priceKesAnnually: annual });
                       }}
@@ -873,7 +873,7 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
                       value={editingPlan.priceKesMonthly}
                       onChange={(e) => {
                         const monthly = parseInt(e.target.value) || 0;
-                        const discount = editingPlan.annualDiscountPercent || 20;
+                        const discount = editingPlan.annualDiscountPercent ?? 20;
                         const annual = monthly > 0 ? Math.round(monthly * 12 * (1 - discount / 100)) : 0;
                         setEditingPlan({ ...editingPlan, priceKesMonthly: monthly, priceKesAnnually: annual });
                       }}
@@ -887,7 +887,7 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
                       type="number"
                       min="0"
                       max="90"
-                      value={editingPlan.annualDiscountPercent || 20}
+                      value={editingPlan.annualDiscountPercent ?? 20}
                       onChange={(e) => {
                         const discount = parseInt(e.target.value) || 0;
                         const annual = editingPlan.priceKesMonthly > 0

@@ -248,7 +248,7 @@ export async function createStockLocation(formData: {
         // Check if this is the very first location — auto-set as default
         const existingCount = await db.$count(
             stockLocations,
-            eq(stockLocations.shopId, formData.shopId)
+            and(eq(stockLocations.shopId, formData.shopId), eq(stockLocations.isActive, true))
         );
         const shouldBeDefault = formData.isDefault || existingCount === 0;
 

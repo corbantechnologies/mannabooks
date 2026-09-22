@@ -4,19 +4,23 @@ import Link from "next/link";
 import { PublicNavbar } from "@/components/PublicNavbar";
 
 export const metadata: Metadata = {
-  title: "Industries & Solutions | Manna Books — Built for Kenyan SMEs",
+  title: "Industries & Solutions | Manna Books — Financial Services, Retail, Hybrid & Statutory Compliance",
   description:
-    "Discover how Manna Books serves retail counters, hardware stores, professional agencies, logistics distributors, and statutory payroll compliance for Kenyan businesses.",
+    "Discover how Manna Books serves pure financial firms, SACCOs, wealth managers, retail counters, professional consultancies, commercial distributors, and hybrid enterprises across Kenya.",
   keywords: [
+    "financial management software Kenya",
+    "accounting software for SACCOs Kenya",
+    "microfinance accounting software Kenya",
     "KRA eTIMS solutions Kenya",
     "retail POS system Kenya",
     "accounting software for hardware stores Kenya",
     "payroll compliance SHIF PAYE NSSF",
+    "bank reconciliation software Kenya",
     "distribution stock tracker Kenya",
   ],
   openGraph: {
-    title: "Industries & Solutions | Manna Books — Invoicing, Payroll & POS",
-    description: "Tailored financial operations and statutory compliance software for retail counters, professional services, distributors, and Kenyan SMEs.",
+    title: "Industries & Solutions | Manna Books — Financial Management, Invoicing, Payroll & POS",
+    description: "Tailored financial management, double-entry accounting, and statutory compliance software for financial firms, retail counters, professional services, and hybrid enterprises.",
     url: "https://mannabooks.co.ke/industries",
     siteName: "Manna Books",
     locale: "en_KE",
@@ -28,6 +32,34 @@ export const metadata: Metadata = {
 };
 
 const industries = [
+  {
+    icon: "🏦",
+    tag: "FINANCIAL & LEGAL SERVICES",
+    title: "Wealth Managers, SACCOs, Microfinance, Law Chambers & Consultancies",
+    description:
+      "Engineered specifically for financial entities, SACCOs, wealth managers, law firms, and advisory practices managing client accounts, creditor commitments, bank reconciliations, and statutory reporting with zero physical stock.",
+    bulletPoints: [
+      "Complete Client (AR 1100) & Supplier (AP 2100) sub-ledger integration with instant statements of account.",
+      "Compound multi-line journal entry builder for fund splits, statutory payroll accruals, and partner draws.",
+      "Bank & M-Pesa CSV reconciliation with automated inverted matching and KES 0.00 zero-variance target.",
+      "Strict monthly period closing/reopening guards and 1-click CSV/PDF export for Trial Balance, P&L, & Balance Sheet."
+    ],
+    highlight: true,
+  },
+  {
+    icon: "🏗️",
+    tag: "HYBRID ENTERPRISE",
+    title: "Contractors, Wholesalers & Commercial Hybrid Firms",
+    description:
+      "The unified architecture for companies billing physical equipment alongside professional installation labor, engineering consulting hours, and recurring maintenance retainers.",
+    bulletPoints: [
+      "Single unified tax invoice billing physical inventory (with FIFO stock deductions) and non-stock service fees.",
+      "Consolidated double-entry General Ledger reconciling warehouse asset accounts with corporate payables.",
+      "Batch vendor bill approvals and consolidated EFT/M-Pesa payment runs for high-volume project procurement.",
+      "Switch workspace business mode to Hybrid in one click to surface both POS and deep financial tools."
+    ],
+    highlight: false,
+  },
   {
     icon: "🏪",
     tag: "RETAIL & WHOLESALE",
@@ -45,7 +77,7 @@ const industries = [
   {
     icon: "💼",
     tag: "PROFESSIONAL SERVICES",
-    title: "Agencies, Consultants, Freelancers & Lawyers",
+    title: "Agencies, Consultants, Freelancers & Service Providers",
     description:
       "Designed for service-based businesses billing local or international clients with retainer contracts, custom currency preferences, and frictionless portal review links.",
     bulletPoints: [
@@ -68,7 +100,7 @@ const industries = [
       "Procurement document flow including Purchase Orders, LPOs, and GRNs.",
       "Weighted average cost valuation & ABC Pareto revenue-tier categorization."
     ],
-    highlight: true,
+    highlight: false,
   },
   {
     icon: "🇰🇪",

@@ -1543,4 +1543,53 @@ export async function deleteDocumentNoteAction(input: {
         console.error("Failed to delete document note:", error);
         return { success: false, error: error.message || "Failed to delete note." };
     }
+}
+
+/**
+ * Action: Bulk update status of multiple documents (e.g. mark as PAID, CANCELLED, ISSUED).
+ */
+export async function bulkUpdateDocumentStatusAction(input: {
+    documentIds: string[];
+    newStatus: "DRAFT" | "ISSUED" | "PAID" | "CANCELLED";
+    shopSlug: string;
+}): Promise<{ success: boolean; updatedCount: number; error?: string }> {
+    try {
+        const session = await verifyAndGetSession();
+        if (!session) {
+            return { success: false, updatedCount: 0, error: "Unauthorized. Please log in." };
+        }
+
+        if (!input.documentIds || input.documentIds.length === 0) {
+            return { success: false, updatedCount: 0, error: "No documents provided." };
+        }
+
+        const shop = await db.query.shops.findFirst({
+            where: eq(shops.slug, input.shopSlug),
+        });
+
+        if (!shop) {
+            return { success: false, updatedCount: 0, error: "Workspace not found." };
+        }
+
+        await enforcePermission(shop.id, "manage_documents");
+
+        const { inArray } = await import("drizzle-orm");
+
+        await db.update(documents)
+            .set({
+                status: input.newStatus,
+            })
+            .where(
+                and(
+                    eq(documents.shopId, shop.id),
+                    inArray(documents.id, input.documentIds)
+                )
+            );
+
+        revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+        return { success: true, updatedCount: input.documentIds.length };
+    } catch (error: any) {
+        console.error("Failed to bulk update document status:", error);
+        return { success: false, updatedCount: 0, error: error.message || "Bulk update failed." };
+    }
 }

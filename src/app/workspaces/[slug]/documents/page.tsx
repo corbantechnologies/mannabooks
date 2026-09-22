@@ -10,6 +10,7 @@ import { clients } from "@/db/schema";
 import { LedgerFilterBar } from "./LedgerFilterBar";
 import { PipelineView } from "@/components/PipelineView";
 import { DocumentExportActions } from "./DocumentExportActions";
+import { DocumentsTableClient } from "./DocumentsTableClient";
 
 interface LedgerPageProps {
   params: Promise<{ slug: string }>;
@@ -243,109 +244,37 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
           currency={shop.currency}
         />
       ) : (
-        /* TABLE VIEW */
-        <div className="surface overflow-x-auto">
-          <table className="w-full text-left font-mono text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
-                <th className="px-4 py-3 border-r border-zinc-100">Serial No</th>
-                <th className="px-4 py-3 border-r border-zinc-100">Type</th>
-                <th className="px-4 py-3 border-r border-zinc-100">Client / Party</th>
-                <th className="px-4 py-3 border-r border-zinc-100">Date Issued</th>
-                <th className="px-4 py-3 border-r border-zinc-100 text-right">Total</th>
-                <th className="px-4 py-3 text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {streamLedger.map((doc) => (
-                <tr key={doc.id} className="hover:bg-zinc-50 transition-colors group cursor-pointer border-b border-zinc-100/80 last:border-0">
-                  <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider">
-                    <Link href={`/workspaces/${slug}/documents/${doc.id}`} className="hover:underline">
-                      {doc.docNumber}
-                    </Link>
-                  </td>
-                  <td className="p-4 border-r border-zinc-100">
-                    <span className="badge-zinc">
-                      {doc.type}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 border-r border-zinc-100 font-sans text-sm font-semibold text-zinc-900">
-                    {doc.client ? (
-                      <Link
-                        href={`/workspaces/${slug}/clients/${doc.client.id}`}
-                        className="hover:underline text-black font-semibold"
-                      >
-                        {doc.client.name} ➔
-                      </Link>
-                    ) : doc.supplier ? (
-                      <Link
-                        href={`/workspaces/${slug}/suppliers/${doc.supplier.id}`}
-                        className="hover:underline text-zinc-700"
-                      >
-                        {doc.supplier.name} ➔
-                      </Link>
-                    ) : (
-                      doc.type === "PAYROLL_VOUCHER" ? "Staff Payroll" : "Walk-in Customer"
-                    )}
-                  </td>
-                  <td className="px-4 py-3 border-r border-zinc-100 text-zinc-400">
-                    {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
-                  </td>
-                  <td className="px-4 py-3 border-r border-zinc-100 font-semibold text-sm text-zinc-900 text-right">
-                    {formatCurrency(doc.grandTotal, shop.currency)}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <div className="flex flex-col gap-1 items-center">
-                      <span className={`border px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded ${
-                        doc.status === "PAID" ? "badge-emerald" :
-                        doc.status === "ISSUED" ? "badge-zinc" :
-                        doc.status === "OVERDUE" ? "badge-rose" :
-                        "badge-zinc"
-                      }`}>
-                        {doc.status}
-                      </span>
-                      {isFiscalDocType(doc.type) && doc.requiresEtims && !doc.kraCuInvoiceNumber && (
-                        <span className="border border-amber-300 bg-amber-50 text-amber-900 px-1.5 py-0.5 text-[9px] font-semibold tracking-tight uppercase whitespace-nowrap rounded">
-                          ⚠️ eTIMS CU Pending
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-
-              {streamLedger.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-16 text-center">
-                    <div className="space-y-3">
-                      <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center mx-auto mb-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                      </div>
-                      <p className="font-bold text-zinc-800 text-sm font-sans">
-                        {activeType !== "ALL"
-                          ? `No ${DOC_TYPE_TABS.find(t => t.key === activeType)?.label || activeType}s found`
-                          : "No documents yet"}
-                      </p>
-                      <p className="text-zinc-400 text-xs font-sans max-w-xs mx-auto leading-relaxed">
-                        {activeType === "QUOTATION"
-                          ? "Create your first quote and convert it to an invoice in one click."
-                          : activeType === "INVOICE"
-                          ? "Generate your first invoice or convert an existing quotation."
-                          : "Start by generating a document for your workspace."}
-                      </p>
-                      <Link
-                        href={`/workspaces/${slug}/documents/new`}
-                        className="btn-primary-modern px-4 py-2 text-xs font-semibold uppercase inline-block mt-2"
-                      >
-                        + Generate Document
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        /* TABLE VIEW WITH BULK ACTIONS */
+        <DocumentsTableClient
+          slug={slug}
+          currency={shop.currency}
+          activeType={activeType}
+          docTypeTabs={DOC_TYPE_TABS}
+          documents={streamLedger.map((doc) => ({
+            id: doc.id,
+            docNumber: doc.docNumber,
+            type: doc.type,
+            status: doc.status,
+            grandTotal: doc.grandTotal,
+            issueDate: String(doc.issueDate),
+            requiresEtims: doc.requiresEtims,
+            kraCuInvoiceNumber: doc.kraCuInvoiceNumber,
+            client: doc.client ? {
+              id: doc.client.id,
+              name: doc.client.name,
+              email: doc.client.email,
+              phone: doc.client.phone,
+              taxPin: doc.client.taxPin,
+            } : null,
+            supplier: doc.supplier ? {
+              id: doc.supplier.id,
+              name: doc.supplier.name,
+              email: doc.supplier.email,
+              phone: doc.supplier.phone,
+              taxPin: doc.supplier.taxPin,
+            } : null,
+          }))}
+        />
       )}
 
     </div>

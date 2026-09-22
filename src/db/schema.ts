@@ -93,6 +93,8 @@ export const shops = pgTable('shops', {
     estimatedAnnualProfit: numeric('estimated_annual_profit', { precision: 15, scale: 2 }).default('0.00').notNull(),
     // Stock Automation & Inventory Governance
     autoStockDeductionEnabled: boolean('auto_stock_deduction_enabled').default(true).notNull(),
+    // Workspace Business Operations Mode: 'SERVICES' | 'RETAIL' | 'HYBRID'
+    businessMode: varchar('business_mode', { length: 30 }).default('HYBRID').notNull(),
     // Loyalty & Membership Engine
     loyaltyEngineMode: loyaltyEngineModeEnum('loyalty_engine_mode').default('OFF').notNull(),
     // Subscription & Plan Governance
@@ -439,6 +441,8 @@ export const journalEntries = pgTable('journal_entries', {
     debitAccountId: uuid('debit_account_id').references(() => chartOfAccounts.id).notNull(),
     creditAccountId: uuid('credit_account_id').references(() => chartOfAccounts.id).notNull(),
     amount: numeric('amount', { precision: 15, scale: 2 }).notNull(),
+    referenceNumber: varchar('reference_number', { length: 100 }), // Batch / Journal Ref e.g. JRN-2026-001
+    costCenterId: uuid('cost_center_id'), // Optional Department / Project Cost Center FK
     sourceType: journalSourceEnum('source_type').default('manual').notNull(),
     sourceId: uuid('source_id'),               // FK to originating record (document, expense, etc.)
     createdById: uuid('created_by_id').references(() => users.id),
@@ -457,7 +461,20 @@ export const budgets = pgTable('budgets', {
     monthlyLimit: numeric('monthly_limit', { precision: 15, scale: 2 }).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
-    unique('unique_budget_account_period').on(table.shopId, table.accountId, table.month, table.year),
+    unique('unique_shop_account_budget').on(table.shopId, table.accountId, table.month, table.year),
+]);
+
+// COST CENTERS (Departmental & Project Cost Allocation)
+export const costCenters = pgTable('cost_centers', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    code: varchar('code', { length: 20 }).notNull(), // e.g. "CC-HQ", "PROJ-NAIROBI"
+    name: text('name').notNull(),
+    department: varchar('department', { length: 100 }),
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_cost_center_code').on(table.shopId, table.code),
 ]);
 
 // FIXED ASSETS REGISTER
@@ -504,6 +521,49 @@ export const whtPayments = pgTable('wht_payments', {
     whtAmount: numeric('wht_amount', { precision: 15, scale: 2 }).notNull(),
     sourceDocumentId: uuid('source_document_id').references(() => documents.id, { onDelete: 'set null' }),
     status: text('status').default('PENDING').notNull(), // PENDING, PAID/REMITTED
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ==========================================
+// ACCOUNTS PAYABLE (VENDOR BILLS & ITEMS)
+// ==========================================
+export const vendorBills = pgTable('vendor_bills', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    supplierId: uuid('supplier_id').references(() => suppliers.id).notNull(),
+    billNumber: varchar('bill_number', { length: 50 }).notNull(),
+    reference: varchar('reference', { length: 100 }), // Vendor's external invoice/ref number
+    billDate: timestamp('bill_date').defaultNow().notNull(),
+    dueDate: timestamp('due_date'),
+    subTotal: numeric('sub_total', { precision: 12, scale: 2 }).notNull(),
+    taxAmount: numeric('tax_amount', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    whtRate: numeric('wht_rate', { precision: 5, scale: 2 }).default('0.00').notNull(), // 0%, 5%, 10%
+    whtAmount: numeric('wht_amount', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    totalAmount: numeric('total_amount', { precision: 12, scale: 2 }).notNull(),
+    netPayable: numeric('net_payable', { precision: 12, scale: 2 }).notNull(),
+    amountPaid: numeric('amount_paid', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    status: varchar('status', { length: 30 }).default('DRAFT').notNull(), // 'DRAFT' | 'AWAITING_APPROVAL' | 'APPROVED' | 'PARTIALLY_PAID' | 'PAID' | 'CANCELLED'
+    paymentChannel: varchar('payment_channel', { length: 50 }), // 'BANK' | 'MPESA' | 'CASH' | 'CHEQUE'
+    paymentReference: varchar('payment_reference', { length: 100 }),
+    paidAt: timestamp('paid_at'),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+    index('idx_vendor_bills_shop').on(table.shopId),
+    index('idx_vendor_bills_supplier').on(table.supplierId),
+    index('idx_vendor_bills_status').on(table.status),
+]);
+
+export const vendorBillItems = pgTable('vendor_bill_items', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    billId: uuid('bill_id').references(() => vendorBills.id, { onDelete: 'cascade' }).notNull(),
+    accountId: uuid('account_id').references(() => chartOfAccounts.id).notNull(), // Expense/Asset GL account
+    description: text('description').notNull(),
+    quantity: numeric('quantity', { precision: 12, scale: 2 }).default('1.00').notNull(),
+    unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
+    taxRate: numeric('tax_rate', { precision: 5, scale: 2 }).default('0.00').notNull(),
+    totalAmount: numeric('total_amount', { precision: 12, scale: 2 }).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -757,6 +817,8 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     membershipTiers: many(membershipTiers),
     clientLoyaltyAccounts: many(clientLoyaltyAccounts),
     loyaltyLedger: many(loyaltyLedger),
+    vendorBills: many(vendorBills),
+    costCenters: many(costCenters),
 }));
 
 export const shopCurrenciesRelations = relations(shopCurrencies, ({ one }) => ({
@@ -772,6 +834,7 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
 export const suppliersRelations = relations(suppliers, ({ one, many }) => ({
     shop: one(shops, { fields: [suppliers.shopId], references: [shops.id] }),
     documents: many(documents),
+    vendorBills: many(vendorBills),
 }));
 
 export const shopMembersRelations = relations(shopMembers, ({ one }) => ({
@@ -866,6 +929,7 @@ export const chartOfAccountsRelations = relations(chartOfAccounts, ({ one, many 
     debitEntries: many(journalEntries, { relationName: 'debit_account' }),
     creditEntries: many(journalEntries, { relationName: 'credit_account' }),
     budgets: many(budgets),
+    vendorBillItems: many(vendorBillItems),
 }));
 
 export const fiscalYearsRelations = relations(fiscalYears, ({ one, many }) => ({
@@ -885,7 +949,13 @@ export const journalEntriesRelations = relations(journalEntries, ({ one }) => ({
     period: one(accountingPeriods, { fields: [journalEntries.periodId], references: [accountingPeriods.id] }),
     debitAccount: one(chartOfAccounts, { fields: [journalEntries.debitAccountId], references: [chartOfAccounts.id], relationName: 'debit_account' }),
     creditAccount: one(chartOfAccounts, { fields: [journalEntries.creditAccountId], references: [chartOfAccounts.id], relationName: 'credit_account' }),
+    costCenter: one(costCenters, { fields: [journalEntries.costCenterId], references: [costCenters.id] }),
     createdBy: one(users, { fields: [journalEntries.createdById], references: [users.id] }),
+}));
+
+export const costCentersRelations = relations(costCenters, ({ one, many }) => ({
+    shop: one(shops, { fields: [costCenters.shopId], references: [shops.id] }),
+    journalEntries: many(journalEntries),
 }));
 
 export const budgetsRelations = relations(budgets, ({ one }) => ({
@@ -905,6 +975,17 @@ export const taxInstalmentsRelations = relations(taxInstalments, ({ one }) => ({
 export const whtPaymentsRelations = relations(whtPayments, ({ one }) => ({
     shop: one(shops, { fields: [whtPayments.shopId], references: [shops.id] }),
     sourceDocument: one(documents, { fields: [whtPayments.sourceDocumentId], references: [documents.id] }),
+}));
+
+export const vendorBillsRelations = relations(vendorBills, ({ one, many }) => ({
+    shop: one(shops, { fields: [vendorBills.shopId], references: [shops.id] }),
+    supplier: one(suppliers, { fields: [vendorBills.supplierId], references: [suppliers.id] }),
+    items: many(vendorBillItems),
+}));
+
+export const vendorBillItemsRelations = relations(vendorBillItems, ({ one }) => ({
+    bill: one(vendorBills, { fields: [vendorBillItems.billId], references: [vendorBills.id] }),
+    account: one(chartOfAccounts, { fields: [vendorBillItems.accountId], references: [chartOfAccounts.id] }),
 }));
 
 // Ledger Snapshots (GL Backups before resets)

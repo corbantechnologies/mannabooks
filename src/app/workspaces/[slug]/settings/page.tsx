@@ -72,6 +72,7 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
         paymentMethods={paymentMethods}
         initialTerms={shopTerms}
         initialAutoStockDeductionEnabled={(shop as any).autoStockDeductionEnabled ?? true}
+        initialBusinessMode={((shop as any).businessMode || "HYBRID") as "SERVICES" | "RETAIL" | "HYBRID"}
         initialLoyaltyEngineMode={(shop as any).loyaltyEngineMode || "OFF"}
       />
     </div>

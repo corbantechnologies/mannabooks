@@ -78,7 +78,7 @@ export async function getBankReconciliationData(
                 amount: amt,
                 direction: isDebit ? "DEBIT" : "CREDIT",
                 sourceType: e.sourceType,
-                reference: e.description.match(/(INV-[A-Z0-9-]+|REC-[A-Z0-9-]+|EXP-[A-Z0-9-]+|MPESA-[A-Z0-9]+|[A-Z0-9]{8,12})/i)?.[0] || null,
+                reference: e.referenceNumber || e.description.match(/(INV-[A-Z0-9-]+|REC-[A-Z0-9-]+|EXP-[A-Z0-9-]+|BILL-[A-Z0-9-]+|MPESA-[A-Z0-9]+|[A-Z0-9]{8,12})/i)?.[0] || null,
             };
         });
 
@@ -106,5 +106,45 @@ export async function getBankReconciliationData(
     } catch (error: any) {
         console.error("Bank reconciliation data error:", error);
         return { success: false, error: "Failed to load bank reconciliation data." };
+    }
+}
+
+/**
+ * Action: Create an instant 1-click GL journal adjustment for bank charges or interest income
+ * to eliminate reconciliation variance.
+ */
+export async function postReconciliationAdjustmentAction(input: {
+    shopId: string;
+    entryDate: string;
+    amount: number;
+    type: "BANK_FEE" | "INTEREST_INCOME";
+    description: string;
+    reference?: string;
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const { createJournalEntry } = await import("./gl");
+        const isFee = input.type === "BANK_FEE";
+
+        await createJournalEntry({
+            shopId: input.shopId,
+            entryDate: new Date(input.entryDate),
+            description: input.description.trim() || (isFee ? "Bank Maintenance & Processing Fee" : "Interest Income"),
+            debitAccountCode: isFee ? "6900" : "1200", // Fee = DR Expense, CR Cash; Income = DR Cash, CR Revenue
+            creditAccountCode: isFee ? "1200" : "4200",
+            amount: input.amount,
+            sourceType: isFee ? "expense" : "income",
+        });
+
+        const shop = await db.query.shops.findFirst({ where: eq(shops.id, input.shopId) });
+        if (shop) {
+            const { revalidatePath } = await import("next/cache");
+            revalidatePath(`/workspaces/${shop.slug}/finance/reconciliation`);
+            revalidatePath(`/workspaces/${shop.slug}/finance/ledger`);
+        }
+
+        return { success: true };
+    } catch (err: any) {
+        console.error("Reconciliation adjustment error:", err);
+        return { success: false, error: err.message || "Failed to post reconciliation adjustment." };
     }
 }

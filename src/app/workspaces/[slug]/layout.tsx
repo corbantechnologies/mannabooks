@@ -91,7 +91,7 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
         user={user}
         planName={planName}
         isLifetime={isLifetime}
-        sidebarChildren={<DesktopSideNav slug={slug} brandColor={brandColor} />}
+        sidebarChildren={<DesktopSideNav slug={slug} brandColor={brandColor} businessMode={((shop as any).businessMode || "HYBRID") as "SERVICES" | "RETAIL" | "HYBRID"} />}
         headerChildren={
           <>
             {user.isSuperAdmin && (

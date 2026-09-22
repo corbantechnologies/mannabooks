@@ -168,3 +168,25 @@ export async function dispatchDocumentEmail({ documentId, isReminder = false, re
         return { success: false, error: error.message || "Failed to transmit notification message pipelines." };
     }
 }
+
+/**
+ * Bulk dispatch documents to their respective client or supplier emails
+ */
+export async function bulkDispatchDocumentEmails(documentIds: string[]) {
+    const results = { sent: 0, failed: 0, errors: [] as string[] };
+    for (const id of documentIds) {
+        try {
+            const res = await dispatchDocumentEmail({ documentId: id });
+            if (res.success) {
+                results.sent++;
+            } else {
+                results.failed++;
+                if (res.error) results.errors.push(res.error);
+            }
+        } catch (err: any) {
+            results.failed++;
+            results.errors.push(err.message || `Failed to dispatch email for document ${id}`);
+        }
+    }
+    return results;
+}

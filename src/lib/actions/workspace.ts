@@ -105,6 +105,7 @@ interface UpdateShopSettingsInput {
     currency: string;
     fiscalYearStartMonth: number;
     autoStockDeductionEnabled?: boolean;
+    businessMode?: "SERVICES" | "RETAIL" | "HYBRID";
     loyaltyEngineMode?: "OFF" | "POINTS_ONLY" | "TIERS_ONLY" | "HYBRID";
 }
 
@@ -139,6 +140,10 @@ export async function updateShopSettings(input: UpdateShopSettingsInput) {
 
         if (input.autoStockDeductionEnabled !== undefined) {
             updateData.autoStockDeductionEnabled = input.autoStockDeductionEnabled;
+        }
+
+        if (input.businessMode !== undefined) {
+            updateData.businessMode = input.businessMode;
         }
 
         if (input.loyaltyEngineMode !== undefined) {

@@ -25,10 +25,8 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
   const { slug } = await params;
 
   // 2. Authenticate session and fetch multi-tenant profile fields entirely on the server
-  const [{ shop, user }, planDetails] = await Promise.all([
-    getActiveWorkspaceContext(slug),
-    getActiveWorkspaceContext(slug).then(ctx => getShopPlanDetails(ctx.shop.id)),
-  ]);
+  const { shop, user } = await getActiveWorkspaceContext(slug);
+  const planDetails = await getShopPlanDetails(shop.id);
 
   // 3. Check if GL is enabled and at least one fiscal year is declared
   const hasFiscalYear = !shop.isGlEnabled || (await db.query.fiscalYears.findFirst({

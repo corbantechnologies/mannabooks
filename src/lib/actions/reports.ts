@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { documents, documentItems, expenses, incomes, shops, clients, fixedAssets, productLocationStock, products } from "@/db/schema";
+import { documents, documentItems, expenses, incomes, shops, clients, suppliers, fixedAssets, productLocationStock, products } from "@/db/schema";
 import { eq, and, gte, lte, desc, sum } from "drizzle-orm";
 import { getFiscalYearRange } from "@/lib/fiscalYear";
 
@@ -631,5 +631,144 @@ export async function getClientStatement(
     } catch (error: any) {
         console.error("Client statement error:", error);
         return { success: false, error: "Failed to generate client statement." };
+    }
+}
+
+// ================================================================
+// SUPPLIER STATEMENT OF ACCOUNT
+// ================================================================
+
+export interface SupplierStatementData {
+    supplierName: string;
+    supplierEmail: string;
+    supplierPhone?: string | null;
+    taxPin?: string | null;
+    currency: string;
+    shopName: string;
+    periodLabel: string;
+    lines: StatementLine[];
+    totalDebits: number;
+    totalCredits: number;
+    closingBalance: number;
+}
+
+export async function getSupplierStatement(
+    shopId: string,
+    supplierId: string,
+    startDate?: Date,
+    endDate?: Date
+): Promise<{ success: true; data: SupplierStatementData } | { success: false; error: string }> {
+    try {
+        const [shop, supplier] = await Promise.all([
+            db.query.shops.findFirst({ where: eq(shops.id, shopId) }),
+            db.query.suppliers.findFirst({
+                where: and(eq(suppliers.id, supplierId), eq(suppliers.shopId, shopId)),
+            }),
+        ]);
+
+        if (!shop) return { success: false, error: "Workspace not found." };
+        if (!supplier) return { success: false, error: "Supplier not found." };
+
+        const start = startDate || new Date(new Date().getFullYear(), 0, 1);
+        const end = endDate || new Date();
+
+        const periodLabel = `${start.toLocaleDateString("en-KE", { dateStyle: "medium" })} – ${end.toLocaleDateString("en-KE", { dateStyle: "medium" })}`;
+
+        // Fetch all documents for this supplier in the period
+        const supplierDocs = await db.query.documents.findMany({
+            where: and(
+                eq(documents.shopId, shopId),
+                eq(documents.supplierId, supplierId),
+                gte(documents.issueDate, start),
+                lte(documents.issueDate, end)
+            ),
+            orderBy: [desc(documents.issueDate)],
+        });
+
+        // Sort ascending for running balance calculation
+        const sorted = [...supplierDocs].sort(
+            (a, b) => new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime()
+        );
+
+        let runningBalance = 0;
+        let totalDebits = 0;  // Payments made (debit AP)
+        let totalCredits = 0; // Bills received (credit AP)
+
+        const lines: StatementLine[] = sorted.map(doc => {
+            const amount = parseFloat(doc.grandTotal || "0");
+            let debit = 0;
+            let credit = 0;
+
+            if (doc.type === "INVOICE" || doc.type === "GOODS_RECEIVED_NOTE" || doc.type === "PO" || doc.type === "LPO") {
+                // Inbound bill/PO: Credit Accounts Payable (liability increases)
+                if (doc.status !== "CANCELLED") {
+                    credit = amount;
+                    runningBalance += amount;
+                    totalCredits += amount;
+                }
+            } else if (doc.type === "PAYMENT_VOUCHER" || doc.type === "RECEIPT") {
+                // Outbound settlement / voucher: Debit Accounts Payable (liability decreases)
+                if (doc.status !== "CANCELLED") {
+                    debit = amount;
+                    runningBalance -= amount;
+                    totalDebits += amount;
+                }
+            } else if (doc.type === "DEBIT_NOTE") {
+                // Debit Note issued to supplier reduces amount owed
+                if (doc.status !== "CANCELLED") {
+                    debit = amount;
+                    runningBalance -= amount;
+                    totalDebits += amount;
+                }
+            } else if (doc.type === "CREDIT_NOTE") {
+                // Supplier credit increases or offsets
+                credit = amount;
+                runningBalance += amount;
+                totalCredits += amount;
+            }
+
+            const docTypeLabel: Record<string, string> = {
+                INVOICE: "Supplier Bill",
+                GOODS_RECEIVED_NOTE: "Goods Received Note",
+                LPO: "Local Purchase Order",
+                PO: "Purchase Order",
+                PAYMENT_VOUCHER: "Payment Voucher",
+                RECEIPT: "Supplier Receipt",
+                CREDIT_NOTE: "Credit Note",
+                DEBIT_NOTE: "Debit Note",
+            };
+
+            return {
+                date: new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" }),
+                reference: doc.docNumber,
+                docType: doc.type,
+                description: docTypeLabel[doc.type] || doc.type,
+                debit,
+                credit,
+                runningBalance,
+                status: doc.status,
+                docId: doc.id,
+            };
+        });
+
+        return {
+            success: true,
+            data: {
+                supplierName: supplier.name,
+                supplierEmail: supplier.email,
+                supplierPhone: supplier.phone,
+                taxPin: supplier.taxPin,
+                currency: shop.currency || "KES",
+                shopName: shop.name,
+                periodLabel,
+                lines,
+                totalDebits,
+                totalCredits,
+                closingBalance: runningBalance,
+            },
+        };
+    } catch (error: any) {
+        console.error("Supplier statement error:", error);
+        return { success: false, error: "Failed to generate supplier statement." };
     }
 }

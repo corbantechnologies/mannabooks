@@ -65,10 +65,6 @@ export const verifyAndGetSession = cache(async function verifyAndGetSession() {
         });
 
         if (!sessionRecord || !sessionRecord.user) {
-            // Drop invalid / orphan session cookie immediately
-            try {
-                (await cookies()).delete(SESSION_COOKIE_NAME);
-            } catch (e) {}
             return null;
         }
 
@@ -78,10 +74,9 @@ export const verifyAndGetSession = cache(async function verifyAndGetSession() {
             : new Date(sessionRecord.expiresAt).getTime();
 
         if (isNaN(expiryTime) || Date.now() >= expiryTime) {
-            // Session stale; purge from DB and drop cookie context
+            // Session stale; purge from DB
             try {
                 await db.delete(sessions).where(eq(sessions.id, token));
-                (await cookies()).delete(SESSION_COOKIE_NAME);
             } catch (e) {}
             return null;
         }

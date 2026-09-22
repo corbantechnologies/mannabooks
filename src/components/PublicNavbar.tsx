@@ -27,7 +27,7 @@ export function PublicNavbar({ activePage }: PublicNavbarProps) {
   }
 
   return (
-    <header className="border-b border-zinc-200/80 glass-panel sticky top-0 z-50 bg-white/95">
+    <header className="border-b border-zinc-200/80 sticky top-0 z-50 bg-white/85 backdrop-blur-md shadow-2xs transition-all">
       {/* PRIMARY NAVIGATION ROW */}
       <div className="px-5 sm:px-6 py-4 flex justify-between items-center max-w-7xl mx-auto w-full">
         {/* BRAND LOGO */}

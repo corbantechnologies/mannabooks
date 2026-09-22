@@ -12,6 +12,7 @@ import { enforcePermission } from "./rbac";
 import { applyDocumentStockMovements } from "@/lib/actions/stock";
 import { getFiscalYearRange, getFyDocSuffix } from "@/lib/fiscalYear";
 import { createJournalEntry } from "./gl";
+import { accrueDocumentLoyalty, redeemLoyaltyPoints } from "./loyalty";
 
 export type DocumentType = 
   | "QUOTATION" 
@@ -53,6 +54,10 @@ interface CreateDocumentInput {
     sourceDocType?: DocumentType;
     isRecurring?: boolean;
     recurringInterval?: "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY";
+    locationId?: string;
+    restockInventory?: boolean; // For CREDIT_NOTE: restore products to stock
+    loyaltyPointsRedeemed?: number;
+    loyaltyDiscountAmount?: number;
     items: CreateDocumentItemInput[];
 }
 
@@ -199,7 +204,9 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
             const docCurrency = input.currency || shopProfile.currency || "KES";
             const rateVal = input.exchangeRate && input.exchangeRate > 0 ? input.exchangeRate : 1.0;
             const baseCurr = shopProfile.currency || "KES";
-            const baseTotalVal = (calculatedTotals.grandTotal * rateVal).toFixed(2);
+            const loyaltyDisc = input.loyaltyDiscountAmount || 0;
+            const netGrandTotal = Math.max(0, calculatedTotals.grandTotal - loyaltyDisc);
+            const baseTotalVal = (netGrandTotal * rateVal).toFixed(2);
 
             // 6. Insert master header registry (The Document)
             const [newDoc] = await tx.insert(documents).values({
@@ -223,9 +230,12 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 nextRecurringDate: input.isRecurring ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : null, // Default to next month if recurring
                 subTotal: calculatedTotals.subTotal.toString(),
                 taxAmount: calculatedTotals.taxAmount.toString(),
-                grandTotal: calculatedTotals.grandTotal.toString(),
+                grandTotal: netGrandTotal.toFixed(2),
                 issueDate: new Date(),
                 dueDate: input.dueDate || null,
+                locationId: input.locationId || null,
+                loyaltyPointsRedeemed: input.loyaltyPointsRedeemed || 0,
+                loyaltyDiscountAmount: loyaltyDisc.toString(),
             }).returning();
 
             // 5. Structure and write the calculated item rows to the sub-ledger
@@ -253,11 +263,17 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
             await tx.insert(documentItems).values(compiledRowsPayload);
 
             // 6. Trigger Stock Movements
-            if (input.type === "RECEIPT" && !input.parentDocumentId) {
-                // Direct Receipts cause immediate outflow
+            if (
+                (input.type === "RECEIPT" && !input.parentDocumentId) ||
+                (input.type === "INVOICE" && newDoc.status === "ISSUED")
+            ) {
+                // Direct Receipts or Invoices created directly in ISSUED status (e.g. converted from Quotation) cause immediate outflow
                 await applyDocumentStockMovements(newDoc.id, "OUTFLOW", tx);
             } else if (input.type === "GOODS_RECEIVED_NOTE") {
                 // Goods Received Notes cause immediate inflow
+                await applyDocumentStockMovements(newDoc.id, "INFLOW", tx);
+            } else if (input.type === "CREDIT_NOTE" && input.restockInventory !== false) {
+                // Credit Notes return merchandise to inventory
                 await applyDocumentStockMovements(newDoc.id, "INFLOW", tx);
             }
 
@@ -278,6 +294,30 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
             }
 
             const docEntryDate = new Date(newDoc.issueDate);
+
+            // LOYALTY & REWARDS: Process point redemptions and accrual
+            if (input.loyaltyPointsRedeemed && input.loyaltyPointsRedeemed > 0 && finalClientId) {
+                redeemLoyaltyPoints(input.shopId, finalClientId, input.loyaltyPointsRedeemed, newDoc.id)
+                    .catch(err => console.warn("Failed to deduct redeemed loyalty points:", err));
+            }
+
+            if ((input.type === "RECEIPT" || (input.type === "INVOICE" && newDoc.status === "ISSUED")) && finalClientId) {
+                accrueDocumentLoyalty(newDoc.id).catch(err => console.warn("Failed to accrue loyalty points:", err));
+            }
+
+            // AUTO-JOURNAL: Sales Discount (Account 4200) for redeemed loyalty points
+            if (input.loyaltyDiscountAmount && input.loyaltyDiscountAmount > 0) {
+                createJournalEntry({
+                    shopId: input.shopId,
+                    entryDate: docEntryDate,
+                    description: `Loyalty Points Discount — ${formattedSerial}`,
+                    debitAccountCode: "4200",  // Sales Discounts
+                    creditAccountCode: "4100", // Sales Revenue
+                    amount: input.loyaltyDiscountAmount,
+                    sourceType: "document",
+                    sourceId: newDoc.id,
+                }).catch(err => console.warn("Failed to post loyalty discount journal:", err));
+            }
 
             // AUTO-JOURNAL: Standalone Receipt (no parent invoice) → DR Cash & Bank / CR Sales Revenue
             if (input.type === "RECEIPT" && !input.parentDocumentId) {
@@ -440,6 +480,18 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
                 await applyDocumentStockMovements(existing.id, "INFLOW");
             }
         }
+
+        // STOCK REVERSAL: When an active invoice or receipt is cancelled, restore stock
+        if (
+            (existing.status === "ISSUED" || existing.status === "PAID" || existing.status === "PARTIALLY_PAID") &&
+            input.status === "CANCELLED"
+        ) {
+            if (existing.type === "INVOICE" || existing.type === "RECEIPT") {
+                await applyDocumentStockMovements(existing.id, "REVERSE_OUTFLOW");
+            } else if (existing.type === "GOODS_RECEIVED_NOTE" || existing.type === "LPO" || existing.type === "PO") {
+                await applyDocumentStockMovements(existing.id, "REVERSE_INFLOW");
+            }
+        }
         
         // Ensure LPOs, POs, and GRNs trigger INFLOW when marked as RECEIVED or PAID (goods delivered)
         const isReceivingTransition = (input.status === "RECEIVED" || input.status === "PAID") && 
@@ -457,6 +509,10 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
 
         // AUTO-JOURNAL: Post GL entries when an invoice is paid
         if (existing.status !== "PAID" && input.status === "PAID") {
+            if (existing.clientId) {
+                accrueDocumentLoyalty(existing.id).catch(err => console.warn("Failed to accrue loyalty on invoice payment:", err));
+            }
+
             const amount = parseFloat(existing.grandTotal || "0");
             if (amount > 0) {
                 if (existing.type === "INVOICE") {
@@ -818,6 +874,9 @@ interface UpdateDocumentInput {
     termsAndConditions?: string;
     currency?: string;
     exchangeRate?: number;
+    locationId?: string;
+    loyaltyPointsRedeemed?: number;
+    loyaltyDiscountAmount?: number;
     items: UpdateDocumentItemInput[];
 }
 
@@ -863,7 +922,11 @@ export async function updateBillingDocument(input: UpdateDocumentInput) {
             const docCurrency = input.currency || shopProfile.currency || "KES";
             const rateVal = input.exchangeRate && input.exchangeRate > 0 ? input.exchangeRate : 1.0;
             const baseCurr = shopProfile.currency || "KES";
-            const baseTotalVal = (calculatedTotals.grandTotal * rateVal).toFixed(2);
+            const loyaltyDisc = input.loyaltyDiscountAmount !== undefined 
+                ? input.loyaltyDiscountAmount 
+                : parseFloat(doc.loyaltyDiscountAmount || "0");
+            const netGrandTotal = Math.max(0, calculatedTotals.grandTotal - loyaltyDisc);
+            const baseTotalVal = (netGrandTotal * rateVal).toFixed(2);
 
             // Update master header
             await tx.update(documents)
@@ -882,7 +945,10 @@ export async function updateBillingDocument(input: UpdateDocumentInput) {
                     baseGrandTotal: baseTotalVal,
                     subTotal: calculatedTotals.subTotal.toString(),
                     taxAmount: calculatedTotals.taxAmount.toString(),
-                    grandTotal: calculatedTotals.grandTotal.toString(),
+                    grandTotal: netGrandTotal.toFixed(2),
+                    locationId: input.locationId !== undefined ? (input.locationId || null) : doc.locationId,
+                    loyaltyPointsRedeemed: input.loyaltyPointsRedeemed !== undefined ? input.loyaltyPointsRedeemed : doc.loyaltyPointsRedeemed,
+                    loyaltyDiscountAmount: loyaltyDisc.toString(),
                 })
                 .where(eq(documents.id, input.documentId));
 

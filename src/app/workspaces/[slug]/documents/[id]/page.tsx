@@ -30,6 +30,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
     with: {
       client: true,
       supplier: true,
+      location: true,
       items: true,
       payments: {
         orderBy: (p, { desc }) => [desc(p.paymentDate)],
@@ -227,6 +228,12 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
               <p className="font-bold text-sm">{new Date(doc.dueDate).toLocaleDateString("en-KE", { dateStyle: "long" })}</p>
             </>
           )}
+          {doc.location && (
+            <>
+              <p className="font-mono text-[10px] text-zinc-400 uppercase mt-2">Fulfillment Location</p>
+              <p className="font-mono text-xs font-semibold text-black">📍 {doc.location.name} {doc.location.code ? `(${doc.location.code})` : ""}</p>
+            </>
+          )}
         </div>
         <div className="p-5 space-y-1">
           <p className="font-mono text-[10px] text-zinc-400 uppercase">Grand Total</p>
@@ -234,6 +241,16 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
           <p className="font-mono text-[10px] text-zinc-500">
             Sub: {formatCurrency(doc.subTotal, doc.currency || shop.currency)} | VAT: {formatCurrency(doc.taxAmount, doc.currency || shop.currency)}
           </p>
+          {doc.loyaltyDiscountAmount && parseFloat(doc.loyaltyDiscountAmount) > 0 && (
+            <p className="font-mono text-[10px] text-emerald-700 font-semibold">
+              🎁 Loyalty Discount: -{formatCurrency(doc.loyaltyDiscountAmount, doc.currency || shop.currency)} ({doc.loyaltyPointsRedeemed || 0} pts)
+            </p>
+          )}
+          {doc.loyaltyPointsEarned && doc.loyaltyPointsEarned > 0 && (
+            <p className="font-mono text-[10px] text-zinc-600">
+              ✨ Points Accrued: +{doc.loyaltyPointsEarned} pts
+            </p>
+          )}
           {doc.currency && doc.currency !== (shop.currency || "KES") && (
             <div className="bg-amber-50 border border-amber-200 rounded p-2 text-[10px] font-sans text-amber-900 mt-1">
               <span className="font-bold block">Base Equivalent ({shop.currency || "KES"}): {formatCurrency(doc.baseGrandTotal || (parseFloat(doc.grandTotal) * parseFloat(doc.exchangeRate || "1")), shop.currency || "KES")}</span>

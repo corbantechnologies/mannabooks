@@ -104,6 +104,8 @@ interface UpdateShopSettingsInput {
     vatNumber?: string;
     currency: string;
     fiscalYearStartMonth: number;
+    autoStockDeductionEnabled?: boolean;
+    loyaltyEngineMode?: "OFF" | "POINTS_ONLY" | "TIERS_ONLY" | "HYBRID";
 }
 
 /**
@@ -120,21 +122,31 @@ export async function updateShopSettings(input: UpdateShopSettingsInput) {
             primaryColor = `#${primaryColor}`;
         }
 
+        const updateData: any = {
+            name: input.name.trim(),
+            shortName: input.shortName?.trim() || null,
+            phone: input.phone?.trim() || null,
+            website: input.website?.trim() || null,
+            logoUrl: input.logoUrl?.trim() || null,
+            primaryColor,
+            taxPin: input.taxPin?.trim() || null,
+            email: input.email?.trim() || null,
+            isVatRegistered: input.isVatRegistered,
+            vatNumber: input.isVatRegistered ? (input.vatNumber?.trim() || null) : null,
+            currency: input.currency.toUpperCase().trim(),
+            fiscalYearStartMonth: input.fiscalYearStartMonth,
+        };
+
+        if (input.autoStockDeductionEnabled !== undefined) {
+            updateData.autoStockDeductionEnabled = input.autoStockDeductionEnabled;
+        }
+
+        if (input.loyaltyEngineMode !== undefined) {
+            updateData.loyaltyEngineMode = input.loyaltyEngineMode;
+        }
+
         await db.update(shops)
-            .set({
-                name: input.name.trim(),
-                shortName: input.shortName?.trim() || null,
-                phone: input.phone?.trim() || null,
-                website: input.website?.trim() || null,
-                logoUrl: input.logoUrl?.trim() || null,
-                primaryColor,
-                taxPin: input.taxPin?.trim() || null,
-                email: input.email?.trim() || null,
-                isVatRegistered: input.isVatRegistered,
-                vatNumber: input.isVatRegistered ? (input.vatNumber?.trim() || null) : null, // Set to null if not VAT registered
-                currency: input.currency.toUpperCase().trim(),
-                fiscalYearStartMonth: input.fiscalYearStartMonth,
-            })
+            .set(updateData)
             .where(eq(shops.id, input.shopId));
 
         return { success: true };

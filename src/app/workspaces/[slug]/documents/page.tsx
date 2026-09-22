@@ -9,6 +9,7 @@ import Link from "next/link";
 import { clients } from "@/db/schema";
 import { LedgerFilterBar } from "./LedgerFilterBar";
 import { PipelineView } from "@/components/PipelineView";
+import { DocumentExportActions } from "./DocumentExportActions";
 
 interface LedgerPageProps {
   params: Promise<{ slug: string }>;
@@ -143,12 +144,19 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
           <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Billing &amp; Invoices</h1>
         </div>
         
-        <Link
-          href={`/workspaces/${slug}/documents/new`}
-          className="btn-primary-modern px-4 py-2 text-xs font-semibold uppercase tracking-wider w-full sm:w-auto text-center"
-        >
-          + Generate Document
-        </Link>
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          <DocumentExportActions
+            shopSlug={slug}
+            currency={shop.currency}
+            documents={streamLedger}
+          />
+          <Link
+            href={`/workspaces/${slug}/documents/new`}
+            className="btn-primary-modern px-4 py-2 text-xs font-semibold uppercase tracking-wider text-center"
+          >
+            + Generate Document
+          </Link>
+        </div>
       </div>
 
       {/* STATS STRIP */}

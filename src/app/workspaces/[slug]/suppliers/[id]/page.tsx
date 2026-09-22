@@ -105,6 +105,14 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
           {/* STREAMLINED ACTION CONTROLS */}
           <div className="flex items-center gap-2.5">
             <Link
+              href={`/workspaces/${slug}/suppliers/${supplierRecord.id}/statement`}
+              className="border border-zinc-300 bg-white hover:border-black px-3.5 py-2 font-mono font-semibold uppercase tracking-wider text-xs rounded-md shadow-2xs flex items-center gap-1.5 text-black"
+            >
+              <span>📑</span>
+              <span>Statement</span>
+            </Link>
+
+            <Link
               href={`/workspaces/${slug}/documents/new?supplierId=${supplierRecord.id}&type=LPO`}
               className="btn-primary-modern px-4 py-2 font-semibold uppercase tracking-wider text-xs shadow-sm flex items-center gap-1.5"
             >

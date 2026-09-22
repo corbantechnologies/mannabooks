@@ -1,10 +1,12 @@
 import { db } from "@/db";
-import { clients, products, shops, suppliers, documents } from "@/db/schema";
+import { clients, products, shops, suppliers, documents, shopTerms, stockLocations } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { DocumentBuilderClientForm } from "../../new/DocumentBuilderClientForm";
 import Link from "next/link";
 import { Suspense } from "react";
+import { getShopCurrencies } from "@/lib/actions/currencies";
+import { getLoyaltyProgram, getMembershipTiers } from "@/lib/actions/loyalty";
 
 interface EditDocumentPageProps {
   params: Promise<{ slug: string; id: string }>;
@@ -56,6 +58,18 @@ export default async function EditDocumentPage({ params }: EditDocumentPageProps
     orderBy: [desc(products.createdAt)],
   });
 
+  const termsRegistry = await db.query.shopTerms.findMany({
+    where: eq(shopTerms.shopId, shop.id),
+  });
+
+  const locationsRegistry = await db.query.stockLocations.findMany({
+    where: and(eq(stockLocations.shopId, shop.id), eq(stockLocations.isActive, true)),
+  });
+
+  const currenciesRegistry = await getShopCurrencies(shop.id, shop.currency || "KES");
+  const loyaltyProgramRes = await getLoyaltyProgram(shop.id);
+  const membershipTiersRes = await getMembershipTiers(shop.id);
+
   return (
     <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white font-mono text-xs">
       
@@ -92,6 +106,11 @@ export default async function EditDocumentPage({ params }: EditDocumentPageProps
           clients={clientRegistry}
           suppliers={supplierRegistry}
           products={productRegistry}
+          shopTerms={termsRegistry}
+          currencies={currenciesRegistry}
+          stockLocations={locationsRegistry}
+          loyaltyProgram={loyaltyProgramRes.success ? loyaltyProgramRes.data : null}
+          membershipTiers={membershipTiersRes.success ? membershipTiersRes.data : []}
           initialDocument={doc}
         />
       </Suspense>

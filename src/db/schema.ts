@@ -30,6 +30,16 @@ export const journalSourceEnum = pgEnum('journal_source', ['document', 'expense'
 export const docStatusEnum = pgEnum('doc_status', ['DRAFT', 'ISSUED', 'OVERDUE', 'PAID', 'PARTIALLY_PAID', 'RECEIVED', 'CANCELLED', 'CONFIRMED']);
 export const taxRegimeEnum = pgEnum('tax_regime', ['CIT', 'TOT', 'EXEMPT']);
 export const assetClassEnum = pgEnum('asset_class', ['CLASS_1', 'CLASS_2', 'CLASS_3', 'CLASS_4', 'BUILDING']);
+export const loyaltyEngineModeEnum = pgEnum('loyalty_engine_mode', ['OFF', 'POINTS_ONLY', 'TIERS_ONLY', 'HYBRID']);
+export const loyaltyMovementTypeEnum = pgEnum('loyalty_movement_type', [
+    'EARN',
+    'REDEEM',
+    'MANUAL_ADJUST',
+    'EXPIRE',
+    'WALLET_TOPUP',
+    'WALLET_DEBIT',
+    'VOID'
+]);
 
 // ==========================================
 // 2. TABLES
@@ -81,6 +91,10 @@ export const shops = pgTable('shops', {
     isTotActive: boolean('is_tot_active').default(false).notNull(),
     citRate: numeric('cit_rate', { precision: 5, scale: 2 }).default('30.00').notNull(),
     estimatedAnnualProfit: numeric('estimated_annual_profit', { precision: 15, scale: 2 }).default('0.00').notNull(),
+    // Stock Automation & Inventory Governance
+    autoStockDeductionEnabled: boolean('auto_stock_deduction_enabled').default(true).notNull(),
+    // Loyalty & Membership Engine
+    loyaltyEngineMode: loyaltyEngineModeEnum('loyalty_engine_mode').default('OFF').notNull(),
     // Subscription & Plan Governance
     plan: varchar('plan', { length: 30 }).default('FREE').notNull(), // 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE'
     subscriptionStatus: varchar('subscription_status', { length: 30 }).default('ACTIVE').notNull(), // 'ACTIVE' | 'GRACE_PERIOD' | 'EXPIRED' | 'CANCELLED' | 'LIFETIME_FREE'
@@ -236,6 +250,14 @@ export const documents = pgTable('documents', {
     resendEmailId: varchar('resend_email_id', { length: 100 }),
     lastEmailSentAt: timestamp('last_email_sent_at'),
     lastEmailOpenedAt: timestamp('last_email_opened_at'),
+
+    // Inventory Location Fulfillment
+    locationId: uuid('location_id').references((): any => stockLocations.id, { onDelete: 'set null' }),
+
+    // Loyalty Rewards & Point Redemptions
+    loyaltyPointsEarned: integer('loyalty_points_earned').default(0).notNull(),
+    loyaltyPointsRedeemed: integer('loyalty_points_redeemed').default(0).notNull(),
+    loyaltyDiscountAmount: numeric('loyalty_discount_amount', { precision: 12, scale: 2 }).default('0.00').notNull(),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
@@ -638,6 +660,65 @@ export const platformPlans = pgTable('platform_plans', {
 });
 
 // ==========================================
+// LOYALTY & MEMBERSHIP ENGINE TABLES
+// ==========================================
+export const loyaltyPrograms = pgTable('loyalty_programs', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull().unique(),
+    isEnabled: boolean('is_enabled').default(false).notNull(),
+    engineMode: loyaltyEngineModeEnum('engine_mode').default('HYBRID').notNull(),
+    programName: varchar('program_name', { length: 100 }).default('Rewards Club').notNull(),
+    earnRateKes: numeric('earn_rate_kes', { precision: 10, scale: 2 }).default('100.00').notNull(), // KES spent to earn 1 point
+    pointValueKes: numeric('point_value_kes', { precision: 10, scale: 2 }).default('1.00').notNull(), // Discount value of 1 point (KES)
+    minRedeemPoints: integer('min_redeem_points').default(50).notNull(),
+    pointsExpiryDays: integer('points_expiry_days'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const membershipTiers = pgTable('membership_tiers', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    name: varchar('name', { length: 50 }).notNull(), // e.g. "Bronze", "Silver", "Gold", "VIP", "Wholesale Tier 1"
+    minSpendKes: numeric('min_spend_kes', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    discountPercent: numeric('discount_percent', { precision: 5, scale: 2 }).default('0.00').notNull(), // Auto discount on billing
+    pointsMultiplier: numeric('points_multiplier', { precision: 4, scale: 2 }).default('1.00').notNull(), // e.g. 1.5x points
+    badgeColor: varchar('badge_color', { length: 20 }).default('#71717a').notNull(),
+    displayOrder: integer('display_order').default(0).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const clientLoyaltyAccounts = pgTable('client_loyalty_accounts', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    clientId: uuid('client_id').references(() => clients.id, { onDelete: 'cascade' }).notNull().unique(),
+    memberNumber: varchar('member_number', { length: 50 }).notNull().unique(),
+    tierId: uuid('tier_id').references(() => membershipTiers.id, { onDelete: 'set null' }),
+    currentPoints: integer('current_points').default(0).notNull(),
+    lifetimePoints: integer('lifetime_points').default(0).notNull(),
+    walletBalanceKes: numeric('wallet_balance_kes', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    membershipStatus: varchar('membership_status', { length: 20 }).default('ACTIVE').notNull(),
+    expiresAt: timestamp('expires_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const loyaltyLedger = pgTable('loyalty_ledger', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    accountId: uuid('account_id').references(() => clientLoyaltyAccounts.id, { onDelete: 'cascade' }).notNull(),
+    movementType: loyaltyMovementTypeEnum('movement_type').notNull(),
+    pointsDelta: integer('points_delta').default(0).notNull(),
+    walletDeltaKes: numeric('wallet_delta_kes', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    runningPointsBalance: integer('running_points_balance').notNull(),
+    runningWalletBalanceKes: numeric('running_wallet_balance_kes', { precision: 12, scale: 2 }).notNull(),
+    sourceDocumentId: uuid('source_document_id').references(() => documents.id, { onDelete: 'set null' }),
+    notes: text('notes'),
+    createdById: uuid('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ==========================================
 // 3. RELATIONS (For ORM Querying)
 // ==========================================
 export const usersRelations = relations(users, ({ many }) => ({
@@ -672,6 +753,10 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     stockLedger: many(stockLedger),
     subscriptions: many(subscriptions),
     billingTransactions: many(billingTransactions),
+    loyaltyPrograms: many(loyaltyPrograms),
+    membershipTiers: many(membershipTiers),
+    clientLoyaltyAccounts: many(clientLoyaltyAccounts),
+    loyaltyLedger: many(loyaltyLedger),
 }));
 
 export const shopCurrenciesRelations = relations(shopCurrencies, ({ one }) => ({
@@ -681,6 +766,7 @@ export const shopCurrenciesRelations = relations(shopCurrencies, ({ one }) => ({
 export const clientsRelations = relations(clients, ({ one, many }) => ({
     shop: one(shops, { fields: [clients.shopId], references: [shops.id] }),
     documents: many(documents),
+    loyaltyAccounts: many(clientLoyaltyAccounts),
 }));
 
 export const suppliersRelations = relations(suppliers, ({ one, many }) => ({
@@ -698,10 +784,12 @@ export const documentsRelations = relations(documents, ({ one, many }) => ({
     client: one(clients, { fields: [documents.clientId], references: [clients.id] }),
     supplier: one(suppliers, { fields: [documents.supplierId], references: [suppliers.id] }),
     parentDocument: one(documents, { fields: [documents.parentDocumentId], references: [documents.id], relationName: 'document_lineage' }),
+    location: one(stockLocations, { fields: [documents.locationId], references: [stockLocations.id] }),
     items: many(documentItems),
     payments: many(documentPayments),
     notesList: many(documentNotes),
     token: one(documentTokens, { fields: [documents.id], references: [documentTokens.documentId] }),
+    loyaltyLedgerEntries: many(loyaltyLedger),
 }));
 
 export const documentPaymentsRelations = relations(documentPayments, ({ one }) => ({
@@ -903,4 +991,26 @@ export const notifications = pgTable('notifications', {
 export const notificationsRelations = relations(notifications, ({ one }) => ({
     user: one(users, { fields: [notifications.userId], references: [users.id] }),
     shop: one(shops, { fields: [notifications.shopId], references: [shops.id] }),
+}));
+
+export const loyaltyProgramsRelations = relations(loyaltyPrograms, ({ one }) => ({
+    shop: one(shops, { fields: [loyaltyPrograms.shopId], references: [shops.id] }),
+}));
+
+export const membershipTiersRelations = relations(membershipTiers, ({ one, many }) => ({
+    shop: one(shops, { fields: [membershipTiers.shopId], references: [shops.id] }),
+    accounts: many(clientLoyaltyAccounts),
+}));
+
+export const clientLoyaltyAccountsRelations = relations(clientLoyaltyAccounts, ({ one, many }) => ({
+    shop: one(shops, { fields: [clientLoyaltyAccounts.shopId], references: [shops.id] }),
+    client: one(clients, { fields: [clientLoyaltyAccounts.clientId], references: [clients.id] }),
+    tier: one(membershipTiers, { fields: [clientLoyaltyAccounts.tierId], references: [membershipTiers.id] }),
+    ledgerEntries: many(loyaltyLedger),
+}));
+
+export const loyaltyLedgerRelations = relations(loyaltyLedger, ({ one }) => ({
+    shop: one(shops, { fields: [loyaltyLedger.shopId], references: [shops.id] }),
+    account: one(clientLoyaltyAccounts, { fields: [loyaltyLedger.accountId], references: [clientLoyaltyAccounts.id] }),
+    document: one(documents, { fields: [loyaltyLedger.sourceDocumentId], references: [documents.id] }),
 }));

@@ -487,13 +487,72 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
     );
 };
 
+export async function generateDocumentPdfBuffer(targetDocumentId: string): Promise<{ buffer: Buffer; filename: string } | null> {
+    registerPdfFonts();
+
+    const doc = await db.query.documents.findFirst({
+        where: eq(documents.id, targetDocumentId),
+        with: {
+            client: true,
+            supplier: true,
+            shop: true,
+            items: true,
+        },
+    });
+
+    if (!doc) return null;
+
+    const isPayroll = doc.type === "PAYROLL_VOUCHER";
+
+    const party = doc.client || doc.supplier || {
+        name: isPayroll 
+            ? "Internal Company Staff Payroll" 
+            : (doc.type === "RECEIPT" ? "Walk-in Customer" : (doc.type === "PAYMENT_VOUCHER" ? "Direct Vendor" : "Walk-in Customer")),
+        email: "—",
+        phone: null,
+        taxPin: null,
+    };
+
+    const settlements = await db.query.paymentMethods.findMany({ where: eq(paymentMethods.shopId, doc.shop.id) });
+
+    const tokenByDoc = await db.query.documentTokens.findFirst({
+        where: eq(documentTokens.documentId, targetDocumentId),
+    });
+    const actualToken = tokenByDoc?.token || "";
+    
+    let qrCodeDataUrl = "";
+    try {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://mannabooks.co.ke";
+        const qrText = doc.kraCuInvoiceNumber
+            ? `https://itax.kra.go.ke/KRA-Portal/invoiceVerification.htm?invoiceNo=${encodeURIComponent(doc.kraCuInvoiceNumber)}`
+            : `${appUrl}/portal/invoice/${actualToken}`;
+        qrCodeDataUrl = await QRCode.toDataURL(qrText, { errorCorrectionLevel: 'H', margin: 1 });
+    } catch (err) {
+        console.error("Failed to generate QR Code", err);
+    }
+
+    // Select PDF layout structure: Landscape Payroll Vector vs Standard Vector Document
+    const PDFElement = isPayroll
+        ? React.createElement(PayrollPdfDocumentStructure, { doc, shop: doc.shop, qrCodeDataUrl })
+        : React.createElement(StandardPdfDocumentStructure, { doc, shop: doc.shop, client: party, settlements, qrCodeDataUrl });
+
+    const streamStream = await ReactPDF.renderToStream(PDFElement);
+
+    const chunks: any[] = [];
+    for await (const chunk of streamStream) {
+        chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+    const filename = `MannaBooks_${doc.docNumber}.pdf`;
+
+    return { buffer, filename };
+}
+
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ token: string }> }
 ) {
     try {
-        // Re-register fonts on every request — guards against Next.js worker reloads
-        // where @react-pdf's FontStore is reset but module-level registration is skipped.
         registerPdfFonts();
         const { token } = await params;
 
@@ -527,69 +586,15 @@ export async function GET(
             return new NextResponse("Document not found.", { status: 404 });
         }
 
-        const doc = await db.query.documents.findFirst({
-            where: eq(documents.id, targetDocumentId),
-            with: {
-                client: true,
-                supplier: true,
-                shop: true,
-                items: true,
-            },
-        });
-
-        if (!doc) {
+        const pdfResult = await generateDocumentPdfBuffer(targetDocumentId);
+        if (!pdfResult) {
             return new NextResponse("Document not found.", { status: 404 });
         }
 
-        const isPayroll = doc.type === "PAYROLL_VOUCHER";
-
-        const party = doc.client || doc.supplier || {
-            name: isPayroll 
-                ? "Internal Company Staff Payroll" 
-                : (doc.type === "RECEIPT" ? "Walk-in Customer" : (doc.type === "PAYMENT_VOUCHER" ? "Direct Vendor" : "Walk-in Customer")),
-            email: "—",
-            phone: null,
-            taxPin: null,
-        };
-
-        const settlements = await db.query.paymentMethods.findMany({ where: eq(paymentMethods.shopId, doc.shop.id) });
-
-        let actualToken = tokenRecord?.token;
-        if (!actualToken) {
-            const tokenByDoc = await db.query.documentTokens.findFirst({
-                where: eq(documentTokens.documentId, targetDocumentId),
-            });
-            actualToken = tokenByDoc?.token || token;
-        }
-        
-        let qrCodeDataUrl = "";
-        try {
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://mannabooks.co.ke";
-            const qrText = doc.kraCuInvoiceNumber
-                ? `https://itax.kra.go.ke/KRA-Portal/invoiceVerification.htm?invoiceNo=${encodeURIComponent(doc.kraCuInvoiceNumber)}`
-                : `${appUrl}/portal/invoice/${actualToken}`;
-            qrCodeDataUrl = await QRCode.toDataURL(qrText, { errorCorrectionLevel: 'H', margin: 1 });
-        } catch (err) {
-            console.error("Failed to generate QR Code", err);
-        }
-
-        // Select PDF layout structure: Landscape Payroll Vector vs Standard Vector Document
-        const PDFElement = isPayroll
-            ? React.createElement(PayrollPdfDocumentStructure, { doc, shop: doc.shop, qrCodeDataUrl })
-            : React.createElement(StandardPdfDocumentStructure, { doc, shop: doc.shop, client: party, settlements, qrCodeDataUrl });
-
-        const streamStream = await ReactPDF.renderToStream(PDFElement);
-
-        const chunks: any[] = [];
-        for await (const chunk of streamStream) {
-            chunks.push(chunk);
-        }
-        const pdfBuffer = Buffer.concat(chunks);
-
-        return new NextResponse(pdfBuffer, {
+        return new NextResponse(new Uint8Array(pdfResult.buffer), {
             headers: {
                 "Content-Type": "application/pdf",
-                "Content-Disposition": `attachment; filename=MannaBooks_${doc.docNumber}.pdf`
+                "Content-Disposition": `attachment; filename=${pdfResult.filename}`
             }
         });
     } catch (error: any) {

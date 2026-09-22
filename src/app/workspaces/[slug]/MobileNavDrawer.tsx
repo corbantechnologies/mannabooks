@@ -151,10 +151,12 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
     <div className="lg:hidden sticky top-0 z-40">
       {/* ── Mobile Top Bar ─────────────────────────────────── */}
       <div
-        className="flex justify-between items-center px-4 h-[52px]"
+        className="flex justify-between items-center px-4 h-[52px] backdrop-blur-md shadow-xs"
         style={{
-          backgroundColor: "#0f1117",
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
+          backgroundColor: "rgba(15, 17, 23, 0.92)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
         }}
       >
         {/* Shop identity */}

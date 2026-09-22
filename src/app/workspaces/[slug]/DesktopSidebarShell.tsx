@@ -269,19 +269,17 @@ export function DesktopSidebarShell({
           MAIN CONTENT AREA
       ─────────────────────────────────────────────────────── */}
       <main
-        className="flex-1 flex flex-col min-w-0 overflow-x-hidden transition-all duration-300"
+        className="flex-1 flex flex-col min-w-0 overflow-x-clip transition-all duration-300"
         style={{ backgroundColor: "var(--portal-canvas, #f4f5f7)" }}
       >
-        {/* ── Desktop top header bar ─────────────────────────── */}
+        {/* ── Desktop top header bar (sticky top-0) ───────────── */}
         <header
-          className="hidden lg:flex items-center justify-between px-5 shrink-0 sticky top-0 z-30 select-none"
+          className="hidden lg:flex items-center justify-between px-5 shrink-0 sticky top-0 z-30 select-none border-b border-[#e2e4e8] shadow-xs"
           style={{
             height: "52px",
-            backgroundColor: "rgba(244, 245, 247, 0.92)",
+            backgroundColor: "rgba(244, 245, 247, 0.88)",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
-            borderBottom: "1px solid #e2e4e8",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
           }}
         >
           {/* Left: collapse toggle + breadcrumb */}
@@ -316,7 +314,7 @@ export function DesktopSidebarShell({
         </header>
 
         {/* ── Page content ───────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden">{contentChildren}</div>
+        <div className="flex-1 min-w-0">{contentChildren}</div>
       </main>
     </SidebarContext.Provider>
   );

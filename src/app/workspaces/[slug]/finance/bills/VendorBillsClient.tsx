@@ -756,7 +756,7 @@ export function VendorBillsClient({
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. INV-2026-9481 or NCBA-OCT"
+                    placeholder="e.g. INV-2026-9481 or BNK-OCT"
                     value={reference}
                     onChange={(e) => setReference(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white font-mono focus:outline-none focus:ring-1 focus:ring-black"

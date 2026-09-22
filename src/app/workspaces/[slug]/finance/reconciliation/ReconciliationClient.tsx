@@ -113,7 +113,7 @@ export default function ReconciliationClient({
     function loadSampleStatement() {
         const sampleCsv = `Date,Reference,Details,Debit,Credit,Balance
 2026-08-25,MPESA-QH82910,Customer Invoice Payment Settlement,0,15000,115000
-2026-08-26,NCBA-WTH-041,Office Rent Disbursement,45000,0,70000
+2026-08-26,BANK-EFT-041,Office Rent Disbursement,45000,0,70000
 2026-08-27,MPESA-TK99120,Walk-in POS Store Sale,0,6500,76500
 2026-08-28,CHQ-882190,Electricity & Internet Utilities,12000,0,64500
 2026-08-29,BNK-FEE-88,Bank Monthly Maintenance Fee,750,0,63750`;

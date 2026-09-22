@@ -567,11 +567,11 @@ export default function FeaturesPage() {
               </h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
-              Eliminate manual bank statement audit headaches. Upload raw CSV exports from Equity Bank, NCBA, KCB, Stanbic, Absa, Co-op Bank, or Safaricom M-Pesa Business. The engine inverts bank statements (Bank Credit = Book Debit), auto-pairs matching transactions against Account 1200, and computes real-time statement variance down to KES 0.00.
+              Eliminate manual bank statement audit headaches. Upload raw CSV exports from any commercial bank (corporate or retail online banking) or Safaricom M-Pesa (Till, Paybill, or B2B). The engine inverts bank statements (Bank Credit = Book Debit), auto-pairs matching transactions against Account 1200, and computes real-time statement variance down to KES 0.00.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
-                { title: "Universal Kenyan Bank Format Support", body: "Natively parses both standard 6-column bank statements (Date, Ref, Narrative, Dr, Cr, Balance) and compact 4-column M-Pesa Business portal exports without tedious manual formatting." },
+                { title: "Universal Commercial Bank Format Support", body: "Natively parses both standard 6-column commercial bank statements (Date, Ref, Narrative, Dr, Cr, Balance) and compact 4-column M-Pesa Business portal exports without tedious manual formatting." },
                 { title: "Smart Auto-Matching Algorithm", body: "Instantly pairs external statement rows against internal GL journal entries using exact amount match (±0.01), direction inversion, and M-Pesa/check reference code verification." },
                 { title: "1-Click Adjustments & Discrepancy Logger", body: "Directly create balancing journal entries for bank maintenance fees, withholding tax withholdings, or interest charges on the fly with live variance counter countdown to zero." },
               ].map((item) => (

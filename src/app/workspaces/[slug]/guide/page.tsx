@@ -763,7 +763,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
             </div>
 
             <p className="text-xs text-zinc-600 leading-relaxed">
-              Achieve audited financial integrity by matching external bank statements (Equity, NCBA, Stanbic, KCB, Absa) or Safaricom M-Pesa Business CSVs directly against General Ledger Account 1200 (Cash &amp; Bank).
+              Achieve audited financial integrity by matching external commercial bank statements (corporate or retail online banking) or Safaricom M-Pesa Business CSVs directly against General Ledger Account 1200 (Cash &amp; Bank).
             </p>
 
             <div className="bg-emerald-50/50 border border-emerald-200 p-4 rounded-lg space-y-2">

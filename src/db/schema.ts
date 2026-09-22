@@ -126,7 +126,7 @@ export const shopMembers = pgTable('shop_members', {
 export const paymentMethods = pgTable('payment_methods', {
     id: uuid('id').defaultRandom().primaryKey(),
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
-    name: varchar('name', { length: 100 }).notNull(), // e.g., "M-Pesa Till", "NCBA Bank Account"
+    name: varchar('name', { length: 100 }).notNull(), // e.g., "M-Pesa Till", "Commercial Bank Account"
     details: text('details').notNull(), // Account numbers / instructions
     isDefault: boolean('is_default').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),

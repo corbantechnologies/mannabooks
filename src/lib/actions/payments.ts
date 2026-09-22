@@ -9,7 +9,7 @@ import { verifyAndGetSession } from "./auth";
 interface AddPaymentMethodInput {
   shopId: string;
   shopSlug: string;
-  name: string;      // e.g., "M-Pesa Till" or "NCBA Bank"
+  name: string;      // e.g., "M-Pesa Till" or "Commercial Bank"
   details: string;   // e.g., "Till Number: 552134" or "Acc No: 0110XXXXXX"
   isDefault: boolean;
 }

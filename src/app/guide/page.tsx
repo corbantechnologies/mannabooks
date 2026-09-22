@@ -546,7 +546,7 @@ export default function PublicOperatorGuidePage() {
             <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
               <h4 className="font-bold uppercase text-black text-xs">Step-by-Step Reconciliation Workflow:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
-                <li><strong>Export Statement:</strong> Download a CSV statement from your bank portal (Equity EazzyBiz, NCBA, KCB, Stanbic, Absa) or Safaricom M-Pesa Business portal.</li>
+                <li><strong>Export Statement:</strong> Download a CSV statement from your commercial bank online portal (corporate or retail banking) or Safaricom M-Pesa Business portal.</li>
                 <li><strong>Upload Statement:</strong> Navigate to <strong>Finance &rarr; Bank Reconciliation</strong>, click <strong>Upload Bank / M-Pesa Statement (CSV)</strong>, and select your file.</li>
                 <li><strong>Automatic Match:</strong> The engine automatically matches statement credits (money in) against book debits, and statement debits (withdrawals) against book credits based on exact amounts and M-Pesa/check references.</li>
                 <li><strong>Adjustments &amp; Balancing:</strong> Click on any unmatched row to manually pair it or click <strong>Record Adjustment</strong> to post bank fee/tax journal entries until variance reads <strong>KES 0.00</strong>.</li>

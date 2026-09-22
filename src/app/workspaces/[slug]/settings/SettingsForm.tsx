@@ -850,7 +850,7 @@ export function SettingsForm({
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  placeholder="e.g., NCBA Bank Account"
+                  placeholder="e.g., Commercial Bank Account"
                   className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
                   required
                 />
@@ -946,7 +946,7 @@ export function SettingsForm({
                       type="text"
                       value={bankName}
                       onChange={(e) => setBankName(e.target.value)}
-                      placeholder="e.g., NCBA Bank / KCB"
+                      placeholder="e.g., Commercial Bank Name"
                       className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 rounded text-xs"
                       required
                     />
@@ -994,7 +994,7 @@ export function SettingsForm({
                     type="text"
                     value={swiftCode}
                     onChange={(e) => setSwiftCode(e.target.value)}
-                    placeholder="e.g., NCBAKE22"
+                    placeholder="e.g., BANKKENA"
                     className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black placeholder:text-zinc-300 uppercase rounded text-xs"
                   />
                 </div>

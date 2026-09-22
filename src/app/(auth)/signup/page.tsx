@@ -94,7 +94,10 @@ function SignupContent() {
       <div className="card-modern w-full max-w-md p-8 space-y-6 bg-white">
         
         <div className="space-y-1.5">
-          <Link href="/" className="font-sans text-xs font-semibold text-zinc-400 block hover:underline">
+          <Link
+            href="/"
+            className="font-sans text-xs font-semibold text-zinc-400 hover:text-black inline-flex items-center gap-1 hover:underline transition-colors mb-1"
+          >
             ← Back to Home
           </Link>
           <h2 className="text-xl font-semibold tracking-tight uppercase leading-none font-sans text-black">Create Account</h2>

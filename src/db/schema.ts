@@ -753,7 +753,7 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     stockLedger: many(stockLedger),
     subscriptions: many(subscriptions),
     billingTransactions: many(billingTransactions),
-    loyaltyProgram: one(loyaltyPrograms, { fields: [shops.id], references: [loyaltyPrograms.shopId] }),
+    loyaltyPrograms: many(loyaltyPrograms),
     membershipTiers: many(membershipTiers),
     clientLoyaltyAccounts: many(clientLoyaltyAccounts),
     loyaltyLedger: many(loyaltyLedger),
@@ -766,7 +766,7 @@ export const shopCurrenciesRelations = relations(shopCurrencies, ({ one }) => ({
 export const clientsRelations = relations(clients, ({ one, many }) => ({
     shop: one(shops, { fields: [clients.shopId], references: [shops.id] }),
     documents: many(documents),
-    loyaltyAccount: one(clientLoyaltyAccounts, { fields: [clients.id], references: [clientLoyaltyAccounts.clientId] }),
+    loyaltyAccounts: many(clientLoyaltyAccounts),
 }));
 
 export const suppliersRelations = relations(suppliers, ({ one, many }) => ({

@@ -2,9 +2,9 @@
 
 import { Resend } from "resend";
 import { db } from "@/db";
-import { shops, clients } from "@/db/schema";
+import { shops, clients, suppliers } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { getClientStatement } from "@/lib/actions/reports";
+import { getClientStatement, getSupplierStatement } from "@/lib/actions/reports";
 import { formatCurrency } from "@/lib/utils";
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_mock_key");
@@ -136,5 +136,130 @@ export async function sendClientStatementEmailAction({
         return { success: true };
     } catch (err: any) {
         return { success: false, error: err?.message || "Failed to dispatch statement email." };
+    }
+}
+
+interface SendSupplierStatementInput {
+    shopId: string;
+    supplierId: string;
+    startDate?: Date;
+    endDate?: Date;
+    recipientEmail?: string;
+    customNote?: string;
+}
+
+export async function sendSupplierStatementEmailAction({
+    shopId,
+    supplierId,
+    startDate,
+    endDate,
+    recipientEmail,
+    customNote,
+}: SendSupplierStatementInput) {
+    try {
+        const [shop, supplier] = await Promise.all([
+            db.query.shops.findFirst({ where: eq(shops.id, shopId) }),
+            db.query.suppliers.findFirst({ where: and(eq(suppliers.id, supplierId), eq(suppliers.shopId, shopId)) }),
+        ]);
+
+        if (!shop || !supplier) {
+            return { success: false, error: "Shop or Supplier record not found." };
+        }
+
+        const targetEmail = recipientEmail || supplier.email;
+        if (!targetEmail) {
+            return { success: false, error: "No destination email address found for this supplier." };
+        }
+
+        const statementResult = await getSupplierStatement(shopId, supplierId, startDate, endDate);
+        if (!statementResult.success || !statementResult.data) {
+            return { success: false, error: "Could not compile supplier statement data." };
+        }
+
+        const data = statementResult.data;
+        const brandColor = shop.primaryColor || "#000000";
+
+        const rawFrom = FROM_EMAIL;
+        const emailMatch = rawFrom.match(/<([^>]+)>/);
+        const emailOnly = emailMatch ? emailMatch[1] : (rawFrom.includes("@") ? rawFrom.trim() : "billing@corbantechnologies.org");
+        const cleanShopName = (shop.name || "Manna Books").replace(/[<>"']/g, "").trim();
+        const fromAddress = `${cleanShopName} <${emailOnly}>`;
+
+        await resend.emails.send({
+            from: fromAddress,
+            to: targetEmail,
+            subject: `Statement of Account: ${shop.name} ↔ ${supplier.name} (${data.periodLabel})`,
+            html: `
+                <div style="font-family: sans-serif; max-width: 650px; margin: 0 auto; color: #18181b; padding: 24px;">
+                    <!-- HEADER -->
+                    <div style="border-bottom: 2px solid ${brandColor}; padding-bottom: 16px; margin-bottom: 24px;">
+                        <h1 style="font-size: 20px; font-weight: bold; margin: 0; color: ${brandColor}; text-transform: uppercase; letter-spacing: -0.5px;">
+                            ${shop.name}
+                        </h1>
+                        <p style="font-size: 13px; color: #71717a; margin: 4px 0 0;">
+                            Vendor Statement of Account · ${data.periodLabel}
+                        </p>
+                    </div>
+
+                    <!-- RECIPIENT & SUMMARY CARDS -->
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 24px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px;">
+                        <div>
+                            <p style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b; margin: 0 0 2px;">Vendor / Payee</p>
+                            <p style="font-size: 14px; font-weight: bold; margin: 0;">${supplier.name}</p>
+                            ${supplier.taxPin ? `<p style="font-size: 11px; color: #64748b; margin: 2px 0 0; font-family: monospace;">PIN: ${supplier.taxPin}</p>` : ""}
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b; margin: 0 0 2px;">Outstanding Payable</p>
+                            <p style="font-size: 18px; font-weight: 900; margin: 0; font-family: monospace; color: #000000;">
+                                ${formatCurrency(data.closingBalance, data.currency)}
+                            </p>
+                        </div>
+                    </div>
+
+                    ${customNote ? `
+                        <div style="background-color: #fffbeb; border-left: 3px solid #f59e0b; padding: 10px 14px; border-radius: 4px; margin-bottom: 24px; font-size: 12px; color: #92400e;">
+                            <strong>Note from ${shop.name}:</strong><br/>
+                            ${customNote.replace(/\n/g, "<br/>")}
+                        </div>
+                    ` : ""}
+
+                    <!-- TRANSACTION TABLE -->
+                    <div style="border: 1px solid #e4e4e7; border-radius: 6px; overflow: hidden; margin-bottom: 28px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 11px; font-family: monospace;">
+                            <thead>
+                                <tr style="background-color: #f4f4f5; text-align: left; border-bottom: 1px solid #e4e4e7;">
+                                    <th style="padding: 8px 10px;">Date</th>
+                                    <th style="padding: 8px 10px;">Ref</th>
+                                    <th style="padding: 8px 10px;">Type</th>
+                                    <th style="padding: 8px 10px; text-align: right;">Paid</th>
+                                    <th style="padding: 8px 10px; text-align: right;">Billed</th>
+                                    <th style="padding: 8px 10px; text-align: right;">Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.lines.map((l) => `
+                                    <tr style="border-bottom: 1px solid #f4f4f5;">
+                                        <td style="padding: 6px 10px;">${l.date}</td>
+                                        <td style="padding: 6px 10px; font-weight: bold;">${l.reference}</td>
+                                        <td style="padding: 6px 10px;">${l.docType}</td>
+                                        <td style="padding: 6px 10px; text-align: right; color: #059669;">${l.debit > 0 ? formatCurrency(l.debit, data.currency) : "—"}</td>
+                                        <td style="padding: 6px 10px; text-align: right;">${l.credit > 0 ? formatCurrency(l.credit, data.currency) : "—"}</td>
+                                        <td style="padding: 6px 10px; text-align: right; font-weight: bold;">${formatCurrency(l.runningBalance, data.currency)}</td>
+                                    </tr>
+                                `).join("")}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p style="font-size: 12px; color: #71717a; text-align: center; margin-top: 32px; border-top: 1px solid #e4e4e7; padding-top: 16px;">
+                        ${shop.phone ? `Phone: ${shop.phone} · ` : ""}${shop.email ? `Email: ${shop.email} · ` : ""}Statement dispatched via Manna Books.
+                    </p>
+                </div>
+            `,
+        });
+
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err?.message || "Failed to dispatch supplier statement email." };
     }
 }

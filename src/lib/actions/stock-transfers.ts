@@ -103,6 +103,7 @@ export async function dispatchStockTransfer(transferId: string, shopSlug: string
                     with: { product: true },
                 },
                 fromLocation: true,
+                toLocation: true,
             },
         });
 
@@ -130,7 +131,7 @@ export async function dispatchStockTransfer(transferId: string, shopSlug: string
                     unitCost: product.costPrice || "0",
                     runningBalance: newStock.toString(),
                     transferId,
-                    notes: `Transfer to ${transfer.fromLocation?.name || "destination"}`,
+                    notes: `Transfer to ${transfer.toLocation?.name || "destination"}`,
                     createdById: session.userId,
                 });
 
@@ -191,6 +192,7 @@ export async function receiveStockTransfer(
                 items: {
                     with: { product: true },
                 },
+                fromLocation: true,
                 toLocation: true,
             },
         });
@@ -220,7 +222,7 @@ export async function receiveStockTransfer(
                     unitCost: product.costPrice || "0",
                     runningBalance: newStock.toString(),
                     transferId,
-                    notes: `Received from ${transfer.toLocation?.name || "source"}`,
+                    notes: `Received from ${transfer.fromLocation?.name || "source"}`,
                     createdById: session.userId,
                 });
 

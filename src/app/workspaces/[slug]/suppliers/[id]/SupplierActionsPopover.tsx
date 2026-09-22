@@ -119,6 +119,15 @@ export function SupplierActionsPopover({
               <span className="text-zinc-500">📥</span>
               <span>Goods Received Note (GRN)</span>
             </Link>
+
+            <Link
+              href={`/workspaces/${shopSlug}/suppliers/${supplier.id}/statement`}
+              onClick={() => setIsOpen(false)}
+              className="w-full text-left px-3.5 py-2 hover:bg-zinc-100 font-medium text-xs text-zinc-800 hover:text-black transition-colors flex items-center gap-2.5"
+            >
+              <span className="text-zinc-500">📋</span>
+              <span>Statement of Account</span>
+            </Link>
           </div>
 
           {/* Section: Vendor Profile & Entity Relations */}

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { calculateLineItem, calculateDocumentTotals, formatCurrency, isFiscalDocType, isProcurementDocType } from "@/lib/utils";
 import { createBillingDocument, updateBillingDocument, DocumentType } from "@/lib/actions/documents";
+import { getClientLoyaltyAccount, findOrCreateLoyaltyAccountByPhone } from "@/lib/actions/loyalty";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 import { CatalogProductPicker, CatalogProductItem } from "@/components/CatalogProductPicker";
@@ -19,6 +20,9 @@ interface BuilderProps {
   products: any[];
   shopTerms?: any[];
   currencies?: any[];
+  stockLocations?: any[];
+  loyaltyProgram?: any;
+  membershipTiers?: any[];
   initialDocument?: any;
 }
 
@@ -31,7 +35,19 @@ interface UiRowItem {
   taxType: "V_16" | "V_0" | "EXEMPT";
 }
 
-export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers = [], products, shopTerms = [], currencies = [], initialDocument }: BuilderProps) {
+export function DocumentBuilderClientForm({
+  shop,
+  shopSlug,
+  clients,
+  suppliers = [],
+  products,
+  shopTerms = [],
+  currencies = [],
+  stockLocations = [],
+  loyaltyProgram = null,
+  membershipTiers = [],
+  initialDocument,
+}: BuilderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialClientId = searchParams.get("clientId") || (initialDocument?.clientId) || "";
@@ -39,6 +55,12 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Dynamic client list (can expand when fast walk-in enrolls)
+  const [clientRegistry, setClientRegistry] = useState<any[]>(clients);
+  useEffect(() => {
+    setClientRegistry(clients);
+  }, [clients]);
 
   // Form Parameters
   const [partyType, setPartyType] = useState<"CLIENT" | "SUPPLIER">(
@@ -52,6 +74,25 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
   );
   const [dueDate, setDueDate] = useState(
     initialDocument?.dueDate ? new Date(initialDocument.dueDate).toISOString().split('T')[0] : ""
+  );
+
+  // Inventory Stock Location selection
+  const [locationId, setLocationId] = useState<string>(() => {
+    if (initialDocument?.locationId) return initialDocument.locationId;
+    const def = stockLocations.find((l: any) => l.isDefault);
+    return def ? def.id : (stockLocations[0]?.id || "");
+  });
+
+  // Loyalty & Membership State
+  const [loyaltyAccount, setLoyaltyAccount] = useState<any>(null);
+  const [isLoadingLoyalty, setIsLoadingLoyalty] = useState(false);
+  const [walkinPhone, setWalkinPhone] = useState("");
+  const [isSearchingPhone, setIsSearchingPhone] = useState(false);
+  const [loyaltyPointsToRedeem, setLoyaltyPointsToRedeem] = useState<number>(
+    initialDocument?.loyaltyPointsRedeemed || 0
+  );
+  const [loyaltyDiscountAmount, setLoyaltyDiscountAmount] = useState<number>(
+    parseFloat(initialDocument?.loyaltyDiscountAmount || "0")
   );
   const [kraCuInvoiceNumber, setKraCuInvoiceNumber] = useState(initialDocument?.kraCuInvoiceNumber || "");
   const [requiresEtims, setRequiresEtims] = useState(initialDocument?.requiresEtims || false);
@@ -178,6 +219,103 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
     isShopVatRegistered: shop.isVatRegistered,
   });
 
+  const netGrandTotal = Math.max(0, totals.grandTotal - loyaltyDiscountAmount);
+  const earnRate = parseFloat(loyaltyProgram?.earnRateKes || "100");
+  const tierMultiplier = loyaltyAccount?.tier?.pointsMultiplier ? parseFloat(loyaltyAccount.tier.pointsMultiplier) : 1;
+  const estimatedPointsEarned = (loyaltyProgram?.isEnabled && loyaltyProgram?.engineMode !== "OFF" && earnRate > 0)
+    ? Math.floor((netGrandTotal / earnRate) * tierMultiplier)
+    : 0;
+
+  // Resolve loyalty account when client is selected
+  useEffect(() => {
+    if (partyType === "CLIENT" && targetId && loyaltyProgram?.isEnabled && loyaltyProgram?.engineMode !== "OFF") {
+      setIsLoadingLoyalty(true);
+      getClientLoyaltyAccount(shop.id, targetId)
+        .then((res) => {
+          if (res.success && res.data) {
+            setLoyaltyAccount(res.data);
+          } else {
+            setLoyaltyAccount(null);
+          }
+        })
+        .catch(() => setLoyaltyAccount(null))
+        .finally(() => setIsLoadingLoyalty(false));
+    } else if (!targetId) {
+      setLoyaltyAccount(null);
+      setLoyaltyPointsToRedeem(0);
+      setLoyaltyDiscountAmount(0);
+    }
+  }, [partyType, targetId, shop.id, loyaltyProgram]);
+
+  async function handleWalkinPhoneLookup() {
+    const clean = walkinPhone.trim().replace(/\s+/g, "");
+    if (!clean || clean.length < 9) {
+      toast.error("Please enter a valid phone number (at least 9 digits).");
+      return;
+    }
+    setIsSearchingPhone(true);
+    try {
+      const res = await findOrCreateLoyaltyAccountByPhone(shop.id, clean);
+      if (res.success && res.data) {
+        const client = res.data.client;
+        const account = res.data.loyaltyAccount;
+        setClientRegistry((prev) => {
+          if (!prev.some((c) => c.id === client.id)) {
+            return [client, ...prev];
+          }
+          return prev;
+        });
+        setPartyType("CLIENT");
+        setTargetId(client.id);
+        setLoyaltyAccount(account);
+        toast.success(`Member recognized: ${client.name} (${account.currentPoints} pts available)`);
+      } else {
+        toast.error(res.error || "Could not resolve loyalty account.");
+      }
+    } catch {
+      toast.error("Lookup failed. Check connection.");
+    } finally {
+      setIsSearchingPhone(false);
+    }
+  }
+
+  function applyPointsRedemption(points: number) {
+    if (!loyaltyAccount) return;
+    const available = loyaltyAccount.currentPoints || 0;
+    const pointValue = parseFloat(loyaltyProgram?.pointValueKes || "1.00");
+    const minRedeem = loyaltyProgram?.minRedeemPoints || 50;
+
+    if (points <= 0) {
+      setLoyaltyPointsToRedeem(0);
+      setLoyaltyDiscountAmount(0);
+      return;
+    }
+
+    if (available < minRedeem) {
+      toast.error(`Minimum redemption threshold is ${minRedeem} points. Account has ${available} points.`);
+      return;
+    }
+
+    const cappedPoints = Math.min(points, available);
+    const maxDiscountAllowed = totals.grandTotal;
+    const calculatedDiscount = cappedPoints * pointValue;
+    const finalDiscount = Math.min(calculatedDiscount, maxDiscountAllowed);
+    const actualPointsUsed = Math.floor(finalDiscount / pointValue);
+
+    setLoyaltyPointsToRedeem(actualPointsUsed);
+    setLoyaltyDiscountAmount(finalDiscount);
+    toast.success(`Applied ${actualPointsUsed} points discount: -${formatCurrency(finalDiscount, currency)}`);
+  }
+
+  function applyTierDiscount() {
+    if (!loyaltyAccount?.tier?.discountPercent) return;
+    const tierPct = parseFloat(loyaltyAccount.tier.discountPercent);
+    if (tierPct <= 0) return;
+    const discountVal = (totals.subTotal * tierPct) / 100;
+    setLoyaltyDiscountAmount(discountVal);
+    toast.success(`Applied ${tierPct}% ${loyaltyAccount.tier.name} tier discount (-${formatCurrency(discountVal, currency)})`);
+  }
+
   function addBlankRow() {
     setRows([...rows, { description: "", notes: "", quantity: 1, unitPrice: 0, taxType: "V_16" }]);
   }
@@ -288,6 +426,9 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           requiresEtims: isFiscalDocType(docType) ? requiresEtims : false,
           currency,
           exchangeRate: parseFloat(exchangeRate) || 1.0,
+          locationId: locationId || undefined,
+          loyaltyPointsRedeemed: loyaltyPointsToRedeem > 0 ? loyaltyPointsToRedeem : undefined,
+          loyaltyDiscountAmount: loyaltyDiscountAmount > 0 ? loyaltyDiscountAmount : undefined,
           termsAndConditions: finalTermsSerialized,
           items: itemsPayload,
         })
@@ -304,6 +445,9 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
           exchangeRate: parseFloat(exchangeRate) || 1.0,
           isRecurring,
           recurringInterval: isRecurring ? recurringInterval : undefined,
+          locationId: locationId || undefined,
+          loyaltyPointsRedeemed: loyaltyPointsToRedeem > 0 ? loyaltyPointsToRedeem : undefined,
+          loyaltyDiscountAmount: loyaltyDiscountAmount > 0 ? loyaltyDiscountAmount : undefined,
           termsAndConditions: finalTermsSerialized,
           items: itemsPayload,
         });
@@ -368,7 +512,7 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
 
             <PartyPicker
               partyType={partyType}
-              parties={partyType === "CLIENT" ? clients : suppliers}
+              parties={partyType === "CLIENT" ? clientRegistry : suppliers}
               selectedId={targetId}
               onSelect={(id) => setTargetId(id)}
               onPartyTypeChange={(type) => {
@@ -562,8 +706,152 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
             </div>
           )}
 
+          {/* STOCK DISPATCH LOCATION SELECTOR */}
+          {stockLocations.length > 0 && (
+            <div className="md:col-span-4 space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] text-zinc-400 uppercase font-semibold">
+                  Stock Fulfillment Location
+                </label>
+                <span className="text-[9px] text-zinc-400 italic font-mono">
+                  Inventory Flow
+                </span>
+              </div>
+              <select
+                value={locationId}
+                onChange={(e) => setLocationId(e.target.value)}
+                className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-mono text-xs font-semibold h-10"
+              >
+                <option value="">Default Location / Automatic</option>
+                {stockLocations.map((loc: any) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name} {loc.code ? `(${loc.code})` : ""} {loc.isDefault ? "★ Default" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
         </div>
       </div>
+
+      {/* LOYALTY & REWARDS INTEGRATION HUB */}
+      {loyaltyProgram?.isEnabled && loyaltyProgram?.engineMode !== "OFF" && partyType === "CLIENT" && (
+        <div className="bg-white border border-zinc-200/80 rounded-lg p-5 shadow-sm space-y-4 font-sans">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-100 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+              <h2 className="text-xs font-bold uppercase tracking-tight text-black">
+                {loyaltyProgram.programName || "Customer Loyalty & Member Rewards"}
+              </h2>
+              <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-zinc-100 text-zinc-600 border border-zinc-200">
+                Mode: {loyaltyProgram.engineMode}
+              </span>
+            </div>
+
+            {/* 1-Sec Walk-in Fast Phone Lookup / Enrollment */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <input
+                type="tel"
+                value={walkinPhone}
+                onChange={(e) => setWalkinPhone(e.target.value)}
+                placeholder="1-Sec Walk-in Phone (e.g. 0712345678)"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleWalkinPhoneLookup();
+                  }
+                }}
+                className="px-3 py-1.5 text-xs border border-zinc-300 rounded-md font-mono focus:outline-none focus:ring-1 focus:ring-black w-full sm:w-60"
+              />
+              <button
+                type="button"
+                onClick={handleWalkinPhoneLookup}
+                disabled={isSearchingPhone || !walkinPhone.trim()}
+                className="btn-secondary-modern px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider shrink-0 disabled:opacity-50"
+              >
+                {isSearchingPhone ? "Looking up..." : "⚡ Fast Lookup"}
+              </button>
+            </div>
+          </div>
+
+          {/* Account Status / Points Card */}
+          {isLoadingLoyalty ? (
+            <div className="text-xs text-zinc-400 font-mono py-2 flex items-center gap-2">
+              <Spinner size={13} />
+              <span>Fetching client rewards balance...</span>
+            </div>
+          ) : loyaltyAccount ? (
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-zinc-50/70 p-3.5 rounded-md border border-zinc-200">
+              <div className="md:col-span-6 flex flex-wrap items-center gap-2.5">
+                <span className="px-2.5 py-1 bg-black text-white text-xs font-mono font-bold rounded">
+                  {loyaltyAccount.memberNumber}
+                </span>
+
+                {loyaltyAccount.tier && (
+                  <span className="px-2 py-1 border border-zinc-300 bg-white text-black text-[11px] font-bold uppercase rounded flex items-center gap-1.5 shadow-xs">
+                    <span>{loyaltyAccount.tier.badgeEmoji || "⭐"}</span>
+                    <span>{loyaltyAccount.tier.name}</span>
+                    {parseFloat(loyaltyAccount.tier.discountPercent || "0") > 0 && (
+                      <span className="text-emerald-700 font-mono text-[10px] font-bold">
+                        ({loyaltyAccount.tier.discountPercent}% OFF)
+                      </span>
+                    )}
+                  </span>
+                )}
+
+                <div className="text-xs font-mono text-zinc-600">
+                  Balance: <strong className="text-black font-bold">{loyaltyAccount.currentPoints} pts</strong>
+                  {" "}(worth {formatCurrency(loyaltyAccount.currentPoints * (parseFloat(loyaltyProgram.pointValueKes) || 1), currency)})
+                </div>
+              </div>
+
+              <div className="md:col-span-6 flex flex-wrap items-center justify-start md:justify-end gap-2">
+                {/* 1-Click Tier Benefit */}
+                {loyaltyAccount.tier && parseFloat(loyaltyAccount.tier.discountPercent || "0") > 0 && (
+                  <button
+                    type="button"
+                    onClick={applyTierDiscount}
+                    className="text-[10px] font-bold uppercase px-3 py-1.5 rounded border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-colors shadow-xs"
+                  >
+                    Apply {loyaltyAccount.tier.discountPercent}% VIP Discount
+                  </button>
+                )}
+
+                {/* Points Redemption */}
+                {loyaltyAccount.currentPoints >= (loyaltyProgram.minRedeemPoints || 50) ? (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => applyPointsRedemption(loyaltyAccount.currentPoints)}
+                      className="text-[10px] font-bold uppercase px-3 py-1.5 rounded bg-black text-white hover:bg-zinc-800 transition-colors shadow-xs"
+                    >
+                      Redeem All ({loyaltyAccount.currentPoints} pts)
+                    </button>
+                    {loyaltyPointsToRedeem > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => applyPointsRedemption(0)}
+                        className="text-[10px] font-bold uppercase px-2.5 py-1.5 rounded border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-[10px] font-mono text-zinc-400">
+                    Min {loyaltyProgram.minRedeemPoints || 50} pts to redeem
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-[11px] text-zinc-500 font-sans">
+              Select an existing client or enter customer phone above for instant 1-second loyalty lookup &amp; points accrual.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* LINE ITEMS MATRIX */}
       <div className="bg-white border border-zinc-200/80 rounded-lg shadow-sm overflow-hidden space-y-0">
@@ -897,16 +1185,42 @@ export function DocumentBuilderClientForm({ shop, shopSlug, clients, suppliers =
                 <span>VAT / TAX ({currency}):</span>
                 <span className="text-black">{formatCurrency(totals.taxAmount, currency)}</span>
               </div>
+
+              {loyaltyDiscountAmount > 0 && (
+                <div className="flex justify-between text-emerald-800 bg-emerald-50 border border-emerald-200 rounded px-2.5 py-1.5 text-[10px] font-semibold">
+                  <span className="flex items-center gap-1">
+                    <span>🎁</span>
+                    <span>
+                      {loyaltyPointsToRedeem > 0
+                        ? `Loyalty Redemption (${loyaltyPointsToRedeem} pts):`
+                        : "Member Tier / Loyalty Discount:"}
+                    </span>
+                  </span>
+                  <span className="font-bold">-{formatCurrency(loyaltyDiscountAmount, currency)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between font-bold text-black border-t border-zinc-200 pt-3 text-sm">
                 <span>GRAND TOTAL:</span>
-                <span>{formatCurrency(totals.grandTotal, currency)}</span>
+                <span>{formatCurrency(netGrandTotal, currency)}</span>
               </div>
+
+              {/* POINTS ACCRUAL PREVIEW */}
+              {estimatedPointsEarned > 0 && (
+                <div className="flex items-center justify-between text-[10px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded px-2.5 py-1 font-sans">
+                  <span className="flex items-center gap-1">
+                    <span>✨</span>
+                    <span>Points to be earned:</span>
+                  </span>
+                  <span className="font-bold text-black font-mono">+{estimatedPointsEarned} pts</span>
+                </div>
+              )}
 
               {currency !== (shop.currency || "KES") && (
                 <div className="bg-amber-50 border border-amber-200 rounded p-2.5 space-y-1 text-[11px] font-sans text-amber-900 mt-2">
                   <div className="flex justify-between font-semibold">
                     <span>Base Equivalent ({shop.currency || "KES"}):</span>
-                    <span className="font-bold">{formatCurrency(totals.grandTotal * (parseFloat(exchangeRate) || 1), shop.currency || "KES")}</span>
+                    <span className="font-bold">{formatCurrency(netGrandTotal * (parseFloat(exchangeRate) || 1), shop.currency || "KES")}</span>
                   </div>
                   <p className="text-[9px] text-amber-700 font-mono">
                     Applied rate: 1 {currency} = {parseFloat(exchangeRate || "1").toFixed(4)} {shop.currency || "KES"}

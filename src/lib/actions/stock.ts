@@ -30,10 +30,20 @@ export async function applyDocumentStockMovements(
       },
     });
 
-    // Resolve the document for shopId and source linkage
+    // Resolve the document for shopId, location, and source linkage
     const doc = await executor.query.documents.findFirst({
       where: eq(documents.id, documentId),
+      with: {
+        shop: true,
+      },
     });
+
+    if (!doc) return;
+
+    // Respect workspace toggle: if automated stock movement is turned OFF, bypass all deductions/restocks
+    if (doc.shop && (doc.shop as any).autoStockDeductionEnabled === false) {
+      return;
+    }
 
     // Cache the shop's global default location (fallback only)
     let shopDefaultLocationId: string | null = null;
@@ -59,9 +69,11 @@ export async function applyDocumentStockMovements(
 
       if (!targetProduct || !targetProduct.trackStock) continue;
 
-      // ─── Per-product location resolution ──────────────────────────────────
-      // Use the product's own defaultLocationId first, then fall back to shop default.
-      const locationId: string | null = targetProduct.defaultLocationId || shopDefaultLocationId || null;
+      // ─── Location resolution order ──────────────────────────────────────
+      // 1. Document's specific fulfillment branch/location (doc.locationId)
+      // 2. Product's own defaultLocationId
+      // 3. Shop's global default location
+      const locationId: string | null = (doc as any).locationId || targetProduct.defaultLocationId || shopDefaultLocationId || null;
       // ──────────────────────────────────────────────────────────────────────
 
       const currentStock = parseFloat(targetProduct.stockQuantity || "0");

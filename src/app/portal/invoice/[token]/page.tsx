@@ -417,10 +417,26 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
                 <span className="font-bold text-black">{formatCurrency(doc.taxAmount, doc.currency || shop.currency)}</span>
               </div>
             )}
+            {doc.loyaltyDiscountAmount && parseFloat(doc.loyaltyDiscountAmount) > 0 && (
+              <div className="flex justify-between text-emerald-700">
+                <span>Loyalty Discount ({doc.loyaltyPointsRedeemed || 0} pts):</span>
+                <span className="font-bold">-{formatCurrency(doc.loyaltyDiscountAmount, doc.currency || shop.currency)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-black font-bold text-sm pt-2 border-t-2 border-black">
               <span>TOTAL {doc.type === "QUOTATION" ? "ESTIMATE:" : "OUTSTANDING:"}</span>
               <span className="underline underline-offset-2 decoration-double">{formatCurrency(doc.grandTotal, doc.currency || shop.currency)}</span>
             </div>
+            {doc.loyaltyPointsEarned && doc.loyaltyPointsEarned > 0 && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded p-2.5 text-center mt-2.5 space-y-0.5">
+                <span className="text-emerald-900 font-bold text-xs block font-sans">
+                  ✨ +{doc.loyaltyPointsEarned} Loyalty Points Earned!
+                </span>
+                <span className="text-[10px] text-emerald-700 block font-sans">
+                  Redeem your points on future purchases for instant discounts.
+                </span>
+              </div>
+            )}
             {doc.currency && doc.currency !== (shop.currency || "KES") && (
               <div className="bg-zinc-50 border border-zinc-200 rounded p-2 text-[10px] font-sans text-zinc-700 mt-2">
                 <span className="font-bold block">Base Currency Equivalent: {formatCurrency(doc.baseGrandTotal || (parseFloat(doc.grandTotal) * parseFloat(doc.exchangeRate || "1")), shop.currency || "KES")}</span>

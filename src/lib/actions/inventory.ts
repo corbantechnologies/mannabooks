@@ -699,8 +699,9 @@ export async function getAbcAnalysis(shopId: string): Promise<AbcProduct[]> {
     for (const entry of salesEntries) {
         if (!entry.product) continue;
         const existing = revenueMap.get(entry.productId) || { name: entry.product.name, sku: entry.product.sku, revenue: 0 };
-        // Revenue = qty * unit price from product (or use unitCost as proxy for sales entries)
-        existing.revenue += parseFloat(entry.quantity) * parseFloat(entry.unitCost || "0");
+        // Revenue = quantity * selling price (product.unitPrice), falling back to costPrice if unpriced
+        const sellingPrice = parseFloat((entry.product as any).unitPrice || entry.product.costPrice || entry.unitCost || "0");
+        existing.revenue += parseFloat(entry.quantity) * sellingPrice;
         revenueMap.set(entry.productId, existing);
     }
 

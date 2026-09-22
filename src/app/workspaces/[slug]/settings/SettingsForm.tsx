@@ -35,6 +35,8 @@ interface SettingsFormProps {
   initialCode?: string;
   paymentMethods: PaymentMethod[];
   initialTerms?: ShopTermItem[];
+  initialAutoStockDeductionEnabled?: boolean;
+  initialLoyaltyEngineMode?: "OFF" | "POINTS_ONLY" | "TIERS_ONLY" | "HYBRID";
 }
 
 const COLOR_PALETTES = [
@@ -65,6 +67,8 @@ export function SettingsForm({
   initialCode = "",
   paymentMethods: initialMethods,
   initialTerms = [],
+  initialAutoStockDeductionEnabled = true,
+  initialLoyaltyEngineMode = "OFF",
 }: SettingsFormProps) {
   const router = useRouter();
 
@@ -81,6 +85,8 @@ export function SettingsForm({
   const [vatNumber, setVatNumber] = useState(initialVatNumber);
   const [currency, setCurrency] = useState(initialCurrency);
   const [fiscalYearStartMonth, setFiscalYearStartMonth] = useState(initialFiscalYearStartMonth);
+  const [autoStockDeductionEnabled, setAutoStockDeductionEnabled] = useState(initialAutoStockDeductionEnabled);
+  const [loyaltyEngineMode, setLoyaltyEngineMode] = useState<"OFF" | "POINTS_ONLY" | "TIERS_ONLY" | "HYBRID">(initialLoyaltyEngineMode);
   const [saving, setSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [deletingPmId, setDeletingPmId] = useState<string | null>(null);
@@ -152,6 +158,8 @@ export function SettingsForm({
       vatNumber: vatNumber.trim() || undefined,
       currency,
       fiscalYearStartMonth,
+      autoStockDeductionEnabled,
+      loyaltyEngineMode,
     });
     setSaving(false);
     if (res.success) {
@@ -573,6 +581,55 @@ export function SettingsForm({
               </p>
             </div>
           )}
+        </div>
+
+        {/* INVENTORY & STOCK AUTOMATION SETTING */}
+        <div className="border border-zinc-200 p-4 bg-zinc-50/50 rounded space-y-3">
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="autoStockActive"
+              checked={autoStockDeductionEnabled}
+              onChange={(e) => setAutoStockDeductionEnabled(e.target.checked)}
+              className="w-4 h-4 border border-zinc-300 accent-black rounded-sm mt-0.5 cursor-pointer"
+            />
+            <div className="space-y-1">
+              <label htmlFor="autoStockActive" className="font-semibold uppercase tracking-tight block cursor-pointer select-none text-xs text-black">
+                Automate Document Stock Movements
+              </label>
+              <p className="font-sans text-[11px] text-zinc-500 normal-case leading-tight">
+                When enabled (recommended for retail and distribution), issued Invoices, Receipts, and POS sales automatically deduct inventory balances. Credit Notes and cancellations restore items. Turn this off if your business prefers manual stocktakes or operates purely in services.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* LOYALTY & REWARDS ENGINE SELECTOR */}
+        <div className="border border-zinc-200 p-4 bg-zinc-50/50 rounded space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold uppercase text-black text-xs block">Customer Loyalty &amp; Retention Engine</span>
+            {loyaltyEngineMode !== "OFF" && (
+              <Link
+                href={`/workspaces/${shopSlug}/settings/loyalty`}
+                className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 underline uppercase tracking-wider"
+              >
+                Configure Rules &amp; Tiers →
+              </Link>
+            )}
+          </div>
+          <span className="text-[10px] text-zinc-500 font-sans normal-case block">
+            Select the loyalty retention model tailored for your clientele. Covers walk-in retail points and corporate B2B volume pricing.
+          </span>
+          <select
+            value={loyaltyEngineMode}
+            onChange={(e) => setLoyaltyEngineMode(e.target.value as any)}
+            className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:border-black rounded text-xs font-semibold"
+          >
+            <option value="OFF">Disabled (No Loyalty Engine)</option>
+            <option value="POINTS_ONLY">Points &amp; Cashback Only (Best for Retail &amp; POS)</option>
+            <option value="TIERS_ONLY">Wholesale &amp; VIP Tiers Only (Best for B2B &amp; Corporate)</option>
+            <option value="HYBRID">Hybrid Engine (Both Points Cashback &amp; VIP Tiers Active)</option>
+          </select>
         </div>
 
         <div className="border-t border-zinc-200/80 pt-4 flex justify-end">

@@ -1,4 +1,3 @@
-// src/app/workspaces/[slug]/clients/[id]/page.tsx
 import { db } from "@/db";
 import { clients, documents, shops, suppliers } from "@/db/schema";
 import { eq, and, desc, or } from "drizzle-orm";
@@ -6,6 +5,7 @@ import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { ClientActionsPopover } from "./ClientActionsPopover";
 import { ClientDocumentsSubLedger } from "./ClientDocumentsSubLedger";
+import { getLoyaltyProgram, getClientLoyaltyAccount } from "@/lib/actions/loyalty";
 import Link from "next/link";
 
 interface ClientProfilePageProps {
@@ -24,6 +24,11 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
   if (!shop) {
     notFound();
   }
+
+  const loyaltyProgramRes = await getLoyaltyProgram(shop.id);
+  const loyaltyProgram = loyaltyProgramRes.success ? loyaltyProgramRes.data : null;
+  const clientLoyaltyRes = await getClientLoyaltyAccount(shop.id, id);
+  const loyaltyAccount = clientLoyaltyRes.success ? clientLoyaltyRes.data : null;
 
   // 3. Fetch the targeted client profile alongside all their historical document records
   const clientRecord = await db.query.clients.findFirst({
@@ -186,6 +191,128 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
           </span>
         </div>
       </div>
+
+      {/* LOYALTY & MEMBERSHIP STATUS HUB */}
+      {loyaltyProgram?.isEnabled && loyaltyProgram?.engineMode !== "OFF" && loyaltyAccount && (
+        <div className="card-modern p-5 bg-white space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-100 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
+              <h2 className="text-sm font-bold uppercase tracking-tight text-black font-sans">
+                Loyalty &amp; Membership Rewards
+              </h2>
+              <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-zinc-100 text-zinc-600 border border-zinc-200">
+                {loyaltyProgram.programName || "Rewards Club"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 font-mono text-xs">
+              <span className="text-zinc-400 uppercase text-[10px] font-semibold">Member ID:</span>
+              <span className="px-2.5 py-0.5 bg-black text-white font-bold rounded">
+                {loyaltyAccount.memberNumber}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 bg-zinc-50 rounded-lg border border-zinc-200/80 space-y-1">
+              <span className="text-[10px] text-zinc-400 font-mono font-semibold uppercase block">Membership Tier</span>
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <span
+                  className="w-2.5 h-2.5 rounded-full inline-block"
+                  style={{ backgroundColor: (loyaltyAccount as any)?.tier?.badgeColor || "#000000" }}
+                />
+                <span className="text-sm font-bold text-black font-sans uppercase">
+                  {(loyaltyAccount as any)?.tier?.name || "Standard Member"}
+                </span>
+              </div>
+              {(loyaltyAccount as any)?.tier && parseFloat((loyaltyAccount as any).tier.discountPercent || "0") > 0 && (
+                <span className="text-[10px] font-mono text-emerald-700 font-bold block">
+                  {(loyaltyAccount as any).tier.discountPercent}% VIP Discount Benefit
+                </span>
+              )}
+            </div>
+
+            <div className="p-4 bg-zinc-50 rounded-lg border border-zinc-200/80 space-y-1">
+              <span className="text-[10px] text-zinc-400 font-mono font-semibold uppercase block">Available Points</span>
+              <div className="text-xl font-bold text-black font-mono">
+                {loyaltyAccount.currentPoints} <span className="text-xs text-zinc-500 font-normal">pts</span>
+              </div>
+              <span className="text-[10px] font-mono text-zinc-500 block">
+                ≈ {formatCurrency(loyaltyAccount.currentPoints * (parseFloat(loyaltyProgram.pointValueKes) || 1), shop.currency)} redeemable
+              </span>
+            </div>
+
+            <div className="p-4 bg-zinc-50 rounded-lg border border-zinc-200/80 space-y-1">
+              <span className="text-[10px] text-zinc-400 font-mono font-semibold uppercase block">Lifetime Points</span>
+              <div className="text-xl font-bold text-zinc-700 font-mono">
+                {loyaltyAccount.lifetimePoints} <span className="text-xs text-zinc-400 font-normal">pts</span>
+              </div>
+              <span className="text-[10px] font-mono text-zinc-500 block">
+                Total points earned to date
+              </span>
+            </div>
+
+            <div className="p-4 bg-zinc-50 rounded-lg border border-zinc-200/80 space-y-1">
+              <span className="text-[10px] text-zinc-400 font-mono font-semibold uppercase block">Earn Multiplier</span>
+              <div className="text-xl font-bold text-zinc-700 font-mono">
+                {(loyaltyAccount as any)?.tier?.pointsMultiplier ? `${(loyaltyAccount as any).tier.pointsMultiplier}x` : "1.0x"}
+              </div>
+              <span className="text-[10px] font-mono text-zinc-500 block">
+                Points accrual acceleration
+              </span>
+            </div>
+          </div>
+
+          {/* RECENT POINTS LEDGER ENTRIES */}
+          {(loyaltyAccount as any)?.ledgerEntries && (loyaltyAccount as any).ledgerEntries.length > 0 && (
+            <div className="pt-2 border-t border-zinc-100 space-y-2">
+              <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block">
+                Recent Points Activity
+              </span>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-zinc-200 text-[10px] uppercase text-zinc-400 bg-zinc-50/50">
+                      <th className="p-2">Date</th>
+                      <th className="p-2">Activity Type</th>
+                      <th className="p-2">Description</th>
+                      <th className="p-2 text-right">Points</th>
+                      <th className="p-2 text-right">Balance After</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100">
+                    {((loyaltyAccount as any).ledgerEntries as any[]).slice(0, 5).map((entry: any) => (
+                      <tr key={entry.id} className="hover:bg-zinc-50/50">
+                        <td className="p-2 text-zinc-500 text-[11px]">
+                          {new Date(entry.createdAt).toLocaleDateString("en-KE", { dateStyle: "short" })}
+                        </td>
+                        <td className="p-2">
+                          <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                            entry.movementType === "ACCRUAL"
+                              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                              : entry.movementType === "REDEMPTION"
+                              ? "bg-amber-50 text-amber-800 border border-amber-200"
+                              : "bg-zinc-100 text-zinc-700"
+                          }`}>
+                            {entry.movementType}
+                          </span>
+                        </td>
+                        <td className="p-2 text-zinc-700 font-sans text-xs">{entry.description}</td>
+                        <td className={`p-2 text-right font-bold ${
+                          entry.points > 0 ? "text-emerald-700" : "text-rose-600"
+                        }`}>
+                          {entry.points > 0 ? `+${entry.points}` : entry.points}
+                        </td>
+                        <td className="p-2 text-right text-zinc-600">{entry.balanceAfter} pts</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* STANDALONE HISTORICAL SUB-LEDGER GRID (INSTANT 0MS CLIENT-SIDE FILTERING) */}
       <div className="space-y-4">

@@ -1,13 +1,13 @@
-// src/app/workspaces/[slug]/documents/new/page.tsx
 import { db } from "@/db";
-import { clients, products, shops, suppliers, shopTerms } from "@/db/schema";
-import { eq, desc, asc } from "drizzle-orm";
+import { clients, products, shops, suppliers, shopTerms, stockLocations } from "@/db/schema";
+import { eq, desc, asc, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { DocumentBuilderClientForm } from "./DocumentBuilderClientForm";
 import Link from "next/link";
 import { Suspense } from "react";
 
 import { getShopCurrencies } from "@/lib/actions/currencies";
+import { getLoyaltyProgram, getMembershipTiers } from "@/lib/actions/loyalty";
 
 interface NewDocumentPageProps {
   params: Promise<{ slug: string }>;
@@ -47,7 +47,14 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
     orderBy: [asc(shopTerms.displayOrder), asc(shopTerms.createdAt)],
   });
 
+  const locationsRegistry = await db.query.stockLocations.findMany({
+    where: and(eq(stockLocations.shopId, shop.id), eq(stockLocations.isActive, true)),
+    orderBy: [desc(stockLocations.isDefault), asc(stockLocations.name)],
+  });
+
   const currenciesRegistry = await getShopCurrencies(shop.id, shop.currency || "KES");
+  const loyaltyProgramRes = await getLoyaltyProgram(shop.id);
+  const membershipTiersRes = await getMembershipTiers(shop.id);
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white">
@@ -91,6 +98,9 @@ export default async function NewDocumentPage({ params }: NewDocumentPageProps) 
           products={productRegistry}
           shopTerms={termsRegistry}
           currencies={currenciesRegistry}
+          stockLocations={locationsRegistry}
+          loyaltyProgram={loyaltyProgramRes.success ? loyaltyProgramRes.data : null}
+          membershipTiers={membershipTiersRes.success ? membershipTiersRes.data : []}
         />
       </Suspense>
     </div>

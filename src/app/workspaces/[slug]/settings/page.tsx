@@ -39,6 +39,12 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
             ⚡ Billing &amp; Plan
           </Link>
           <Link
+            href={`/workspaces/${slug}/settings/loyalty`}
+            className="px-3.5 py-1.5 border border-zinc-300 hover:border-black rounded transition-colors text-zinc-700 hover:text-black"
+          >
+            🎁 Loyalty &amp; Rewards
+          </Link>
+          <Link
             href={`/workspaces/${slug}/settings/currencies`}
             className="px-3.5 py-1.5 border border-zinc-300 hover:border-black rounded transition-colors text-zinc-700 hover:text-black"
           >
@@ -65,6 +71,8 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
         initialFiscalYearStartMonth={shop.fiscalYearStartMonth}
         paymentMethods={paymentMethods}
         initialTerms={shopTerms}
+        initialAutoStockDeductionEnabled={(shop as any).autoStockDeductionEnabled ?? true}
+        initialLoyaltyEngineMode={(shop as any).loyaltyEngineMode || "OFF"}
       />
     </div>
   );

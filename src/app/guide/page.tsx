@@ -52,6 +52,12 @@ const GUIDE_MODULES = [
   { href: "#module-13", label: "[13] Shared B2B Inbox" },
   { href: "#module-14", label: "[14] General Ledger & Budgets" },
   { href: "#module-15", label: "[15] PWA Appliance" },
+  { href: "#module-16", label: "[16] Bank & M-Pesa Reconciliation" },
+  { href: "#module-17", label: "[17] Compound Multi-Line Journals" },
+  { href: "#module-18", label: "[18] Accounts Payable & Vendor Bills" },
+  { href: "#module-19", label: "[19] Fiscal Periods & Month Closing" },
+  { href: "#module-20", label: "[20] High-Volume Bulk Operations" },
+  { href: "#module-21", label: "[21] Report Exports & Statements" },
 ];
 
 export default function PublicOperatorGuidePage() {
@@ -521,6 +527,146 @@ export default function PublicOperatorGuidePage() {
                 <li><strong>Chrome / Edge / Windows / Mac:</strong> Click the <strong>📲 Install App</strong> prompt in the bottom-right corner, or use the install icon in your browser address bar.</li>
                 <li><strong>iOS Safari (iPhone / iPad):</strong> Tap the <strong>Share</strong> icon in Safari, then select <strong>Add to Home Screen</strong>.</li>
                 <li><strong>Android Chrome:</strong> Tap the three-dot menu and select <strong>Add to Home Screen</strong> or <strong>Install App</strong>.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 16: BANK & M-PESA RECONCILIATION */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-16" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 16]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Bank &amp; M-Pesa CSV Statement Reconciliation</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Upload monthly statements from your bank or M-Pesa portal and match them against internal General Ledger Account 1200 (Cash &amp; Bank) to achieve a verified KES 0.00 variance.
+            </p>
+
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Step-by-Step Reconciliation Workflow:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Export Statement:</strong> Download a CSV statement from your bank portal (Equity EazzyBiz, NCBA, KCB, Stanbic, Absa) or Safaricom M-Pesa Business portal.</li>
+                <li><strong>Upload Statement:</strong> Navigate to <strong>Finance &rarr; Bank Reconciliation</strong>, click <strong>Upload Bank / M-Pesa Statement (CSV)</strong>, and select your file.</li>
+                <li><strong>Automatic Match:</strong> The engine automatically matches statement credits (money in) against book debits, and statement debits (withdrawals) against book credits based on exact amounts and M-Pesa/check references.</li>
+                <li><strong>Adjustments &amp; Balancing:</strong> Click on any unmatched row to manually pair it or click <strong>Record Adjustment</strong> to post bank fee/tax journal entries until variance reads <strong>KES 0.00</strong>.</li>
+              </ol>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 17: COMPOUND MULTI-LINE JOURNALS */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-17" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 17]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Compound Multi-Line Journal Entry Builder</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Post arbitrary N-line compound journal entries with dynamic rows, live debit/credit balancing, and optional document receipt attachments.
+            </p>
+
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Creating a Compound Journal Entry:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li>Navigate to <strong>Finance &rarr; General Ledger</strong> and click <strong>New Journal Entry</strong>.</li>
+                <li>Enter the <strong>Posting Date</strong>, <strong>Reference Code</strong>, and <strong>Master Narrative</strong>.</li>
+                <li>Click <strong>+ Add Line</strong> to add as many debit or credit lines as required (e.g. 5 lines for gross salary, PAYE, NSSF, SHIF, and net pay).</li>
+                <li>Use the <strong>Auto-Balance</strong> button on the final row to automatically compute the residual balancing amount.</li>
+                <li>Verify that <strong>Out of Balance = KES 0.00</strong>, attach an optional PDF/receipt image, and click <strong>Post Journal Entry</strong>.</li>
+              </ol>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 18: ACCOUNTS PAYABLE & VENDOR BILLS */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-18" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 18]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Accounts Payable: Vendor Bills &amp; Remittance Advice</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Manage operating creditors (office rent, cloud services, external audit, legal) with automated Withholding Tax (WHT) deductions and payment vouchers.
+            </p>
+
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Vendor Bill &amp; Settlement Flow:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Bill Entry:</strong> Go to <strong>Finance &rarr; Bills</strong> and click <strong>+ New Bill</strong>. Select the supplier, input bill date, due date, and assign expense/asset accounts.</li>
+                <li><strong>Withholding Tax:</strong> Select applicable WHT rates (5% professional fees or 10% rent). The system automatically books the net vendor liability and KRA WHT Payable (2350).</li>
+                <li><strong>Payables Aging:</strong> Inspect <strong>Finance &rarr; Reports &rarr; Payables Aging</strong> to track overdue vendor debts across 30, 60, and 90+ day aging buckets.</li>
+                <li><strong>Payment &amp; Remittance:</strong> Authorize a disbursement to debit Accounts Payable (2100) and credit Bank (1200), generating a downloadable PDF payment voucher and emailing a remittance slip to the vendor.</li>
+              </ol>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 19: FISCAL PERIODS & MONTH CLOSING */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-19" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 19]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Fiscal Calendar, Monthly Period Closing &amp; Reopening</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Enforce strict financial governance. Set up 12-month fiscal years, lock completed months against retroactive changes, and log audit justifications for reopened periods.
+            </p>
+
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Period Closing &amp; Reopening Protocol:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Declare Fiscal Year:</strong> Navigate to <strong>Finance &rarr; Accounting Periods</strong> and declare your 12-month fiscal year. The system automatically populates 12 monthly periods in <code>OPEN</code> status.</li>
+                <li><strong>Month-End Closing:</strong> Once bank reconciliation and payroll postings are complete, click <strong>Close Period</strong>. Postings and edits for that calendar month are strictly locked.</li>
+                <li><strong>Reopening for Adjustments:</strong> If a late invoice is discovered during an audit, an authorized admin clicks <strong>Reopen Period</strong> and submits an audit justification reason to temporarily unlock the period.</li>
+                <li><strong>Year-End Sweep:</strong> When all 12 periods are closed, click <strong>Close Fiscal Year</strong> to automatically sweep net Revenue and Expenses into Retained Earnings (3300) and reset P&L accounts for the new year.</li>
+              </ol>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 20: HIGH-VOLUME BULK OPERATIONS */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-20" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 20]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">High-Volume Bulk Financial Operations</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Process hundreds of customer invoices, vendor disbursements, and journal migrations without repetitive manual data entry.
+            </p>
+
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Executing Bulk Operations:</h4>
+              <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Bulk Invoicing &amp; Email:</strong> On the Documents table, select multiple issued invoices using checkboxes, then click <strong>Bulk Email</strong> to dispatch personalized PDF invoices to all selected clients simultaneously.</li>
+                <li><strong>Bulk PDF ZIP Export:</strong> Click <strong>Download ZIP</strong> to bundle selected client invoices or payment vouchers into a single encrypted ZIP file for board or tax audit packs.</li>
+                <li><strong>Batch Vendor Payment Runs:</strong> Select approved supplier bills and click <strong>Initiate Payment Run</strong> to export formatted Bank EFT or M-Pesa B2B disbursement sheets.</li>
+                <li><strong>Atomic Journal CSV Import:</strong> Upload historical journal migrations from QuickBooks or Sage with all-or-nothing transaction rollback protection.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 21: REPORT EXPORTS & STATEMENTS */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-21" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 21]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Financial Statements &amp; Board Report Exports</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Every financial report in Manna Books is exportable in 1 click as formula-ready CSV spreadsheets for Excel modeling or boardroom-ready PDFs.
+            </p>
+
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Available Financial Statement Exports:</h4>
+              <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Trial Balance (CSV / PDF):</strong> Live debit and credit balance verification across all 1000s–6000s accounts.</li>
+                <li><strong>Profit &amp; Loss / Income Statement (CSV / PDF):</strong> Filter by This Month, Last Month, Quarter, or Fiscal Year YTD.</li>
+                <li><strong>Balance Sheet (CSV / PDF):</strong> Live financial position enforcing Assets = Liabilities + Equity as of any cutoff date.</li>
+                <li><strong>Cash Flow Statement (CSV / PDF):</strong> Cash flows segregated into Operating, Investing, and Financing activities.</li>
+                <li><strong>Client &amp; Supplier Statements (CSV / PDF):</strong> Chronological running balances with 1-click customer email delivery.</li>
               </ul>
             </div>
           </section>

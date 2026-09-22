@@ -4,27 +4,27 @@ import Link from "next/link";
 import { PublicNavbar } from "@/components/PublicNavbar";
 
 export const metadata: Metadata = {
-  title: "Features | Manna Books — KRA eTIMS Invoicing, Statutory Payroll, POS, RBAC & Multi-Currency",
+  title: "Features | Manna Books — KRA eTIMS, General Ledger, Bank Reconciliation & Multi-Currency",
   description:
-    "Explore all Manna Books platform features: KRA eTIMS multi-rate invoicing, statutory payroll (PAYE, SHIF, AHL, NSSF), walk-in POS terminal, shareable digital product catalog, smart multi-location inventory, in-app notifications, quotation expiry management, granular staff RBAC, multi-currency FX, 20th VAT return automation, general ledger, and passwordless client portals.",
+    "Explore all Manna Books platform features: KRA eTIMS invoicing, statutory payroll, bank & M-Pesa CSV reconciliation, compound multi-line journals, accounts payable vendor bills, bulk invoicing, fiscal periods, walk-in POS terminal, smart inventory, and double-entry general ledger.",
   keywords: [
     "KRA eTIMS features Kenya",
+    "bank reconciliation software Kenya",
+    "M-Pesa statement reconciliation",
+    "compound multi-line journals",
+    "accounts payable vendor bills Kenya",
+    "bulk invoicing Kenya",
     "statutory payroll PAYE SHIF NSSF Kenya",
     "invoicing software features Kenya",
-    "digital product catalog rate cards Kenya",
     "walk-in POS Kenya",
-    "inventory management Kenya",
-    "role based access control staff Kenya",
-    "in-app notifications invoicing Kenya",
-    "quotation expiry Kenya",
-    "VAT tracker Kenya",
     "general ledger double entry Kenya",
     "multi-currency accounting Kenya",
+    "financial management software Kenya",
     "mannabooks.co.ke features",
   ],
   openGraph: {
-    title: "Platform Features | Manna Books — KRA eTIMS, Payroll, POS & Digital Catalog",
-    description: "Complete feature specifications for Manna Books: eTIMS invoicing, statutory payroll, digital product catalog, walk-in POS, COGS analytics, staff RBAC, quotation expiry, and passwordless client portals — built for Kenyan SMEs.",
+    title: "Platform Features | Manna Books — KRA eTIMS, General Ledger, Bank Reconciliation & Payroll",
+    description: "Complete feature specifications for Manna Books: eTIMS invoicing, bank & M-Pesa reconciler, multi-line compound journals, vendor bills, statutory payroll, digital catalogs, and double-entry accounting.",
     url: "https://mannabooks.co.ke/features",
     siteName: "Manna Books",
     locale: "en_KE",
@@ -56,7 +56,7 @@ export default function FeaturesPage() {
             <span className="gradient-text-emerald">feature specifications.</span>
           </h1>
           <p className="text-base md:text-lg text-zinc-600 max-w-3xl font-normal leading-relaxed">
-            Manna Books is an end-to-end financial operations &amp; statutory compliance platform engineered for Kenyan and African SMEs. Explore every module, compliance engine, inventory system, and architectural pillar built into the platform.
+            Manna Books is an end-to-end financial operations, double-entry accounting &amp; statutory compliance platform engineered for Kenyan and African SMEs. Explore every module, compliance engine, reconciliation tool, and architectural pillar built into the platform.
           </p>
           <div className="pt-2 flex flex-wrap gap-2.5 font-mono text-xs">
             {[
@@ -67,7 +67,7 @@ export default function FeaturesPage() {
               { href: "#notifications", label: "In-App Activity Bell" },
               { href: "#payroll", label: "Statutory Payroll" },
               { href: "#expenses", label: "Expenses" },
-              { href: "#crm", label: "CRM" },
+              { href: "#crm", label: "CRM & Debtors" },
               { href: "#vat", label: "20th VAT Tracker" },
               { href: "#pdf-engine", label: "Vector PDF" },
               { href: "#portals", label: "Passwordless Portals" },
@@ -77,6 +77,12 @@ export default function FeaturesPage() {
               { href: "#b2b-inbox", label: "B2B Inbox" },
               { href: "#general-ledger", label: "General Ledger" },
               { href: "#income-tax", label: "Kenya Income Tax" },
+              { href: "#reconciliation", label: "Bank & M-Pesa Reconciliation" },
+              { href: "#compound-journals", label: "Compound Multi-Line Journals" },
+              { href: "#accounts-payable", label: "Accounts Payable & Bills" },
+              { href: "#bulk-actions", label: "Bulk Operations" },
+              { href: "#fiscal-periods", label: "Fiscal Periods & Exports" },
+              { href: "#business-modes", label: "3 Workspace Modes" },
             ].map((link) => (
               <a key={link.href} href={link.href} className="btn-secondary-emerald px-3 py-1.5 text-xs font-semibold uppercase">
                 {link.label}
@@ -543,6 +549,156 @@ export default function FeaturesPage() {
                 { title: "Corporate Income Tax (CIT)", body: "Annual tax computation including non-deductible add-backs (marketing, entertainment) and capital allowances. Instantly determine resident/non-resident company liabilities." },
                 { title: "Fixed Assets & Capital Allowances", body: "Categorize fixed assets into KRA Class bands (Class I 50%, Class II 25%, Class III 25%, Class IV 10%) to auto-calculate annual wear-and-tear depreciation deduction." },
                 { title: "Instalment & Turnover Tax (TOT)", body: "Quarterly CIT instalment scheduler (with KES 30,000 auto-obligation check) and Turnover Tax (TOT) 1.5% calculation on monthly gross revenue." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 17: BANK & M-PESA CSV RECONCILIATION ENGINE */}
+          <div id="reconciliation" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 17</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Bank &amp; M-Pesa CSV Statement Reconciliation Engine
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Eliminate manual bank statement audit headaches. Upload raw CSV exports from Equity Bank, NCBA, KCB, Stanbic, Absa, Co-op Bank, or Safaricom M-Pesa Business. The engine inverts bank statements (Bank Credit = Book Debit), auto-pairs matching transactions against Account 1200, and computes real-time statement variance down to KES 0.00.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Universal Kenyan Bank Format Support", body: "Natively parses both standard 6-column bank statements (Date, Ref, Narrative, Dr, Cr, Balance) and compact 4-column M-Pesa Business portal exports without tedious manual formatting." },
+                { title: "Smart Auto-Matching Algorithm", body: "Instantly pairs external statement rows against internal GL journal entries using exact amount match (±0.01), direction inversion, and M-Pesa/check reference code verification." },
+                { title: "1-Click Adjustments & Discrepancy Logger", body: "Directly create balancing journal entries for bank maintenance fees, withholding tax withholdings, or interest charges on the fly with live variance counter countdown to zero." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 18: COMPOUND MULTI-LINE JOURNAL ENTRY BUILDER */}
+          <div id="compound-journals" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 18</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Compound Multi-Line Journal Entry Builder
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Full double-entry flexibility for professional accountants. Create arbitrary N-line compound journal entries with dynamic line additions, searchable Chart of Accounts, and real-time mathematical validation ensuring total debits equal total credits.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Arbitrary N-Line Compound Postings", body: "Construct complex multi-line journals for monthly payroll accruals (splitting gross salary, PAYE, NSSF, SHIF, and net pay), mixed asset purchases with cash deposits, and debt restructurings." },
+                { title: "Real-Time Balance & Auto-Balance Helper", body: "Live out-of-balance counter with disabled submission guards until total debits match total credits (Δ = 0.00). Includes 1-click Auto-Balance helper to calculate residual balancing entries." },
+                { title: "Audit Trail & Document Attachments", body: "Every compound journal captures operator identity, timestamp, backdated audit justifications, and optional PDF/receipt image attachments for seamless external audit review." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 19: ACCOUNTS PAYABLE & VENDOR BILLS */}
+          <div id="accounts-payable" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 19</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Accounts Payable (Vendor Bills) &amp; Remittance Advice
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Institutional procurement and vendor credit management. Track vendor obligations from bill receipt through multi-tier approval, payables aging categorization, and payment voucher execution with automated remittance dispatch.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Inbound Bill Registration & WHT", body: "Record vendor invoices with line-item GL expense and asset assignments, payment terms (Net 30, Net 60), and automated Withholding Tax (WHT 5% or 10%) deductions." },
+                { title: "Payables Aging Analysis (30/60/90+)", body: "Real-time vendor liability categorization across Current, 1-30, 31-60, 61-90, and 90+ days overdue to optimize working capital and maintain vendor creditworthiness." },
+                { title: "Payment Vouchers & Remittance Slips", body: "Authorizing disbursements debits Accounts Payable (2100) and credits Bank (1200), instantly generating official PDF payment vouchers and automated remittance emails to suppliers." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 20: BULK ACTIONS & HIGH-VOLUME OPERATIONS */}
+          <div id="bulk-actions" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 20</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Bulk Actions &amp; High-Volume Financial Operations
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Scale your accounting throughput. Process recurring monthly invoicing across all retainer clients, execute multi-select batch emails with PDF attachments, bundle audit packs as ZIP files, and upload historical journal migrations in seconds.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Bulk Retainer Invoicing & Multi-Email", body: "Generate recurring monthly invoices for corporate retainers in 1 click. Multi-select invoices to trigger batch personalized email delivery with attached vector PDFs and payment links." },
+                { title: "Batch Vendor Payment Runs (EFT / M-Pesa)", body: "Select approved supplier bills to generate consolidated payment schedules, export Bank EFT batch upload sheets or M-Pesa B2B manifests, and clear AP balances in one master voucher." },
+                { title: "Atomic Bulk Journal CSV Importer", body: "Seamlessly migrate from QuickBooks, Sage, or Excel with our transactional CSV importer. Guarantees all-or-nothing database integrity with line-specific validation reporting." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 21: FISCAL PERIODS & REPORT EXPORTS */}
+          <div id="fiscal-periods" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 21</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Fiscal Years, Monthly Periods &amp; Report Exports
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Complete fiscal calendar governance. Declaring a fiscal year auto-generates 12 monthly accounting periods with strict month-end closing guards, audit-logged reopening workflows, and 1-click CSV spreadsheet / high-res PDF exports across all financial statements.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "12 Monthly Periods & Month-End Locking", body: "Declare custom fiscal years (Jan-Dec or Jul-Jun). Lock closed months to prevent retroactive tampering, backdating, or accidental changes that affect reconciled reports." },
+                { title: "Audit-Logged Period Reopening", body: "Authorized administrators can reopen closed periods with a mandatory audit justification reason to post legitimate adjusting entries before re-locking the period." },
+                { title: "1-Click CSV & Executive PDF Exports", body: "Export Trial Balance, P&L, Balance Sheet, Cash Flow, Payables Aging, and Client Statements into formula-ready CSV spreadsheets or boardroom-ready PDFs with corporate letterhead." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 22: THREE WORKSPACE OPERATING MODES */}
+          <div id="business-modes" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 22</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Three Workspace Operating Modes (Services vs. Retail vs. Hybrid)
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Tailor Manna Books to your exact operational model. Pure financial and service firms enjoy a clean, clutter-free financial workspace without POS or warehouse clutter, while retailers and hybrid enterprises harness physical stock tracking.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Mode 1: Pure Financial & Services", body: "For consultancies, law firms, wealth managers, and SACCOs. POS and warehouse menus are hidden, surfacing General Ledger, Invoicing, Banking, Tax, and Payroll." },
+                { title: "Mode 2: Retail & Physical Inventory", body: "For supermarkets, hardware shops, and retail stores. Puts the rapid walk-in POS counter terminal, multi-location stock reconciler, and barcode lookup front and center." },
+                { title: "Mode 3: Hybrid Complete Enterprise", body: "The best of both worlds for contractors and distributors. Sell goods with FIFO stock deductions while billing consulting hours and retainers on the same unified tax invoice." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
                   <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>

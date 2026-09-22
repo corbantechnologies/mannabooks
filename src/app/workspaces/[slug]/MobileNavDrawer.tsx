@@ -42,6 +42,8 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
     children?: { href: string; label: string; exact?: boolean }[];
   };
 
+  const isServicesOnly = (shop as any)?.businessMode === "SERVICES";
+
   const navItems: NavItem[] = [
     { href: `/workspaces/${slug}`, label: "Overview", exact: true },
     {
@@ -52,7 +54,7 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
       ],
     },
     { href: `/workspaces/${slug}/inbox`, label: "Shared Inbox" },
-    { href: `/workspaces/${slug}/pos`, label: "Point of Sale (POS)" },
+    ...(!isServicesOnly ? [{ href: `/workspaces/${slug}/pos`, label: "Point of Sale (POS)" }] : []),
     {
       label: "Contacts",
       children: [
@@ -60,8 +62,8 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
         { href: `/workspaces/${slug}/suppliers`, label: "Suppliers" },
       ],
     },
-    { href: `/workspaces/${slug}/products`, label: "Product Catalog" },
-    {
+    { href: `/workspaces/${slug}/products`, label: isServicesOnly ? "Services & Rates" : "Product Catalog" },
+    ...(!isServicesOnly ? [{
       label: "Inventory",
       children: [
         { href: `/workspaces/${slug}/inventory`, label: "Stock Overview", exact: true },
@@ -73,7 +75,7 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
         { href: `/workspaces/${slug}/inventory/reports/low-stock`, label: "Low Stock Alerts" },
         { href: `/workspaces/${slug}/inventory/reports/abc`, label: "ABC Analysis" },
       ],
-    },
+    }] : []),
     {
       label: "Cash Book",
       children: [
@@ -99,11 +101,13 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
         { href: `/workspaces/${slug}/finance/reconciliation`, label: "Bank Reconciliation" },
         { href: `/workspaces/${slug}/finance/periods`, label: "Accounting Periods" },
         { href: `/workspaces/${slug}/finance/budgets`, label: "Operating Budgets" },
+        { href: `/workspaces/${slug}/finance/cost-centers`, label: "Cost Centers" },
         { href: `/workspaces/${slug}/finance/reports/pl`, label: "P&L Statement" },
         { href: `/workspaces/${slug}/finance/reports/balance-sheet`, label: "Balance Sheet" },
         { href: `/workspaces/${slug}/finance/reports/cashflow`, label: "Cash Flow" },
         { href: `/workspaces/${slug}/finance/reports/trial-balance`, label: "Trial Balance" },
         { href: `/workspaces/${slug}/finance/reports/payables-aging`, label: "Payables Aging (AP)" },
+        { href: `/workspaces/${slug}/finance/bills`, label: "Vendor Bills (AP)" },
         { href: `/workspaces/${slug}/finance/tax/assets`, label: "Fixed Assets Register" },
         { href: `/workspaces/${slug}/finance/tax/instalments`, label: "Instalment Tax" },
         { href: `/workspaces/${slug}/finance/tax/tot`, label: "Turnover Tax (TOT)" },

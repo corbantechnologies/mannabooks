@@ -36,6 +36,7 @@ interface SettingsFormProps {
   paymentMethods: PaymentMethod[];
   initialTerms?: ShopTermItem[];
   initialAutoStockDeductionEnabled?: boolean;
+  initialBusinessMode?: "SERVICES" | "RETAIL" | "HYBRID";
   initialLoyaltyEngineMode?: "OFF" | "POINTS_ONLY" | "TIERS_ONLY" | "HYBRID";
 }
 
@@ -68,6 +69,7 @@ export function SettingsForm({
   paymentMethods: initialMethods,
   initialTerms = [],
   initialAutoStockDeductionEnabled = true,
+  initialBusinessMode = "HYBRID",
   initialLoyaltyEngineMode = "OFF",
 }: SettingsFormProps) {
   const router = useRouter();
@@ -86,6 +88,7 @@ export function SettingsForm({
   const [currency, setCurrency] = useState(initialCurrency);
   const [fiscalYearStartMonth, setFiscalYearStartMonth] = useState(initialFiscalYearStartMonth);
   const [autoStockDeductionEnabled, setAutoStockDeductionEnabled] = useState(initialAutoStockDeductionEnabled);
+  const [businessMode, setBusinessMode] = useState<"SERVICES" | "RETAIL" | "HYBRID">(initialBusinessMode);
   const [loyaltyEngineMode, setLoyaltyEngineMode] = useState<"OFF" | "POINTS_ONLY" | "TIERS_ONLY" | "HYBRID">(initialLoyaltyEngineMode);
   const [saving, setSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -159,6 +162,7 @@ export function SettingsForm({
       currency,
       fiscalYearStartMonth,
       autoStockDeductionEnabled,
+      businessMode,
       loyaltyEngineMode,
     });
     setSaving(false);
@@ -601,6 +605,71 @@ export function SettingsForm({
                 When enabled (recommended for retail and distribution), issued Invoices, Receipts, and POS sales automatically deduct inventory balances. Credit Notes and cancellations restore items. Turn this off if your business prefers manual stocktakes or operates purely in services.
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* WORKSPACE BUSINESS OPERATIONS MODE */}
+        <div className="border border-zinc-200 p-4 bg-zinc-50/50 rounded space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold uppercase text-black text-xs block">Workspace Business Mode</span>
+            <span className="text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+              {businessMode === "SERVICES" ? "Pure Services / Finance" : businessMode === "RETAIL" ? "Retail / Stock" : "Complete Hybrid"}
+            </span>
+          </div>
+          <span className="text-[10px] text-zinc-500 font-sans normal-case block">
+            Customizes your workspace navigation and tools to match your operating model.
+          </span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => setBusinessMode("SERVICES")}
+              className={`p-3 text-left border rounded transition-all space-y-1.5 ${
+                businessMode === "SERVICES"
+                  ? "border-[#064e3b] bg-emerald-50/50 text-[#064e3b] shadow-sm ring-1 ring-[#064e3b]"
+                  : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300"
+              }`}
+            >
+              <div className="font-bold text-xs uppercase flex items-center gap-1.5">
+                <span>💼</span> Financial &amp; Services
+              </div>
+              <p className="text-[10px] font-sans normal-case text-zinc-500 leading-tight">
+                For consultancies, law firms, wealth managers &amp; SACCOs. Hides POS &amp; warehouse clutter; surfaces GL, Invoicing, Banking, Tax &amp; Payroll.
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setBusinessMode("RETAIL")}
+              className={`p-3 text-left border rounded transition-all space-y-1.5 ${
+                businessMode === "RETAIL"
+                  ? "border-[#064e3b] bg-emerald-50/50 text-[#064e3b] shadow-sm ring-1 ring-[#064e3b]"
+                  : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300"
+              }`}
+            >
+              <div className="font-bold text-xs uppercase flex items-center gap-1.5">
+                <span>🏪</span> Retail &amp; POS
+              </div>
+              <p className="text-[10px] font-sans normal-case text-zinc-500 leading-tight">
+                For shops, supermarkets &amp; hardware stores. Puts the rapid walk-in POS counter terminal and stock reconciler front and center.
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setBusinessMode("HYBRID")}
+              className={`p-3 text-left border rounded transition-all space-y-1.5 ${
+                businessMode === "HYBRID"
+                  ? "border-[#064e3b] bg-emerald-50/50 text-[#064e3b] shadow-sm ring-1 ring-[#064e3b]"
+                  : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300"
+              }`}
+            >
+              <div className="font-bold text-xs uppercase flex items-center gap-1.5">
+                <span>🏗️</span> Hybrid Enterprise
+              </div>
+              <p className="text-[10px] font-sans normal-case text-zinc-500 leading-tight">
+                Complete suite. Manage physical inventory, warehouse transfers, walk-in POS alongside corporate retainers and double-entry general ledger.
+              </p>
+            </button>
           </div>
         </div>
 

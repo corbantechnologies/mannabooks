@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { chartOfAccounts, accountingPeriods, journalEntries, shops, fiscalYears } from "@/db/schema";
-import { eq, and, gte, lte, or } from "drizzle-orm";
+import { eq, and, gte, lte, or, inArray } from "drizzle-orm";
 import { verifyAndGetSession } from "./auth";
 import { enforcePermission } from "./rbac";
 import { revalidatePath } from "next/cache";
@@ -209,6 +209,7 @@ interface JournalEntryInput {
     debitAccountCode: string;
     creditAccountCode: string;
     amount: number;
+    referenceNumber?: string;
     sourceType: "document" | "expense" | "income" | "payroll" | "manual" | "migrated";
     sourceId?: string;
     createdById?: string;
@@ -267,6 +268,7 @@ export async function createJournalEntry(input: JournalEntryInput) {
         debitAccountId: debitAccount.id,
         creditAccountId: creditAccount.id,
         amount: input.amount.toFixed(2),
+        referenceNumber: input.referenceNumber || null,
         sourceType: input.sourceType,
         sourceId: input.sourceId || null,
         createdById: input.createdById || null,
@@ -583,5 +585,171 @@ export async function postManualJournalEntry(
     } catch (error: any) {
         console.error("Manual journal entry error:", error);
         return { success: false, error: error.message || "Failed to post journal entry." };
+    }
+}
+
+// ================================================================
+// COMPOUND MULTI-LINE JOURNAL ENTRIES (N-Legged Grid Postings)
+// ================================================================
+
+export interface CompoundJournalLine {
+    accountId: string;
+    debitAmount: number;
+    creditAmount: number;
+    lineDescription?: string;
+    costCenterId?: string;
+}
+
+export async function postCompoundJournalEntry(
+    shopId: string,
+    shopSlug: string,
+    data: {
+        entryDate: Date;
+        referenceNumber?: string;
+        description: string;
+        costCenterId?: string;
+        lines: CompoundJournalLine[];
+        isBackdated?: boolean;
+        backdatedReason?: string;
+    }
+) {
+    try {
+        await enforcePermission(shopId, "manage_expenses");
+        const session = await verifyAndGetSession();
+        if (!session) return { success: false, error: "Authentication required." };
+
+        const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
+        if (!shop?.isGlEnabled) return { success: false, error: "GL not activated." };
+
+        if (!data.description?.trim()) {
+            return { success: false, error: "Description is required." };
+        }
+
+        // Filter valid lines with non-zero amounts
+        const validLines = data.lines.filter(l => {
+            const dr = Number(l.debitAmount) || 0;
+            const cr = Number(l.creditAmount) || 0;
+            return l.accountId && (dr > 0.0001 || cr > 0.0001);
+        });
+
+        if (validLines.length < 2) {
+            return { success: false, error: "A compound journal entry must contain at least two active account lines." };
+        }
+
+        // Verify total debits equal total credits
+        let totalDebits = 0;
+        let totalCredits = 0;
+        for (const line of validLines) {
+            totalDebits += Number(line.debitAmount) || 0;
+            totalCredits += Number(line.creditAmount) || 0;
+        }
+
+        totalDebits = Math.round(totalDebits * 100) / 100;
+        totalCredits = Math.round(totalCredits * 100) / 100;
+        const diff = Math.abs(totalDebits - totalCredits);
+
+        if (diff > 0.01) {
+            return {
+                success: false,
+                error: `Compound entry is out of balance. Total Debits (KES ${totalDebits.toLocaleString("en-KE", { minimumFractionDigits: 2 })}) must equal Total Credits (KES ${totalCredits.toLocaleString("en-KE", { minimumFractionDigits: 2 })}). Imbalance: KES ${diff.toFixed(2)}.`
+            };
+        }
+
+        if (totalDebits <= 0) {
+            return { success: false, error: "Total journal amount must be greater than zero." };
+        }
+
+        // Validate all referenced accounts
+        const accountIds = Array.from(new Set(validLines.map(l => l.accountId)));
+        const dbAccounts = await db.query.chartOfAccounts.findMany({
+            where: and(
+                eq(chartOfAccounts.shopId, shopId),
+                inArray(chartOfAccounts.id, accountIds)
+            ),
+        });
+
+        if (dbAccounts.length !== accountIds.length) {
+            return { success: false, error: "One or more selected accounts could not be verified." };
+        }
+
+        // Find or determine accounting period
+        const entryDateStr = data.entryDate.toISOString().split("T")[0];
+        const period = await db.query.accountingPeriods.findFirst({
+            where: and(
+                eq(accountingPeriods.shopId, shopId),
+                lte(accountingPeriods.startDate, entryDateStr),
+                gte(accountingPeriods.endDate, entryDateStr),
+            ),
+        });
+
+        if (!period) {
+            return { success: false, error: `No active accounting period found for date ${entryDateStr}. Transaction date must fall within a declared Fiscal Year.` };
+        }
+
+        if (period.status === "CLOSED" && !shop.glOnboardingMode) {
+            return { success: false, error: `Accounting period "${period.periodName}" is closed. Postings to closed periods are locked.` };
+        }
+
+        const debits = validLines
+            .filter(l => (Number(l.debitAmount) || 0) > 0.0001)
+            .map(l => ({ accountId: l.accountId, amount: Number(l.debitAmount), desc: l.lineDescription?.trim(), costCenterId: l.costCenterId }));
+
+        const credits = validLines
+            .filter(l => (Number(l.creditAmount) || 0) > 0.0001)
+            .map(l => ({ accountId: l.accountId, amount: Number(l.creditAmount), desc: l.lineDescription?.trim(), costCenterId: l.costCenterId }));
+
+        if (debits.length === 0 || credits.length === 0) {
+            return { success: false, error: "Both debit and credit lines are required." };
+        }
+
+        const ref = data.referenceNumber?.trim() || `JRN-${Date.now().toString().slice(-6)}`;
+        const isBackdated = data.isBackdated || data.entryDate < new Date(new Date().setHours(0, 0, 0, 0));
+        const reason = data.backdatedReason || (isBackdated ? "Compound adjusting entry" : null);
+
+        // Decompose compound debits & credits into balanced double-entry pairings
+        await db.transaction(async (tx) => {
+            let dIdx = 0;
+            let cIdx = 0;
+            let dRem = debits[0].amount;
+            let cRem = credits[0].amount;
+
+            while (dIdx < debits.length && cIdx < credits.length) {
+                const matched = Math.min(dRem, cRem);
+                if (matched > 0.0001) {
+                    await tx.insert(journalEntries).values({
+                        shopId,
+                        periodId: period.id,
+                        entryDate: data.entryDate,
+                        description: debits[dIdx].desc || credits[cIdx].desc || data.description,
+                        debitAccountId: debits[dIdx].accountId,
+                        creditAccountId: credits[cIdx].accountId,
+                        amount: matched.toFixed(2),
+                        referenceNumber: ref,
+                        costCenterId: debits[dIdx].costCenterId || credits[cIdx].costCenterId || data.costCenterId || null,
+                        sourceType: "manual",
+                        createdById: session.userId,
+                        isBackdated,
+                        backdatedReason: reason,
+                    });
+                }
+                dRem = Math.round((dRem - matched) * 100) / 100;
+                cRem = Math.round((cRem - matched) * 100) / 100;
+
+                if (dRem <= 0.0001) {
+                    dIdx++;
+                    if (dIdx < debits.length) dRem = debits[dIdx].amount;
+                }
+                if (cRem <= 0.0001) {
+                    cIdx++;
+                    if (cIdx < credits.length) cRem = credits[cIdx].amount;
+                }
+            }
+        });
+
+        revalidatePath(`/workspaces/${shopSlug}/finance/ledger`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Compound journal entry error:", error);
+        return { success: false, error: error.message || "Failed to post compound journal entry." };
     }
 }

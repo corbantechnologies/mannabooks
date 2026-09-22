@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { shops, suppliers, documents } from "@/db/schema";
+import { shops, suppliers, documents, vendorBills } from "@/db/schema";
 import { eq, and, ne } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { PayablesAgingClient, type SupplierAgingItem } from "./PayablesAgingClient";
@@ -19,7 +19,7 @@ export default async function PayablesAgingPage({ params }: PayablesAgingPagePro
     notFound();
   }
 
-  // Fetch all suppliers with their unpaid documents
+  // Fetch all suppliers with their unpaid documents and unpaid vendor bills
   const shopSuppliers = await db.query.suppliers.findMany({
     where: eq(suppliers.shopId, shop.id),
     with: {
@@ -27,6 +27,12 @@ export default async function PayablesAgingPage({ params }: PayablesAgingPagePro
         where: and(
           ne(documents.status, "PAID"),
           ne(documents.status, "CANCELLED")
+        ),
+      },
+      vendorBills: {
+        where: and(
+          ne(vendorBills.status, "PAID"),
+          ne(vendorBills.status, "CANCELLED")
         ),
       },
     },
@@ -75,7 +81,39 @@ export default async function PayablesAgingPage({ params }: PayablesAgingPagePro
       };
     });
 
-    if (docItems.length > 0 || total > 0) {
+    const billItems = ((supp as any).vendorBills || []).map((b: any) => {
+      const billTime = new Date(b.billDate).getTime();
+      const diffMs = now.getTime() - billTime;
+      const daysAge = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+      const balance = Math.max(0, parseFloat(b.netPayable || "0") - parseFloat(b.amountPaid || "0"));
+
+      if (daysAge <= 30) {
+        current += balance;
+      } else if (daysAge <= 60) {
+        days31to60 += balance;
+      } else if (daysAge <= 90) {
+        days61to90 += balance;
+      } else {
+        days90Plus += balance;
+      }
+
+      total += balance;
+
+      return {
+        id: b.id,
+        docNumber: b.billNumber,
+        type: "BILL",
+        issueDate: String(b.billDate),
+        dueDate: b.dueDate ? String(b.dueDate) : null,
+        grandTotal: balance.toFixed(2),
+        status: b.status,
+        daysOverdue: daysAge,
+      };
+    });
+
+    const allPayableItems = [...docItems, ...billItems];
+
+    if (allPayableItems.length > 0 || total > 0) {
       agingData.push({
         supplierId: supp.id,
         supplierName: supp.name,
@@ -88,8 +126,8 @@ export default async function PayablesAgingPage({ params }: PayablesAgingPagePro
         days61to90: days61to90,
         days90Plus: days90Plus,
         totalPayable: total,
-        documentsCount: docItems.length,
-        documents: docItems,
+        documentsCount: allPayableItems.length,
+        documents: allPayableItems,
       });
     }
   }

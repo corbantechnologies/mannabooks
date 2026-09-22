@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { shops, journalEntries } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { shops, journalEntries, costCenters } from "@/db/schema";
+import { eq, desc, asc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getChartOfAccounts } from "@/lib/actions/gl";
 import GeneralLedgerClient from "./GeneralLedgerClient";
@@ -12,7 +12,7 @@ export default async function GeneralLedgerPage({ params }: { params: Promise<{ 
 
     if (!shop.isGlEnabled) redirect(`/workspaces/${slug}/finance/accounts`);
 
-    const [accounts, entries] = await Promise.all([
+    const [accounts, entries, shopCostCenters] = await Promise.all([
         getChartOfAccounts(shop.id),
         db.query.journalEntries.findMany({
             where: eq(journalEntries.shopId, shop.id),
@@ -21,9 +21,14 @@ export default async function GeneralLedgerPage({ params }: { params: Promise<{ 
                 creditAccount: true,
                 period: true,
                 createdBy: true,
+                costCenter: true,
             },
             orderBy: [desc(journalEntries.entryDate), desc(journalEntries.createdAt)],
             limit: 200,
+        }),
+        db.query.costCenters.findMany({
+            where: eq(costCenters.shopId, shop.id),
+            orderBy: [asc(costCenters.code)],
         }),
     ]);
 
@@ -43,6 +48,7 @@ export default async function GeneralLedgerPage({ params }: { params: Promise<{ 
                 shopSlug={slug}
                 glOnboardingMode={shop.glOnboardingMode}
                 accounts={accounts.map(a => ({ id: a.id, code: a.code, name: a.name, accountType: a.accountType }))}
+                costCenters={shopCostCenters.map(c => ({ id: c.id, code: c.code, name: c.name }))}
                 entries={entries.map(e => ({
                     id: e.id,
                     entryDate: e.entryDate.toISOString(),
@@ -57,6 +63,8 @@ export default async function GeneralLedgerPage({ params }: { params: Promise<{ 
                     isBackdated: e.isBackdated,
                     backdatedReason: e.backdatedReason,
                     createdByName: e.createdBy?.name || null,
+                    costCenterCode: e.costCenter?.code || null,
+                    costCenterName: e.costCenter?.name || null,
                 }))}
             />
         </div>

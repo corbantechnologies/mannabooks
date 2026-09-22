@@ -42,11 +42,13 @@ import {
   Landmark,
   Building2,
   Layers,
+  Receipt,
 } from "lucide-react";
 
 interface DesktopSideNavProps {
   slug: string;
   brandColor?: string;
+  businessMode?: "SERVICES" | "RETAIL" | "HYBRID";
 }
 
 type ChildItem = {
@@ -64,8 +66,9 @@ type NavItem = {
   children?: ChildItem[];
 };
 
-export function DesktopSideNav({ slug, brandColor = "#064e3b" }: DesktopSideNavProps) {
+export function DesktopSideNav({ slug, brandColor = "#064e3b", businessMode = "HYBRID" }: DesktopSideNavProps) {
   const pathname = usePathname();
+  const isServicesOnly = businessMode === "SERVICES";
 
   const navItems: NavItem[] = [
     { href: `/workspaces/${slug}`, label: "Overview", icon: LayoutDashboard, exact: true },
@@ -78,7 +81,7 @@ export function DesktopSideNav({ slug, brandColor = "#064e3b" }: DesktopSideNavP
       ],
     },
     { href: `/workspaces/${slug}/inbox`, label: "Shared Inbox", icon: Inbox },
-    { href: `/workspaces/${slug}/pos`, label: "Point of Sale", icon: ShoppingCart },
+    ...(!isServicesOnly ? [{ href: `/workspaces/${slug}/pos`, label: "Point of Sale", icon: ShoppingCart }] : []),
     {
       label: "Contacts",
       icon: Users,
@@ -87,8 +90,8 @@ export function DesktopSideNav({ slug, brandColor = "#064e3b" }: DesktopSideNavP
         { href: `/workspaces/${slug}/suppliers`, label: "Suppliers", icon: Truck },
       ],
     },
-    { href: `/workspaces/${slug}/products`, label: "Product Catalog", icon: Package },
-    {
+    { href: `/workspaces/${slug}/products`, label: isServicesOnly ? "Services & Rates" : "Product Catalog", icon: Package },
+    ...(!isServicesOnly ? [{
       label: "Inventory",
       icon: Warehouse,
       children: [
@@ -101,7 +104,7 @@ export function DesktopSideNav({ slug, brandColor = "#064e3b" }: DesktopSideNavP
         { href: `/workspaces/${slug}/inventory/reports/low-stock`, label: "Low Stock", icon: AlertTriangle },
         { href: `/workspaces/${slug}/inventory/reports/abc`, label: "ABC Analysis", icon: PieChart },
       ],
-    },
+    }] : []),
     {
       label: "Cash Book",
       icon: BookOpen,
@@ -130,11 +133,13 @@ export function DesktopSideNav({ slug, brandColor = "#064e3b" }: DesktopSideNavP
         { href: `/workspaces/${slug}/finance/reconciliation`, label: "Bank Reconciliation", icon: Landmark },
         { href: `/workspaces/${slug}/finance/periods`, label: "Accounting Periods", icon: RefreshCw },
         { href: `/workspaces/${slug}/finance/budgets`, label: "Operating Budgets", icon: BarChart2 },
+        { href: `/workspaces/${slug}/finance/cost-centers`, label: "Cost Centers", icon: Layers },
         { href: `/workspaces/${slug}/finance/reports/pl`, label: "P&L Statement", icon: TrendingUp },
         { href: `/workspaces/${slug}/finance/reports/balance-sheet`, label: "Balance Sheet", icon: Scale },
         { href: `/workspaces/${slug}/finance/reports/cashflow`, label: "Cash Flow", icon: BarChart },
         { href: `/workspaces/${slug}/finance/reports/trial-balance`, label: "Trial Balance", icon: FileBarChart },
         { href: `/workspaces/${slug}/finance/reports/payables-aging`, label: "Payables Aging (AP)", icon: AlertTriangle },
+        { href: `/workspaces/${slug}/finance/bills`, label: "Vendor Bills (AP)", icon: Receipt },
         { href: `/workspaces/${slug}/finance/tax/assets`, label: "Fixed Assets", icon: Building2 },
         { href: `/workspaces/${slug}/finance/tax/instalments`, label: "Instalment Tax", icon: DollarSign },
         { href: `/workspaces/${slug}/finance/tax/tot`, label: "Turnover Tax (TOT)", icon: Globe },

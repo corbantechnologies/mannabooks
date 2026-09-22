@@ -344,23 +344,72 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           {/* MODULE 8: PASSWORDLESS PORTALS */}
           {/* ─────────────────────────────────────────── */}
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 8: PASSWORDLESS PORTALS */}
+          {/* ─────────────────────────────────────────── */}
           <section id="module-8" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 08]</span>
-              <h2 className="text-xl font-bold uppercase font-sans text-black">Passwordless Client Portals, Signatures &amp; Amendments</h2>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Passwordless Client Portals, E-Signatures &amp; Telemetry</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
-              Clients view documents via secure 64-character unguessable token links — no accounts or passwords required.
+              Eliminate client friction. Every commercial document (Quotation, Tax Invoice, Receipt, Delivery Note, Payment Voucher) is equipped with a secure, unguessable 64-character cryptographic token URL (<code>/portal/invoice/[token]</code>). Clients access their branded document instantly on any mobile phone, tablet, or desktop without needing to create an account, install an app, or remember a password.
             </p>
-            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
-              <h4 className="font-bold uppercase text-black text-xs">Operating Steps:</h4>
+
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-4 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">How Operators Direct Clients to Their Portals:</h4>
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
-                <li>Open any document detail page.</li>
-                <li>Click <strong>Copy Public Portal Link</strong> to copy the secure 64-character token URL for sharing via WhatsApp or messaging.</li>
-                <li>Or click <strong>Dispatch via Email</strong> to send a styled Resend HTML email with your shop logo and brand color CTA button.</li>
-                <li><strong>Quotation Acceptance:</strong> Clients can electronically sign and accept quotes directly on the portal.</li>
-                <li><strong>Quotation Expiry Warning:</strong> If a quote has expired, the portal displays a warning banner disabling acceptance and offering a 1-click &quot;Request Updated Quote&quot; button.</li>
+                <li>
+                  <strong>Locate the Document:</strong> Open any issued Quotation or Invoice from <strong>Fiscal Ledgers</strong> (or from the client&apos;s transaction history).
+                </li>
+                <li>
+                  <strong>Copy the Portal Link:</strong> In the upper-right <em>Document Status Panel</em>, click the <strong>Share &amp; Export</strong> dropdown and select <strong>&quot;🔗 Copy Portal Link&quot;</strong>. A green confirmation toast confirms the 64-character link is copied to your clipboard.
+                </li>
+                <li>
+                  <strong>Direct via WhatsApp or SMS:</strong> Paste the link directly into your WhatsApp chat or SMS. When pasted into WhatsApp, the message automatically generates a rich preview with your business name and document reference.
+                </li>
+                <li>
+                  <strong>Direct via Branded Email:</strong> Alternatively, click <strong>&quot;📧 Dispatch via Email&quot;</strong> to send an automated, responsive HTML email displaying your company logo, greeting, and a prominent <em>&quot;View &amp; Settle Online&quot;</em> action button.
+                </li>
               </ol>
+
+              <div className="border-t border-emerald-100 pt-3 space-y-3">
+                <h5 className="font-bold uppercase text-black text-xs">What the Client Sees &amp; Can Do:</h5>
+                <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                  <li>
+                    <strong>Custom Brand Identity:</strong> Displays your official business logo, corporate letterhead, contact details, KRA Tax PIN, and your configured primary brand color.
+                  </li>
+                  <li>
+                    <strong>Settlement Channels &amp; Payment Details:</strong> The portal automatically embeds your active settlement instructions (configured under <em>Workspace Settings &rarr; Payment Methods</em>), displaying your <strong>M-Pesa Till / Paybill number &amp; Account</strong> and <strong>Commercial Bank details</strong> (Bank Name, Branch, Account Number, SWIFT/BIC) so the customer can pay immediately.
+                  </li>
+                  <li>
+                    <strong>Official KRA eTIMS QR Verification:</strong> Renders a live scannable QR code that clients and corporate tax auditors can scan with any smartphone camera to verify authenticity directly on KRA tax authority servers.
+                  </li>
+                  <li>
+                    <strong>1-Click Quotation Acceptance &amp; Amendments:</strong> On quotations, clients can click <strong>&quot;Accept Quotation&quot;</strong> to confirm the deal with optional notes (transitioning the quote to <code>CONFIRMED</code>), or click <strong>&quot;Request Changes&quot;</strong> to submit scope/rate adjustments without calling.
+                  </li>
+                  <li>
+                    <strong>Quotation Expiry Safeguard:</strong> If the quote has passed its validity date, the acceptance button is automatically locked, and the portal displays an amber notice with a 1-click <em>&quot;Request Updated Quote&quot;</em> action.
+                  </li>
+                  <li>
+                    <strong>Instant Vector PDF Downloads:</strong> Clients can click <strong>&quot;Download PDF&quot;</strong> to get an ultra-crisp, letterhead-formatted vector PDF for their internal procurement records.
+                  </li>
+                </ul>
+              </div>
+
+              <div className="border-t border-emerald-100 pt-3 space-y-2">
+                <h5 className="font-bold uppercase text-black text-xs">Real-Time Operator Telemetry &amp; Alerts:</h5>
+                <p className="text-zinc-700 font-sans text-sm leading-relaxed">
+                  Manna Books tracks client engagement in real time. As soon as the client opens their portal link, the database records the view timestamp, and an emerald <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">👁️ Portal Viewed</span> badge illuminates on the document in your workspace. When a client accepts a quote or requests revisions, an instant alert triggers in the top navigation activity bell.
+                </p>
+              </div>
+
+              <div className="border-t border-emerald-100 pt-3 space-y-2">
+                <h5 className="font-bold uppercase text-black text-xs">Public Digital Catalog Portal (<code>/portal/catalog/[slug]</code>):</h5>
+                <p className="text-zinc-700 font-sans text-sm leading-relaxed">
+                  Direct prospective buyers to your live digital product &amp; services showcase. Send clients your public catalog URL where they can browse hardware specifications, service rate cards, inventory availability, and standard commercial payment terms.
+                </p>
+              </div>
             </div>
           </section>
 

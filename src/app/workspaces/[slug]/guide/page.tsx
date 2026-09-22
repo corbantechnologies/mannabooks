@@ -502,19 +502,64 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
                 [MODULE 08]
               </span>
               <h2 className="text-base sm:text-lg font-bold uppercase text-black">
-                Passwordless Client Portals, E-Signatures &amp; Amendments
+                Passwordless Client Portals, E-Signatures &amp; Telemetry
               </h2>
             </div>
 
             <p className="text-xs text-zinc-600 leading-relaxed">
-              Eliminate client friction. Customers access their branded invoice, quotation, or receipt via an unguessable 64-character token link (<code>/portal/doc/[token]</code>) without needing to download apps or remember passwords.
+              Eliminate client friction. Every commercial document (Quotation, Tax Invoice, Receipt, Delivery Note, Payment Voucher) is equipped with a secure, unguessable 64-character cryptographic token URL (<code>/portal/invoice/[token]</code>). Customers access their branded document instantly on any mobile phone, tablet, or desktop without downloading apps or remembering passwords.
             </p>
 
-            <ul className="list-disc list-inside space-y-1.5 text-zinc-700 text-xs">
-              <li><strong>Interactive Electronic Signing:</strong> Corporate buyers sign their approval on touchscreens or desktops, creating a binding timestamped approval record.</li>
-              <li><strong>Amendment Negotiation:</strong> If a client requires scope or rate changes, they submit notes via the portal. You receive an in-app alert to revise the quote.</li>
-              <li><strong>Vector PDF Download:</strong> High-resolution, letterhead-styled vector PDFs download in 1 click.</li>
-            </ul>
+            <div className="bg-emerald-50/50 border border-emerald-200 p-4 rounded-lg font-mono text-xs space-y-3">
+              <span className="font-bold text-emerald-950 uppercase text-[11px] block">
+                How Operators Direct Clients to Their Portals:
+              </span>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-xs leading-relaxed">
+                <li>
+                  <strong>Locate the Document:</strong> Open any issued Quotation or Tax Invoice from <strong>Fiscal Ledgers</strong> (or from the client&apos;s transaction record).
+                </li>
+                <li>
+                  <strong>Copy the Portal Link:</strong> In the upper-right <em>Document Status Panel</em>, click the <strong>Share &amp; Export</strong> dropdown and select <strong>&quot;🔗 Copy Portal Link&quot;</strong>. A green confirmation toast confirms the link is copied to your clipboard.
+                </li>
+                <li>
+                  <strong>Share via WhatsApp or SMS:</strong> Paste the link directly into your WhatsApp conversation or SMS. In WhatsApp, the link automatically unfurls with your business name and document reference.
+                </li>
+                <li>
+                  <strong>Send Branded Resend Email:</strong> Alternatively, click <strong>&quot;📧 Dispatch via Email&quot;</strong> to send an automated responsive HTML email featuring your company logo and a direct <em>&quot;View &amp; Settle Online&quot;</em> button.
+                </li>
+              </ol>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <h4 className="font-bold uppercase text-black text-xs">What Clients Experience on the Portal:</h4>
+              <ul className="list-disc list-inside space-y-1.5 text-zinc-700 text-xs leading-relaxed font-sans">
+                <li>
+                  <strong>Branded Company Letterhead:</strong> Displays your custom logo, contacts, KRA PIN, and primary brand theme color.
+                </li>
+                <li>
+                  <strong>Configured Settlement Instructions:</strong> Embeds your active payment channels (M-Pesa Till / Paybill number &amp; account, plus Commercial Bank account number, branch, and SWIFT/BIC code) so clients can settle immediately.
+                </li>
+                <li>
+                  <strong>KRA eTIMS Verification QR:</strong> A live scannable QR code that allows clients and corporate auditors to verify invoice tax validity directly on KRA servers.
+                </li>
+                <li>
+                  <strong>1-Click Quotation Acceptance &amp; Amendments:</strong> Clients can click <strong>&quot;Accept Quotation&quot;</strong> to confirm the order (transitioning the quote to <code>CONFIRMED</code>), or click <strong>&quot;Request Changes&quot;</strong> to submit scope/rate adjustments directly back to your team.
+                </li>
+                <li>
+                  <strong>Quotation Expiry Protection:</strong> Once a quote expires, acceptance is disabled and replaced with a 1-click <em>&quot;Request Updated Quote&quot;</em> prompt.
+                </li>
+                <li>
+                  <strong>Vector PDF Download:</strong> High-resolution, letterhead-styled vector PDFs download in 1 click (<code>/portal/pdf/[token]</code>).
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-zinc-50 border border-zinc-200 p-3 rounded-lg text-xs space-y-1">
+              <span className="font-bold text-black uppercase text-[11px] block">Real-Time Operator Telemetry:</span>
+              <p className="text-zinc-600 leading-relaxed font-sans">
+                When a client opens their portal link, the database timestamps the visit and an emerald <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">👁️ Portal Viewed</span> badge lights up on the document in your workspace. When a client confirms or requests amendments on a quote, you receive an instant in-app notification in your top navigation activity bell.
+              </p>
+            </div>
           </section>
 
           {/* ─────────────────────────────────────────── */}

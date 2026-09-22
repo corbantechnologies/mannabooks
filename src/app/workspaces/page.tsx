@@ -1,4 +1,4 @@
-﻿import { db } from "@/db";
+import { db } from "@/db";
 import { shopMembers, shops, users } from "@/db/schema";
 import { verifyAndGetSession } from "@/lib/actions/auth";
 import { logoutAction } from "@/lib/actions/logout";
@@ -9,7 +9,7 @@ import Link from "next/link";
 export default async function WorkspacesDirectoryPage() {
   const session = await verifyAndGetSession();
   if (!session) {
-    redirect("/login");
+    redirect("/logout");
   }
 
   // Auto-heal: Check if this user owns shops directly in the shops table

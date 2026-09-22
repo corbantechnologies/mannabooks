@@ -93,11 +93,21 @@ export const verifyAndGetSession = cache(async function verifyAndGetSession() {
  */
 export async function invalidateSession() {
     try {
-        const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+        const cookieStore = await cookies();
+        const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
         if (token) {
-            await db.delete(sessions).where(eq(sessions.id, token));
+            try {
+                await db.delete(sessions).where(eq(sessions.id, token));
+            } catch (err) {}
         }
-        (await cookies()).delete(SESSION_COOKIE_NAME);
+        cookieStore.delete(SESSION_COOKIE_NAME);
+        cookieStore.set(SESSION_COOKIE_NAME, "", {
+            path: "/",
+            maxAge: 0,
+            expires: new Date(0),
+            httpOnly: true,
+            sameSite: "lax",
+        });
     } catch (e) {
         console.error("Error during invalidateSession:", e);
     }

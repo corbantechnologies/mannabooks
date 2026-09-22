@@ -18,7 +18,7 @@ export const getActiveWorkspaceContext = cache(async function getActiveWorkspace
     // 1. Authenticate the active session cookie
     const sessionRecord = await verifyAndGetSession();
     if (!sessionRecord) {
-        redirect("/login");
+        redirect("/logout");
     }
 
     // 2. Locate the requested shop profile by its unique URL slug

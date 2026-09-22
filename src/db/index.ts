@@ -17,10 +17,10 @@ const pool = globalForDb.pool ?? new Pool({
     connectionString: process.env.DATABASE_URL,
     max: 10, // Maintain a clean connection cap for serverless/edge pathways
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
+    connectionTimeoutMillis: 10000,
 });
 
-if (process.env.NODE_ENV !== 'production') globalForDb.pool = pool;
+globalForDb.pool = pool;
 
 export const db = globalForDb.db ?? drizzle(pool, { schema });
-if (process.env.NODE_ENV !== 'production') globalForDb.db = db;
+globalForDb.db = db;

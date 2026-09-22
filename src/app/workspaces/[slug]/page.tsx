@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { shops, documents, clients, products, paymentMethods, expenses } from "@/db/schema";
 import { eq, count, and, desc, gte } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { OnboardingTracker } from "./OnboardingTracker";
@@ -23,14 +24,8 @@ interface WorkspaceOverviewPageProps {
 export default async function WorkspaceOverviewPage({ params }: WorkspaceOverviewPageProps) {
   const { slug } = await params;
 
-  // 1. Resolve shop context
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
-
-  if (!shop) {
-    notFound();
-  }
+  // 1. Resolve authenticated shop context (cached with layout)
+  const { shop } = await getActiveWorkspaceContext(slug);
 
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);

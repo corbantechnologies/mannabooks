@@ -97,6 +97,13 @@ function LoginFormContent() {
           <p className="text-xs text-zinc-500 font-sans">Enter your credentials to access your account</p>
         </div>
 
+        {searchParams.get("cleared") === "1" && !error && (
+          <div className="border border-emerald-200 bg-emerald-50 p-3 font-sans text-xs text-emerald-800 rounded font-semibold flex items-center gap-2">
+            <span>✓</span>
+            <span>Session cookies cleared cleanly. Please enter your credentials to log in.</span>
+          </div>
+        )}
+
         {error && (
           <div className="border border-rose-200 bg-rose-50 p-3 font-sans text-xs text-rose-800 rounded font-semibold">
             ⚠ {error}

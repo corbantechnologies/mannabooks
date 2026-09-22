@@ -8,7 +8,7 @@ export default async function DashboardProxyPage() {
   const session = await verifyAndGetSession();
   
   if (!session) {
-    redirect("/login");
+    redirect("/logout");
   }
 
   // 1. If the logged in account is a Super Admin (ROOT), land directly on the platform terminal

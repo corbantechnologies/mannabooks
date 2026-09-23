@@ -58,6 +58,9 @@ const GUIDE_MODULES = [
   { href: "#module-19", label: "[19] Fiscal Periods & Month Closing" },
   { href: "#module-20", label: "[20] High-Volume Bulk Operations" },
   { href: "#module-21", label: "[21] Report Exports & Statements" },
+  { href: "#module-22", label: "[22] CRM & Deals Pipeline" },
+  { href: "#module-23", label: "[23] Interactive Proposals & e-Sign" },
+  { href: "#module-24", label: "[24] Retainer Contracts & Projects" },
 ];
 
 export default function PublicOperatorGuidePage() {
@@ -716,6 +719,68 @@ export default function PublicOperatorGuidePage() {
                 <li><strong>Balance Sheet (CSV / PDF):</strong> Live financial position enforcing Assets = Liabilities + Equity as of any cutoff date.</li>
                 <li><strong>Cash Flow Statement (CSV / PDF):</strong> Cash flows segregated into Operating, Investing, and Financing activities.</li>
                 <li><strong>Client &amp; Supplier Statements (CSV / PDF):</strong> Chronological running balances with 1-click customer email delivery.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 22: CRM & DEALS PIPELINE */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-22" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 22]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">CRM Pipeline &amp; Deal Management</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Track prospects through the visual drag-and-drop Kanban pipeline: Lead &rarr; Qualified &rarr; Proposal Sent &rarr; Negotiation &rarr; Won &rarr; Lost. Monitor weighted pipeline revenue, assign staff reps, log call/meeting activities, and link closed deals directly to Proposals, Retainers, and Projects.
+            </p>
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">CRM Capabilities:</h4>
+              <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Interactive Kanban:</strong> Drag-and-drop deal cards between stages with live column totals and win-probability forecasts.</li>
+                <li><strong>Activity Timeline:</strong> Log calls, meeting minutes, notes, and stage changes per deal.</li>
+                <li><strong>Loss Reasons &amp; Win Velocity:</strong> Capture competitive loss reasons to analyze conversion bottlenecks.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 23: INTERACTIVE PROPOSALS & E-SIGN */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-23" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 23]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Interactive Proposals &amp; Client e-Signatures</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Create branded, tiered package proposals (e.g. Silver / Gold / Enterprise) and deliver them via passwordless 64-char public client portal links. Clients can inspect scopes of work, choose packages, draw touch/mouse signatures, request amendments, or approve with immediate notification.
+            </p>
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Proposal Features:</h4>
+              <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Client Portal (<code className="bg-white px-1.5 py-0.5 rounded border border-zinc-200">/portal/proposal/[token]</code>):</strong> Live view tracking, amendment requests, and drawn touch/mouse signatures.</li>
+                <li><strong>1-Click Conversion:</strong> Accepted proposals convert instantly into KRA eTIMS invoices or contracts with zero manual re-entry.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* ─────────────────────────────────────────── */}
+          {/* MODULE 24: RETAINER CONTRACTS & PROJECTS */}
+          {/* ─────────────────────────────────────────── */}
+          <section id="module-24" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 24]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Retainer Contracts, SLA Burn-Down &amp; Project Timesheets</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Manage fixed-fee or hourly retainer contracts with monthly hours burn-down ledgers. Automatically generate recurring retainer invoices and dispatch 30-day/60-day renewal alerts via the cron engine. Track project workspaces, staff billable rates, timesheet approvals, and phased milestone billing.
+            </p>
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Contracts &amp; Projects Capabilities:</h4>
+              <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Automated Retainer Invoicing:</strong> Cron engine generates monthly invoices on the designated billing day and advances next billing dates.</li>
+                <li><strong>SLA Expiry Alerts:</strong> In-app notifications and email alerts triggered 60 days and 30 days prior to contract expiration.</li>
+                <li><strong>Project Milestones &amp; Timesheets:</strong> Phased milestone billing gates and staff timesheet review workflows.</li>
               </ul>
             </div>
           </section>

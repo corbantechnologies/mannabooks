@@ -43,6 +43,9 @@ import {
   Building2,
   Layers,
   Receipt,
+  Target,
+  FolderKanban,
+  FileSignature,
 } from "lucide-react";
 
 interface DesktopSideNavProps {
@@ -82,6 +85,16 @@ export function DesktopSideNav({ slug, brandColor = "#064e3b", businessMode = "H
     },
     { href: `/workspaces/${slug}/inbox`, label: "Shared Inbox", icon: Inbox },
     ...(!isServicesOnly ? [{ href: `/workspaces/${slug}/pos`, label: "Point of Sale", icon: ShoppingCart }] : []),
+    {
+      label: "CRM Pipeline",
+      icon: Target,
+      children: [
+        { href: `/workspaces/${slug}/crm`, label: "Deal Pipeline", icon: FolderKanban, exact: true },
+        { href: `/workspaces/${slug}/crm/proposals`, label: "Proposals", icon: FileSignature },
+        { href: `/workspaces/${slug}/crm/contracts`, label: "Contracts & SLAs", icon: Briefcase },
+      ],
+    },
+    { href: `/workspaces/${slug}/projects`, label: "Projects", icon: FolderKanban },
     {
       label: "Contacts",
       icon: Users,

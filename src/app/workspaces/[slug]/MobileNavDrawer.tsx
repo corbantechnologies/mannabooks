@@ -56,6 +56,15 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
     { href: `/workspaces/${slug}/inbox`, label: "Shared Inbox" },
     ...(!isServicesOnly ? [{ href: `/workspaces/${slug}/pos`, label: "Point of Sale (POS)" }] : []),
     {
+      label: "CRM Pipeline",
+      children: [
+        { href: `/workspaces/${slug}/crm`, label: "Deal Pipeline", exact: true },
+        { href: `/workspaces/${slug}/crm/proposals`, label: "Proposals" },
+        { href: `/workspaces/${slug}/crm/contracts`, label: "Contracts & SLAs" },
+      ],
+    },
+    { href: `/workspaces/${slug}/projects`, label: "Projects" },
+    {
       label: "Contacts",
       children: [
         { href: `/workspaces/${slug}/clients`, label: "Clients" },

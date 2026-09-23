@@ -33,6 +33,9 @@ const GUIDE_MODULES = [
   { id: "mod-20", label: "[20] High-Volume Bulk Operations", category: "Operations" },
   { id: "mod-21", label: "[21] Financial Statements & Board Reports", category: "Accounting" },
   { id: "mod-22", label: "[22] Three Workspace Operating Modes", category: "Admin" },
+  { id: "mod-23", label: "[23] CRM Pipeline & Deals Management", category: "CRM" },
+  { id: "mod-24", label: "[24] Interactive Proposals & e-Signatures", category: "CRM" },
+  { id: "mod-25", label: "[25] Contracts, Retainers & Projects", category: "Operations" },
 ];
 
 export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageProps) {
@@ -1074,6 +1077,75 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
 
             <p className="text-[11px] text-zinc-500 font-mono pt-1">
               To switch your mode at any time, navigate to <strong>Settings</strong> &rarr; scroll to <strong>Workspace Business Mode</strong> &rarr; pick your preferred card &rarr; click <strong>Commit Changes</strong>.
+            </p>
+          </section>
+
+          {/* MODULE 23: CRM PIPELINE & DEALS */}
+          <section id="mod-23" className="card-modern p-6 space-y-4 bg-white border border-zinc-200 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="bg-black text-white px-2.5 py-1 font-bold uppercase font-mono text-[10px] rounded">
+                  [MODULE 23]
+                </span>
+                <h2 className="text-base sm:text-lg font-bold uppercase text-black">
+                  CRM Deal Pipeline &amp; Visual Kanban
+                </h2>
+              </div>
+              <Link
+                href={`/workspaces/${slug}/crm`}
+                className="btn-secondary-modern px-3 py-1 font-mono text-[10px] font-bold uppercase shrink-0"
+              >
+                Open CRM Pipeline →
+              </Link>
+            </div>
+            <p className="text-xs text-zinc-600 leading-relaxed">
+              Track prospects through 6 stages: Lead, Qualified, Proposal Sent, Negotiation, Won, and Lost. Monitor weighted pipeline forecasting, assign team reps, log activities (calls, meetings, notes), and seamlessly link won deals to proposals and contracts.
+            </p>
+          </section>
+
+          {/* MODULE 24: INTERACTIVE PROPOSALS */}
+          <section id="mod-24" className="card-modern p-6 space-y-4 bg-white border border-zinc-200 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="bg-black text-white px-2.5 py-1 font-bold uppercase font-mono text-[10px] rounded">
+                  [MODULE 24]
+                </span>
+                <h2 className="text-base sm:text-lg font-bold uppercase text-black">
+                  Tiered Proposals &amp; Passwordless Client e-Signatures
+                </h2>
+              </div>
+              <Link
+                href={`/workspaces/${slug}/crm/proposals`}
+                className="btn-secondary-modern px-3 py-1 font-mono text-[10px] font-bold uppercase shrink-0"
+              >
+                View Proposals →
+              </Link>
+            </div>
+            <p className="text-xs text-zinc-600 leading-relaxed">
+              Build tiered proposals (e.g. Silver, Gold, Platinum packages) and share them via secure 64-char public tokens. Clients review terms, draw signatures directly on their phone or laptop, or request amendments with zero friction. Approved proposals convert into invoices in 1 click.
+            </p>
+          </section>
+
+          {/* MODULE 25: CONTRACTS & PROJECTS */}
+          <section id="mod-25" className="card-modern p-6 space-y-4 bg-white border border-zinc-200 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="bg-black text-white px-2.5 py-1 font-bold uppercase font-mono text-[10px] rounded">
+                  [MODULE 25]
+                </span>
+                <h2 className="text-base sm:text-lg font-bold uppercase text-black">
+                  Retainer Contracts, SLA Hours &amp; Project Workspaces
+                </h2>
+              </div>
+              <Link
+                href={`/workspaces/${slug}/crm/contracts`}
+                className="btn-secondary-modern px-3 py-1 font-mono text-[10px] font-bold uppercase shrink-0"
+              >
+                Manage Contracts &amp; Projects →
+              </Link>
+            </div>
+            <p className="text-xs text-zinc-600 leading-relaxed">
+              Automate monthly recurring retainer invoices and SLA burn-down tracking. Monitor 30-day and 60-day expiry alert thresholds. Manage project workspaces with per-member billable rates, timesheet approvals, and phased milestone invoices.
             </p>
           </section>
 

@@ -4,10 +4,14 @@ import Link from "next/link";
 import { PublicNavbar } from "@/components/PublicNavbar";
 
 export const metadata: Metadata = {
-  title: "Features | Manna Books — KRA eTIMS, General Ledger, Bank Reconciliation & Multi-Currency",
+  title: "Features | Manna Books — KRA eTIMS, CRM Pipeline, Proposals, Contracts & General Ledger",
   description:
-    "Explore all Manna Books platform features: KRA eTIMS invoicing, statutory payroll, bank & M-Pesa CSV reconciliation, compound multi-line journals, accounts payable vendor bills, bulk invoicing, fiscal periods, walk-in POS terminal, smart inventory, and double-entry general ledger.",
+    "Explore all Manna Books platform features: CRM pipeline, interactive proposals with e-signatures, retainer contracts & SLAs, project milestone billing, KRA eTIMS invoicing, statutory payroll, bank & M-Pesa CSV reconciliation, compound multi-line journals, and double-entry general ledger.",
   keywords: [
+    "CRM deals pipeline Kenya",
+    "interactive proposals e-signature Kenya",
+    "retainer contract SLA tracking Kenya",
+    "project timesheets milestone billing",
     "KRA eTIMS features Kenya",
     "bank reconciliation software Kenya",
     "M-Pesa statement reconciliation",
@@ -23,8 +27,8 @@ export const metadata: Metadata = {
     "mannabooks.co.ke features",
   ],
   openGraph: {
-    title: "Platform Features | Manna Books — KRA eTIMS, General Ledger, Bank Reconciliation & Payroll",
-    description: "Complete feature specifications for Manna Books: eTIMS invoicing, bank & M-Pesa reconciler, multi-line compound journals, vendor bills, statutory payroll, digital catalogs, and double-entry accounting.",
+    title: "Platform Features | Manna Books — CRM, Proposals, Retainers & Financial Operations",
+    description: "Complete feature specifications for Manna Books: CRM deals pipeline, interactive proposals with e-signatures, retainer contracts, project timesheets, eTIMS invoicing, and double-entry accounting.",
     url: "https://mannabooks.co.ke/features",
     siteName: "Manna Books",
     locale: "en_KE",
@@ -60,6 +64,9 @@ export default function FeaturesPage() {
           </p>
           <div className="pt-2 flex flex-wrap gap-2.5 font-mono text-xs">
             {[
+              { href: "#crm-pipeline", label: "CRM Deals Pipeline" },
+              { href: "#proposals", label: "Interactive Proposals" },
+              { href: "#contracts-projects", label: "Contracts & Projects" },
               { href: "#pos", label: "Walk-in POS" },
               { href: "#invoicing", label: "Invoicing & eTIMS" },
               { href: "#catalog-showcase", label: "Digital Catalog & Rate Cards" },
@@ -67,7 +74,6 @@ export default function FeaturesPage() {
               { href: "#notifications", label: "In-App Activity Bell" },
               { href: "#payroll", label: "Statutory Payroll" },
               { href: "#expenses", label: "Expenses" },
-              { href: "#crm", label: "CRM & Debtors" },
               { href: "#vat", label: "20th VAT Tracker" },
               { href: "#pdf-engine", label: "Vector PDF" },
               { href: "#portals", label: "Passwordless Portals" },
@@ -699,6 +705,81 @@ export default function FeaturesPage() {
                 { title: "Mode 1: Pure Financial & Services", body: "For consultancies, law firms, wealth managers, and SACCOs. POS and warehouse menus are hidden, surfacing General Ledger, Invoicing, Banking, Tax, and Payroll." },
                 { title: "Mode 2: Retail & Physical Inventory", body: "For supermarkets, hardware shops, and retail stores. Puts the rapid walk-in POS counter terminal, multi-location stock reconciler, and barcode lookup front and center." },
                 { title: "Mode 3: Hybrid Complete Enterprise", body: "The best of both worlds for contractors and distributors. Sell goods with FIFO stock deductions while billing consulting hours and retainers on the same unified tax invoice." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 23: CRM DEALS PIPELINE */}
+          <div id="crm-pipeline" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 23</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                CRM Deal Pipeline &amp; Visual Kanban Board
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Track prospects through a fluid 6-stage Kanban sales pipeline: Lead, Qualified, Proposal Sent, Negotiation, Won, and Lost. Monitor live weighted conversion forecasting, assign account reps, log call/meeting notes, and convert won opportunities directly into Proposals, Contracts, or Invoices.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Interactive Drag-and-Drop Kanban", body: "Quickly move opportunities through pipeline stages with drag-and-drop mechanics, stage velocity tracking, and stage-specific revenue totals." },
+                { title: "Probability & Weighted Forecasting", body: "Stage-weighted revenue calculations calculate projected monthly cash collections based on close probabilities and anticipated win dates." },
+                { title: "Unified Deal Activity Log", body: "Log telephone calls, discovery meeting minutes, internal notes, and stage advancement audits in a consolidated chronological stream." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 24: INTERACTIVE PROPOSALS & CLIENT E-SIGNATURES */}
+          <div id="proposals" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 24</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Tiered Proposals &amp; Passwordless Client e-Signatures
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Send interactive, high-converting proposals with tiered package options (e.g. Silver, Gold, Enterprise). Clients review terms and deliverables on a dedicated passwordless web portal, draw signatures on their touch screen or trackpad, or request adjustments before one-click invoice generation.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Tiered Package Selection", body: "Present clients with selectable pricing tiers and customizable deliverables, giving prospects the autonomy to select the scope that fits their budget." },
+                { title: "Passwordless Client Portal", body: "Clients access their branded proposal through a secure 64-char token link with live view tracking and real-time amendment submission." },
+                { title: "Drawn e-Signatures & Instant Invoicing", body: "Prospects sign using a touch or mouse signature pad. Accepted proposals trigger instant in-app alerts and convert to KRA eTIMS invoices in 1 click." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 25: CONTRACTS, RETAINERS & PROJECTS */}
+          <div id="contracts-projects" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 25</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Retainer Contracts, SLA Hours &amp; Project Workspaces
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Structure monthly retainer agreements with allocated support hours, burn-down ledgers, and automated recurring billing. Manage projects with team hourly billable rates, timesheet approvals, and milestone-based phased invoicing.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Automated Retainer Invoicing", body: "The background cron engine auto-generates monthly retainer invoices on designated billing dates and advances future billing cycles seamlessly." },
+                { title: "SLA Expiry Alerts (30 & 60 Days)", body: "Receive proactive automated in-app alerts and email notifications 60 days and 30 days prior to contract expiration to ensure timely renewal." },
+                { title: "Project Timesheets & Milestone Invoicing", body: "Log billable and non-billable staff hours against project workspaces, approve timesheets, and invoice completion milestones with one click." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
                   <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>

@@ -41,6 +41,9 @@ export const loyaltyMovementTypeEnum = pgEnum('loyalty_movement_type', [
     'VOID'
 ]);
 
+export const employmentTypeEnum = pgEnum('employment_type', ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN']);
+export const expenseClaimStatusEnum = pgEnum('expense_claim_status', ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'DISBURSED']);
+
 // ==========================================
 // 2. TABLES
 // ==========================================
@@ -318,10 +321,18 @@ export const documentNotes = pgTable('document_notes', {
 export const employees = pgTable('employees', {
     id: uuid('id').defaultRandom().primaryKey(),
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
     fullName: varchar('full_name', { length: 255 }).notNull(),
     email: varchar('email', { length: 255 }),
+    department: varchar('department', { length: 100 }),
+    designation: varchar('designation', { length: 100 }),
+    employmentType: employmentTypeEnum('employment_type').default('FULL_TIME').notNull(),
     nationalId: varchar('national_id', { length: 50 }),
     kraPin: varchar('kra_pin', { length: 13 }),
+    bankName: varchar('bank_name', { length: 100 }),
+    bankAccountNumber: varchar('bank_account_number', { length: 50 }),
+    bankBranch: varchar('bank_branch', { length: 100 }),
+    mpesaPhone: varchar('mpesa_phone', { length: 30 }),
     baseSalary: numeric('base_salary', { precision: 12, scale: 2 }).default('0.00').notNull(),
     commissionRate: numeric('commission_rate', { precision: 5, scale: 2 }).default('0.00').notNull(),
     isActive: boolean('is_active').default(true).notNull(),
@@ -370,6 +381,32 @@ export const expenses = pgTable('expenses', {
     isNonDeductible: boolean('is_non_deductible').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+// EXPENSE CLAIMS TABLE (Staff Reimbursements & Petty Cash Claims)
+export const expenseClaims = pgTable('expense_claims', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    employeeId: uuid('employee_id').references(() => employees.id, { onDelete: 'cascade' }).notNull(),
+    claimNumber: varchar('claim_number', { length: 50 }).notNull(),
+    title: varchar('title', { length: 255 }).notNull(),
+    description: text('description'),
+    amount: numeric('amount', { precision: 15, scale: 2 }).notNull(),
+    claimDate: date('claim_date').notNull(),
+    category: expenseCategoryEnum('category').default('OFFICE_SUPPLIES').notNull(),
+    costCenterId: uuid('cost_center_id').references(() => costCenters.id, { onDelete: 'set null' }),
+    receiptUrl: text('receipt_url'),
+    status: expenseClaimStatusEnum('status').default('DRAFT').notNull(),
+    approvedById: uuid('approved_by_id').references(() => users.id, { onDelete: 'set null' }),
+    approvedAt: timestamp('approved_at'),
+    approvalNotes: text('approval_notes'),
+    disbursedExpenseId: uuid('disbursed_expense_id').references(() => expenses.id, { onDelete: 'set null' }),
+    disbursedAt: timestamp('disbursed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    index('idx_expense_claims_shop').on(table.shopId),
+    index('idx_expense_claims_employee').on(table.employeeId),
+    index('idx_expense_claims_status').on(table.status),
+]);
 
 // SHOP INVITATIONS TABLE (Pending Invites)
 export const shopInvitations = pgTable('shop_invitations', {
@@ -1086,6 +1123,7 @@ export const usersRelations = relations(users, ({ many }) => ({
     ownedShops: many(shops),
     memberships: many(shopMembers),
     sessions: many(sessions),
+    employeeProfiles: many(employees),
 }));
 
 export const shopsRelations = relations(shops, ({ one, many }) => ({
@@ -1138,6 +1176,8 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
     proposals: many(proposals),
     contracts: many(contracts),
     projects: many(projects),
+    employees: many(employees),
+    expenseClaims: many(expenseClaims),
 }));
 
 export const suppliersRelations = relations(suppliers, ({ one, many }) => ({
@@ -1216,8 +1256,10 @@ export const incomesRelations = relations(incomes, ({ one }) => ({
     shop: one(shops, { fields: [incomes.shopId], references: [shops.id] }),
 }));
 
-export const employeesRelations = relations(employees, ({ one }) => ({
+export const employeesRelations = relations(employees, ({ one, many }) => ({
     shop: one(shops, { fields: [employees.shopId], references: [shops.id] }),
+    user: one(users, { fields: [employees.userId], references: [users.id] }),
+    expenseClaims: many(expenseClaims),
 }));
 
 export const paymentMethodsRelations = relations(paymentMethods, ({ one }) => ({
@@ -1265,6 +1307,7 @@ export const journalEntriesRelations = relations(journalEntries, ({ one }) => ({
 export const costCentersRelations = relations(costCenters, ({ one, many }) => ({
     shop: one(shops, { fields: [costCenters.shopId], references: [shops.id] }),
     journalEntries: many(journalEntries),
+    expenseClaims: many(expenseClaims),
 }));
 
 export const budgetsRelations = relations(budgets, ({ one }) => ({
@@ -1484,4 +1527,12 @@ export const projectMilestonesRelations = relations(projectMilestones, ({ one })
     project: one(projects, { fields: [projectMilestones.projectId], references: [projects.id] }),
     shop: one(shops, { fields: [projectMilestones.shopId], references: [shops.id] }),
     invoicedDocument: one(documents, { fields: [projectMilestones.invoicedDocumentId], references: [documents.id] }),
+}));
+
+export const expenseClaimsRelations = relations(expenseClaims, ({ one }) => ({
+    shop: one(shops, { fields: [expenseClaims.shopId], references: [shops.id] }),
+    employee: one(employees, { fields: [expenseClaims.employeeId], references: [employees.id] }),
+    costCenter: one(costCenters, { fields: [expenseClaims.costCenterId], references: [costCenters.id] }),
+    approvedBy: one(users, { fields: [expenseClaims.approvedById], references: [users.id] }),
+    disbursedExpense: one(expenses, { fields: [expenseClaims.disbursedExpenseId], references: [expenses.id] }),
 }));

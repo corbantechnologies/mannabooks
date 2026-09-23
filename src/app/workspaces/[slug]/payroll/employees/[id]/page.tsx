@@ -120,6 +120,49 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
         </div>
       </div>
 
+      {/* HR CONTRACT & BANKING METADATA */}
+      <div className="card-modern p-5 bg-white space-y-4">
+        <h2 className="text-xs font-semibold uppercase tracking-wider font-sans text-black border-b border-zinc-100 pb-2">
+          Employment Profile &amp; Banking Details
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
+          <div>
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Department</span>
+            <span className="font-semibold text-black">{employeeData.department || "—"}</span>
+          </div>
+          <div>
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Designation</span>
+            <span className="font-semibold text-black">{employeeData.designation || "—"}</span>
+          </div>
+          <div>
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Employment Contract</span>
+            <span className="font-semibold text-black uppercase">
+              {employeeData.employmentType ? employeeData.employmentType.replace("_", " ") : "FULL TIME"}
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">M-PESA Phone</span>
+            <span className="font-semibold text-black">{employeeData.mpesaPhone || "—"}</span>
+          </div>
+          <div>
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Bank Name</span>
+            <span className="font-semibold text-black">{employeeData.bankName || "—"}</span>
+          </div>
+          <div>
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Account Number</span>
+            <span className="font-semibold text-black">{employeeData.bankAccountNumber || "—"}</span>
+          </div>
+          <div>
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Bank Branch</span>
+            <span className="font-semibold text-black">{employeeData.bankBranch || "—"}</span>
+          </div>
+          <div>
+            <span className="text-[10px] text-zinc-400 uppercase font-semibold block">National ID / KRA</span>
+            <span className="font-semibold text-black">{employeeData.nationalId || "—"} / {employeeData.kraPin || "—"}</span>
+          </div>
+        </div>
+      </div>
+
       {/* HISTORICAL EMPLOYEE PAYMENT SUB-LEDGER */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">

@@ -31,6 +31,13 @@ export async function registerNewEmployee(formData: {
     kraPin?: string;
     baseSalary: number;
     commissionRate: number;
+    department?: string;
+    designation?: string;
+    employmentType?: "FULL_TIME" | "PART_TIME" | "CONTRACT" | "INTERN";
+    bankName?: string;
+    bankAccountNumber?: string;
+    bankBranch?: string;
+    mpesaPhone?: string;
 }) {
     const session = await verifyAndGetSession();
     if (!session) return { success: false, error: "Unauthorized operation context." };
@@ -73,6 +80,13 @@ export async function registerNewEmployee(formData: {
             kraPin: trimmedPin || null,
             baseSalary: formData.baseSalary.toString(),
             commissionRate: formData.commissionRate.toString(),
+            department: formData.department?.trim() || null,
+            designation: formData.designation?.trim() || null,
+            employmentType: formData.employmentType || "FULL_TIME",
+            bankName: formData.bankName?.trim() || null,
+            bankAccountNumber: formData.bankAccountNumber?.trim() || null,
+            bankBranch: formData.bankBranch?.trim() || null,
+            mpesaPhone: formData.mpesaPhone?.trim() || null,
         });
 
         const shop = await db.query.shops.findFirst({ where: eq(shops.id, formData.shopId) });
@@ -95,22 +109,39 @@ export async function updateEmployee(formData: {
     kraPin?: string;
     baseSalary: number;
     commissionRate: number;
+    department?: string;
+    designation?: string;
+    employmentType?: "FULL_TIME" | "PART_TIME" | "CONTRACT" | "INTERN";
+    bankName?: string;
+    bankAccountNumber?: string;
+    bankBranch?: string;
+    mpesaPhone?: string;
     isActive?: boolean;
 }) {
     const session = await verifyAndGetSession();
     if (!session) return { success: false, error: "Unauthorized operation context." };
 
     try {
+        const updateData: Record<string, any> = {
+            fullName: formData.fullName,
+            email: formData.email?.trim() || null,
+            nationalId: formData.nationalId || null,
+            kraPin: formData.kraPin || null,
+            baseSalary: formData.baseSalary.toString(),
+            commissionRate: formData.commissionRate.toString(),
+            isActive: formData.isActive ?? true,
+        };
+
+        if (formData.department !== undefined) updateData.department = formData.department?.trim() || null;
+        if (formData.designation !== undefined) updateData.designation = formData.designation?.trim() || null;
+        if (formData.employmentType !== undefined) updateData.employmentType = formData.employmentType;
+        if (formData.bankName !== undefined) updateData.bankName = formData.bankName?.trim() || null;
+        if (formData.bankAccountNumber !== undefined) updateData.bankAccountNumber = formData.bankAccountNumber?.trim() || null;
+        if (formData.bankBranch !== undefined) updateData.bankBranch = formData.bankBranch?.trim() || null;
+        if (formData.mpesaPhone !== undefined) updateData.mpesaPhone = formData.mpesaPhone?.trim() || null;
+
         await db.update(employees)
-            .set({
-                fullName: formData.fullName,
-                email: formData.email?.trim() || null,
-                nationalId: formData.nationalId || null,
-                kraPin: formData.kraPin || null,
-                baseSalary: formData.baseSalary.toString(),
-                commissionRate: formData.commissionRate.toString(),
-                isActive: formData.isActive ?? true,
-            })
+            .set(updateData)
             .where(and(eq(employees.id, formData.id), eq(employees.shopId, formData.shopId)));
 
         const shop = await db.query.shops.findFirst({ where: eq(shops.id, formData.shopId) });

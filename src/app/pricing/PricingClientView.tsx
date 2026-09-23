@@ -30,6 +30,10 @@ const faqs = [
     q: "How much do I save with annual billing?",
     a: "Annual billing gives you a 20% discount (equivalent to getting more than 2 full months free compared to month-to-month billing)."
   },
+  {
+    q: "Are CRM pipeline, proposals, and retainer contracts included?",
+    a: "Yes — Professional and Enterprise plans include the visual CRM Kanban pipeline, tiered proposals with passwordless client e-signatures, monthly retainer SLA tracking with auto-invoicing, and project workspaces with staff timesheets."
+  },
 ];
 
 export function PricingClientView({ plans }: PricingClientViewProps) {

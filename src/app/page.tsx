@@ -3,10 +3,14 @@ import Link from "next/link";
 import { PublicNavbar } from "@/components/PublicNavbar";
 
 export const metadata: Metadata = {
-  title: "Manna Books | KRA eTIMS Invoicing, Digital Catalogs, Payroll & POS for Kenyan SMEs",
+  title: "Manna Books | KRA eTIMS, CRM Pipeline, Proposals, Payroll & POS for Kenyan SMEs",
   description:
-    "Manna Books is the all-in-one financial platform for Kenyan businesses. Issue KRA eTIMS invoices, share digital product catalogs, run statutory payroll (PAYE, SHIF, AHL, NSSF), manage walk-in POS sales, track COGS margins, and automate your monthly 20th VAT return.",
+    "Manna Books is the all-in-one financial platform for Kenyan businesses. Visual CRM Kanban pipeline, tiered proposals with client e-signatures, retainer contracts & SLAs, KRA eTIMS invoices, digital product catalogs, statutory payroll (PAYE, SHIF, AHL, NSSF), POS, and double-entry accounting.",
   keywords: [
+    "CRM deals pipeline Kenya",
+    "interactive proposals e-signature Kenya",
+    "retainer contracts SLA Kenya",
+    "project milestone invoicing Kenya",
     "KRA eTIMS invoicing Kenya",
     "digital product catalog rate cards Kenya",
     "Kenya statutory payroll software",
@@ -20,9 +24,9 @@ export const metadata: Metadata = {
     "business management software Kenya",
   ],
   openGraph: {
-    title: "Manna Books — KRA eTIMS, Digital Catalogs, Payroll & POS for Kenyan SMEs",
+    title: "Manna Books — CRM, Proposals, KRA eTIMS, Payroll & POS for Kenyan SMEs",
     description:
-      "Issue multi-rate KRA invoices, share digital product catalogs, automate 20th VAT returns, run statutory payroll, and manage walk-in POS sales. Built from the ground up for Kenyan and African SMEs.",
+      "Manage CRM deals, deliver tiered proposals with client e-signatures, track retainer SLAs, issue multi-rate KRA invoices, automate 20th VAT returns, and run statutory payroll.",
     url: "https://mannabooks.co.ke",
     siteName: "Manna Books",
     locale: "en_KE",
@@ -59,7 +63,7 @@ export default function LandingPage() {
           <div className="lg:col-span-7 space-y-7 relative z-10">
             <div className="inline-flex items-center gap-2 border border-emerald-200 px-3.5 py-1.5 text-[11px] font-mono uppercase tracking-widest bg-emerald-50 rounded-full font-semibold text-[#064e3b]">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
-              Edition 2026.6 — Digital Catalogs, Walk-in POS &amp; Statutory Compliance
+              Edition 2026.9 — CRM Pipeline, Interactive Proposals, Contracts &amp; Statutory Accounting
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-[1.02] uppercase text-black">
@@ -68,7 +72,7 @@ export default function LandingPage() {
             </h1>
 
             <p className="text-base md:text-lg text-zinc-600 max-w-xl font-normal leading-relaxed">
-              A complete financial operating system for Kenyan businesses. Share digital product catalogs, issue multi-rate KRA eTIMS invoices, run statutory payroll, execute walk-in POS sales, track COGS margins, and automate your monthly 20th VAT return — all in one workspace.
+              A complete financial operating system for Kenyan businesses. Visual CRM Kanban pipeline, tiered proposals with drawn e-signatures, retainer contracts with SLA burn-down, multi-rate KRA eTIMS invoices, statutory payroll, walk-in POS, and double-entry accounting — all in one workspace.
             </p>
 
             <div className="pt-1 flex flex-col sm:flex-row gap-4 font-mono text-xs">
@@ -89,14 +93,14 @@ export default function LandingPage() {
             {/* TRUST STATS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
               {[
-                { title: "Digital Product Catalog", text: "Curate models & share rate cards on WhatsApp." },
+                { title: "CRM Deals Pipeline", text: "Visual Kanban with weighted conversion forecasting." },
+                { title: "Tiered Proposals", text: "Client e-signatures & 1-click invoice conversion." },
+                { title: "Retainer Contracts", text: "Monthly SLA hours burn-down & auto-invoicing." },
                 { title: "KRA eTIMS Integrated", text: "Multi-rate VAT & CU serial control mapping." },
                 { title: "Statutory Payroll", text: "PAYE, SHIF 2.75%, AHL 1.5% & NSSF Tier I/II." },
                 { title: "Walk-in POS Terminal", text: "Rapid checkout with instant stock deduction." },
-                { title: "Smart Multi-Location", text: "Real-time FIFO ledger & branch transfers." },
-                { title: "A/R Aging & Analytics", text: "Revenue vs COGS gross margin intelligence." },
+                { title: "Project Workspaces", text: "Timesheet approvals & milestone phased billing." },
                 { title: "Double-Entry GL", text: "Standardized accounts, periods & auto-budgets." },
-                { title: "Client Portals", text: "Unguessable 64-char token links for PDF download." },
               ].map((feat, i) => (
                 <div key={i} className="card-emerald-accent p-4 text-left">
                   <h4 className="font-bold text-xs uppercase text-black mb-1.5">{feat.title}</h4>
@@ -262,6 +266,30 @@ export default function LandingPage() {
                   title: "General Ledger & GL",
                   body: "Full double-entry general ledger, customizable Chart of Accounts, multi-month operating budgets with 1-click cloning, period locking, and P&L.",
                   emoji: "⚖️",
+                },
+                {
+                  tag: "MODULE 09",
+                  title: "CRM Deals Pipeline",
+                  body: "Visual 6-stage Kanban board. Track leads through to won deals with stage-weighted forecasting, rep assignments, and activity timelines.",
+                  emoji: "🎯",
+                },
+                {
+                  tag: "MODULE 10",
+                  title: "Interactive Proposals",
+                  body: "Send tiered scope packages (Silver, Gold, Platinum). Clients review terms, draw signatures on their mobile or desktop, and convert to invoices.",
+                  emoji: "✍️",
+                },
+                {
+                  tag: "MODULE 11",
+                  title: "Retainer Contracts & SLAs",
+                  body: "Automated recurring monthly retainer invoices, hours burn-down ledgers, and automated 30-day & 60-day renewal expiration alerts.",
+                  emoji: "📜",
+                },
+                {
+                  tag: "MODULE 12",
+                  title: "Project Workspaces",
+                  body: "Track client project delivery with staff hourly billable rates, timesheet submission & approvals, and milestone-based phased invoicing.",
+                  emoji: "🚀",
                 },
               ].map((f) => (
                 <div

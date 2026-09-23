@@ -53,6 +53,7 @@ const industries = [
     description:
       "The unified architecture for companies billing physical equipment alongside professional installation labor, engineering consulting hours, and recurring maintenance retainers.",
     bulletPoints: [
+      "Track complex commercial contracts from initial CRM proposal through to delivered project milestones.",
       "Single unified tax invoice billing physical inventory (with FIFO stock deductions) and non-stock service fees.",
       "Consolidated double-entry General Ledger reconciling warehouse asset accounts with corporate payables.",
       "Batch vendor bill approvals and consolidated EFT/M-Pesa payment runs for high-volume project procurement.",
@@ -79,12 +80,12 @@ const industries = [
     tag: "PROFESSIONAL SERVICES",
     title: "Agencies, Consultants, Freelancers & Service Providers",
     description:
-      "Designed for service-based businesses billing local or international clients with retainer contracts, custom currency preferences, and frictionless portal review links.",
+      "Designed for service-based businesses billing local or international clients with CRM pipelines, tiered e-signed proposals, retainer SLA contracts, and project timesheets.",
     bulletPoints: [
-      "Passwordless client portals with cryptographically secure 64-character token links.",
-      "Support for multi-currency invoicing (KES, USD, EUR, GBP) natively.",
-      "1-click quotation conversions to invoices, receipts, or credit notes.",
-      "Automated retainer billing schedules with client payment notifications."
+      "Visual CRM deals pipeline with 6-stage Kanban and weighted conversion forecasting.",
+      "Tiered interactive proposals (Silver, Gold, Platinum) with drawn touch/mouse client e-signatures.",
+      "Retainer contracts with monthly SLA hours burndown ledgers and automated 30-day/60-day renewal alerts.",
+      "Project workspaces with staff hourly billable rates, timesheet approvals, and phased milestone invoicing."
     ],
     highlight: false,
   },

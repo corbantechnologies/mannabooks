@@ -4,6 +4,7 @@ import { documents } from "@/db/schema";
 import { eq, lte, and } from "drizzle-orm";
 import { duplicateDocument, updateDocumentStatus } from "@/lib/actions/documents";
 import { dispatchDocumentEmail } from "@/lib/actions/email";
+import { processAutoContractInvoicesAction, sendContractExpiryAlertsAction } from "@/lib/actions/contracts";
 
 export const dynamic = 'force-dynamic';
 
@@ -95,10 +96,21 @@ export async function GET(request: Request) {
             }
         }
 
+        // 5. Process Contract Retainers & SLA Auto-Invoicing
+        const contractInvoices = await processAutoContractInvoicesAction();
+
+        // 6. Dispatch Contract Expiry Alerts (30d and 60d thresholds)
+        const expiryAlerts = await sendContractExpiryAlertsAction();
+
         return NextResponse.json({ 
             success: true, 
             processedCount: results.length, 
-            engineLogs: results 
+            engineLogs: results,
+            contracts: {
+                invoicesCreated: contractInvoices.processed,
+                contractErrors: contractInvoices.errors,
+                expiryAlertsSent: expiryAlerts.sent,
+            }
         });
 
     } catch (error: any) {

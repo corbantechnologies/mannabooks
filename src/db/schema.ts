@@ -779,6 +779,307 @@ export const loyaltyLedger = pgTable('loyalty_ledger', {
 });
 
 // ==========================================
+// CRM: DEALS PIPELINE & INTERACTIVE PROPOSALS
+// ==========================================
+
+export const dealStageEnum = pgEnum('deal_stage', [
+    'LEAD',
+    'QUALIFIED',
+    'PROPOSAL_SENT',
+    'NEGOTIATION',
+    'WON',
+    'LOST',
+]);
+
+export const dealActivityTypeEnum = pgEnum('deal_activity_type', [
+    'NOTE',
+    'CALL',
+    'EMAIL',
+    'MEETING',
+    'STAGE_CHANGE',
+    'PROPOSAL_SENT',
+    'PROPOSAL_ACCEPTED',
+    'WON',
+    'LOST',
+]);
+
+export const proposalStatusEnum = pgEnum('proposal_status', [
+    'DRAFT',
+    'SENT',
+    'VIEWED',
+    'ACCEPTED',
+    'AMENDMENT_REQUESTED',
+    'EXPIRED',
+    'DECLINED',
+]);
+
+// DEALS TABLE — CRM Pipeline Cards
+export const deals = pgTable('deals', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    clientId: uuid('client_id').references(() => clients.id, { onDelete: 'set null' }),
+    assignedUserId: uuid('assigned_user_id').references(() => users.id, { onDelete: 'set null' }),
+    title: varchar('title', { length: 255 }).notNull(),
+    contactName: varchar('contact_name', { length: 255 }).notNull(),
+    contactEmail: varchar('contact_email', { length: 255 }),
+    contactPhone: varchar('contact_phone', { length: 50 }),
+    stage: dealStageEnum('stage').default('LEAD').notNull(),
+    currency: varchar('currency', { length: 10 }).default('KES').notNull(),
+    estimatedValue: numeric('estimated_value', { precision: 14, scale: 2 }).default('0').notNull(),
+    winProbability: integer('win_probability').default(50).notNull(), // 0–100%
+    expectedCloseDate: timestamp('expected_close_date'),
+    lossReason: text('loss_reason'),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+    index('idx_deals_shop').on(table.shopId),
+    index('idx_deals_stage').on(table.stage),
+    index('idx_deals_client').on(table.clientId),
+]);
+
+// DEAL ACTIVITIES TABLE — Timeline / Audit Log per Deal
+export const dealActivities = pgTable('deal_activities', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    dealId: uuid('deal_id').references(() => deals.id, { onDelete: 'cascade' }).notNull(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    activityType: dealActivityTypeEnum('activity_type').default('NOTE').notNull(),
+    title: varchar('title', { length: 255 }).notNull(),
+    body: text('body'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// PROPOSALS TABLE — Rich Interactive Proposal Documents
+export const proposals = pgTable('proposals', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    dealId: uuid('deal_id').references(() => deals.id, { onDelete: 'set null' }),
+    clientId: uuid('client_id').references(() => clients.id, { onDelete: 'set null' }),
+    proposalNumber: varchar('proposal_number', { length: 50 }).notNull(), // e.g. PRP-2026-001
+    title: varchar('title', { length: 255 }).notNull(),
+    executiveSummary: text('executive_summary'),
+    scopeOfWork: text('scope_of_work'),         // Rich text / markdown
+    termsAndConditions: text('terms_and_conditions'),
+    validityDays: integer('validity_days').default(30).notNull(),
+    currency: varchar('currency', { length: 10 }).default('KES').notNull(),
+    subtotal: numeric('subtotal', { precision: 14, scale: 2 }).default('0').notNull(),
+    status: proposalStatusEnum('status').default('DRAFT').notNull(),
+    // Client portal interaction
+    viewedAt: timestamp('viewed_at'),
+    viewCount: integer('view_count').default(0).notNull(),
+    respondedAt: timestamp('responded_at'),
+    signerName: varchar('signer_name', { length: 255 }),
+    signatureDataUrl: text('signature_data_url'), // Touch/mouse e-signature PNG data URL
+    amendmentNotes: text('amendment_notes'),
+    // Conversion lineage
+    convertedDocumentId: uuid('converted_document_id').references(() => documents.id, { onDelete: 'set null' }),
+    sentAt: timestamp('sent_at'),
+    expiresAt: timestamp('expires_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_proposal_number').on(table.shopId, table.proposalNumber),
+    index('idx_proposals_shop').on(table.shopId),
+    index('idx_proposals_deal').on(table.dealId),
+    index('idx_proposals_status').on(table.status),
+]);
+
+// PROPOSAL ITEMS TABLE — Tiered Packages / Line Items
+export const proposalItems = pgTable('proposal_items', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    proposalId: uuid('proposal_id').references(() => proposals.id, { onDelete: 'cascade' }).notNull(),
+    packageLabel: varchar('package_label', { length: 100 }), // e.g. "Silver", "Gold", "Enterprise" — null = single tier
+    description: text('description').notNull(),
+    notes: text('notes'),
+    quantity: numeric('quantity', { precision: 10, scale: 2 }).default('1').notNull(),
+    unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
+    itemTotal: numeric('item_total', { precision: 12, scale: 2 }).notNull(),
+    displayOrder: integer('display_order').default(0).notNull(),
+});
+
+// PROPOSAL TOKENS TABLE — Secure 64-char public access links
+export const proposalTokens = pgTable('proposal_tokens', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    proposalId: uuid('proposal_id').references(() => proposals.id, { onDelete: 'cascade' }).notNull().unique(),
+    token: varchar('token', { length: 64 }).notNull().unique(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    index('idx_proposal_token').on(table.token),
+]);
+
+// ==========================================
+// CONTRACTS, SLAs & RETAINER BURN-DOWN
+// ==========================================
+
+export const contractStatusEnum = pgEnum('contract_status', [
+    'ACTIVE',
+    'PAUSED',
+    'EXPIRED',
+    'CANCELLED',
+]);
+
+// CONTRACTS TABLE — Retainer & SLA Agreements
+export const contracts = pgTable('contracts', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    clientId: uuid('client_id').references(() => clients.id, { onDelete: 'set null' }),
+    dealId: uuid('deal_id').references(() => deals.id, { onDelete: 'set null' }),
+    contractNumber: varchar('contract_number', { length: 50 }).notNull(), // e.g. CNT-2026-001
+    title: varchar('title', { length: 255 }).notNull(),
+    description: text('description'),
+    currency: varchar('currency', { length: 10 }).default('KES').notNull(),
+    status: contractStatusEnum('status').default('ACTIVE').notNull(),
+    // Billing
+    monthlyFee: numeric('monthly_fee', { precision: 14, scale: 2 }).default('0').notNull(),
+    isRetainerHours: boolean('is_retainer_hours').default(false).notNull(), // true = hours-based retainer
+    monthlyHoursAllocated: numeric('monthly_hours_allocated', { precision: 8, scale: 2 }).default('0').notNull(),
+    hourlyRate: numeric('hourly_rate', { precision: 12, scale: 2 }).default('0').notNull(),
+    // Recurring auto-invoicing
+    autoInvoiceEnabled: boolean('auto_invoice_enabled').default(false).notNull(),
+    nextBillingDate: date('next_billing_date'),
+    billingDayOfMonth: integer('billing_day_of_month').default(1).notNull(), // 1st of each month
+    // Contract term
+    startDate: date('start_date').notNull(),
+    endDate: date('end_date'),
+    // Expiry alerts
+    alert30DaySentAt: timestamp('alert_30_day_sent_at'),
+    alert60DaySentAt: timestamp('alert_60_day_sent_at'),
+    termsAndConditions: text('terms_and_conditions'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_contract_number').on(table.shopId, table.contractNumber),
+    index('idx_contracts_shop').on(table.shopId),
+    index('idx_contracts_status').on(table.status),
+    index('idx_contracts_next_billing').on(table.nextBillingDate),
+]);
+
+// CONTRACT HOURS LOG TABLE — Retainer Burn-Down Ledger
+export const contractHoursLog = pgTable('contract_hours_log', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    contractId: uuid('contract_id').references(() => contracts.id, { onDelete: 'cascade' }).notNull(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    loggedByUserId: uuid('logged_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+    billingMonth: varchar('billing_month', { length: 7 }).notNull(), // e.g. "2026-09"
+    hoursUsed: numeric('hours_used', { precision: 8, scale: 2 }).notNull(),
+    description: text('description'),
+    logDate: date('log_date').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ==========================================
+// PROJECT WORKSPACES, TIMESHEETS & MILESTONE INVOICING
+// ==========================================
+
+export const projectStatusEnum = pgEnum('project_status', [
+    'PLANNING',
+    'ACTIVE',
+    'ON_HOLD',
+    'COMPLETED',
+    'CANCELLED',
+]);
+
+export const timesheetStatusEnum = pgEnum('timesheet_status', [
+    'DRAFT',
+    'SUBMITTED',
+    'APPROVED',
+    'REJECTED',
+]);
+
+export const milestoneStatusEnum = pgEnum('milestone_status', [
+    'PENDING',
+    'IN_PROGRESS',
+    'COMPLETED',
+    'INVOICED',
+]);
+
+// PROJECTS TABLE — Project Workspaces
+export const projects = pgTable('projects', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    clientId: uuid('client_id').references(() => clients.id, { onDelete: 'set null' }),
+    dealId: uuid('deal_id').references(() => deals.id, { onDelete: 'set null' }),
+    contractId: uuid('contract_id').references(() => contracts.id, { onDelete: 'set null' }),
+    projectCode: varchar('project_code', { length: 50 }).notNull(), // e.g. PROJ-2026-001
+    name: varchar('name', { length: 255 }).notNull(),
+    description: text('description'),
+    status: projectStatusEnum('status').default('PLANNING').notNull(),
+    currency: varchar('currency', { length: 10 }).default('KES').notNull(),
+    // Budget
+    budgetType: varchar('budget_type', { length: 20 }).default('FIXED').notNull(), // 'FIXED' | 'TIME_AND_MATERIALS'
+    budgetAmount: numeric('budget_amount', { precision: 14, scale: 2 }).default('0').notNull(),
+    budgetHours: numeric('budget_hours', { precision: 10, scale: 2 }).default('0').notNull(),
+    // Timeline
+    startDate: date('start_date'),
+    endDate: date('end_date'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_project_code').on(table.shopId, table.projectCode),
+    index('idx_projects_shop').on(table.shopId),
+    index('idx_projects_client').on(table.clientId),
+    index('idx_projects_status').on(table.status),
+]);
+
+// PROJECT MEMBERS TABLE — Team with individual billable rates
+export const projectMembers = pgTable('project_members', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).notNull(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    role: varchar('role', { length: 100 }).default('Team Member').notNull(), // e.g. "Senior Partner", "Associate"
+    billableRatePerHour: numeric('billable_rate_per_hour', { precision: 12, scale: 2 }).default('0').notNull(),
+    isActive: boolean('is_active').default(true).notNull(),
+    joinedAt: timestamp('joined_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_project_member').on(table.projectId, table.userId),
+]);
+
+// TIMESHEETS TABLE — Individual Time Log Entries
+export const timesheets = pgTable('timesheets', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).notNull(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    workDate: date('work_date').notNull(),
+    hoursLogged: numeric('hours_logged', { precision: 8, scale: 2 }).notNull(),
+    taskDescription: text('task_description').notNull(),
+    isBillable: boolean('is_billable').default(true).notNull(),
+    billableRate: numeric('billable_rate', { precision: 12, scale: 2 }).default('0').notNull(), // Snapshotted from projectMembers at submission time
+    billableAmount: numeric('billable_amount', { precision: 12, scale: 2 }).default('0').notNull(),
+    status: timesheetStatusEnum('status').default('DRAFT').notNull(),
+    reviewedByUserId: uuid('reviewed_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+    reviewNotes: text('review_notes'),
+    invoicedDocumentId: uuid('invoiced_document_id').references(() => documents.id, { onDelete: 'set null' }), // Set when billed
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+    index('idx_timesheets_project').on(table.projectId),
+    index('idx_timesheets_user').on(table.userId),
+    index('idx_timesheets_status').on(table.status),
+]);
+
+// PROJECT MILESTONES TABLE — Phased Billing Gates
+export const projectMilestones = pgTable('project_milestones', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).notNull(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    title: varchar('title', { length: 255 }).notNull(), // e.g. "Milestone 1 — Mobilization Deposit (30%)"
+    description: text('description'),
+    percentageOfTotal: numeric('percentage_of_total', { precision: 5, scale: 2 }).default('0').notNull(), // e.g. 30.00
+    amount: numeric('amount', { precision: 14, scale: 2 }).notNull(),
+    currency: varchar('currency', { length: 10 }).default('KES').notNull(),
+    dueDate: date('due_date'),
+    status: milestoneStatusEnum('status').default('PENDING').notNull(),
+    completedAt: timestamp('completed_at'),
+    invoicedDocumentId: uuid('invoiced_document_id').references(() => documents.id, { onDelete: 'set null' }),
+    displayOrder: integer('display_order').default(0).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ==========================================
 // 3. RELATIONS (For ORM Querying)
 // ==========================================
 export const usersRelations = relations(users, ({ many }) => ({
@@ -819,6 +1120,10 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     loyaltyLedger: many(loyaltyLedger),
     vendorBills: many(vendorBills),
     costCenters: many(costCenters),
+    deals: many(deals),
+    proposals: many(proposals),
+    contracts: many(contracts),
+    projects: many(projects),
 }));
 
 export const shopCurrenciesRelations = relations(shopCurrencies, ({ one }) => ({
@@ -829,6 +1134,10 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
     shop: one(shops, { fields: [clients.shopId], references: [shops.id] }),
     documents: many(documents),
     loyaltyAccounts: many(clientLoyaltyAccounts),
+    deals: many(deals),
+    proposals: many(proposals),
+    contracts: many(contracts),
+    projects: many(projects),
 }));
 
 export const suppliersRelations = relations(suppliers, ({ one, many }) => ({
@@ -1094,4 +1403,85 @@ export const loyaltyLedgerRelations = relations(loyaltyLedger, ({ one }) => ({
     shop: one(shops, { fields: [loyaltyLedger.shopId], references: [shops.id] }),
     account: one(clientLoyaltyAccounts, { fields: [loyaltyLedger.accountId], references: [clientLoyaltyAccounts.id] }),
     document: one(documents, { fields: [loyaltyLedger.sourceDocumentId], references: [documents.id] }),
-}));
+}));
+
+// ==========================================
+// CRM / CONTRACTS / PROJECTS — RELATIONS
+// ==========================================
+
+export const dealsRelations = relations(deals, ({ one, many }) => ({
+    shop: one(shops, { fields: [deals.shopId], references: [shops.id] }),
+    client: one(clients, { fields: [deals.clientId], references: [clients.id] }),
+    assignedUser: one(users, { fields: [deals.assignedUserId], references: [users.id] }),
+    activities: many(dealActivities),
+    proposals: many(proposals),
+    contracts: many(contracts),
+    projects: many(projects),
+}));
+
+export const dealActivitiesRelations = relations(dealActivities, ({ one }) => ({
+    deal: one(deals, { fields: [dealActivities.dealId], references: [deals.id] }),
+    shop: one(shops, { fields: [dealActivities.shopId], references: [shops.id] }),
+    user: one(users, { fields: [dealActivities.userId], references: [users.id] }),
+}));
+
+export const proposalsRelations = relations(proposals, ({ one, many }) => ({
+    shop: one(shops, { fields: [proposals.shopId], references: [shops.id] }),
+    deal: one(deals, { fields: [proposals.dealId], references: [deals.id] }),
+    client: one(clients, { fields: [proposals.clientId], references: [clients.id] }),
+    convertedDocument: one(documents, { fields: [proposals.convertedDocumentId], references: [documents.id] }),
+    items: many(proposalItems),
+    token: one(proposalTokens, { fields: [proposals.id], references: [proposalTokens.proposalId] }),
+}));
+
+export const proposalItemsRelations = relations(proposalItems, ({ one }) => ({
+    proposal: one(proposals, { fields: [proposalItems.proposalId], references: [proposals.id] }),
+}));
+
+export const proposalTokensRelations = relations(proposalTokens, ({ one }) => ({
+    proposal: one(proposals, { fields: [proposalTokens.proposalId], references: [proposals.id] }),
+}));
+
+export const contractsRelations = relations(contracts, ({ one, many }) => ({
+    shop: one(shops, { fields: [contracts.shopId], references: [shops.id] }),
+    client: one(clients, { fields: [contracts.clientId], references: [clients.id] }),
+    deal: one(deals, { fields: [contracts.dealId], references: [deals.id] }),
+    hoursLog: many(contractHoursLog),
+    projects: many(projects),
+}));
+
+export const contractHoursLogRelations = relations(contractHoursLog, ({ one }) => ({
+    contract: one(contracts, { fields: [contractHoursLog.contractId], references: [contracts.id] }),
+    shop: one(shops, { fields: [contractHoursLog.shopId], references: [shops.id] }),
+    loggedBy: one(users, { fields: [contractHoursLog.loggedByUserId], references: [users.id] }),
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+    shop: one(shops, { fields: [projects.shopId], references: [shops.id] }),
+    client: one(clients, { fields: [projects.clientId], references: [clients.id] }),
+    deal: one(deals, { fields: [projects.dealId], references: [deals.id] }),
+    contract: one(contracts, { fields: [projects.contractId], references: [contracts.id] }),
+    members: many(projectMembers),
+    timesheets: many(timesheets),
+    milestones: many(projectMilestones),
+}));
+
+export const projectMembersRelations = relations(projectMembers, ({ one }) => ({
+    project: one(projects, { fields: [projectMembers.projectId], references: [projects.id] }),
+    shop: one(shops, { fields: [projectMembers.shopId], references: [shops.id] }),
+    user: one(users, { fields: [projectMembers.userId], references: [users.id] }),
+}));
+
+export const timesheetsRelations = relations(timesheets, ({ one }) => ({
+    project: one(projects, { fields: [timesheets.projectId], references: [projects.id] }),
+    shop: one(shops, { fields: [timesheets.shopId], references: [shops.id] }),
+    user: one(users, { fields: [timesheets.userId], references: [users.id] }),
+    reviewedBy: one(users, { fields: [timesheets.reviewedByUserId], references: [users.id], relationName: 'timesheet_reviewer' }),
+    invoicedDocument: one(documents, { fields: [timesheets.invoicedDocumentId], references: [documents.id] }),
+}));
+
+export const projectMilestonesRelations = relations(projectMilestones, ({ one }) => ({
+    project: one(projects, { fields: [projectMilestones.projectId], references: [projects.id] }),
+    shop: one(shops, { fields: [projectMilestones.shopId], references: [shops.id] }),
+    invoicedDocument: one(documents, { fields: [projectMilestones.invoicedDocumentId], references: [documents.id] }),
+}));

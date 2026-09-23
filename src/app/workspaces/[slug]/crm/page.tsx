@@ -64,25 +64,25 @@ export default async function CRMPipelinePage({ params }: CRMPageProps) {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">CRM Pipeline</h1>
+          <h1 className="text-xl font-bold text-gray-900">CRM Pipeline</h1>
           <p className="text-sm text-gray-500 mt-0.5">Track deals from lead to close. Drag to advance stages.</p>
         </div>
         <div className="flex items-center gap-2">
           <Link
             href={`/workspaces/${slug}/crm/proposals`}
-            className="px-3 py-2 text-sm border border-gray-200 dark:border-white/10 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+            className="px-3.5 py-2 text-sm font-medium border border-gray-200 rounded-lg text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors"
           >
             Proposals
           </Link>
           <Link
             href={`/workspaces/${slug}/crm/contracts`}
-            className="px-3 py-2 text-sm border border-gray-200 dark:border-white/10 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+            className="px-3.5 py-2 text-sm font-medium border border-gray-200 rounded-lg text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors"
           >
             Contracts
           </Link>
           <Link
             href={`/workspaces/${slug}/crm/deals/new`}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg text-white"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg text-white shadow-sm"
             style={{ backgroundColor: shop.primaryColor || "#064e3b" }}
           >
             <Plus className="w-4 h-4" />
@@ -96,13 +96,13 @@ export default async function CRMPipelinePage({ params }: CRMPageProps) {
         {statCards.map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.label} className="rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/3 p-4 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${card.color}18` }}>
-                <Icon className="w-4 h-4" style={{ color: card.color }} />
+            <div key={card.label} className="rounded-xl border border-gray-200 bg-white shadow-sm p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${card.color}15` }}>
+                <Icon className="w-5 h-5" style={{ color: card.color }} />
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium">{card.label}</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white mt-0.5">{card.value}</p>
+                <p className="text-base font-bold text-gray-900 mt-0.5">{card.value}</p>
               </div>
             </div>
           );

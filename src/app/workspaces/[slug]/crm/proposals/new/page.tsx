@@ -33,7 +33,7 @@ export default async function NewProposalPage({ params, searchParams }: NewPropo
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-6">
       <div className="mb-6">
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">New Proposal</h1>
+        <h1 className="text-xl font-bold text-gray-900">New Proposal</h1>
         <p className="text-sm text-gray-500 mt-0.5">Create an interactive proposal with e-signature support.</p>
       </div>
       <NewProposalForm

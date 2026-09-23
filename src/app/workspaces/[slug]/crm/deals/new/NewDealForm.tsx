@@ -66,17 +66,17 @@ export function NewDealForm({ shopId, shopSlug, clients, currency, brandColor }:
     });
   };
 
-  const inputClass = "w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-0";
-  const labelClass = "block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5";
+  const inputClass = "w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all";
+  const labelClass = "block text-xs font-semibold text-gray-700 mb-1.5";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <Link href={`/workspaces/${shopSlug}/crm`} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+      <Link href={`/workspaces/${shopSlug}/crm`} className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors">
         <ArrowLeft className="w-3.5 h-3.5" /> Back to Pipeline
       </Link>
 
-      <div className="rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/3 p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-gray-800 dark:text-white">Deal Details</h2>
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6 space-y-4">
+        <h2 className="text-sm font-bold text-gray-900">Deal Details</h2>
 
         <div>
           <label className={labelClass}>Deal Title *</label>
@@ -84,7 +84,7 @@ export function NewDealForm({ shopId, shopSlug, clients, currency, brandColor }:
         </div>
 
         <div>
-          <label className={labelClass}>Existing Client <span className="text-gray-400">(optional — links deal to client record)</span></label>
+          <label className={labelClass}>Existing Client <span className="text-gray-400 font-normal">(optional — links deal to client record)</span></label>
           <select value={form.clientId} onChange={set("clientId")} className={inputClass}>
             <option value="">No client linked</option>
             {clients.map(c => <option key={c.id} value={c.id}>{c.name} {c.email ? `— ${c.email}` : ""}</option>)}
@@ -92,8 +92,8 @@ export function NewDealForm({ shopId, shopSlug, clients, currency, brandColor }:
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/3 p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-gray-800 dark:text-white">Contact Person</h2>
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6 space-y-4">
+        <h2 className="text-sm font-bold text-gray-900">Contact Person</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Full Name *</label>
@@ -110,8 +110,8 @@ export function NewDealForm({ shopId, shopSlug, clients, currency, brandColor }:
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/3 p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-gray-800 dark:text-white">Deal Metrics</h2>
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6 space-y-4">
+        <h2 className="text-sm font-bold text-gray-900">Deal Metrics</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Estimated Value ({currency})</label>
@@ -131,12 +131,12 @@ export function NewDealForm({ shopId, shopSlug, clients, currency, brandColor }:
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/3 p-6">
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
         <label className={labelClass}>Internal Notes</label>
         <textarea value={form.notes} onChange={set("notes")} rows={3} placeholder="Context, source of lead, key requirements…" className={`${inputClass} resize-none`} />
       </div>
 
-      {error && <p className="text-red-500 text-sm bg-red-50 dark:bg-red-500/8 px-4 py-2.5 rounded-lg">{error}</p>}
+      {error && <p className="text-red-600 text-sm bg-red-50 border border-red-200 px-4 py-2.5 rounded-lg">{error}</p>}
 
       <button
         type="submit"

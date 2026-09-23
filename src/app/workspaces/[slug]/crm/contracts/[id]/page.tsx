@@ -53,7 +53,7 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
       {/* Breadcrumb */}
       <Link
         href={`/workspaces/${slug}/crm/contracts`}
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" /> Contracts
       </Link>
@@ -70,16 +70,16 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
               {contract.status}
             </span>
             {daysLeft !== null && daysLeft <= 30 && daysLeft > 0 && (
-              <span className="flex items-center gap-1 text-[11px] text-amber-500 font-medium">
+              <span className="flex items-center gap-1 text-[11px] text-amber-600 font-semibold">
                 <AlertTriangle className="w-3 h-3" /> Expires in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
               </span>
             )}
           </div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{contract.title}</h1>
+          <h1 className="text-xl font-bold text-gray-900">{contract.title}</h1>
           {contract.client && (
             <Link
               href={`/workspaces/${slug}/clients/${contract.client.id}`}
-              className="text-sm text-gray-500 hover:underline mt-0.5 block"
+              className="text-sm text-gray-600 hover:underline mt-0.5 block"
             >
               {contract.client.name}
             </Link>
@@ -90,14 +90,14 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
           {contract.deal && (
             <Link
               href={`/workspaces/${slug}/crm/deals/${contract.deal.id}`}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs border border-gray-200 dark:border-white/10 rounded-lg text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs border border-gray-200 rounded-lg text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors font-medium"
             >
-              <Briefcase className="w-3 h-3" /> Linked Deal
+              <Briefcase className="w-3 h-3 text-gray-400" /> Linked Deal
             </Link>
           )}
           <Link
             href={`/workspaces/${slug}/projects/new?contractId=${contract.id}`}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg text-white"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg text-white shadow-sm"
             style={{ backgroundColor: brandColor }}
           >
             + New Project
@@ -109,12 +109,12 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
         {/* Left column — contract info */}
         <div className="md:col-span-1 space-y-4">
           {/* Billing snapshot */}
-          <div className="rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/3 p-5 space-y-3">
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-5 space-y-3">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Billing</h3>
             <div className="space-y-2.5">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-500">Monthly Fee</span>
-                <span className="text-sm font-bold text-gray-900 dark:text-white">
+                <span className="text-sm font-bold text-gray-900">
                   {formatCurrency(monthlyFee, contract.currency)}
                 </span>
               </div>
@@ -122,22 +122,22 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
                 <>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-500">Hours / Month</span>
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <span className="text-sm font-semibold text-gray-800">
                       {contract.monthlyHoursAllocated}h
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-500">Rate / Hour</span>
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <span className="text-sm font-semibold text-gray-800">
                       {formatCurrency(parseFloat(String(contract.hourlyRate)), contract.currency)}
                     </span>
                   </div>
                 </>
               )}
               {contract.autoInvoiceEnabled && (
-                <div className="flex items-center gap-1.5 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/8">
-                  <RotateCcw className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                  <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                <div className="flex items-center gap-1.5 p-2 rounded-lg bg-emerald-50 border border-emerald-100">
+                  <RotateCcw className="w-3 h-3 text-emerald-600" />
+                  <span className="text-xs text-emerald-800 font-medium">
                     Auto-invoices on day {contract.billingDayOfMonth} monthly
                   </span>
                 </div>
@@ -146,7 +146,7 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
                 <div className="flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-gray-400" />
                   <span className="text-xs text-gray-500">
-                    Next bill: <strong className="text-gray-700 dark:text-gray-300">
+                    Next bill: <strong className="text-gray-900">
                       {new Date(contract.nextBillingDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
                     </strong>
                   </span>
@@ -156,18 +156,18 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
           </div>
 
           {/* Contract term */}
-          <div className="rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/3 p-5 space-y-2.5">
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-5 space-y-2.5">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Term</h3>
             <div className="space-y-1.5">
               <div className="flex justify-between">
                 <span className="text-xs text-gray-500">Start</span>
-                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                <span className="text-xs font-medium text-gray-800">
                   {contract.startDate ? new Date(contract.startDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-xs text-gray-500">End</span>
-                <span className={`text-xs font-medium ${daysLeft !== null && daysLeft <= 30 && daysLeft > 0 ? "text-amber-500" : "text-gray-700 dark:text-gray-300"}`}>
+                <span className={`text-xs font-medium ${daysLeft !== null && daysLeft <= 30 && daysLeft > 0 ? "text-amber-600 font-semibold" : "text-gray-800"}`}>
                   {contract.endDate ? new Date(contract.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "Open-ended"}
                 </span>
               </div>
@@ -176,16 +176,16 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
 
           {/* Linked projects */}
           {contract.projects && contract.projects.length > 0 && (
-            <div className="rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/3 p-5 space-y-3">
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-5 space-y-3">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Projects</h3>
               {contract.projects.map((p: any) => (
                 <Link
                   key={p.id}
                   href={`/workspaces/${slug}/projects/${p.id}`}
-                  className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-100 transition-colors"
                 >
-                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">{p.name}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-white/8 dark:text-gray-400 font-medium shrink-0 ml-2">
+                  <span className="text-xs font-medium text-gray-800 truncate">{p.name}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-700 font-medium shrink-0 ml-2">
                     {p.status}
                   </span>
                 </Link>
@@ -223,23 +223,23 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
 
           {/* Hours log history */}
           {contract.hoursLog && contract.hoursLog.length > 0 && (
-            <div className="rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/3 overflow-hidden">
-              <div className="p-4 border-b border-gray-100 dark:border-white/5">
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-white">Hours Log</h3>
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-gray-100">
+                <h3 className="text-sm font-bold text-gray-900">Hours Log</h3>
               </div>
-              <div className="divide-y divide-gray-100 dark:divide-white/5 max-h-64 overflow-y-auto">
+              <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto">
                 {contract.hoursLog.map((log: any) => (
                   <div key={log.id} className="flex items-center gap-3 p-3.5">
-                    <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shrink-0">
-                      <Clock className="w-3.5 h-3.5 text-blue-500" />
+                    <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                      <Clock className="w-3.5 h-3.5 text-blue-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-800 dark:text-white truncate">{log.description}</p>
+                      <p className="text-xs font-medium text-gray-900 truncate">{log.description}</p>
                       <p className="text-[11px] text-gray-400 mt-0.5">
                         {log.logDate} · by {log.loggedBy?.name || "Staff"}
                       </p>
                     </div>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white shrink-0">
+                    <span className="text-sm font-bold text-gray-900 shrink-0">
                       {log.hoursUsed}h
                     </span>
                   </div>
@@ -250,9 +250,9 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
 
           {/* Terms & Conditions */}
           {contract.termsAndConditions && (
-            <div className="rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/3 p-5">
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-5">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Terms & Conditions</h3>
-              <p className="text-xs text-gray-500 leading-6 whitespace-pre-line">{contract.termsAndConditions}</p>
+              <p className="text-xs text-gray-700 leading-6 whitespace-pre-line">{contract.termsAndConditions}</p>
             </div>
           )}
         </div>

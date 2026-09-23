@@ -90,25 +90,28 @@ export function CRMKanbanBoard({
           return (
             <div
               key={stage.id}
+              className="w-72 shrink-0 rounded-xl border border-gray-200 bg-gray-50/70 shadow-sm flex flex-col overflow-hidden"
               style={isDragTarget ? { outline: `2px solid ${stage.color}`, outlineOffset: "2px" } : undefined}
               onDragOver={(e) => handleDragOver(e, stage.id)}
               onDragLeave={handleDragLeave}
               onDrop={() => handleDrop(stage.id)}
             >
               {/* Stage header */}
-              <div className={`rounded-t-xl px-3.5 py-3 flex items-center justify-between border-b ${isDragTarget ? "border-b-2" : "border-b"}`}
+              <div
+                className={`px-3.5 py-3 flex items-center justify-between border-b ${isDragTarget ? "border-b-2" : "border-b"}`}
                 style={{ 
-                  backgroundColor: isDragTarget ? `${stage.color}15` : "transparent",
-                  borderColor: isDragTarget ? stage.color : "rgba(0,0,0,0.06)",
-                }}>
+                  backgroundColor: isDragTarget ? `${stage.color}15` : "#ffffff",
+                  borderColor: isDragTarget ? stage.color : "#f1f5f9",
+                }}
+              >
                 <div className="flex items-center gap-2">
                   <span className="text-[13px] font-semibold" style={{ color: stage.color }}>{stage.label}</span>
-                  <span className="bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                  <span className="bg-gray-200 text-gray-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                     {stageDeals.length}
                   </span>
                 </div>
                 {stageTotal > 0 && (
-                  <span className="text-[11px] text-gray-400 font-medium">
+                  <span className="text-[11px] text-gray-500 font-medium">
                     {formatCurrency(stageTotal, currency)}
                   </span>
                 )}
@@ -171,17 +174,17 @@ function DealCard({
       draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      className={`group relative rounded-lg border bg-white dark:bg-gray-900 p-3 cursor-grab active:cursor-grabbing transition-all duration-150 ${
+      className={`group relative rounded-lg border border-gray-200 bg-white p-3 cursor-grab active:cursor-grabbing transition-all duration-150 ${
         isDragging ? "opacity-40 scale-95 shadow-lg" : "hover:shadow-md hover:-translate-y-px"
       } ${isUpdating ? "animate-pulse" : ""}`}
-      style={{ borderColor: isDragging ? stageColor : "rgba(0,0,0,0.08)" }}
+      style={{ borderColor: isDragging ? stageColor : undefined }}
     >
       {/* Drag handle */}
       <GripVertical className="w-3 h-3 text-gray-300 absolute top-3 right-2 opacity-0 group-hover:opacity-100 transition-opacity" />
 
       {/* Title */}
       <Link href={`/workspaces/${shopSlug}/crm/deals/${deal.id}`} onClick={e => e.stopPropagation()}>
-        <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white leading-snug line-clamp-2 pr-4 hover:underline">
+        <h4 className="text-[13px] font-semibold text-gray-900 leading-snug line-clamp-2 pr-4 hover:underline">
           {deal.title}
         </h4>
       </Link>
@@ -206,11 +209,11 @@ function DealCard({
 
       {/* Footer: value + probability */}
       <div className="mt-3 flex items-center justify-between gap-2">
-        <span className="text-[12px] font-bold text-gray-900 dark:text-white">
+        <span className="text-[12px] font-bold text-gray-900">
           {formatCurrency(parseFloat(deal.estimatedValue || "0"), deal.currency || currency)}
         </span>
         <div className="flex items-center gap-1">
-          <div className="w-14 h-1.5 rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden">
+          <div className="w-14 h-1.5 rounded-full bg-gray-100 overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
               style={{ width: `${deal.winProbability}%`, backgroundColor: stageColor }}
@@ -224,7 +227,7 @@ function DealCard({
       {(deal.proposals?.length ?? 0) > 0 && (
         <div className="mt-2 flex gap-1 flex-wrap">
           {deal.proposals!.slice(0, 2).map(p => (
-            <span key={p.id} className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium">
+            <span key={p.id} className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium">
               📋 {p.status.charAt(0) + p.status.slice(1).toLowerCase()}
             </span>
           ))}

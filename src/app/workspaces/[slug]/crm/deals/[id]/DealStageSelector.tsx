@@ -73,25 +73,25 @@ export function DealStageSelector({ dealId, shopId, shopSlug, currentStage, bran
       {/* Loss reason modal */}
       {showLossModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-white/10 p-6 max-w-sm w-full space-y-4 shadow-2xl">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Why was this deal lost?</h3>
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <h3 className="text-sm font-bold text-gray-900">Why was this deal lost?</h3>
             <textarea
               value={lossReason}
               onChange={e => setLossReason(e.target.value)}
               rows={3}
               placeholder="e.g. Budget constraints, competitor pricing…"
-              className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none resize-none"
+              className="w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
             />
             <div className="flex gap-2">
               <button
                 onClick={() => setShowLossModal(false)}
-                className="flex-1 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5"
+                className="flex-1 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={() => applyStageChange("LOST", lossReason.trim() || undefined)}
-                className="flex-1 py-2 text-sm rounded-lg bg-red-500/90 text-white font-medium hover:bg-red-600 transition-colors"
+                className="flex-1 py-2 text-sm rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors shadow-sm"
               >
                 Mark Lost
               </button>

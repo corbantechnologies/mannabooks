@@ -74,9 +74,9 @@ export function DealActivityFeed({ activities: initialActivities, dealId, shopId
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/3 overflow-hidden">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
       {/* Log activity form */}
-      <div className="p-4 border-b border-gray-100 dark:border-white/5">
+      <div className="p-4 border-b border-gray-100">
         <div className="flex items-center gap-2 mb-3">
           {ACTIVITY_TYPES.map(at => {
             const Icon = at.icon;
@@ -87,7 +87,7 @@ export function DealActivityFeed({ activities: initialActivities, dealId, shopId
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   selectedType === at.id && isExpanded
                     ? "text-white"
-                    : "text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/8"
+                    : "text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200"
                 }`}
                 style={selectedType === at.id && isExpanded ? { backgroundColor: at.color } : {}}
               >
@@ -104,7 +104,7 @@ export function DealActivityFeed({ activities: initialActivities, dealId, shopId
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Activity summary…"
-              className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-3.5 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-gray-300 dark:focus:border-white/20"
+              className="w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               autoFocus
             />
             <textarea
@@ -112,17 +112,17 @@ export function DealActivityFeed({ activities: initialActivities, dealId, shopId
               onChange={e => setBody(e.target.value)}
               rows={2}
               placeholder="Additional notes (optional)…"
-              className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-3.5 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-gray-300 dark:focus:border-white/20 resize-none"
+              className="w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
             />
             {error && <p className="text-red-500 text-xs">{error}</p>}
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setIsExpanded(false)} className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+              <button onClick={() => setIsExpanded(false)} className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-900 font-medium">
                 Cancel
               </button>
               <button
                 onClick={handleLog}
                 disabled={isPending}
-                className="px-4 py-1.5 text-xs font-semibold text-white rounded-lg transition-all disabled:opacity-60"
+                className="px-4 py-1.5 text-xs font-semibold text-white rounded-lg transition-all disabled:opacity-60 shadow-sm"
                 style={{ backgroundColor: brandColor }}
               >
                 {isPending ? "Saving…" : "Log Activity"}
@@ -132,7 +132,7 @@ export function DealActivityFeed({ activities: initialActivities, dealId, shopId
         ) : (
           <button
             onClick={() => setIsExpanded(true)}
-            className="w-full text-left px-3.5 py-2 rounded-lg bg-gray-50 dark:bg-white/5 text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8 transition-colors border border-gray-200 dark:border-white/8"
+            className="w-full text-left px-3.5 py-2 rounded-lg bg-gray-50 text-sm text-gray-500 hover:bg-gray-100 transition-colors border border-gray-200"
           >
             + Log a call, meeting, email, or note…
           </button>
@@ -140,7 +140,7 @@ export function DealActivityFeed({ activities: initialActivities, dealId, shopId
       </div>
 
       {/* Timeline */}
-      <div className="divide-y divide-gray-100 dark:divide-white/5 max-h-[520px] overflow-y-auto">
+      <div className="divide-y divide-gray-100 max-h-[520px] overflow-y-auto">
         {activities.length === 0 && (
           <div className="p-8 text-center text-sm text-gray-400">
             No activity recorded yet. Start by logging a note, call, or meeting.
@@ -160,14 +160,14 @@ export function DealActivityFeed({ activities: initialActivities, dealId, shopId
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{a.title}</p>
+                  <p className="text-sm font-semibold text-gray-900 leading-snug">{a.title}</p>
                   <span className="text-[11px] text-gray-400 shrink-0">
                     {ts.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                     {" "}
                     {ts.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
-                {a.body && <p className="text-xs text-gray-500 mt-1 leading-5">{a.body}</p>}
+                {a.body && <p className="text-xs text-gray-600 mt-1 leading-5">{a.body}</p>}
                 {a.user && <p className="text-[11px] text-gray-400 mt-1">by {a.user.name}</p>}
               </div>
             </div>

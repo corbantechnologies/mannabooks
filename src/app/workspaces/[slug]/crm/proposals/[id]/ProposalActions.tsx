@@ -81,18 +81,18 @@ export function ProposalActions({
         {portalUrl && (
           <button
             onClick={copyLink}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs border border-gray-200 dark:border-white/10 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs border border-gray-200 rounded-lg text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors font-medium"
           >
-            {copied ? <><Check className="w-3 h-3 text-emerald-500" /> Copied</> : <><Copy className="w-3 h-3" /> Copy Link</>}
+            {copied ? <><Check className="w-3 h-3 text-emerald-600" /> Copied</> : <><Copy className="w-3 h-3 text-gray-400" /> Copy Link</>}
           </button>
         )}
 
         {/* Send email */}
         <button
           onClick={() => setShowSendModal(true)}
-          className="flex items-center gap-1.5 px-3 py-2 text-xs border border-gray-200 dark:border-white/10 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 text-xs border border-gray-200 rounded-lg text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors font-medium"
         >
-          <Send className="w-3 h-3" /> Send Email
+          <Send className="w-3 h-3 text-gray-400" /> Send Email
         </button>
 
         {/* Convert to invoice (only after accepted) */}
@@ -100,7 +100,7 @@ export function ProposalActions({
           <button
             onClick={handleConvert}
             disabled={isPending}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white rounded-lg transition-all disabled:opacity-60"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white rounded-lg transition-all disabled:opacity-60 shadow-sm"
             style={{ backgroundColor: brandColor }}
           >
             <FileText className="w-3 h-3" /> Convert to Invoice
@@ -109,7 +109,7 @@ export function ProposalActions({
       </div>
 
       {message && (
-        <p className={`text-xs px-3 py-1.5 rounded-lg ${message.startsWith("✓") ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400" : "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400"}`}>
+        <p className={`text-xs px-3 py-1.5 rounded-lg border ${message.startsWith("✓") ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-600 border-red-200"}`}>
           {message}
         </p>
       )}
@@ -117,28 +117,28 @@ export function ProposalActions({
       {/* Send email modal */}
       {showSendModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-white/10 p-6 max-w-sm w-full space-y-4 shadow-2xl">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Send Proposal via Email</h3>
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <h3 className="text-sm font-bold text-gray-900">Send Proposal via Email</h3>
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">Recipient Email *</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Recipient Email *</label>
               <input
                 type="email"
                 value={sendEmail}
                 onChange={e => setSendEmail(e.target.value)}
                 placeholder="client@example.com"
-                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none"
+                className="w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 autoFocus
               />
             </div>
             {message && <p className="text-xs text-red-500">{message}</p>}
             <div className="flex gap-2">
-              <button onClick={() => setShowSendModal(false)} className="flex-1 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400">
+              <button onClick={() => setShowSendModal(false)} className="flex-1 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium">
                 Cancel
               </button>
               <button
                 onClick={handleSend}
                 disabled={isPending}
-                className="flex-1 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-60"
+                className="flex-1 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-60 shadow-sm"
                 style={{ backgroundColor: brandColor }}
               >
                 {isPending ? "Sending…" : "Send"}

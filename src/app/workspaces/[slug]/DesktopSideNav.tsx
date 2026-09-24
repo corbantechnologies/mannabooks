@@ -46,6 +46,7 @@ import {
   Target,
   FolderKanban,
   FileSignature,
+  CheckCircle2,
 } from "lucide-react";
 
 interface DesktopSideNavProps {
@@ -84,6 +85,7 @@ export function DesktopSideNav({ slug, brandColor = "#064e3b", businessMode = "H
       ],
     },
     { href: `/workspaces/${slug}/inbox`, label: "Shared Inbox", icon: Inbox },
+    { href: `/workspaces/${slug}/approvals`, label: "Approvals", icon: CheckCircle2 },
     ...(!isServicesOnly ? [{ href: `/workspaces/${slug}/pos`, label: "Point of Sale", icon: ShoppingCart }] : []),
     {
       label: "CRM Pipeline",
@@ -110,11 +112,15 @@ export function DesktopSideNav({ slug, brandColor = "#064e3b", businessMode = "H
       children: [
         { href: `/workspaces/${slug}/inventory`, label: "Stock Overview", icon: BarChart2, exact: true },
         { href: `/workspaces/${slug}/inventory/locations`, label: "Locations", icon: MapPin },
+        { href: `/workspaces/${slug}/inventory/bins`, label: "Storage Bins", icon: Layers },
         { href: `/workspaces/${slug}/inventory/adjustments`, label: "Adjustments", icon: SlidersHorizontal },
         { href: `/workspaces/${slug}/inventory/transfers`, label: "Transfers", icon: ArrowLeftRight },
+        { href: `/workspaces/${slug}/inventory/bom`, label: "BOM & Assemblies", icon: Package },
+        { href: `/workspaces/${slug}/inventory/stocktakes`, label: "Stocktake Audit", icon: Scale },
         { href: `/workspaces/${slug}/inventory/reports/valuation`, label: "Valuation", icon: DollarSign },
         { href: `/workspaces/${slug}/inventory/reports/movement`, label: "Movement History", icon: History },
         { href: `/workspaces/${slug}/inventory/reports/low-stock`, label: "Low Stock", icon: AlertTriangle },
+        { href: `/workspaces/${slug}/inventory/reports/expiry`, label: "Expiry Risk (FEFO)", icon: AlertTriangle },
         { href: `/workspaces/${slug}/inventory/reports/abc`, label: "ABC Analysis", icon: PieChart },
       ],
     }] : []),

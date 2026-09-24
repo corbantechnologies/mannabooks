@@ -44,6 +44,38 @@ export const loyaltyMovementTypeEnum = pgEnum('loyalty_movement_type', [
 export const employmentTypeEnum = pgEnum('employment_type', ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN']);
 export const expenseClaimStatusEnum = pgEnum('expense_claim_status', ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'DISBURSED']);
 
+export const approvalRequestTypeEnum = pgEnum('approval_request_type', [
+    'PURCHASE_REQUISITION',
+    'EXPENSE_CLAIM',
+    'CREDIT_NOTE',
+    'STOCK_ADJUSTMENT',
+    'BUDGET_OVERRUN'
+]);
+export const approvalStatusEnum = pgEnum('approval_status', [
+    'DRAFT',
+    'PENDING',
+    'APPROVED',
+    'REJECTED',
+    'CANCELLED'
+]);
+export const approvalPriorityEnum = pgEnum('approval_priority', [
+    'LOW',
+    'NORMAL',
+    'HIGH',
+    'URGENT'
+]);
+export const productionOrderStatusEnum = pgEnum('production_order_status', [
+    'DRAFT',
+    'COMPLETED',
+    'CANCELLED'
+]);
+export const stocktakeStatusEnum = pgEnum('stocktake_status', [
+    'DRAFT',
+    'COUNTING',
+    'COMPLETED',
+    'CANCELLED'
+]);
+
 // ==========================================
 // 2. TABLES
 // ==========================================
@@ -1117,6 +1149,174 @@ export const projectMilestones = pgTable('project_milestones', {
 });
 
 // ==========================================
+// APPROVALS & REQUESTS TABLES
+// ==========================================
+export const approvalPolicies = pgTable('approval_policies', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    requestType: approvalRequestTypeEnum('request_type').notNull(),
+    name: varchar('name', { length: 150 }).notNull(),
+    minAmount: numeric('min_amount', { precision: 14, scale: 2 }).default('0').notNull(),
+    maxAmount: numeric('max_amount', { precision: 14, scale: 2 }),
+    requiredRole: userRoleEnum('required_role').default('MANAGER').notNull(),
+    autoApproveBelow: numeric('auto_approve_below', { precision: 14, scale: 2 }).default('0').notNull(),
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const approvalRequests = pgTable('approval_requests', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    policyId: uuid('policy_id').references(() => approvalPolicies.id, { onDelete: 'set null' }),
+    requestType: approvalRequestTypeEnum('request_type').notNull(),
+    requestNumber: varchar('request_number', { length: 50 }).notNull(),
+    requesterUserId: uuid('requester_user_id').references(() => users.id).notNull(),
+    title: varchar('title', { length: 255 }).notNull(),
+    description: text('description'),
+    amount: numeric('amount', { precision: 14, scale: 2 }).default('0').notNull(),
+    currency: varchar('currency', { length: 10 }).default('KES').notNull(),
+    priority: approvalPriorityEnum('priority').default('NORMAL').notNull(),
+    status: approvalStatusEnum('status').default('PENDING').notNull(),
+    targetEntityType: varchar('target_entity_type', { length: 50 }).notNull(),
+    targetEntityId: uuid('target_entity_id').notNull(),
+    payloadSnapshot: jsonb('payload_snapshot'),
+    decisionByUserId: uuid('decision_by_user_id').references(() => users.id),
+    decisionAt: timestamp('decision_at'),
+    decisionReason: text('decision_reason'),
+    approvalToken: varchar('approval_token', { length: 64 }).unique(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_request_number').on(table.shopId, table.requestNumber),
+    index('idx_approvals_shop_status').on(table.shopId, table.status),
+    index('idx_approvals_requester').on(table.requesterUserId),
+]);
+
+export const approvalTimeline = pgTable('approval_timeline', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    requestId: uuid('request_id').references(() => approvalRequests.id, { onDelete: 'cascade' }).notNull(),
+    userId: uuid('user_id').references(() => users.id),
+    action: varchar('action', { length: 50 }).notNull(),
+    comment: text('comment'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ==========================================
+// ADVANCED WMS STORAGE BINS & BATCHES
+// ==========================================
+export const storageBins = pgTable('storage_bins', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    locationId: uuid('location_id').references(() => stockLocations.id, { onDelete: 'cascade' }).notNull(),
+    zone: varchar('zone', { length: 50 }).notNull(),
+    rack: varchar('rack', { length: 50 }),
+    shelf: varchar('shelf', { length: 50 }),
+    binCode: varchar('bin_code', { length: 50 }).notNull(),
+    description: text('description'),
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_location_bin').on(table.shopId, table.locationId, table.binCode),
+    index('idx_storage_bins_location').on(table.locationId),
+]);
+
+export const productBatches = pgTable('product_batches', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    productId: uuid('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+    locationId: uuid('location_id').references(() => stockLocations.id).notNull(),
+    binId: uuid('bin_id').references(() => storageBins.id, { onDelete: 'set null' }),
+    batchNumber: varchar('batch_number', { length: 100 }).notNull(),
+    manufactureDate: date('manufacture_date'),
+    expiryDate: date('expiry_date').notNull(),
+    initialQuantity: numeric('initial_quantity', { precision: 12, scale: 2 }).notNull(),
+    currentQuantity: numeric('current_quantity', { precision: 12, scale: 2 }).notNull(),
+    costPrice: numeric('cost_price', { precision: 14, scale: 2 }).notNull(),
+    supplierId: uuid('supplier_id').references(() => suppliers.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    index('idx_batches_product').on(table.productId),
+    index('idx_batches_expiry').on(table.expiryDate),
+    index('idx_batches_location').on(table.locationId),
+]);
+
+// ==========================================
+// BILL OF MATERIALS (BOM) & PRODUCTION
+// ==========================================
+export const billOfMaterials = pgTable('bill_of_materials', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    finishedProductId: uuid('finished_product_id').references(() => products.id).notNull(),
+    name: varchar('name', { length: 255 }).notNull(),
+    laborCostEstimate: numeric('labor_cost_estimate', { precision: 14, scale: 2 }).default('0'),
+    overheadCostEstimate: numeric('overhead_cost_estimate', { precision: 14, scale: 2 }).default('0'),
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    index('idx_bom_finished_product').on(table.finishedProductId),
+]);
+
+export const bomItems = pgTable('bom_items', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    bomId: uuid('bom_id').references(() => billOfMaterials.id, { onDelete: 'cascade' }).notNull(),
+    rawMaterialProductId: uuid('raw_material_product_id').references(() => products.id).notNull(),
+    quantityRequired: numeric('quantity_required', { precision: 12, scale: 4 }).notNull(),
+    wastagePercentage: numeric('wastage_percentage', { precision: 5, scale: 2 }).default('0'),
+}, (table) => [
+    index('idx_bom_items_bom').on(table.bomId),
+]);
+
+export const productionOrders = pgTable('production_orders', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    bomId: uuid('bom_id').references(() => billOfMaterials.id).notNull(),
+    orderNumber: varchar('order_number', { length: 50 }).notNull(),
+    targetLocationId: uuid('target_location_id').references(() => stockLocations.id).notNull(),
+    unitsToProduce: numeric('units_to_produce', { precision: 12, scale: 2 }).notNull(),
+    totalCostKes: numeric('total_cost_kes', { precision: 14, scale: 2 }).default('0').notNull(),
+    status: productionOrderStatusEnum('status').default('DRAFT').notNull(),
+    completedAt: timestamp('completed_at'),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_production_order_number').on(table.shopId, table.orderNumber),
+    index('idx_production_orders_shop').on(table.shopId),
+]);
+
+// ==========================================
+// STOCKTAKE RECONCILIATION
+// ==========================================
+export const stocktakes = pgTable('stocktakes', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    locationId: uuid('location_id').references(() => stockLocations.id).notNull(),
+    stocktakeNumber: varchar('stocktake_number', { length: 50 }).notNull(),
+    status: stocktakeStatusEnum('status').default('DRAFT').notNull(),
+    conductedByUserId: uuid('conducted_by_user_id').references(() => users.id).notNull(),
+    startedAt: timestamp('started_at').defaultNow().notNull(),
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_shop_stocktake_number').on(table.shopId, table.stocktakeNumber),
+    index('idx_stocktakes_shop').on(table.shopId),
+]);
+
+export const stocktakeItems = pgTable('stocktake_items', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    stocktakeId: uuid('stocktake_id').references(() => stocktakes.id, { onDelete: 'cascade' }).notNull(),
+    productId: uuid('product_id').references(() => products.id).notNull(),
+    binId: uuid('bin_id').references(() => storageBins.id, { onDelete: 'set null' }),
+    batchId: uuid('batch_id').references(() => productBatches.id, { onDelete: 'set null' }),
+    bookQuantity: numeric('book_quantity', { precision: 12, scale: 2 }).notNull(),
+    countedQuantity: numeric('counted_quantity', { precision: 12, scale: 2 }).notNull(),
+    varianceQuantity: numeric('variance_quantity', { precision: 12, scale: 2 }).notNull(),
+    varianceCostKes: numeric('variance_cost_kes', { precision: 14, scale: 2 }).notNull(),
+    notes: text('notes'),
+}, (table) => [
+    index('idx_stocktake_items_stocktake').on(table.stocktakeId),
+]);
+
+// ==========================================
 // 3. RELATIONS (For ORM Querying)
 // ==========================================
 export const usersRelations = relations(users, ({ many }) => ({
@@ -1162,6 +1362,13 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     proposals: many(proposals),
     contracts: many(contracts),
     projects: many(projects),
+    approvalPolicies: many(approvalPolicies),
+    approvalRequests: many(approvalRequests),
+    storageBins: many(storageBins),
+    productBatches: many(productBatches),
+    billOfMaterials: many(billOfMaterials),
+    productionOrders: many(productionOrders),
+    stocktakes: many(stocktakes),
 }));
 
 export const shopCurrenciesRelations = relations(shopCurrencies, ({ one }) => ({
@@ -1364,6 +1571,10 @@ export const stockLocationsRelations = relations(stockLocations, ({ one, many })
     transfersFrom: many(stockTransfers, { relationName: 'from_location' }),
     transfersTo: many(stockTransfers, { relationName: 'to_location' }),
     locationStock: many(productLocationStock),
+    storageBins: many(storageBins),
+    productBatches: many(productBatches),
+    productionOrders: many(productionOrders),
+    stocktakes: many(stocktakes),
 }));
 
 export const stockLedgerRelations = relations(stockLedger, ({ one }) => ({
@@ -1394,6 +1605,10 @@ export const productsRelations = relations(products, ({ one, many }) => ({
     stockLedger: many(stockLedger),
     transferItems: many(stockTransferItems),
     locationStock: many(productLocationStock),
+    batches: many(productBatches),
+    bomAssemblies: many(billOfMaterials),
+    bomRawMaterials: many(bomItems),
+    stocktakeItems: many(stocktakeItems),
 }));
 
 // PRODUCT LOCATION STOCK RELATIONS
@@ -1535,4 +1750,68 @@ export const expenseClaimsRelations = relations(expenseClaims, ({ one }) => ({
     costCenter: one(costCenters, { fields: [expenseClaims.costCenterId], references: [costCenters.id] }),
     approvedBy: one(users, { fields: [expenseClaims.approvedById], references: [users.id] }),
     disbursedExpense: one(expenses, { fields: [expenseClaims.disbursedExpenseId], references: [expenses.id] }),
+}));
+
+export const approvalPoliciesRelations = relations(approvalPolicies, ({ one, many }) => ({
+    shop: one(shops, { fields: [approvalPolicies.shopId], references: [shops.id] }),
+    requests: many(approvalRequests),
+}));
+
+export const approvalRequestsRelations = relations(approvalRequests, ({ one, many }) => ({
+    shop: one(shops, { fields: [approvalRequests.shopId], references: [shops.id] }),
+    policy: one(approvalPolicies, { fields: [approvalRequests.policyId], references: [approvalPolicies.id] }),
+    requester: one(users, { fields: [approvalRequests.requesterUserId], references: [users.id], relationName: 'approval_requester' }),
+    decisionBy: one(users, { fields: [approvalRequests.decisionByUserId], references: [users.id], relationName: 'approval_decider' }),
+    timeline: many(approvalTimeline),
+}));
+
+export const approvalTimelineRelations = relations(approvalTimeline, ({ one }) => ({
+    request: one(approvalRequests, { fields: [approvalTimeline.requestId], references: [approvalRequests.id] }),
+    user: one(users, { fields: [approvalTimeline.userId], references: [users.id] }),
+}));
+
+export const storageBinsRelations = relations(storageBins, ({ one, many }) => ({
+    shop: one(shops, { fields: [storageBins.shopId], references: [shops.id] }),
+    location: one(stockLocations, { fields: [storageBins.locationId], references: [stockLocations.id] }),
+    batches: many(productBatches),
+}));
+
+export const productBatchesRelations = relations(productBatches, ({ one }) => ({
+    shop: one(shops, { fields: [productBatches.shopId], references: [shops.id] }),
+    product: one(products, { fields: [productBatches.productId], references: [products.id] }),
+    location: one(stockLocations, { fields: [productBatches.locationId], references: [stockLocations.id] }),
+    bin: one(storageBins, { fields: [productBatches.binId], references: [storageBins.id] }),
+    supplier: one(suppliers, { fields: [productBatches.supplierId], references: [suppliers.id] }),
+}));
+
+export const billOfMaterialsRelations = relations(billOfMaterials, ({ one, many }) => ({
+    shop: one(shops, { fields: [billOfMaterials.shopId], references: [shops.id] }),
+    finishedProduct: one(products, { fields: [billOfMaterials.finishedProductId], references: [products.id] }),
+    items: many(bomItems),
+    productionOrders: many(productionOrders),
+}));
+
+export const bomItemsRelations = relations(bomItems, ({ one }) => ({
+    bom: one(billOfMaterials, { fields: [bomItems.bomId], references: [billOfMaterials.id] }),
+    rawMaterialProduct: one(products, { fields: [bomItems.rawMaterialProductId], references: [products.id] }),
+}));
+
+export const productionOrdersRelations = relations(productionOrders, ({ one }) => ({
+    shop: one(shops, { fields: [productionOrders.shopId], references: [shops.id] }),
+    bom: one(billOfMaterials, { fields: [productionOrders.bomId], references: [billOfMaterials.id] }),
+    targetLocation: one(stockLocations, { fields: [productionOrders.targetLocationId], references: [stockLocations.id] }),
+}));
+
+export const stocktakesRelations = relations(stocktakes, ({ one, many }) => ({
+    shop: one(shops, { fields: [stocktakes.shopId], references: [shops.id] }),
+    location: one(stockLocations, { fields: [stocktakes.locationId], references: [stockLocations.id] }),
+    conductedBy: one(users, { fields: [stocktakes.conductedByUserId], references: [users.id] }),
+    items: many(stocktakeItems),
+}));
+
+export const stocktakeItemsRelations = relations(stocktakeItems, ({ one }) => ({
+    stocktake: one(stocktakes, { fields: [stocktakeItems.stocktakeId], references: [stocktakes.id] }),
+    product: one(products, { fields: [stocktakeItems.productId], references: [products.id] }),
+    bin: one(storageBins, { fields: [stocktakeItems.binId], references: [storageBins.id] }),
+    batch: one(productBatches, { fields: [stocktakeItems.batchId], references: [productBatches.id] }),
 }));

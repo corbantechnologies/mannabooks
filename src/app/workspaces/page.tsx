@@ -5,6 +5,8 @@ import { logoutAction } from "@/lib/actions/logout";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { getOrganizationStaffRoster } from "@/lib/actions/team-directory";
+import { WorkspaceDirectoryClient } from "./WorkspaceDirectoryClient";
 
 export default async function WorkspacesDirectoryPage() {
   const session = await verifyAndGetSession();
@@ -28,8 +30,8 @@ export default async function WorkspacesDirectoryPage() {
     } catch (e) {}
   }
 
-  // Pull user profile and active memberships
-  const [currentUser, memberships] = await Promise.all([
+  // Pull user profile, active memberships, and organization roster
+  const [currentUser, memberships, rosterRes] = await Promise.all([
     db.query.users.findFirst({
       where: eq(users.id, session.userId),
     }),
@@ -42,6 +44,7 @@ export default async function WorkspacesDirectoryPage() {
         shop: true,
       },
     }),
+    getOrganizationStaffRoster(),
   ]);
 
   const isLifetime = Boolean(currentUser?.isLifetimePro || currentUser?.isSuperAdmin);
@@ -53,10 +56,10 @@ export default async function WorkspacesDirectoryPage() {
       {/* TOP META BAR */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-6">
         <div>
-          <span className="text-xs text-zinc-400 font-medium">Account Workspaces</span>
+          <span className="text-xs text-zinc-400 font-medium">Account Workspaces &amp; Staff Directory</span>
           <div className="flex items-center gap-3 mt-1">
             <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight font-sans text-black">
-              Select Workspace
+              Workspace Central
             </h1>
 
             {/* USER SUBSCRIPTION PLAN BADGE */}
@@ -113,72 +116,16 @@ export default async function WorkspacesDirectoryPage() {
         </div>
       </header>
 
-      {/* WORKSPACE DIRECTORY GRID */}
-      <main className="my-12 max-w-4xl w-full mx-auto space-y-4">
-        <div className="flex justify-between items-center px-1">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">
-            Authorized Workspaces ({memberships.length})
-          </span>
-          <span className="font-mono text-[10px] text-zinc-400">
-            Account: <strong className="text-black">{currentUser?.email}</strong>
-          </span>
-        </div>
-        
-        <div className="card-modern divide-y divide-zinc-200/80 bg-white">
-          {memberships.map((member) => {
-            if (!member.shop) return null;
-            return (
-              <Link 
-                key={member.id} 
-                href={`/workspaces/${member.shop.slug}`}
-                className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-zinc-50/80 transition-colors group"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2.5">
-                    <span
-                      className="w-3.5 h-3.5 border border-black/30 rounded-sm shrink-0 inline-block"
-                      style={{ backgroundColor: member.shop.primaryColor || "#000000" }}
-                      title={`Theme: ${member.shop.primaryColor}`}
-                    />
-                    <h3 className="text-xl font-semibold uppercase tracking-tight font-sans text-black group-hover:underline decoration-2 underline-offset-4">
-                      {member.shop.shortName || member.shop.name}
-                    </h3>
-                  </div>
-                  <p className="font-mono text-xs text-zinc-500">
-                    URL Reference: /workspaces/{member.shop.slug}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 font-mono text-[10px]">
-                  {/* WORKSPACE PLAN STATUS */}
-                  {isLifetime ? (
-                    <span className="bg-amber-50 text-amber-900 border border-amber-300 font-bold px-2 py-0.5 rounded shadow-2xs">
-                      👑 LIFETIME PRO
-                    </span>
-                  ) : (
-                    <span className="bg-zinc-100 border border-zinc-200 text-zinc-700 font-bold px-2 py-0.5 rounded">
-                      {rawPlan} TIER
-                    </span>
-                  )}
-
-                  <span className="border border-zinc-300 px-2.5 py-0.5 font-semibold uppercase bg-white rounded">
-                    {member.role}
-                  </span>
-                  <span className={`border px-2.5 py-0.5 font-semibold uppercase rounded ${
-                    member.shop.isVatRegistered 
-                      ? "badge-emerald" 
-                      : "border-zinc-200 text-zinc-400"
-                  }`}>
-                    {member.shop.isVatRegistered ? "VAT_ACTIVE (16%)" : "NON_VAT"}
-                  </span>
-                  <span className="bg-zinc-100 border border-zinc-200 text-zinc-600 px-2.5 py-0.5 font-semibold rounded">
-                    {member.shop.currency}
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+      {/* WORKSPACE DIRECTORY & STAFF ROSTER */}
+      <main className="my-10 max-w-4xl w-full mx-auto space-y-4">
+        <WorkspaceDirectoryClient
+          currentUser={currentUser}
+          rawPlan={rawPlan}
+          isLifetime={isLifetime}
+          memberships={memberships}
+          initialRoster={rosterRes.roster}
+          ownedShops={rosterRes.ownedShops}
+        />
       </main>
 
       {/* BOTTOM FOOTER TRACKER */}

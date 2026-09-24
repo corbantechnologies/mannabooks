@@ -4,10 +4,17 @@ import Link from "next/link";
 import { PublicNavbar } from "@/components/PublicNavbar";
 
 export const metadata: Metadata = {
-  title: "Features | Manna Books — KRA eTIMS, CRM Pipeline, Proposals, Contracts & General Ledger",
+  title: "Features | Manna Books — WMS Bins, FEFO Expiry, BOM Manufacturing, Stocktakes & Approvals",
   description:
-    "Explore all Manna Books platform features: CRM pipeline, interactive proposals with e-signatures, retainer contracts & SLAs, project milestone billing, KRA eTIMS invoicing, statutory payroll, bank & M-Pesa CSV reconciliation, compound multi-line journals, and double-entry general ledger.",
+    "Explore all Manna Books enterprise platform features: WMS shelf storage bins, FEFO expiry tracking, Bill of Materials (BOM) light manufacturing, stocktake audit reconciliation, unified corporate approvals, multi-branch staff governance, CRM pipeline, interactive proposals, eTIMS invoicing, and double-entry general ledger.",
   keywords: [
+    "warehouse management system Kenya",
+    "storage bins shelf hierarchy Kenya",
+    "FEFO expiry date tracking",
+    "bill of materials light manufacturing Kenya",
+    "stocktake audit wizard variance reconciliation",
+    "corporate approvals purchase requisition Kenya",
+    "multi-branch staff storekeeper RBAC Kenya",
     "CRM deals pipeline Kenya",
     "interactive proposals e-signature Kenya",
     "retainer contract SLA tracking Kenya",
@@ -71,6 +78,12 @@ export default function FeaturesPage() {
               { href: "#invoicing", label: "Invoicing & eTIMS" },
               { href: "#catalog-showcase", label: "Digital Catalog & Rate Cards" },
               { href: "#inventory", label: "Smart Inventory & Reconciler" },
+              { href: "#wms-bins", label: "Storage Bins & Shelves" },
+              { href: "#fefo-expiry", label: "FEFO & Expiry Risk" },
+              { href: "#bom-manufacturing", label: "BOM & Manufacturing" },
+              { href: "#stocktake-audit", label: "Stocktake Audit Wizard" },
+              { href: "#corporate-approvals", label: "Approvals & Requisitions" },
+              { href: "#multibranch-governance", label: "Multi-Branch & Storekeeper RBAC" },
               { href: "#notifications", label: "In-App Activity Bell" },
               { href: "#payroll", label: "Statutory Payroll" },
               { href: "#expenses", label: "Expenses" },
@@ -780,6 +793,156 @@ export default function FeaturesPage() {
                 { title: "Automated Retainer Invoicing", body: "The background cron engine auto-generates monthly retainer invoices on designated billing dates and advances future billing cycles seamlessly." },
                 { title: "SLA Expiry Alerts (30 & 60 Days)", body: "Receive proactive automated in-app alerts and email notifications 60 days and 30 days prior to contract expiration to ensure timely renewal." },
                 { title: "Project Timesheets & Milestone Invoicing", body: "Log billable and non-billable staff hours against project workspaces, approve timesheets, and invoice completion milestones with one click." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 26: MULTI-BRANCH GOVERNANCE & STOREKEEPER RBAC */}
+          <div id="multibranch-governance" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 26</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Multi-Branch Organization Roster &amp; Storekeeper RBAC
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Consolidated enterprise staff roster allowing multi-entity businesses to allocate and govern employees across different branch workspaces. Assign operational presets—Storekeepers, Cashiers, Dispatchers, Sales Reps, Accountants, and Branch Managers—with physical warehouse branch fences and commercial cost privacy.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Multi-Branch Staff Roster", body: "View and manage staff memberships across all business locations from a single directory panel at /workspaces." },
+                { title: "Location-Fenced Scoping", body: "Restrict warehouse clerks strictly to their designated warehouse branches, preventing accidental cross-branch stock alterations." },
+                { title: "Cost-Price Blindness", body: "Shield commercial buying prices and profit margins from frontline storekeepers and counter cashiers during counts and receipt processing." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 27: UNIFIED CORPORATE APPROVALS & REQUISITIONS */}
+          <div id="corporate-approvals" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 27</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Unified Corporate Approvals &amp; Requisition Engine
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Multi-tier governance workflow for Purchase Requisitions (PR), Employee Expense Claims, Customer Credit Notes, and Damaged Inventory Write-offs. Set spending thresholds for automatic clearance and require mandatory manager justification on all rejected requests.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Tiered Spending Thresholds", body: "Define auto-approval ceilings per request type, allowing low-value operational tickets to clear instantly while flagging large capital commitments." },
+                { title: "Slide-Over Audit Trail", body: "Inspect full snapshot payloads, requester history, priority tags (Urgent, High, Normal, Low), and chronological decision timelines." },
+                { title: "Mandatory Rejection Reasons", body: "Enforce governance compliance by requiring approvers to provide actionable written justifications when rejecting tickets." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 28: ADVANCED WMS STORAGE BINS & QR LABELS */}
+          <div id="wms-bins" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 28</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                WMS Storage Bins &amp; Shelf-Level QR Labeling
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Industrial warehouse management slotting down to Zone, Rack, Shelf, and Bin. Print high-resolution QR barcode labels for physical warehouse shelving and optimize staff picking and replenishment paths.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "4-Level Storage Hierarchy", body: "Structure warehouse locations into physical Zones, Racks, Shelves, and unique Bin Codes for precision inventory slotting." },
+                { title: "Printable QR Shelf Barcodes", body: "Generate crisp SVG/vector QR barcode labels formatted for thermal label printers to stick directly onto storage racks." },
+                { title: "Multi-Warehouse Compatibility", body: "Manage storage bins independently across multiple branches, warehouses, cold storage rooms, and depot facilities." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 29: FEFO BATCH TRACKING & EXPIRY RISK */}
+          <div id="fefo-expiry" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 29</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                FEFO Batch Tracking &amp; Expiry Risk Dashboard
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Track perishable goods, pharmaceuticals, and chemicals by Lot/Batch number with supplier provenance and manufacture/expiry dates. Enforce First Expired, First Out (FEFO) order picking and visualize inventory valuation at risk across 3 urgency tiers.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "First Expired, First Out (FEFO)", body: "Automatic batch suggestion algorithm prioritizing batches nearing expiry first, slashing warehouse write-offs and spoiled stock." },
+                { title: "3-Tier Expiry Risk Aging", body: "Automated segregation into &lt;30 days (Critical Action), 30–60 days (Warning), and 60–90 days (Notice) risk buckets." },
+                { title: "Capitalized Risk Value", body: "Live monetary computation of total financial inventory value nearing expiration, giving leadership early visibility to run promotional clearances." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 30: BILL OF MATERIALS & LIGHT MANUFACTURING */}
+          <div id="bom-manufacturing" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 30</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Bill of Materials (BOM) &amp; Light Manufacturing
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Configure multi-component formulas and assembly recipes with raw material ratios, scrap tolerances, and allocated labor/overhead allowances. Execute atomic production orders that consume raw stock and capitalize finished items at computed unit COGS.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Multi-Level Assembly Recipes", body: "Build component recipes with variable quantities, scrap percentages, and direct labor overhead cost buffers." },
+                { title: "Theoretical Unit Cost Preview", body: "Dynamic real-time cost calculator showing projected unit manufacturing cost as components and labor allowances are adjusted." },
+                { title: "Atomic Assembly Runs", body: "One-click execution that debits raw materials from the stock ledger (ADJUSTMENT_OUT) and deposits finished goods (ADJUSTMENT_IN) with updated unit cost." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 31: PHYSICAL STOCKTAKE AUDIT WIZARD */}
+          <div id="stocktake-audit" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 31</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Physical Stocktake Audit Wizard &amp; Reconciliation
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Execute comprehensive cycle counts and annual stocktakes per warehouse branch. Freeze system book balances, conduct physical counts with printable sheets, analyze shortages and surpluses in real time, and post ledger adjustments in one click.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "System Balance Snapshot", body: "Freeze on-hand ledger quantities at the start of the audit to prevent baseline drift while counting is underway." },
+                { title: "Interactive Count Sheets", body: "Live physical counting grid with optimistic variance tracking, color-coded shortages/surpluses, and variance cost computations." },
+                { title: "1-Click Ledger Reconciliation", body: "Instantly posts matching ADJUSTMENT_IN or ADJUSTMENT_OUT journals to the immutable stock ledger and locks the audit report." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
                   <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>

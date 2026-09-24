@@ -54,6 +54,7 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
       ],
     },
     { href: `/workspaces/${slug}/inbox`, label: "Shared Inbox" },
+    { href: `/workspaces/${slug}/approvals`, label: "Approvals" },
     ...(!isServicesOnly ? [{ href: `/workspaces/${slug}/pos`, label: "Point of Sale (POS)" }] : []),
     {
       label: "CRM Pipeline",
@@ -77,11 +78,15 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
       children: [
         { href: `/workspaces/${slug}/inventory`, label: "Stock Overview", exact: true },
         { href: `/workspaces/${slug}/inventory/locations`, label: "Locations" },
+        { href: `/workspaces/${slug}/inventory/bins`, label: "Storage Bins" },
         { href: `/workspaces/${slug}/inventory/adjustments`, label: "Adjustments" },
         { href: `/workspaces/${slug}/inventory/transfers`, label: "Transfers" },
+        { href: `/workspaces/${slug}/inventory/bom`, label: "BOM & Assemblies" },
+        { href: `/workspaces/${slug}/inventory/stocktakes`, label: "Stocktake Audit" },
         { href: `/workspaces/${slug}/inventory/reports/valuation`, label: "Stock Valuation" },
         { href: `/workspaces/${slug}/inventory/reports/movement`, label: "Movement History" },
         { href: `/workspaces/${slug}/inventory/reports/low-stock`, label: "Low Stock Alerts" },
+        { href: `/workspaces/${slug}/inventory/reports/expiry`, label: "Expiry Risk (FEFO)" },
         { href: `/workspaces/${slug}/inventory/reports/abc`, label: "ABC Analysis" },
       ],
     }] : []),

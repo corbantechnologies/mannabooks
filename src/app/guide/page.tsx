@@ -61,6 +61,11 @@ const GUIDE_MODULES = [
   { href: "#module-22", label: "[22] CRM & Deals Pipeline" },
   { href: "#module-23", label: "[23] Interactive Proposals & e-Sign" },
   { href: "#module-24", label: "[24] Retainer Contracts & Projects" },
+  { href: "#module-25", label: "[25] Multi-Branch Staff & Scoped Roles" },
+  { href: "#module-26", label: "[26] Unified Corporate Approvals" },
+  { href: "#module-27", label: "[27] Storage Bins & FEFO Expiry Risk" },
+  { href: "#module-28", label: "[28] BOM & Light Manufacturing" },
+  { href: "#module-29", label: "[29] Stocktake Audit & Reconciliation" },
 ];
 
 export default function PublicOperatorGuidePage() {
@@ -781,6 +786,101 @@ export default function PublicOperatorGuidePage() {
                 <li><strong>Automated Retainer Invoicing:</strong> Cron engine generates monthly invoices on the designated billing day and advances next billing dates.</li>
                 <li><strong>SLA Expiry Alerts:</strong> In-app notifications and email alerts triggered 60 days and 30 days prior to contract expiration.</li>
                 <li><strong>Project Milestones &amp; Timesheets:</strong> Phased milestone billing gates and staff timesheet review workflows.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* MODULE 25: MULTI-BRANCH STAFF & SCOPED ROLES */}
+          <section id="module-25" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 25]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Multi-Branch Staff Directory &amp; Scoped Storekeeper Roles</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Manage cross-branch organizational rosters from a single master directory. Assign specialized operational personas—Storekeepers, Cashiers, Dispatchers, Sales Reps, Accountants, and Branch Managers. Implement physical warehouse branch scoping to fence operational staff to specific locations, and toggle Cost-Price Blindness to protect sensitive vendor purchasing terms from frontline employees.
+            </p>
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Staff Governance Capabilities:</h4>
+              <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Multi-Branch Staff Allocation:</strong> Assign a staff member to multiple branch entities with distinct roles per branch.</li>
+                <li><strong>Location-Fenced Access:</strong> Storekeepers only view and interact with inventory in their assigned warehouses.</li>
+                <li><strong>Cost-Price Blindness:</strong> Frontline warehouse and cashier staff cannot view purchase costs or margins.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* MODULE 26: UNIFIED CORPORATE APPROVALS */}
+          <section id="module-26" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 26]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Unified Corporate Approvals &amp; Requisition Engine</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Standardize multi-tier approval flows across Purchase Requisitions, Staff Expense Claims, Customer Credit Notes, and Damaged Inventory Write-offs. Set spending thresholds for automatic approvals and require structured manager decision reasons with immutable audit timelines.
+            </p>
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Corporate Approval Features:</h4>
+              <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Automated Spending Thresholds:</strong> Auto-approve routine operational requests below customizable spending caps.</li>
+                <li><strong>Audit Timeline:</strong> Chronological logging of ticket creation, status changes, decider profiles, and comments.</li>
+                <li><strong>Mandatory Rejection Reasons:</strong> Rejections require structured explanations communicated directly to the requester.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* MODULE 27: STORAGE BINS & FEFO */}
+          <section id="module-27" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 27]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">WMS Storage Bins, QR Shelving &amp; FEFO Expiry Risk</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Full warehouse management system mapping physical storage down to Zone, Rack, Shelf, and Bin. Generate and print scannable QR barcode labels for warehouse aisles and racks. Enforce First Expired, First Out (FEFO) batch pick routing and monitor multi-tier expiration aging risks to minimize inventory spoilage.
+            </p>
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">WMS Capabilities:</h4>
+              <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Shelf-Level Slotting:</strong> Precise mapping from warehouse zone to individual shelf bins.</li>
+                <li><strong>QR Barcode Printing:</strong> Instant generation of warehouse labels for physical picking locations.</li>
+                <li><strong>FEFO Risk Dashboard:</strong> Automated triage into &lt;30d Critical, 30–60d Warning, and 60–90d Notice categories.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* MODULE 28: BOM & LIGHT MANUFACTURING */}
+          <section id="module-28" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 28]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Bill of Materials (BOM) &amp; Light Manufacturing Assemblies</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Engineer multi-part formulas with component quantities, expected scrap percentages, and allocated labor/overhead allowances. Execute one-click production orders that atomically consume raw ingredients from inventory and credit finished goods at actual capitalized unit costs.
+            </p>
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Manufacturing &amp; Assembly Features:</h4>
+              <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Multi-Component Recipes:</strong> Define dynamic assembly recipes with scrap and wastage buffers.</li>
+                <li><strong>Atomic Production Runs:</strong> 1-click execution debiting raw stock and depositing capitalized assembled goods.</li>
+                <li><strong>Accurate COGS Allocation:</strong> Dynamic inclusion of material cost, direct labor, and overhead into unit inventory values.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* MODULE 29: STOCKTAKE AUDIT WIZARD */}
+          <section id="module-29" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 29]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Physical Stocktake Audit Wizard &amp; Discrepancy Reconciliation</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Conduct periodic cycle counts and full physical inventory reconciliations. Snapshot warehouse balances, print physical count sheets, record actual shelf quantities, and view live discrepancy quantities and costs. Reconcile with 1 click to post shrinkage journals and balance sheet inventory adjustments.
+            </p>
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Stocktake Reconciliation Features:</h4>
+              <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>System Stock Freeze:</strong> Instant snapshot of current ledger quantities across warehouse products.</li>
+                <li><strong>Interactive Count Sheet:</strong> Real-time variance tracking with color-coded shortages and surpluses.</li>
+                <li><strong>Automatic Adjustment Posting:</strong> Atomically generates stock ledger entries and updates on-hand balances.</li>
               </ul>
             </div>
           </section>

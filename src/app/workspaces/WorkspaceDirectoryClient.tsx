@@ -48,7 +48,7 @@ export function WorkspaceDirectoryClient({
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"ADMIN" | "MANAGER" | "ACCOUNTANT" | "STOREKEEPER" | "CASHIER" | "DISPATCHER" | "SALES_REP" | "EMPLOYEE" | "VIEWER">("STOREKEEPER");
   const [hideCostPrices, setHideCostPrices] = useState(true);
-  const [directApprovalLimit, setDirectApprovalLimit] = useState("0");
+  const [directApprovalLimit, setDirectApprovalLimit] = useState("");
 
   const handleQuickInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -406,9 +406,11 @@ export function WorkspaceDirectoryClient({
                   <input
                     type="number"
                     min="0"
-                    step="100"
+                    step="any"
+                    placeholder="0.00"
                     value={directApprovalLimit}
                     onChange={(e) => setDirectApprovalLimit(e.target.value)}
+                    onFocus={(e) => e.target.select()}
                     className="w-full border border-zinc-200 rounded p-1.5 text-xs font-mono bg-white"
                   />
                 </div>

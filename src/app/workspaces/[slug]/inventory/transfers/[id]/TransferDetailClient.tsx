@@ -27,7 +27,7 @@ export function TransferDetailClient({ transfer, shopSlug, shopCurrency }: Props
   const [loading, setLoading] = useState(false);
 
   // Received quantities for IN_TRANSIT → COMPLETED
-  const [receivedQtys, setReceivedQtys] = useState<Record<string, number>>(
+  const [receivedQtys, setReceivedQtys] = useState<Record<string, number | string>>(
     Object.fromEntries(transfer.items.map((item: any) => [
       item.id,
       parseFloat(item.quantityRequested)
@@ -61,7 +61,7 @@ export function TransferDetailClient({ transfer, shopSlug, shopCurrency }: Props
       const toastId = toast.loading("Confirming transfer receipt...");
       const receivedItems = transfer.items.map((item: any) => ({
         transferItemId: item.id,
-        quantityReceived: receivedQtys[item.id] ?? parseFloat(item.quantityRequested),
+        quantityReceived: Number(receivedQtys[item.id]) || 0,
       }));
       const res = await receiveStockTransfer(transfer.id, shopSlug, receivedItems);
       setLoading(false);
@@ -235,10 +235,18 @@ export function TransferDetailClient({ transfer, shopSlug, shopCurrency }: Props
                     <input
                       type="number"
                       min="0"
-                      step="0.01"
+                      step="any"
+                      placeholder="0.00"
                       max={item.quantityRequested}
                       value={receivedQtys[item.id] ?? parseFloat(item.quantityRequested)}
-                      onChange={(e) => setReceivedQtys(prev => ({ ...prev, [item.id]: parseFloat(e.target.value) || 0 }))}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setReceivedQtys((prev) => ({
+                          ...prev,
+                          [item.id]: val === "" ? "" : parseFloat(val),
+                        }));
+                      }}
+                      onFocus={(e) => e.target.select()}
                       className="w-24 px-2 py-1 border border-zinc-300 rounded focus:outline-none focus:ring-2 focus:ring-black font-mono text-xs text-right"
                     />
                   ) : (

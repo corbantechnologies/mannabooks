@@ -62,17 +62,18 @@ export function StocktakeAuditClient({
   const isCompleted = stocktake.status === "COMPLETED";
 
   // Handle local change & sync to server
-  const handleCountChange = (itemId: string, newCount: number) => {
+  const handleCountChange = (itemId: string, newCountStr: string) => {
     // 1. Optimistic local update
     setItems((prev) =>
       prev.map((item) => {
         if (item.id !== itemId) return item;
+        const countNum = newCountStr === "" ? 0 : Number(newCountStr);
         const book = Number(item.bookQuantity) || 0;
-        const diff = newCount - book;
+        const diff = countNum - book;
         const unitCost = Number(item.product.costPrice || item.product.unitPrice || 0);
         return {
           ...item,
-          countedQuantity: String(newCount),
+          countedQuantity: newCountStr,
           varianceQuantity: String(diff.toFixed(2)),
           varianceCostKes: String((diff * unitCost).toFixed(2)),
         };
@@ -83,7 +84,7 @@ export function StocktakeAuditClient({
     updateStocktakeItemCountAction({
       stocktakeId: stocktake.id,
       itemId,
-      countedQuantity: newCount,
+      countedQuantity: newCountStr === "" ? 0 : Number(newCountStr),
     });
   };
 
@@ -358,10 +359,12 @@ export function StocktakeAuditClient({
                       ) : (
                         <input
                           type="number"
-                          step="1"
+                          step="any"
                           min="0"
+                          placeholder="0"
                           value={item.countedQuantity}
-                          onChange={(e) => handleCountChange(item.id, Number(e.target.value) || 0)}
+                          onChange={(e) => handleCountChange(item.id, e.target.value)}
+                          onFocus={(e) => e.target.select()}
                           className="w-28 text-right border border-zinc-300 rounded px-2 py-1 font-mono font-bold text-xs focus:ring-1 focus:ring-black bg-white"
                         />
                       )}

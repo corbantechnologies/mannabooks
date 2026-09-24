@@ -56,7 +56,9 @@ export default function LoyaltySettingsClient({
     const [programName, setProgramName] = useState(initialProgram?.programName || "Rewards Club");
     const [earnRateKes, setEarnRateKes] = useState(initialProgram?.earnRateKes || "100.00");
     const [pointValueKes, setPointValueKes] = useState(initialProgram?.pointValueKes || "1.00");
-    const [minRedeemPoints, setMinRedeemPoints] = useState(initialProgram?.minRedeemPoints || 50);
+    const [minRedeemPoints, setMinRedeemPoints] = useState<number | string>(
+        initialProgram?.minRedeemPoints ?? 50
+    );
     const [pointsExpiryDays, setPointsExpiryDays] = useState<number | string>(
         initialProgram?.pointsExpiryDays || ""
     );
@@ -67,8 +69,8 @@ export default function LoyaltySettingsClient({
     const [isTierModalOpen, setIsTierModalOpen] = useState(false);
     const [editingTier, setEditingTier] = useState<TierItem | null>(null);
     const [tierName, setTierName] = useState("");
-    const [tierMinSpend, setTierMinSpend] = useState("0");
-    const [tierDiscount, setTierDiscount] = useState("0");
+    const [tierMinSpend, setTierMinSpend] = useState("");
+    const [tierDiscount, setTierDiscount] = useState("");
     const [tierMultiplier, setTierMultiplier] = useState("1.0");
     const [tierColor, setTierColor] = useState("#000000");
     const [tierOrder, setTierOrder] = useState(0);
@@ -80,14 +82,18 @@ export default function LoyaltySettingsClient({
         const toastId = toast.loading("Saving loyalty configuration...");
 
         try {
+            const parsedEarnRate = !earnRateKes || parseFloat(earnRateKes) <= 0 ? "100.00" : earnRateKes;
+            const parsedPointVal = !pointValueKes || parseFloat(pointValueKes) <= 0 ? "1.00" : pointValueKes;
+            const parsedMinRedeem = minRedeemPoints === "" ? 1 : Math.max(1, parseInt(String(minRedeemPoints), 10) || 1);
+
             const res = await updateLoyaltyProgram(shopId, shopSlug, {
                 isEnabled,
                 engineMode,
                 programName: programName.trim(),
-                earnRateKes,
-                pointValueKes,
-                minRedeemPoints: Number(minRedeemPoints),
-                pointsExpiryDays: pointsExpiryDays ? Number(pointsExpiryDays) : null,
+                earnRateKes: parsedEarnRate,
+                pointValueKes: parsedPointVal,
+                minRedeemPoints: parsedMinRedeem,
+                pointsExpiryDays: pointsExpiryDays && Number(pointsExpiryDays) > 0 ? Number(pointsExpiryDays) : null,
             });
 
             if (res.success) {
@@ -106,8 +112,8 @@ export default function LoyaltySettingsClient({
     function openNewTierModal() {
         setEditingTier(null);
         setTierName("");
-        setTierMinSpend("0");
-        setTierDiscount("0");
+        setTierMinSpend("");
+        setTierDiscount("");
         setTierMultiplier("1.0");
         setTierColor("#000000");
         setTierOrder(tiers.length + 1);
@@ -134,12 +140,16 @@ export default function LoyaltySettingsClient({
 
         setIsSavingTier(true);
         try {
+            const minSpend = tierMinSpend === "" ? "0" : tierMinSpend;
+            const discount = tierDiscount === "" ? "0" : tierDiscount;
+            const multiplier = tierMultiplier === "" ? "1.0" : tierMultiplier;
+
             if (editingTier) {
                 const res = await updateMembershipTier(editingTier.id, shopSlug, {
                     name: tierName.trim(),
-                    minSpendKes: tierMinSpend,
-                    discountPercent: tierDiscount,
-                    pointsMultiplier: tierMultiplier,
+                    minSpendKes: minSpend,
+                    discountPercent: discount,
+                    pointsMultiplier: multiplier,
                     badgeColor: tierColor,
                     displayOrder: Number(tierOrder),
                 });
@@ -153,9 +163,9 @@ export default function LoyaltySettingsClient({
             } else {
                 const res = await createMembershipTier(shopId, shopSlug, {
                     name: tierName.trim(),
-                    minSpendKes: tierMinSpend,
-                    discountPercent: tierDiscount,
-                    pointsMultiplier: tierMultiplier,
+                    minSpendKes: minSpend,
+                    discountPercent: discount,
+                    pointsMultiplier: multiplier,
                     badgeColor: tierColor,
                     displayOrder: Number(tierOrder),
                 });
@@ -258,10 +268,12 @@ export default function LoyaltySettingsClient({
                             <span className="text-xs font-mono text-zinc-400">KES</span>
                             <input
                                 type="number"
-                                step="1"
-                                min="1"
+                                step="any"
+                                min="0.01"
+                                placeholder="100.00"
                                 value={earnRateKes}
                                 onChange={(e) => setEarnRateKes(e.target.value)}
+                                onFocus={(e) => e.target.select()}
                                 className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs font-mono font-bold focus:outline-none focus:border-black"
                                 required
                             />
@@ -279,10 +291,12 @@ export default function LoyaltySettingsClient({
                             <span className="text-xs font-mono text-zinc-400">KES</span>
                             <input
                                 type="number"
-                                step="0.05"
-                                min="0.01"
+                                step="any"
+                                min="0.0001"
+                                placeholder="1.00"
                                 value={pointValueKes}
                                 onChange={(e) => setPointValueKes(e.target.value)}
+                                onFocus={(e) => e.target.select()}
                                 className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs font-mono font-bold focus:outline-none focus:border-black"
                                 required
                             />
@@ -299,8 +313,11 @@ export default function LoyaltySettingsClient({
                         <input
                             type="number"
                             min="1"
+                            step="1"
+                            placeholder="50"
                             value={minRedeemPoints}
-                            onChange={(e) => setMinRedeemPoints(parseInt(e.target.value) || 0)}
+                            onChange={(e) => setMinRedeemPoints(e.target.value)}
+                            onFocus={(e) => e.target.select()}
                             className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs font-mono font-bold focus:outline-none focus:border-black"
                             required
                         />
@@ -316,9 +333,11 @@ export default function LoyaltySettingsClient({
                         <input
                             type="number"
                             min="0"
+                            step="1"
                             placeholder="Leave blank for points that never expire"
                             value={pointsExpiryDays}
                             onChange={(e) => setPointsExpiryDays(e.target.value)}
+                            onFocus={(e) => e.target.select()}
                             className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs font-mono focus:outline-none focus:border-black"
                         />
                     </div>
@@ -451,9 +470,11 @@ export default function LoyaltySettingsClient({
                                 <input
                                     type="number"
                                     min="0"
-                                    step="1000"
+                                    step="any"
+                                    placeholder="0.00"
                                     value={tierMinSpend}
                                     onChange={(e) => setTierMinSpend(e.target.value)}
+                                    onFocus={(e) => e.target.select()}
                                     className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs font-mono font-semibold focus:outline-none focus:border-black"
                                     required
                                 />
@@ -468,9 +489,11 @@ export default function LoyaltySettingsClient({
                                         type="number"
                                         min="0"
                                         max="100"
-                                        step="0.5"
+                                        step="any"
+                                        placeholder="0"
                                         value={tierDiscount}
                                         onChange={(e) => setTierDiscount(e.target.value)}
+                                        onFocus={(e) => e.target.select()}
                                         className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs font-mono font-semibold focus:outline-none focus:border-black"
                                     />
                                 </div>
@@ -481,11 +504,13 @@ export default function LoyaltySettingsClient({
                                     </label>
                                     <input
                                         type="number"
-                                        min="1"
-                                        max="10"
-                                        step="0.1"
+                                        min="0.1"
+                                        max="100"
+                                        step="any"
+                                        placeholder="1.0"
                                         value={tierMultiplier}
                                         onChange={(e) => setTierMultiplier(e.target.value)}
+                                        onFocus={(e) => e.target.select()}
                                         className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs font-mono font-semibold focus:outline-none focus:border-black"
                                     />
                                 </div>

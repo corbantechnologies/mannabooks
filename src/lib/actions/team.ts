@@ -11,11 +11,18 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+export type EnterpriseRole = "ADMIN" | "MANAGER" | "ACCOUNTANT" | "STOREKEEPER" | "CASHIER" | "DISPATCHER" | "SALES_REP" | "EMPLOYEE" | "VIEWER";
+
 export async function inviteTeamMember(
     shopId: string,
     email: string,
-    role: "ADMIN" | "MANAGER" | "ACCOUNTANT" | "EMPLOYEE" | "VIEWER",
-    customPermissions: Record<string, boolean> = {}
+    role: EnterpriseRole,
+    customPermissions: Record<string, boolean> = {},
+    options?: {
+        assignedLocationIds?: string[];
+        hideCostPrices?: boolean;
+        directApprovalLimit?: number;
+    }
 ) {
     try {
         await enforcePermission(shopId, "manage_team");
@@ -47,6 +54,9 @@ export async function inviteTeamMember(
                 userId: targetUser.id,
                 role,
                 customPermissions: JSON.stringify(customPermissions),
+                assignedLocationIds: options?.assignedLocationIds || [],
+                hideCostPrices: options?.hideCostPrices || false,
+                directApprovalLimit: String(options?.directApprovalLimit || 0),
                 isActive: true
             });
 
@@ -90,6 +100,9 @@ export async function inviteTeamMember(
                 email: normalizedEmail,
                 role,
                 customPermissions: JSON.stringify(customPermissions),
+                assignedLocationIds: options?.assignedLocationIds || [],
+                hideCostPrices: options?.hideCostPrices || false,
+                directApprovalLimit: String(options?.directApprovalLimit || 0),
                 token,
                 status: "PENDING",
                 expiresAt
@@ -180,8 +193,13 @@ export async function revokeInvitation(shopId: string, inviteId: string) {
 export async function updateTeamMemberRoleAndPermissions(
     shopId: string,
     memberId: string,
-    role: "ADMIN" | "MANAGER" | "ACCOUNTANT" | "EMPLOYEE" | "VIEWER",
-    customPermissions: Record<string, boolean>
+    role: EnterpriseRole,
+    customPermissions: Record<string, boolean>,
+    options?: {
+        assignedLocationIds?: string[];
+        hideCostPrices?: boolean;
+        directApprovalLimit?: number;
+    }
 ) {
     try {
         await enforcePermission(shopId, "manage_team");
@@ -206,6 +224,9 @@ export async function updateTeamMemberRoleAndPermissions(
             .set({
                 role,
                 customPermissions: JSON.stringify(customPermissions),
+                ...(options?.assignedLocationIds !== undefined ? { assignedLocationIds: options.assignedLocationIds } : {}),
+                ...(options?.hideCostPrices !== undefined ? { hideCostPrices: options.hideCostPrices } : {}),
+                ...(options?.directApprovalLimit !== undefined ? { directApprovalLimit: String(options.directApprovalLimit) } : {}),
             })
             .where(eq(shopMembers.id, memberId));
 

@@ -11,6 +11,10 @@ export type WorkspacePermission =
     | "manage_clients"
     | "canEditClients"
     | "manage_products"
+    | "manage_inventory_ops"
+    | "operate_pos"
+    | "manage_logistics"
+    | "manage_crm"
     | "manage_expenses"
     | "view_analytics"
     | "view_finance"
@@ -19,15 +23,60 @@ export type WorkspacePermission =
     | "canExportReports"
     | "manage_payroll"
     | "manage_team"
-    | "manage_settings";
+    | "manage_settings"
+    | "view_cost_prices"
+    | "approve_requests";
+
+/**
+ * Built-in permission matrices for standard business roles (Option C Presets).
+ */
+const ROLE_PRESET_PERMISSIONS: Record<string, WorkspacePermission[]> = {
+    OWNER: [
+        "manage_documents", "canCreateDocuments", "manage_clients", "canEditClients",
+        "manage_products", "manage_inventory_ops", "operate_pos", "manage_logistics",
+        "manage_crm", "manage_expenses", "view_analytics", "view_finance", "canViewFinance",
+        "export_reports", "canExportReports", "manage_payroll", "manage_team", "manage_settings",
+        "view_cost_prices", "approve_requests"
+    ],
+    ADMIN: [
+        "manage_documents", "canCreateDocuments", "manage_clients", "canEditClients",
+        "manage_products", "manage_inventory_ops", "operate_pos", "manage_logistics",
+        "manage_crm", "manage_expenses", "view_analytics", "view_finance", "canViewFinance",
+        "export_reports", "canExportReports", "manage_payroll", "manage_team", "manage_settings",
+        "view_cost_prices", "approve_requests"
+    ],
+    MANAGER: [
+        "manage_documents", "canCreateDocuments", "manage_clients", "canEditClients",
+        "manage_products", "manage_inventory_ops", "operate_pos", "manage_logistics",
+        "manage_crm", "manage_expenses", "view_analytics", "view_finance", "canViewFinance",
+        "export_reports", "canExportReports", "manage_payroll", "view_cost_prices", "approve_requests"
+    ],
+    ACCOUNTANT: [
+        "manage_documents", "canCreateDocuments", "manage_clients", "canEditClients",
+        "manage_expenses", "view_analytics", "view_finance", "canViewFinance",
+        "export_reports", "canExportReports", "manage_payroll", "view_cost_prices", "approve_requests"
+    ],
+    STOREKEEPER: [
+        "manage_products", "manage_inventory_ops", "manage_logistics", "canCreateDocuments"
+    ],
+    CASHIER: [
+        "operate_pos", "manage_documents", "canCreateDocuments", "manage_clients", "canEditClients"
+    ],
+    DISPATCHER: [
+        "manage_logistics", "manage_documents", "canCreateDocuments"
+    ],
+    SALES_REP: [
+        "manage_crm", "manage_documents", "canCreateDocuments", "manage_clients", "canEditClients"
+    ],
+    VIEWER: [
+        "view_analytics", "view_finance", "canViewFinance"
+    ],
+    EMPLOYEE: []
+};
 
 /**
  * Ensures the currently logged-in user has the right role and/or granular permissions 
  * to perform a specific action within a workspace.
- * 
- * @param shopId The target workspace ID
- * @param requiredPermission The specific action permission required
- * @returns The user's role and ID if authorized, otherwise throws or returns null.
  */
 export async function enforcePermission(shopId: string, requiredPermission: WorkspacePermission) {
     const session = await verifyAndGetSession();
@@ -36,7 +85,7 @@ export async function enforcePermission(shopId: string, requiredPermission: Work
     }
 
     if (session.user.isSuperAdmin) {
-        return { userId: session.user.id, role: "SUPER_ADMIN" };
+        return { userId: session.user.id, role: "SUPER_ADMIN", membership: null };
     }
 
     const membership = await db.query.shopMembers.findFirst({
@@ -55,58 +104,86 @@ export async function enforcePermission(shopId: string, requiredPermission: Work
 
     // 1. OWNER and ADMIN have full access to everything
     if (role === "OWNER" || role === "ADMIN") {
-        return { userId: session.userId, role };
+        return { userId: session.userId, role, membership };
     }
 
-    // 2. MANAGER has full access EXCEPT managing the team / critical settings
-    if (role === "MANAGER") {
-        if (requiredPermission === "manage_team" || requiredPermission === "manage_settings") {
-            throw new Error("Access Denied. Only Owners or Admins can manage team settings.");
+    // 2. Check Role Presets
+    const allowedInPreset = ROLE_PRESET_PERMISSIONS[role] || [];
+    if (allowedInPreset.includes(requiredPermission)) {
+        return { userId: session.userId, role, membership };
+    }
+
+    // 3. Check Granular Custom Permissions Overrides
+    try {
+        const permissionsMap: Record<string, boolean> = JSON.parse(membership.customPermissions || "{}");
+        if (permissionsMap[requiredPermission] === true) {
+            return { userId: session.userId, role, membership };
         }
-        return { userId: session.userId, role };
+    } catch (e) {
+        console.error("Failed to parse custom permissions:", e);
     }
 
-    // 3. ACCOUNTANT has access to financial and analytical data
-    if (role === "ACCOUNTANT") {
-        const accountantAllowed: WorkspacePermission[] = [
-            "view_analytics", "view_finance", "canViewFinance", "manage_documents", "canCreateDocuments", "manage_expenses", "manage_payroll", "export_reports", "canExportReports", "manage_clients", "canEditClients"
-        ];
-        if (!accountantAllowed.includes(requiredPermission)) {
-            throw new Error("Access Denied. Accountants cannot perform this action.");
-        }
-        return { userId: session.userId, role };
+    throw new Error(`Access Denied. Your role (${role}) lacks permission for this action.`);
+}
+
+/**
+ * Enforces location/branch scoping.
+ * If user is restricted to specific locations, ensures target locationId is allowed.
+ */
+export async function enforceLocationAccess(shopId: string, targetLocationId: string) {
+    const session = await verifyAndGetSession();
+    if (!session) throw new Error("Unauthorized.");
+    if (session.user.isSuperAdmin) return true;
+
+    const membership = await db.query.shopMembers.findFirst({
+        where: and(
+            eq(shopMembers.shopId, shopId),
+            eq(shopMembers.userId, session.userId),
+            eq(shopMembers.isActive, true)
+        )
+    });
+
+    if (!membership) throw new Error("Access Denied: Not a member of this workspace.");
+
+    // Owners, Admins, and Managers have universal multi-branch access
+    if (membership.role === "OWNER" || membership.role === "ADMIN" || membership.role === "MANAGER") {
+        return true;
     }
 
-    // 4. VIEWER is strictly read-only for EVERYTHING.
-    if (role === "VIEWER") {
-        if (requiredPermission === "view_analytics" || requiredPermission === "view_finance" || requiredPermission === "canViewFinance") {
-            return { userId: session.userId, role }; // Viewers can see analytics
-        }
-        throw new Error("Access Denied. Viewers are restricted to read-only mode.");
+    const assigned = (membership.assignedLocationIds as string[]) || [];
+    // If no specific branch restriction is set, user has workspace-wide operational access
+    if (assigned.length === 0) {
+        return true;
     }
 
-    // 5. EMPLOYEE relies on dynamic customPermissions
-    if (role === "EMPLOYEE") {
-        try {
-            const permissionsMap: Record<string, boolean> = JSON.parse(membership.customPermissions || "{}");
-            
-            const isAllowed = 
-                permissionsMap[requiredPermission] === true ||
-                ((requiredPermission === "manage_documents" || requiredPermission === "canCreateDocuments") && (permissionsMap["manage_documents"] === true || permissionsMap["canCreateDocuments"] === true)) ||
-                ((requiredPermission === "manage_clients" || requiredPermission === "canEditClients") && (permissionsMap["manage_clients"] === true || permissionsMap["canEditClients"] === true)) ||
-                ((requiredPermission === "view_finance" || requiredPermission === "canViewFinance" || requiredPermission === "view_analytics" || requiredPermission === "manage_expenses") && (permissionsMap["canViewFinance"] === true || permissionsMap["view_finance"] === true || permissionsMap["view_analytics"] === true || permissionsMap["manage_expenses"] === true)) ||
-                ((requiredPermission === "export_reports" || requiredPermission === "canExportReports") && (permissionsMap["export_reports"] === true || permissionsMap["canExportReports"] === true)) ||
-                (requiredPermission === "manage_products" && permissionsMap["manage_products"] === true) ||
-                (requiredPermission === "manage_payroll" && permissionsMap["manage_payroll"] === true);
-
-            if (isAllowed) {
-                return { userId: session.userId, role };
-            }
-        } catch (e) {
-            console.error("Failed to parse employee permissions:", e);
-        }
-        throw new Error(`Access Denied. Your employee account lacks the required permission.`);
+    if (!assigned.includes(targetLocationId)) {
+        throw new Error("Access Denied: You are not authorized to perform operations in this warehouse location.");
     }
 
-    throw new Error("Access Denied. Unknown role mapping.");
+    return true;
+}
+
+/**
+ * Returns whether the current user is allowed to view purchase/cost prices
+ * or whether cost prices should be blinded (e.g. for Storekeepers and Cashiers).
+ */
+export async function canViewCostPrices(shopId: string): Promise<boolean> {
+    const session = await verifyAndGetSession();
+    if (!session) return false;
+    if (session.user.isSuperAdmin) return true;
+
+    const membership = await db.query.shopMembers.findFirst({
+        where: and(
+            eq(shopMembers.shopId, shopId),
+            eq(shopMembers.userId, session.userId),
+            eq(shopMembers.isActive, true)
+        )
+    });
+
+    if (!membership) return false;
+    if (membership.role === "OWNER" || membership.role === "ADMIN" || membership.role === "MANAGER" || membership.role === "ACCOUNTANT") {
+        return !membership.hideCostPrices;
+    }
+
+    return !membership.hideCostPrices;
 }

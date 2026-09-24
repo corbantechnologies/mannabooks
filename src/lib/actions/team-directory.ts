@@ -118,20 +118,30 @@ export async function getOrganizationStaffRoster() {
     }
 }
 
+export type EnterpriseRole = "ADMIN" | "MANAGER" | "ACCOUNTANT" | "STOREKEEPER" | "CASHIER" | "DISPATCHER" | "SALES_REP" | "EMPLOYEE" | "VIEWER";
+
 /**
  * Fast action to invite or assign a staff member to a specific workspace directly from the directory.
  */
 export async function quickInviteStaffAction(params: {
     shopId: string;
     email: string;
-    role: "ADMIN" | "MANAGER" | "ACCOUNTANT" | "EMPLOYEE" | "VIEWER";
+    role: EnterpriseRole;
     customPermissions?: Record<string, boolean>;
+    assignedLocationIds?: string[];
+    hideCostPrices?: boolean;
+    directApprovalLimit?: number;
 }) {
     const res = await inviteTeamMember(
         params.shopId,
         params.email,
         params.role,
-        params.customPermissions || {}
+        params.customPermissions || {},
+        {
+            assignedLocationIds: params.assignedLocationIds,
+            hideCostPrices: params.hideCostPrices,
+            directApprovalLimit: params.directApprovalLimit,
+        }
     );
     revalidatePath("/workspaces");
     return res;

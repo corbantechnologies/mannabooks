@@ -46,7 +46,9 @@ export function WorkspaceDirectoryClient({
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteShopId, setInviteShopId] = useState(ownedShops[0]?.id || "");
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"ADMIN" | "MANAGER" | "ACCOUNTANT" | "EMPLOYEE" | "VIEWER">("MANAGER");
+  const [inviteRole, setInviteRole] = useState<"ADMIN" | "MANAGER" | "ACCOUNTANT" | "STOREKEEPER" | "CASHIER" | "DISPATCHER" | "SALES_REP" | "EMPLOYEE" | "VIEWER">("STOREKEEPER");
+  const [hideCostPrices, setHideCostPrices] = useState(true);
+  const [directApprovalLimit, setDirectApprovalLimit] = useState("0");
 
   const handleQuickInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +62,8 @@ export function WorkspaceDirectoryClient({
         shopId: inviteShopId,
         email: inviteEmail.trim(),
         role: inviteRole,
+        hideCostPrices,
+        directApprovalLimit: Number(directApprovalLimit) || 0,
       });
 
       if (res.success) {
@@ -356,15 +360,58 @@ export function WorkspaceDirectoryClient({
                 </label>
                 <select
                   value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as any)}
+                  onChange={(e) => {
+                    const role = e.target.value as any;
+                    setInviteRole(role);
+                    if (role === "STOREKEEPER" || role === "CASHIER") {
+                      setHideCostPrices(true);
+                    } else if (role === "ACCOUNTANT" || role === "MANAGER" || role === "ADMIN") {
+                      setHideCostPrices(false);
+                    }
+                  }}
                   className="w-full border border-zinc-300 rounded p-2 text-xs font-sans bg-white focus:outline-black"
                 >
-                  <option value="MANAGER">MANAGER — Full operational control (Sales, POS, Stock, Accounting)</option>
-                  <option value="ADMIN">ADMIN — Full branch admin (can also manage team)</option>
-                  <option value="ACCOUNTANT">ACCOUNTANT — Financial ledgers, bills, tax, payroll, reports</option>
-                  <option value="EMPLOYEE">EMPLOYEE — Standard operational clerk</option>
+                  <option value="STOREKEEPER">STOREKEEPER — WMS, shelf bins, counts, GRN receiving &amp; BOM assemblies</option>
+                  <option value="CASHIER">CASHIER — Retail POS counter, daily registers &amp; receipts</option>
+                  <option value="DISPATCHER">DISPATCHER — Delivery notes, vehicles &amp; inter-branch transfers</option>
+                  <option value="SALES_REP">SALES REP — CRM pipeline, quotes &amp; interactive proposals</option>
+                  <option value="ACCOUNTANT">ACCOUNTANT — Financial ledgers, bills, tax, payroll &amp; P&amp;L</option>
+                  <option value="MANAGER">MANAGER — Full operational control across all modules</option>
+                  <option value="ADMIN">ADMIN — Full branch admin (can manage team &amp; settings)</option>
+                  <option value="EMPLOYEE">EMPLOYEE — General staff clerk</option>
                   <option value="VIEWER">VIEWER — Read-only observation</option>
                 </select>
+              </div>
+
+              {/* Cost Price Privacy & Approval Limit */}
+              <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-lg space-y-3">
+                <div className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    id="hideCostPrices"
+                    checked={hideCostPrices}
+                    onChange={(e) => setHideCostPrices(e.target.checked)}
+                    className="mt-0.5 rounded border-zinc-300 text-black focus:ring-black"
+                  />
+                  <label htmlFor="hideCostPrices" className="text-xs text-zinc-700">
+                    <strong className="block text-zinc-900 font-semibold">Cost-Price Blindness (Commercial Privacy)</strong>
+                    Hide unit purchase costs and vendor margin values from this staff member across inventory and audits.
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono uppercase text-zinc-500 mb-1">
+                    Direct Adjustment Cap (KES) [0 = All requires Manager Approval]
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="100"
+                    value={directApprovalLimit}
+                    onChange={(e) => setDirectApprovalLimit(e.target.value)}
+                    className="w-full border border-zinc-200 rounded p-1.5 text-xs font-mono bg-white"
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-3 border-t border-zinc-100">

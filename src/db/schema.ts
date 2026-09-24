@@ -20,7 +20,18 @@ export const docTypeEnum = pgEnum('doc_type', [
 // docStatusEnum is defined below after GL enums
 export const taxTypeEnum = pgEnum('tax_type', ['V_16', 'V_0', 'EXEMPT']); // 16% VAT, 0% VAT, Tax Exempt
 export const clientTypeEnum = pgEnum('client_type', ['WALK_IN', 'INDIVIDUAL', 'CORPORATE']);
-export const userRoleEnum = pgEnum('user_role', ['OWNER', 'ADMIN', 'MANAGER', 'ACCOUNTANT', 'EMPLOYEE', 'VIEWER']);
+export const userRoleEnum = pgEnum('user_role', [
+    'OWNER',
+    'ADMIN',
+    'MANAGER',
+    'ACCOUNTANT',
+    'STOREKEEPER',
+    'CASHIER',
+    'DISPATCHER',
+    'SALES_REP',
+    'EMPLOYEE',
+    'VIEWER'
+]);
 export const recurringIntervalEnum = pgEnum('recurring_interval', ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']);
 export const expenseCategoryEnum = pgEnum('expense_category', ['RENT', 'UTILITIES', 'FUEL', 'MARKETING', 'SALARIES', 'OFFICE_SUPPLIES', 'OTHER']);
 export const invitationStatusEnum = pgEnum('invitation_status', ['PENDING', 'ACCEPTED', 'REVOKED']);
@@ -151,6 +162,9 @@ export const shopMembers = pgTable('shop_members', {
     userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
     role: userRoleEnum('role').default('OWNER').notNull(),
     customPermissions: text('custom_permissions').default('{}').notNull(), // JSON string for granular employee permissions
+    assignedLocationIds: jsonb('assigned_location_ids').$type<string[]>().default([]).notNull(), // Scoped warehouse branches
+    hideCostPrices: boolean('hide_cost_prices').default(false).notNull(), // Commercial privacy flag
+    directApprovalLimit: numeric('direct_approval_limit', { precision: 12, scale: 2 }).default('0.00').notNull(), // Direct adjustment cap (KES)
     isActive: boolean('is_active').default(true).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
@@ -447,6 +461,9 @@ export const shopInvitations = pgTable('shop_invitations', {
     email: text('email').notNull(),
     role: userRoleEnum('role').default('EMPLOYEE').notNull(),
     customPermissions: text('custom_permissions').default('{}').notNull(),
+    assignedLocationIds: jsonb('assigned_location_ids').$type<string[]>().default([]).notNull(),
+    hideCostPrices: boolean('hide_cost_prices').default(false).notNull(),
+    directApprovalLimit: numeric('direct_approval_limit', { precision: 12, scale: 2 }).default('0.00').notNull(),
     token: varchar('token', { length: 64 }).notNull().unique(),
     status: invitationStatusEnum('status').default('PENDING').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),

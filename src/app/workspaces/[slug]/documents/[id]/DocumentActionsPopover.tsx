@@ -287,22 +287,14 @@ export function DocumentActionsPopover({
             </button>
           )}
 
-          {/* DELIVERY NOTE CONVERSIONS */}
+          {/* DELIVERY NOTE CONVERSIONS — Issue Receipt only */}
           {docType === "DELIVERY_NOTE" && (
-            <>
-              <button
-                onClick={() => handleConvert("INVOICE")}
-                className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
-              >
-                ➔ Issue Invoice
-              </button>
-              <button
-                onClick={() => handleConvert("RECEIPT")}
-                className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"
-              >
-                ➔ Issue Official Receipt
-              </button>
-            </>
+            <button
+              onClick={() => handleConvert("RECEIPT")}
+              className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
+            >
+              <span>🧾</span> Issue Official Receipt
+            </button>
           )}
 
           {/* GENERIC FALLBACK CONVERSIONS */}

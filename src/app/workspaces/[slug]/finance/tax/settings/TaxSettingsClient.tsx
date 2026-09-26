@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { updateTaxSettings } from "@/lib/actions/tax";
 import { declareFiscalYear, closeFiscalYear, deleteFiscalYear } from "@/lib/actions/fiscal-years";
 import { toast } from "react-hot-toast";
@@ -335,7 +336,13 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
                                         <div key={fy.id} className="border border-zinc-200 rounded-xl p-4 space-y-3 hover:bg-zinc-50/50 transition-colors">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <h4 className="font-semibold text-sm text-black">{fy.label}</h4>
+                                                    <Link
+                                                        href={`/workspaces/${shopSlug}/finance/fiscal-years/${fy.id}`}
+                                                        className="font-semibold text-sm text-black hover:underline inline-flex items-center gap-1 group"
+                                                    >
+                                                        {fy.label}
+                                                        <span className="text-zinc-400 group-hover:text-black transition-colors font-normal">➔</span>
+                                                    </Link>
                                                     <p className="text-[11px] text-zinc-500 font-mono mt-0.5">
                                                         {new Date(fy.startDate).toLocaleDateString("en-KE", { day: "2-digit", month: "short", year: "numeric" })}
                                                         {" – "}
@@ -351,25 +358,34 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
                                                 </span>
                                             </div>
 
-                                            {!fy.isClosed && (
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => handleCloseFiscalYear(fy.id, fy.label)}
-                                                        disabled={isPending}
-                                                        className="flex-1 bg-zinc-100 border border-zinc-200 text-zinc-600 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 py-1.5 rounded text-xs font-mono uppercase font-bold transition-all disabled:opacity-40"
-                                                    >
-                                                        Close Fiscal Year
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteFiscalYear(fy.id, fy.label)}
-                                                        disabled={isPending}
-                                                        className="bg-zinc-100 border border-zinc-200 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 px-3 py-1.5 rounded text-xs font-mono uppercase font-bold transition-all disabled:opacity-40"
-                                                        title="Delete Fiscal Year"
-                                                    >
-                                                        🗑️
-                                                    </button>
-                                                </div>
-                                            )}
+                                            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-zinc-100">
+                                                <Link
+                                                    href={`/workspaces/${shopSlug}/finance/fiscal-years/${fy.id}`}
+                                                    className="flex-1 bg-black text-white hover:bg-zinc-800 text-center py-1.5 rounded text-xs font-mono uppercase font-bold transition-all"
+                                                >
+                                                    View Year & Monthly Ledger ➔
+                                                </Link>
+
+                                                {!fy.isClosed && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleCloseFiscalYear(fy.id, fy.label)}
+                                                            disabled={isPending}
+                                                            className="bg-zinc-100 border border-zinc-200 text-zinc-600 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 px-3 py-1.5 rounded text-xs font-mono uppercase font-bold transition-all disabled:opacity-40"
+                                                        >
+                                                            Close Year
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteFiscalYear(fy.id, fy.label)}
+                                                            disabled={isPending}
+                                                            className="bg-zinc-100 border border-zinc-200 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 px-2.5 py-1.5 rounded text-xs font-mono uppercase font-bold transition-all disabled:opacity-40"
+                                                            title="Delete Fiscal Year"
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

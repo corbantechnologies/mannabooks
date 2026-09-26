@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { closePeriod, reopenPeriod, getPeriodDetails } from "@/lib/actions/gl";
 import { Spinner } from "@/components/Spinner";
 
@@ -12,6 +13,7 @@ interface Period {
     status: "OPEN" | "CLOSED";
     closedAt: string | null;
     closedByName: string | null;
+    fiscalYearId?: string | null;
     fiscalYearLabel: string;
 }
 
@@ -160,9 +162,23 @@ export default function AccountingPeriodsClient({ shopId, shopSlug, isGlEnabled,
             )}
 
             {/* Periods Grouped Tables */}
-            {Object.entries(groupedPeriods).map(([fyLabel, fyPeriods]) => (
-                <div key={fyLabel} className="space-y-3">
-                    <h3 className="font-mono text-xs uppercase font-bold text-zinc-500 tracking-wider pl-1">{fyLabel}</h3>
+            {Object.entries(groupedPeriods).map(([fyLabel, fyPeriods]) => {
+                const fyId = fyPeriods.find(p => p.fiscalYearId)?.fiscalYearId;
+                return (
+                    <div key={fyLabel} className="space-y-3">
+                        <div className="flex items-center justify-between pl-1">
+                            <h3 className="font-mono text-xs uppercase font-bold text-zinc-500 tracking-wider">
+                                {fyLabel}
+                            </h3>
+                            {fyId && (
+                                <Link
+                                    href={`/workspaces/${shopSlug}/finance/fiscal-years/${fyId}`}
+                                    className="text-xs font-mono font-bold text-zinc-700 hover:text-black hover:underline inline-flex items-center gap-1"
+                                >
+                                    View Full FY Overview & 12-Month Ledger ➔
+                                </Link>
+                            )}
+                        </div>
                     
                     <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white shadow-sm">
                         <div className="overflow-x-auto">
@@ -224,7 +240,8 @@ export default function AccountingPeriodsClient({ shopId, shopSlug, isGlEnabled,
                         </div>
                     </div>
                 </div>
-            ))}
+            );
+        })}
 
             {/* PERIOD DETAILS INSPECTION MODAL */}
             {inspectPeriodId && (

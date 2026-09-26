@@ -62,14 +62,14 @@ export default function FeaturesPage() {
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Platform Capabilities &amp; Technical Specifications
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-none uppercase max-w-5xl text-black">
-            Complete platform<br />
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-[1.08] uppercase max-w-5xl text-black break-words">
+            Complete platform<br className="hidden sm:inline" />{" "}
             <span className="gradient-text-emerald">feature specifications.</span>
           </h1>
           <p className="text-base md:text-lg text-zinc-600 max-w-3xl font-normal leading-relaxed">
             Manna Books is an end-to-end financial operations, double-entry accounting &amp; statutory compliance platform engineered for Kenyan and African SMEs. Explore every module, compliance engine, reconciliation tool, and architectural pillar built into the platform.
           </p>
-          <div className="pt-2 flex flex-wrap gap-2.5 font-mono text-xs">
+          <div className="pt-2 flex flex-wrap gap-2 sm:gap-2.5 font-mono text-xs">
             {[
               { href: "#crm-pipeline", label: "CRM Deals Pipeline" },
               { href: "#proposals", label: "Interactive Proposals" },
@@ -105,7 +105,7 @@ export default function FeaturesPage() {
               { href: "#fiscal-periods", label: "Fiscal Periods & Exports" },
               { href: "#business-modes", label: "3 Workspace Modes" },
             ].map((link) => (
-              <a key={link.href} href={link.href} className="btn-secondary-emerald px-3 py-1.5 text-xs font-semibold uppercase">
+              <a key={link.href} href={link.href} className="btn-secondary-emerald px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold uppercase whitespace-nowrap shrink-0">
                 {link.label}
               </a>
             ))}
@@ -121,16 +121,16 @@ export default function FeaturesPage() {
                 Want to see these modules solving real-world Kenyan supply chain and manufacturing puzzles with real KES numbers?
               </p>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full sm:w-auto">
               <Link
                 href="/use-cases"
-                className="btn-primary-emerald px-5 py-2.5 text-xs font-mono font-bold uppercase tracking-wider"
+                className="btn-primary-emerald px-5 py-2.5 text-xs font-mono font-bold uppercase tracking-wider text-center"
               >
                 Use Cases Portal →
               </Link>
               <Link
                 href="/industries"
-                className="btn-secondary-emerald px-5 py-2.5 text-xs font-mono font-semibold uppercase tracking-wider"
+                className="btn-secondary-emerald px-5 py-2.5 text-xs font-mono font-semibold uppercase tracking-wider text-center"
               >
                 Industry Blueprints
               </Link>

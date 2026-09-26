@@ -61,36 +61,36 @@ export default function LandingPage() {
           />
 
           <div className="lg:col-span-7 space-y-7 relative z-10">
-            <div className="inline-flex items-center gap-2 border border-emerald-200 px-3.5 py-1.5 text-[11px] font-mono uppercase tracking-widest bg-emerald-50 rounded-full font-semibold text-[#064e3b]">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
-              Edition 2026.9 — Enterprise Production, WMS Bins, Cost Centers, eTIMS &amp; Statutory Compliance
+            <div className="inline-flex items-center gap-2 border border-emerald-200 px-3.5 py-1.5 text-[11px] font-mono uppercase tracking-widest bg-emerald-50 rounded-full font-semibold text-[#064e3b] max-w-full">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" aria-hidden="true" />
+              <span className="truncate">Edition 2026.9 — Enterprise Production, WMS Bins, Cost Centers &amp; eTIMS</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-[1.02] uppercase text-black">
-              Financial velocity, plant operations &amp; compliance<br className="hidden sm:block" />
-              <span className="gradient-text-emerald"> for Kenyan enterprises.</span>
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-[1.05] uppercase text-black break-words">
+              Financial velocity, plant operations &amp; compliance<br className="hidden sm:block" />{" "}
+              <span className="gradient-text-emerald">for Kenyan enterprises.</span>
             </h1>
 
             <p className="text-base md:text-lg text-zinc-600 max-w-xl font-normal leading-relaxed">
               A complete financial operating system for Kenyan businesses — from multi-tier manufacturing plants and holding conglomerates to retail chains and tech resellers. Multi-stage Bill of Materials (BOM), sub-location bin WMS, departmental cost centers, KRA eTIMS compliance, visual CRM pipeline, and double-entry general ledgers — all in one unified workspace.
             </p>
 
-            <div className="pt-1 flex flex-wrap gap-3 font-mono text-xs">
+            <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 font-mono text-xs w-full sm:w-auto">
               <Link
                 href="/signup"
-                className="btn-primary-emerald text-center px-7 py-3 text-xs font-bold uppercase tracking-wider"
+                className="btn-primary-emerald text-center px-6 py-3 text-xs font-bold uppercase tracking-wider"
               >
                 Initialize Your Workspace →
               </Link>
               <Link
                 href="/use-cases"
-                className="btn-secondary-emerald text-center px-7 py-3 text-xs font-semibold uppercase tracking-wider"
+                className="btn-secondary-emerald text-center px-6 py-3 text-xs font-semibold uppercase tracking-wider"
               >
                 Live Use Cases (KES) →
               </Link>
               <Link
                 href="/features"
-                className="border border-zinc-300 hover:border-black bg-zinc-50 hover:bg-white text-zinc-800 text-center px-6 py-3 text-xs font-semibold uppercase tracking-wider rounded-md transition-colors"
+                className="border border-zinc-300 hover:border-black bg-zinc-50 hover:bg-white text-zinc-800 text-center px-5 py-3 text-xs font-semibold uppercase tracking-wider rounded-md transition-colors"
               >
                 Explore Features
               </Link>

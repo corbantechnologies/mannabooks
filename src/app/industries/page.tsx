@@ -149,8 +149,8 @@ export default function IndustriesPage() {
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               Target Markets &amp; Customer Solutions
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-none uppercase max-w-5xl">
-              Built for businesses<br />
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-[1.08] uppercase max-w-5xl break-words">
+              Built for businesses<br className="hidden sm:inline" />{" "}
               <span className="text-zinc-400">demanding statutory compliance.</span>
             </h1>
             <p className="text-base md:text-lg text-zinc-600 max-w-3xl font-normal leading-relaxed">
@@ -271,14 +271,14 @@ export default function IndustriesPage() {
         </section>
 
         {/* INDUSTRIES SECTION */}
-        <section className="max-w-7xl mx-auto w-full px-6 py-16 space-y-12">
+        <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-12 md:py-16 space-y-10 sm:space-y-12">
           {/* USE CASES PROMO BANNER */}
-          <div className="border border-emerald-300 bg-emerald-50/70 p-6 sm:p-8 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xs">
+          <div className="border border-emerald-300 bg-emerald-50/70 p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-5 sm:gap-6 shadow-xs">
             <div className="space-y-1.5 max-w-2xl">
               <div className="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
                 <span>⚡ Real-World Operational Breakdown</span>
               </div>
-              <h3 className="text-lg sm:text-xl font-bold uppercase text-emerald-950 font-sans tracking-tight">
+              <h3 className="text-base sm:text-xl font-bold uppercase text-emerald-950 font-sans tracking-tight break-words">
                 Explore 8 Detailed Field Use Cases &amp; Sample General Ledgers
               </h3>
               <p className="text-xs text-emerald-900/80 font-sans leading-relaxed">
@@ -293,20 +293,20 @@ export default function IndustriesPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
             {industries.map((ind) => (
               <div
                 key={ind.title}
-                className={`border rounded-2xl p-8 space-y-6 transition-all flex flex-col justify-between ${
+                className={`border rounded-2xl sm:rounded-3xl p-5 sm:p-6 md:p-8 space-y-5 sm:space-y-6 transition-all flex flex-col justify-between ${
                   ind.highlight
                     ? "border-black bg-zinc-950 text-white shadow-xl"
                     : "border-zinc-200 bg-white hover:border-zinc-400 hover:shadow-md"
                 }`}
               >
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-3xl">{ind.icon}</span>
-                    <span className={`font-mono text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded ${
+                <div className="space-y-5 sm:space-y-6">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-3xl shrink-0">{ind.icon}</span>
+                    <span className={`font-mono text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded shrink-0 whitespace-nowrap ${
                       ind.highlight ? "bg-white/10 text-emerald-400" : "bg-zinc-100 text-zinc-500"
                     }`}>
                       {ind.tag}
@@ -314,7 +314,7 @@ export default function IndustriesPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <h2 className="text-xl font-bold font-sans uppercase tracking-tight">{ind.title}</h2>
+                    <h2 className="text-lg sm:text-xl font-bold font-sans uppercase tracking-tight break-words">{ind.title}</h2>
                     <p className={`text-xs leading-relaxed font-sans ${ind.highlight ? "text-zinc-400" : "text-zinc-600"}`}>
                       {ind.description}
                     </p>

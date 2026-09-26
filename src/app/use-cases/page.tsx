@@ -56,25 +56,25 @@ export default function UseCasesPage() {
               <span>Operational Blueprint Hub</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight uppercase leading-none text-zinc-950">
-              Real-World Scenarios.<br />
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight uppercase leading-[1.08] text-zinc-950 break-words">
+              Real-World Scenarios.<br className="hidden sm:inline" />{" "}
               <span className="text-zinc-400">Zero Theoretical Fluff.</span>
             </h1>
 
             <p className="text-sm sm:text-base text-zinc-600 leading-relaxed max-w-2xl mx-auto font-normal">
-              Explore step-by-step supply chain sequences, KRA eTIMS invoice generation, and double-entry General Ledger postings for 8 real East African business models.
+              Explore step-by-step supply chain sequences, KRA eTIMS invoice generation, and double-entry General Ledger postings for 9 real East African business models.
             </p>
 
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-6 text-xs font-mono text-zinc-500">
-              <span className="flex items-center gap-1.5">
-                <strong className="text-black">8</strong> Enterprise Blueprints
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 text-xs font-mono text-zinc-500">
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <strong className="text-black">9</strong> Enterprise Blueprints
               </span>
-              <span>&bull;</span>
-              <span className="flex items-center gap-1.5">
+              <span className="hidden sm:inline">&bull;</span>
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <strong className="text-black">100%</strong> KRA eTIMS Compliant
               </span>
-              <span>&bull;</span>
-              <span className="flex items-center gap-1.5">
+              <span className="hidden sm:inline">&bull;</span>
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <strong className="text-black">KES</strong> Local Currency Accounting
               </span>
             </div>
@@ -82,17 +82,17 @@ export default function UseCasesPage() {
         </section>
 
         {/* ── INTERACTIVE USE CASES EXPLORER ── */}
-        <section className="px-5 sm:px-6 py-16 max-w-7xl mx-auto w-full border-b border-zinc-100">
+        <section className="px-4 sm:px-6 py-12 md:py-16 max-w-7xl mx-auto w-full border-b border-zinc-100">
           <UseCasesClient />
         </section>
 
         {/* ── BOTTOM CTA ── */}
-        <section className="px-5 sm:px-6 py-20 max-w-5xl mx-auto w-full text-center space-y-6">
+        <section className="px-5 sm:px-6 py-16 md:py-20 max-w-5xl mx-auto w-full text-center space-y-6">
           <div className="inline-flex items-center gap-2 border border-zinc-300 px-3 py-1 text-[11px] font-mono uppercase tracking-widest bg-zinc-50 rounded-full font-bold text-zinc-700">
             <span>● Deploy in Minutes</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold uppercase tracking-tight text-black max-w-3xl mx-auto">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold uppercase tracking-tight text-black max-w-3xl mx-auto break-words leading-tight">
             Ready to implement one of these workflows in your business?
           </h2>
 

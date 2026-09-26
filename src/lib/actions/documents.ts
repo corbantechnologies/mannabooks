@@ -161,9 +161,12 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                     columns: { docNumber: true },
                 });
                 if (parentDoc?.docNumber) {
-                    const parts = parentDoc.docNumber.split("-");
-                    const candidateSuffix = parts[parts.length - 1];
-                    if (candidateSuffix && candidateSuffix.length === 6) {
+                    const match = parentDoc.docNumber.match(/([2-9A-HJ-NP-Z]{6})(?:-\d+)?$/i) ||
+                                  parentDoc.docNumber.match(/([A-Z0-9]{6})(?:-\d+)?$/i);
+                    const candidateSuffix = match ? match[1].toUpperCase() : null;
+
+                    if (candidateSuffix) {
+                        // 1. Try direct inheritance (1:1 conversion): e.g. GEARH-INV-FY26-7K4M2X
                         const candidateSerial = `${merchantPrefix}-${typeCode}-${fySuffix}-${candidateSuffix}`;
                         const existingCandidate = await tx.query.documents.findFirst({
                             where: and(
@@ -176,6 +179,23 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                         if (!existingCandidate) {
                             formattedSerial = candidateSerial;
                             isUnique = true;
+                        } else {
+                            // 2. 1-to-Many smart branch numbering: e.g. GEARH-RCT-FY26-7K4M2X-2, -3, etc.
+                            for (let branch = 2; branch <= 9 && !isUnique; branch++) {
+                                const branchSerial = `${merchantPrefix}-${typeCode}-${fySuffix}-${candidateSuffix}-${branch}`;
+                                const existingBranch = await tx.query.documents.findFirst({
+                                    where: and(
+                                        eq(documents.shopId, input.shopId),
+                                        eq(documents.docNumber, branchSerial),
+                                        eq(documents.type, input.type)
+                                    ),
+                                    columns: { id: true },
+                                });
+                                if (!existingBranch) {
+                                    formattedSerial = branchSerial;
+                                    isUnique = true;
+                                }
+                            }
                         }
                     }
                 }

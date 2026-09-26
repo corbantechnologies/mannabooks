@@ -38,6 +38,7 @@ interface DocumentStatusPanelProps {
   initialPaymentChannel?: string | null;
   initialPaymentReference?: string | null;
   parentDocument?: { id: string; docNumber: string; type: string } | null;
+  childDocuments?: Array<{ id: string; docNumber: string; type: string; status: string }> | null;
   shopName?: string;
   shopShortName?: string | null;
   shopPhone?: string | null;
@@ -119,6 +120,7 @@ export function DocumentStatusPanel({
   initialPaymentChannel = "",
   initialPaymentReference = "",
   parentDocument,
+  childDocuments,
   shopName,
   shopShortName,
   shopPhone,
@@ -308,11 +310,25 @@ export function DocumentStatusPanel({
               Derived from:{" "}
               <Link
                 href={`/workspaces/${shopSlug}/documents/${parentDocument.id}`}
-                className="font-semibold text-black underline hover:no-underline"
+                className="font-semibold text-black underline hover:no-underline font-mono"
               >
                 {parentDocument.docNumber} ({parentDocument.type})
               </Link>
             </p>
+          )}
+          {childDocuments && childDocuments.length > 0 && (
+            <div className="text-[10px] text-zinc-500 mt-1 flex flex-wrap items-center gap-1.5">
+              <span>Progressed to:</span>
+              {childDocuments.map((child) => (
+                <Link
+                  key={child.id}
+                  href={`/workspaces/${shopSlug}/documents/${child.id}`}
+                  className="font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded underline hover:no-underline font-mono"
+                >
+                  {child.docNumber} ({child.type}) ➔
+                </Link>
+              ))}
+            </div>
           )}
         </div>
 

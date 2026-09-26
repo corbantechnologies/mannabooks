@@ -77,12 +77,14 @@ export function DocumentsTableClient({
     return set;
   }, [documents]);
 
-  // Map each parent doc ID to its child document (for forward conversion references)
+  // Map each parent doc ID to its child documents (for forward conversion references)
   const childMap = useMemo(() => {
-    const map = new Map<string, StreamDocument>();
+    const map = new Map<string, StreamDocument[]>();
     for (const d of documents) {
       if (d.parentDocumentId) {
-        map.set(d.parentDocumentId, d);
+        const list = map.get(d.parentDocumentId) || [];
+        list.push(d);
+        map.set(d.parentDocumentId, list);
       }
     }
     return map;
@@ -508,7 +510,7 @@ export function DocumentsTableClient({
               const ancestors = getDocAncestors(doc);
               const hasAncestors = ancestors.length > 0;
               const isExpanded = expandedChains.has(doc.id);
-              const childDoc = childMap.get(doc.id);
+              const childDocs = childMap.get(doc.id) || [];
 
               return (
                 <React.Fragment key={doc.id}>
@@ -581,15 +583,18 @@ export function DocumentsTableClient({
                         )}
 
                         {/* Flat View Forward Conversion Hint */}
-                        {childDoc && (
-                          <div className="flex items-center gap-1.5 text-[10px] text-emerald-700 font-sans">
+                        {childDocs.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-emerald-700 font-sans">
                             <span>↳ Progressed to:</span>
-                            <Link
-                              href={`/workspaces/${slug}/documents/${childDoc.id}`}
-                              className="font-mono font-semibold underline hover:text-emerald-950 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200"
-                            >
-                              {childDoc.docNumber} ({childDoc.type})
-                            </Link>
+                            {childDocs.map((cd) => (
+                              <Link
+                                key={cd.id}
+                                href={`/workspaces/${slug}/documents/${cd.id}`}
+                                className="font-mono font-semibold underline hover:text-emerald-950 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200"
+                              >
+                                {cd.docNumber} ({cd.type})
+                              </Link>
+                            ))}
                           </div>
                         )}
                       </div>

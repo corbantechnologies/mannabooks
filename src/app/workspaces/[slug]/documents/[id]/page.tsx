@@ -61,6 +61,13 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
     });
   }
 
+  // Fetch downstream child documents created from this document
+  const childDocs = await db.query.documents.findMany({
+    where: and(eq(documents.parentDocumentId, doc.id), eq(documents.shopId, shop.id)),
+    columns: { id: true, docNumber: true, type: true, status: true },
+    orderBy: (d, { asc }) => [asc(d.createdAt)],
+  });
+
   // Pre-capture shopId for use inside closures (TypeScript narrows undefined away)
   const shopId = shop.id;
 
@@ -397,6 +404,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         initialPaymentChannel={doc.paymentChannel || doc.payments?.[0]?.paymentChannel || ""}
         initialPaymentReference={doc.paymentReference || doc.payments?.[0]?.paymentReference || ""}
         parentDocument={parentDoc ? { id: parentDoc.id, docNumber: parentDoc.docNumber, type: parentDoc.type } : null}
+        childDocuments={childDocs}
         shopName={shop.name}
         shopShortName={shop.shortName}
         shopPhone={shop.phone}

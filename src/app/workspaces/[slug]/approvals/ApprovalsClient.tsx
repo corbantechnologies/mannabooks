@@ -125,30 +125,30 @@ export function ApprovalsClient({
   return (
     <div className="space-y-6">
       {/* HEADER METRICS */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="card-modern p-4 bg-white border border-zinc-200">
-          <span className="font-mono text-[10px] uppercase font-bold text-amber-600 block">Pending Review</span>
-          <span className="text-2xl font-bold font-sans text-black">{pendingCount}</span>
-          <span className="text-[11px] text-zinc-400 block mt-0.5">Awaiting authorization</span>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="stat-card p-4 space-y-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-600">Pending Review</p>
+          <p className="font-mono text-lg font-black text-black leading-tight">{pendingCount}</p>
+          <p className="text-[10px] text-zinc-500 font-sans">Awaiting authorization</p>
         </div>
-        <div className="card-modern p-4 bg-white border border-zinc-200">
-          <span className="font-mono text-[10px] uppercase font-bold text-zinc-500 block">My Submissions</span>
-          <span className="text-2xl font-bold font-sans text-black">{myRequestsCount}</span>
-          <span className="text-[11px] text-zinc-400 block mt-0.5">Tickets raised by you</span>
+        <div className="stat-card p-4 space-y-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">My Submissions</p>
+          <p className="font-mono text-lg font-black text-black leading-tight">{myRequestsCount}</p>
+          <p className="text-[10px] text-zinc-500 font-sans">Tickets raised by you</p>
         </div>
-        <div className="card-modern p-4 bg-white border border-zinc-200">
-          <span className="font-mono text-[10px] uppercase font-bold text-emerald-600 block">Approved Total</span>
-          <span className="text-2xl font-bold font-sans text-black">
+        <div className="stat-card p-4 space-y-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600">Approved Total</p>
+          <p className="font-mono text-lg font-black text-black leading-tight">
             {requests.filter((r) => r.status === "APPROVED").length}
-          </span>
-          <span className="text-[11px] text-zinc-400 block mt-0.5">Cleared downstream</span>
+          </p>
+          <p className="text-[10px] text-zinc-500 font-sans">Cleared downstream</p>
         </div>
-        <div className="card-modern p-4 bg-white border border-zinc-200">
-          <span className="font-mono text-[10px] uppercase font-bold text-blue-600 block">Active Policies</span>
-          <span className="text-2xl font-bold font-sans text-black">
+        <div className="stat-card p-4 space-y-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">Active Policies</p>
+          <p className="font-mono text-lg font-black text-black leading-tight">
             {policies.filter((p) => p.isActive).length}
-          </span>
-          <span className="text-[11px] text-zinc-400 block mt-0.5">Governance rules active</span>
+          </p>
+          <p className="text-[10px] text-zinc-500 font-sans">Governance rules active</p>
         </div>
       </div>
 

@@ -42,6 +42,23 @@ export interface IndustryDetail {
     question: string;
     answer: string;
   }[];
+  costCenters?: {
+    code: string;
+    department: string;
+    absorbedExpenses: string;
+  }[];
+  sublocations?: {
+    code: string;
+    zoneName: string;
+    binCoordinates: string;
+    functionPurpose: string;
+  }[];
+  staffHierarchy?: {
+    role: string;
+    systemPreset: string;
+    operationalScope: string;
+    privacySetting: string;
+  }[];
 }
 
 export const INDUSTRIES_DATA: IndustryDetail[] = [
@@ -49,117 +66,180 @@ export const INDUSTRIES_DATA: IndustryDetail[] = [
     slug: "manufacturing-production",
     tag: "MANUFACTURING & ASSEMBLIES",
     icon: "⚙️",
-    heroTitle: "Precision Bill of Materials & Unit Costing for Manufacturers",
-    heroSubtitle: "Transform bulk raw materials into high-margin finished products with automated inventory deduction, labor overhead factoring, and exact cost-per-unit ledgers.",
+    heroTitle: "Precision Bill of Materials, Cost Centers & Plant WMS for Manufacturers",
+    heroSubtitle: "Transform bulk raw materials into high-margin finished products with multi-stage WIP assemblies, departmental cost centers, sub-location bin tracking, and commercial cost-price blindness.",
     executiveSummary:
-      "Designed specifically for light manufacturing, chemical blenders, bakeries, furniture fabricators, and beverage bottlers who need exact production costing without the bloat of legacy $50,000 ERP systems.",
+      "Engineered specifically for mid-sized and enterprise manufacturers—ranging from chemical and paint blenders to food processors, pharmaceutical packagers, and metal fabricators—who need full factory governance. MannaBooks unites departmental cost centers, role-scoped floor staff, multi-bin warehouse sublocations, and exact GAAP/IFRS work-in-progress ledgers without the multi-million shilling bloat of legacy ERPs.",
     idealFor: [
-      "Chemical, soap, and detergent blenders",
-      "Commercial bakeries & food processing plants",
-      "Furniture workshops & metal fabricators",
-      "Beverage, juice, and bottled water bottlers",
-      "Electronics assembly and packaging plants",
+      "Chemical, paint, resin & lubricant blenders",
+      "Commercial bakeries, confectioneries & food packaging plants",
+      "Steel, sheet metal, and architectural fabricators",
+      "Bottled water, beverage, and dairy bottling plants",
+      "Cosmetics, detergents & industrial hygiene formulators",
+      "Pharmaceutical repackagers & medical consumable plants",
     ],
     keyChallenges: [
       {
         title: "Recipe Costing & Yield Variance Blindness",
-        description: "Small shifts in raw chemical, sugar, or timber prices silently erode margins when finished pack prices remain static on retail shelves.",
+        description: "Small shifts in bulk solvent, resin, or sugar prices silently erode margins when finished pack prices remain static, while chemical evaporation and trim scrap go unmeasured.",
       },
       {
-        title: "Disorganized Multi-Step Stock Consumption",
-        description: "Production teams consume bulk ingredients without immediate deductions, creating ghost inventory and crippling stocktakes.",
+        title: "Untracked Factory Overhead & Machine Depreciation",
+        description: "Focusing solely on raw ingredients ignores boiler power, line technician wages, and machine depreciation, generating artificial profitability numbers that mislead directors.",
       },
       {
-        title: "Untracked Factory Overhead & Direct Labor",
-        description: "Focusing solely on raw materials ignores technician wages and machine energy, leading to underpriced commercial quotes.",
+        title: "Warehouse Disorganization & Raw Material Shrinkage",
+        description: "Bulk raw drums and packaging containers stored without bin coordinates create ghost inventory, delayed production runs, and painful stocktake discrepancies.",
+      },
+      {
+        title: "Commercial Margin Leakage & Inter-Depot Transit Theft",
+        description: "Storekeepers seeing supplier buying costs leak wholesale pricing terms to competitors, while goods dispatched to coastal regional depots go missing in transit.",
       },
     ],
     mannaSolution: [
       {
-        title: "Multi-Item Bill of Materials (BOM)",
-        description: "Define unlimited raw component recipes with configurable wastage percentages (e.g. 2.5% spillage tolerance during packaging).",
-        modules: ["Assemblies & BOM", "Inventory Valuation", "General Ledger"],
+        title: "Departmental Cost Centers & Expense Absorption",
+        description: "Tag factory expenses to specific departments (Mixing, Bottling, Lab, Maintenance) and capitalize direct labor and machinery power directly into WIP inventory asset valuation.",
+        modules: ["Cost Accounting", "General Ledger", "P&L Reporting"],
       },
       {
-        title: "One-Click Production Run Execution",
-        description: "Executing a manufacturing order automatically deducts all raw ingredients and instantly credits finished stock at exact weighted unit cost.",
-        modules: ["Production Execution", "Warehouse Bins", "Stock Ledger"],
+        title: "Sub-Location Bin WMS Architecture",
+        description: "Map plant floors into specialized zones (Raw Silos, Chemical Vault, WIP Staging, Finished High-Bay) with precise Aisle-Rack-Shelf-Bin picking coordinates and cycle count audits.",
+        modules: ["Warehouse Bins", "Stock Transfers", "Stocktake Wizard"],
       },
       {
-        title: "Full Labor & Factory Overhead Allocation",
-        description: "Factor direct wages and machine depreciation directly into finished goods cost, generating accurate GAAP/IFRS balance sheet assets.",
-        modules: ["Cost Accounting", "GL Journal Entries", "P&L Reporting"],
+        title: "Multi-Stage Bill of Materials (BOM) & Scrap Tolerance",
+        description: "Define multi-level assembly formulas with configurable wastage allowances (e.g. 2.5% mixing dissipation). Executing a batch automatically moves raw stock into WIP and then into Finished Goods.",
+        modules: ["Assemblies & BOM", "Inventory Valuation", "Production Runs"],
       },
+      {
+        title: "Role-Scoped Operational Scoping & Cost Blindness",
+        description: "Toggle Cost-Price Blindness for storekeepers and line cashiers, preventing supplier margin leakage, while enforcing executive approval caps on supervisor purchase orders.",
+        modules: ["Commercial Privacy", "User Governance", "Approval Caps"],
+      },
+    ],
+    costCenters: [
+      { code: "CC-101", department: "Bulk Chemical Mixing & Reaction", absorbedExpenses: "Industrial 3-phase power, boiler diesel, reaction catalysts, mixing vat maintenance" },
+      { code: "CC-102", department: "High-Speed Bottling & Packaging", absorbedExpenses: "Line technician wages, induction sealer maintenance, outer carton packaging" },
+      { code: "CC-103", department: "Quality Assurance & Testing Lab", absorbedExpenses: "Laboratory reagents, batch retention samples, viscosity testing, calibration" },
+      { code: "CC-104", department: "Plant Utilities & Mechanical Maintenance", absorbedExpenses: "Compressor servicing, replacement bearings, boiler water treatment, lubricating oils" },
+      { code: "CC-105", department: "Central Dispatch & Regional Logistics", absorbedExpenses: "Forklift diesel, haulier truck freight to coastal depots, driver allowances" },
+      { code: "CC-106", department: "Plant Administration & Safety", absorbedExpenses: "NEMA environmental licenses, OSHA fire inspections, factory safety equipment" },
+    ],
+    sublocations: [
+      { code: "WH-01-RAW", zoneName: "Raw Materials Silos & Bulk Tanks", binCoordinates: "Silos 1-4 & Tank Bay A", functionPurpose: "Bulk polymer resins, base oils, and 10,000L raw liquid chemicals" },
+      { code: "WH-01-VAULT", zoneName: "Solvent & Hazardous Vault", binCoordinates: "Aisle 01, Racks 01-04", functionPurpose: "200L flammable chemical drums, volatile pigments, and additives" },
+      { code: "WH-01-PACK", zoneName: "Packaging & Container Storage", binCoordinates: "Aisle 02, Racks 01-06", functionPurpose: "5L jerrycans, caps, foil seals, labels, and corrugated outer cartons" },
+      { code: "WH-01-WIP", zoneName: "WIP Assembly Floor (Tanks 1-4)", binCoordinates: "Floor Staging Bays 1-4", functionPurpose: "Active blending reaction tanks undergoing temperature curing & testing" },
+      { code: "WH-01-FIN", zoneName: "Finished Goods High-Bay Pallet Racks", binCoordinates: "High-Bay A01-A12", functionPurpose: "Palletized finished stock tagged with batch lots, barcodes, and expiry dates" },
+      { code: "WH-02-MSA", zoneName: "Mombasa Regional Port Depot", binCoordinates: "Coastal Depot Bay 1-3", functionPurpose: "Regional hub receiving inter-depot stock via Two-Step Transfers (IN_TRANSIT)" },
+    ],
+    staffHierarchy: [
+      { role: "Plant Operations Director", systemPreset: "MANAGER / ADMIN", operationalScope: "Full plant oversight, approval ceiling of KES 250,000 on purchase bills and scrap adjustments", privacySetting: "Full Financial Access" },
+      { role: "Chief Production Chemist", systemPreset: "STOREKEEPER / MANAGER", operationalScope: "Formulates BOM recipes, initiates production runs, logs batch yields and spillage tolerances", privacySetting: "Cost-Price Blindness Active" },
+      { role: "Raw Materials Storekeeper", systemPreset: "STOREKEEPER", operationalScope: "Inbound PO receiving, GRN generation, raw bin stocking in Chemical Vault", privacySetting: "Cost-Price Blindness Active" },
+      { role: "Quality Control Inspector", systemPreset: "VIEWER / STOREKEEPER", operationalScope: "Batch quarantine inspection, lab sign-off, releases WIP to Finished Goods high-bay", privacySetting: "Cost-Price Blindness Active" },
+      { role: "Finished Goods Dispatcher", systemPreset: "DISPATCHER", operationalScope: "Generates Delivery Notes, assigns driver manifests, tracks in-transit cargo to regional depots", privacySetting: "Cost-Price Blindness Active" },
+      { role: "Factory Cost Accountant", systemPreset: "ACCOUNTANT", operationalScope: "WIP balance reconciliations, labor accruals, standard vs actual variance analysis, tax filings", privacySetting: "Full Financial Access" },
     ],
     workflowSteps: [
       {
         stepNumber: "01",
-        title: "Configure Assembly Recipe (BOM)",
-        action: "Define 500ml Sanitizer: 400ml Ethanol, 50ml Glycerin, 50ml Distilled Water, 1 Plastic Bottle, 1 Mist Cap + KES 6.50 Labor.",
-        accountingImpact: "Recipe saved in master catalog; unit cost benchmarks established.",
+        title: "Inbound PO Receiving to Sub-Location Bins",
+        action: "Storekeeper scans supplier PO for 20x 200L chemical drums. System generates GRN and logs items to Sub-location CHEM-VAULT (Bin A02-R01) with Cost-Price Blindness enabled.",
+        accountingImpact: "Accounts Payable credited; Raw Materials Inventory (1310) debited.",
       },
       {
         stepNumber: "02",
-        title: "Execute Production Run",
-        action: "Batch 1,000 units completed on factory floor. Click 'Execute Assembly Order' in MannaBooks.",
-        accountingImpact: "Raw materials debited out of Raw Goods Inventory (1310); Finished Goods credited (1320).",
+        title: "Requisition to WIP Staging Floor",
+        action: "Chief Chemist creates Production Run #PR-840. System requisitions 400L solvent and 1,000kg polymer into Sub-location WIP-STAGE with 2.5% scrap tolerance.",
+        accountingImpact: "Raw Materials (1310) credited; Work-In-Progress (1315) debited.",
       },
       {
         stepNumber: "03",
-        title: "Allocate Factory Overhead",
-        action: "System appends direct labor estimate and batch electricity cost to inventory asset value.",
-        accountingImpact: "Accrued Factory Wages credited; Finished Goods inventory value capitalized.",
+        title: "Labor & Overhead Capitalization",
+        action: "Batch passes mixing and bottling into 200x 5L Jerrycans. MannaBooks appends direct packaging labor (CC-102: KES 12,000) and power (CC-101: KES 4,500) into WIP.",
+        accountingImpact: "Accrued Factory Wages (2150) and Utilities (2160) credited; WIP capitalized.",
       },
       {
         stepNumber: "04",
-        title: "Commercial Dispatch & Invoicing",
-        action: "Generate KRA eTIMS Tax Invoice and Delivery Note for distributor or supermarket chain.",
-        accountingImpact: "Accounts Receivable debited; Revenue credited; COGS recognized at exact BOM cost.",
+        title: "QA Clearance & Finished Goods Transfer",
+        action: "QA lab confirms batch viscosity and SG. Batch released to Sub-location FIN-HIGHBAY. Ready for KRA eTIMS customer invoice or Two-Step transfer to Mombasa Depot.",
+        accountingImpact: "WIP (1315) cleared; Finished Goods (1320) debited at exact KES 825/unit cost.",
       },
     ],
     sampleLedger: [
       {
-        stage: "Assembly Execution",
-        debitAccount: "Finished Goods Inventory (1320)",
+        stage: "Raw Materials Receipt",
+        debitAccount: "Raw Materials Inventory (1310)",
+        creditAccount: "Accounts Payable - Chemical Vendor (2000)",
+        amountKes: "148,500.00",
+        explanation: "Inbound PO received at CHEM-VAULT bin; verified by storekeeper with cost blindness.",
+      },
+      {
+        stage: "Issuance to Production Floor",
+        debitAccount: "Work-In-Progress Inventory (1315)",
         creditAccount: "Raw Materials Inventory (1310)",
-        amountKes: "85,000.00",
-        explanation: "1,000 bottles produced; raw chemicals & plastic bottles deducted from stock.",
+        amountKes: "148,500.00",
+        explanation: "Raw solvents and polymers transferred to WIP-STAGE floor for mixing.",
       },
       {
-        stage: "Labor Capitalization",
+        stage: "Direct Labor Capitalization",
+        debitAccount: "Work-In-Progress Inventory (1315)",
+        creditAccount: "Accrued Factory Wages - CC-102 (2150)",
+        amountKes: "12,000.00",
+        explanation: "Direct bottling technician wages allocated directly to batch asset value.",
+      },
+      {
+        stage: "Factory Overhead Absorption",
+        debitAccount: "Work-In-Progress Inventory (1315)",
+        creditAccount: "Accrued Factory Power - CC-101 (2160)",
+        amountKes: "4,500.00",
+        explanation: "3-phase mixing power absorbed into WIP inventory asset valuation.",
+      },
+      {
+        stage: "QA Clearance to Finished Stock",
         debitAccount: "Finished Goods Inventory (1320)",
-        creditAccount: "Factory Wages Accrual (2150)",
-        amountKes: "6,500.00",
-        explanation: "Direct packaging labor allocated directly to finished unit asset value.",
+        creditAccount: "Work-In-Progress Inventory (1315)",
+        amountKes: "165,000.00",
+        explanation: "200x 5L Jerrycans capitalized onto balance sheet at exact unit cost of KES 825.",
       },
       {
-        stage: "Commercial Sale",
+        stage: "Commercial Dispatch & eTIMS Sale",
         debitAccount: "Cost of Goods Sold (5000)",
         creditAccount: "Finished Goods Inventory (1320)",
-        amountKes: "91,500.00",
-        explanation: "Cost recognized immediately upon issuing customer invoice at KES 140,000.",
+        amountKes: "165,000.00",
+        explanation: "Cost recognized upon issuing customer invoice at KES 290,000 (KES 125,000 gross margin).",
       },
     ],
     caseStudy: {
-      clientName: "Apex Clean Solutions Ltd.",
+      clientName: "Kipevu Industrial Coatings & Lubricants Ltd.",
       location: "Industrial Area, Nairobi",
-      profile: "Manufacturer of commercial hygiene chemicals, hand sanitisers, and industrial liquid soaps.",
-      challenge: "Lost KES 420,000 every quarter due to untracked chemical spillage and mispriced packaging bottles.",
-      solutionApplied: "Configured 14 distinct BOM recipes in MannaBooks with 3% wastage thresholds and batch production logging.",
+      profile: "Manufacturer of automotive motor oils, industrial resins, and commercial anti-corrosive coatings.",
+      challenge: "Lost KES 780,000 per quarter due to unallocated mixing power, storekeepers leaking supplier costs, and cargo going missing during truck dispatches to Mombasa.",
+      solutionApplied: "Standardized on MannaBooks 6 Cost Centers, Sub-Location Bin WMS, Cost-Price Blindness, and Two-Step Inter-Depot Transfers.",
       measurableResults: [
-        "18.4% improvement in gross margin visibility within 60 days",
-        "Raw chemical stock discrepancy reduced to less than 0.8%",
-        "100% compliant KRA eTIMS sales invoices generated directly from finished stock",
+        "100% elimination of transit stock leakage between Nairobi plant and Mombasa depot",
+        "Cost-per-liter accuracy improved by 22% by capitalizing direct line labor and utilities",
+        "Complete confidentiality of chemical supplier purchasing contracts across 40 plant staff",
       ],
     },
     faqs: [
       {
-        question: "Can MannaBooks handle multi-level assemblies (sub-assemblies)?",
-        answer: "Yes. You can produce a intermediate mixture (e.g. Concentrated Base Compound) and use that base as an ingredient in multiple final packaged variants.",
+        question: "Can MannaBooks track work-in-progress (WIP) across multiple production stages?",
+        answer: "Yes. Raw materials move from Raw Storage into Work-In-Progress (WIP) staging. While in WIP, labor and overhead cost centers are appended until the batch is cleared into Finished Goods.",
       },
       {
-        question: "Does the system support wastage and scrap percentage calculations?",
-        answer: "Yes. Each BOM component allows an optional wastage tolerance percentage (e.g. 2% for cutting timber or evaporation of solvents), which is factored automatically into unit cost.",
+        question: "Can storekeepers receive raw materials without seeing our supplier buying prices?",
+        answer: "Yes. By activating 'Cost-Price Blindness', storekeepers and machine operators can verify quantities and transfer drums between warehouse bins without seeing unit costs or vendor margins.",
+      },
+      {
+        question: "How does MannaBooks protect stock moving between the main plant and regional depots?",
+        answer: "MannaBooks uses Two-Step Stock Transfers. Dispatched cargo stays in 'IN_TRANSIT' status and only joins the destination branch inventory once physically counted and confirmed by the receiving manager.",
+      },
+      {
+        question: "Does the system support scrap and evaporation tolerances?",
+        answer: "Yes. You can specify a percentage yield variance (e.g. 2.5% solvent evaporation during mixing). The unit cost is automatically calibrated to absorb the scrap loss within IFRS guidelines.",
       },
     ],
   },

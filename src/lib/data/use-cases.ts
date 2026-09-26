@@ -25,9 +25,91 @@ export interface UseCaseItem {
     detail: string;
   };
   relatedIndustrySlug: string;
+  departmentCostCenters?: {
+    code: string;
+    name: string;
+    absorbedCosts: string;
+  }[];
+  staffRosterRoles?: {
+    roleTitle: string;
+    preset: string;
+    permissions: string;
+    privacy: string;
+  }[];
+  sublocationsHierarchy?: {
+    code: string;
+    name: string;
+    type: string;
+    purpose: string;
+  }[];
 }
 
 export const USE_CASES_DATA: UseCaseItem[] = [
+  {
+    id: "enterprise-industrial-manufacturing",
+    category: "MANUFACTURING",
+    categoryLabel: "Enterprise Production & WMS",
+    badgeColor: "#ea580c",
+    icon: "🏭",
+    title: "The Full-Scale Industrial Manufacturing Enterprise",
+    headline: "Governing 6 Cost Centers, 5 Staff Roles, 5 Warehouse Sublocations & WIP Assemblies",
+    problemStatement:
+      "Kipevu Industrial Coatings & Lubricants Ltd. operates a 40-worker manufacturing plant producing automotive lubricants, resins, and industrial paints. Their legacy setup caused major operational bleed: factory electricity and machine maintenance weren't absorbed into unit costs, storekeepers leaked raw chemical buying prices to competitors, mixing spillage caused ghost WIP inventory, and goods frequently went missing during transit to their Mombasa port depot.",
+    mannaSolution:
+      "MannaBooks provides an integrated industrial ERP architecture: 6 departmental Cost Centers capture direct labor and utility absorption into Work-in-Progress (WIP); 5 staff roles enforce Cost-Price Blindness for warehouse clerks and approval ceilings for plant managers; 5 warehouse sublocations track granular bins (Aisle-Rack-Shelf-Bin); multi-stage Bill of Materials (BOM) formulas calculate scrap tolerances; and Two-Step stock transfers safeguard inter-depot dispatches.",
+    workflowSteps: [
+      {
+        phase: "Step 1: Inbound GRN to Bin Coordinates",
+        description: "Storekeeper receives 20x 200L drums of solvent and 5,000kg polymer. System records GRN and routes drums to Sub-location CHEM-VAULT (Bin A02-R01). Commercial privacy is active: storekeeper verifies physical quantity with zero visibility of supplier cost.",
+      },
+      {
+        phase: "Step 2: Requisition to WIP Staging & BOM Assembly",
+        description: "Chief Chemist initiates Production Run #PR-840 in Sub-location WIP-STAGE. Formula consumes 400L solvent + 1,000kg polymer + 2.5% evaporation allowance. System debits Work-in-Progress (1315) and credits Raw Goods (1310).",
+      },
+      {
+        phase: "Step 3: Direct Labor & Overhead Absorption",
+        description: "Line operators complete mixing and bottling into 200x 5L Jerrycans. MannaBooks appends Cost Center CC-101 (Power: KES 4,500) and CC-102 (Packaging Labor: KES 12,000) directly into finished unit asset valuation (KES 825/unit).",
+      },
+      {
+        phase: "Step 4: Quality Release & Inter-Depot Dispatch",
+        description: "QA Inspector clears batch to Sub-location FIN-HIGHBAY. Dispatcher dispatches 80 jerrycans to Mombasa Depot via haulier truck. Transfer enters 'IN_TRANSIT' status until Mombasa manager performs physical count verification.",
+      },
+    ],
+    accountingEntry: {
+      debit: "Finished Goods Inventory (1320) - KES 165,000",
+      credit: "Raw Materials (1310: KES 148,500) + Factory Wages CC-102 (2150: KES 12,000) + Utilities CC-101 (2160: KES 4,500)",
+      amountKes: "165,000.00 Capitalized",
+      note: "Work-In-Progress (1315) fully liquidated; finished goods unit cost accurately capitalized at KES 825/pack before KRA eTIMS invoicing at KES 1,450.",
+    },
+    roiMetric: {
+      headline: "100% End-to-End Control",
+      detail: "Eliminated untracked chemical spillage, protected wholesale buying margins, and secured inter-depot cargo dispatches.",
+    },
+    relatedIndustrySlug: "manufacturing-production",
+    departmentCostCenters: [
+      { code: "CC-101", name: "Bulk Chemical Mixing & Reaction", absorbedCosts: "Industrial 3-phase power, boiler diesel, solvent dissipation" },
+      { code: "CC-102", name: "High-Speed Bottling & Packaging", absorbedCosts: "Line technician wages, capper maintenance, carton packaging" },
+      { code: "CC-103", name: "Quality Assurance & Testing Lab", absorbedCosts: "Laboratory reagents, batch retention samples, calibration" },
+      { code: "CC-104", name: "Plant Utilities & Equipment Maintenance", absorbedCosts: "Preventative machinery servicing, replacement bearings, lubricants" },
+      { code: "CC-105", name: "Central Dispatch & Logistics Depot", absorbedCosts: "Forklift diesel, haulier truck freight, driver trip allowances" },
+      { code: "CC-106", name: "Plant Administration & Compliance", absorbedCosts: "Factory safety licenses, NEMA audits, plant supervisor salaries" },
+    ],
+    staffRosterRoles: [
+      { roleTitle: "Plant Operations Director", preset: "MANAGER / ADMIN", permissions: "Full operational authority; approval limit of KES 250,000 on purchase bills and scrap write-offs", privacy: "Full Financial Access" },
+      { roleTitle: "Chief Production Chemist", preset: "STOREKEEPER / MANAGER", permissions: "Formulates master BOM recipes, executes production runs, logs batch yields and spillage", privacy: "Cost-Price Blindness Active" },
+      { roleTitle: "Raw Materials Storekeeper", preset: "STOREKEEPER", permissions: "Inbound PO receiving, GRN generation, raw bin stocking in Chemical Vault", privacy: "Cost-Price Blindness Active" },
+      { roleTitle: "Quality Control Inspector", preset: "VIEWER / STOREKEEPER", permissions: "Batch quarantine inspection, lab sign-off, releases WIP to Finished Goods high-bay", privacy: "Cost-Price Blindness Active" },
+      { roleTitle: "Factory Cost Accountant", preset: "ACCOUNTANT", permissions: "WIP balance reconciliations, labor accruals, standard vs actual variance analysis, tax filings", privacy: "Full Financial Access" },
+    ],
+    sublocationsHierarchy: [
+      { code: "WH-01-RAW", name: "Raw Silos & Heavy Bulk Tanks", type: "Bulk Storage", purpose: "Bulk resin pellets, base oils, and 10,000L raw liquid storage tanks" },
+      { code: "WH-01-VAULT", name: "Solvent & Chemical Vault", type: "Hazardous Materials", purpose: "200L flammable chemical solvent drums and pigment bins (Aisle-Rack-Shelf)" },
+      { code: "WH-01-PACK", name: "Packaging & Container Bins", type: "Component Storage", purpose: "5L jerrycans, caps, foil induction seals, labels, and outer corrugated cartons" },
+      { code: "WH-01-WIP", name: "WIP Assembly Floor (Tanks 1-4)", type: "Work-In-Progress", purpose: "Active blending reaction tanks where formulas undergo temperature curing" },
+      { code: "WH-01-FIN", name: "Finished Goods High-Bay Racks", type: "Pallet Warehouse", purpose: "Palletized finished stock with batch lot numbers and barcode tags ready for order picking" },
+      { code: "WH-02-MSA", name: "Mombasa Regional Port Depot", type: "Regional Hub", purpose: "Receives goods via Two-Step Inter-Branch Transfer (IN_TRANSIT) for coastal fulfillment" },
+    ],
+  },
   {
     id: "tech-on-demand-reseller",
     category: "TECH_RESELLER",

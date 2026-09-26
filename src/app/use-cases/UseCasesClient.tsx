@@ -182,6 +182,89 @@ export default function UseCasesClient() {
                   </div>
                 </div>
 
+                {/* Enterprise Architecture Matrix (Cost Centers, Staff Scoping, WMS Sub-locations) */}
+                {uc.departmentCostCenters && uc.staffRosterRoles && uc.sublocationsHierarchy && (
+                  <div className="border border-zinc-200 bg-zinc-50/70 rounded-2xl p-4 sm:p-5 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-200 pb-3">
+                      <div>
+                        <span className="text-[10px] font-mono uppercase font-bold text-emerald-800 tracking-wider block">
+                          Enterprise System Architecture
+                        </span>
+                        <h4 className="text-xs font-bold uppercase text-zinc-950 font-sans">
+                          Cost Centers, Staff Scoping &amp; Warehouse Sublocations Matrix
+                        </h4>
+                      </div>
+                      <span className="text-[10px] font-mono text-zinc-600 bg-white border border-zinc-200 px-2.5 py-1 rounded-md self-start sm:self-auto">
+                        Multi-Departmental Plant
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs">
+                      {/* Cost Centers */}
+                      <div className="bg-white border border-zinc-200 rounded-xl p-3.5 space-y-2.5 shadow-2xs">
+                        <div className="border-b border-zinc-100 pb-1.5 flex items-center justify-between">
+                          <span className="text-[10px] font-mono font-bold uppercase text-zinc-600">Department Cost Centers</span>
+                          <span className="text-[10px] font-mono text-zinc-400">6 Centers</span>
+                        </div>
+                        <ul className="space-y-2">
+                          {uc.departmentCostCenters.map((cc) => (
+                            <li key={cc.code} className="text-[11px] space-y-0.5">
+                              <div className="flex items-center gap-1.5 font-bold text-zinc-900 font-mono">
+                                <span className="text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded text-[10px]">{cc.code}</span>
+                                <span className="font-sans text-xs">{cc.name}</span>
+                              </div>
+                              <p className="text-[10px] text-zinc-500 pl-7 leading-tight font-sans">{cc.absorbedCosts}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Staff Roster & Scoping */}
+                      <div className="bg-white border border-zinc-200 rounded-xl p-3.5 space-y-2.5 shadow-2xs">
+                        <div className="border-b border-zinc-100 pb-1.5 flex items-center justify-between">
+                          <span className="text-[10px] font-mono font-bold uppercase text-zinc-600">Staff Scoping &amp; Privacy</span>
+                          <span className="text-[10px] font-mono text-zinc-400">5 Roles</span>
+                        </div>
+                        <ul className="space-y-2.5">
+                          {uc.staffRosterRoles.map((role) => (
+                            <li key={role.roleTitle} className="text-[11px] space-y-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="font-bold text-zinc-900 font-sans text-xs">{role.roleTitle}</span>
+                                <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-700 shrink-0">{role.preset}</span>
+                              </div>
+                              <p className="text-[10px] text-zinc-500 leading-tight font-sans">{role.permissions}</p>
+                              <span className={`inline-block text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                                role.privacy.includes("Blindness") ? "bg-amber-50 text-amber-900 border border-amber-200" : "bg-zinc-100 text-zinc-700"
+                              }`}>
+                                🔒 {role.privacy}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Warehouses & Sublocations */}
+                      <div className="bg-white border border-zinc-200 rounded-xl p-3.5 space-y-2.5 shadow-2xs">
+                        <div className="border-b border-zinc-100 pb-1.5 flex items-center justify-between">
+                          <span className="text-[10px] font-mono font-bold uppercase text-zinc-600">Warehouse Sublocations</span>
+                          <span className="text-[10px] font-mono text-zinc-400">6 Sub-Zones</span>
+                        </div>
+                        <ul className="space-y-2">
+                          {uc.sublocationsHierarchy.map((sub) => (
+                            <li key={sub.code} className="text-[11px] space-y-0.5">
+                              <div className="flex items-center gap-1.5 font-mono">
+                                <span className="text-blue-700 bg-blue-50 px-1 py-0.5 rounded text-[10px] font-bold">{sub.code}</span>
+                                <span className="text-zinc-900 font-sans font-semibold text-xs">{sub.name}</span>
+                              </div>
+                              <p className="text-[10px] text-zinc-500 pl-7 leading-tight font-sans">{sub.purpose}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Accounting & General Ledger Impact Box */}
                 <div className="border border-zinc-200 bg-zinc-950 text-white p-4 sm:p-5 rounded-2xl space-y-3 font-mono text-xs">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-2">

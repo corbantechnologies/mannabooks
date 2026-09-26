@@ -216,6 +216,117 @@ export default async function IndustryDetailPage({ params }: IndustryPageProps) 
           </div>
         </section>
 
+        {/* ── ENTERPRISE PLANT ARCHITECTURE (IF AVAILABLE) ── */}
+        {industry.costCenters && industry.sublocations && industry.staffHierarchy && (
+          <section className="px-5 sm:px-6 py-16 max-w-7xl mx-auto w-full border-b border-zinc-100 space-y-10">
+            <div className="space-y-2">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-700 font-bold">
+                Enterprise Infrastructure Matrix
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-zinc-950">
+                Departmental Cost Centers, Staff Roles &amp; Warehouse Sub-Locations
+              </h2>
+              <p className="text-xs sm:text-sm text-zinc-600 max-w-3xl">
+                How a complete multi-tier production plant organizes finances, prevents supplier price leakage to floor staff, and tracks work-in-progress across specialized warehouse bays.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Cost Centers Column */}
+              <div className="border border-zinc-200 bg-white rounded-3xl p-6 space-y-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+                  <div>
+                    <span className="text-[10px] font-mono font-bold uppercase text-zinc-400 block">Finance &amp; Costing</span>
+                    <h3 className="font-bold text-sm uppercase text-zinc-900 font-sans">Department Cost Centers</h3>
+                  </div>
+                  <span className="text-[10px] font-mono bg-zinc-100 px-2 py-0.5 rounded font-bold text-zinc-700">
+                    {industry.costCenters.length} Units
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {industry.costCenters.map((cc) => (
+                    <div key={cc.code} className="p-3 bg-zinc-50 border border-zinc-200/80 rounded-xl space-y-1">
+                      <div className="flex items-center gap-1.5 font-mono">
+                        <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                          {cc.code}
+                        </span>
+                        <span className="font-sans text-xs font-bold text-zinc-900">{cc.department}</span>
+                      </div>
+                      <p className="text-[11px] text-zinc-500 font-sans leading-relaxed pl-8">
+                        {cc.absorbedExpenses}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Staff Roles & Privacy Column */}
+              <div className="border border-zinc-200 bg-white rounded-3xl p-6 space-y-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+                  <div>
+                    <span className="text-[10px] font-mono font-bold uppercase text-zinc-400 block">Governance &amp; RBAC</span>
+                    <h3 className="font-bold text-sm uppercase text-zinc-900 font-sans">Plant Staff Scoping</h3>
+                  </div>
+                  <span className="text-[10px] font-mono bg-zinc-100 px-2 py-0.5 rounded font-bold text-zinc-700">
+                    {industry.staffHierarchy.length} Roles
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {industry.staffHierarchy.map((st) => (
+                    <div key={st.role} className="p-3 bg-zinc-50 border border-zinc-200/80 rounded-xl space-y-1.5">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="font-bold text-xs text-zinc-950 font-sans">{st.role}</span>
+                        <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-700 shrink-0 font-semibold">
+                          {st.systemPreset}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-zinc-500 font-sans leading-relaxed">
+                        {st.operationalScope}
+                      </p>
+                      <span className={`inline-block text-[9px] font-mono px-2 py-0.5 rounded font-bold ${
+                        st.privacySetting.includes("Blindness")
+                          ? "bg-amber-50 text-amber-900 border border-amber-300"
+                          : "bg-zinc-100 text-zinc-700 border border-zinc-200"
+                      }`}>
+                        🔒 {st.privacySetting}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Warehouse Sublocations Column */}
+              <div className="border border-zinc-200 bg-white rounded-3xl p-6 space-y-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+                  <div>
+                    <span className="text-[10px] font-mono font-bold uppercase text-zinc-400 block">WMS &amp; Logistics</span>
+                    <h3 className="font-bold text-sm uppercase text-zinc-900 font-sans">Warehouse Sub-Locations</h3>
+                  </div>
+                  <span className="text-[10px] font-mono bg-zinc-100 px-2 py-0.5 rounded font-bold text-zinc-700">
+                    {industry.sublocations.length} Zones
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {industry.sublocations.map((sub) => (
+                    <div key={sub.code} className="p-3 bg-zinc-50 border border-zinc-200/80 rounded-xl space-y-1">
+                      <div className="flex items-center justify-between gap-1 font-mono">
+                        <span className="text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                          {sub.code}
+                        </span>
+                        <span className="text-[10px] text-zinc-400 font-mono">{sub.binCoordinates}</span>
+                      </div>
+                      <h4 className="font-sans text-xs font-bold text-zinc-900 pt-0.5">{sub.zoneName}</h4>
+                      <p className="text-[11px] text-zinc-500 font-sans leading-relaxed">
+                        {sub.functionPurpose}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* ── STEP-BY-STEP OPERATIONAL FLOW ── */}
         <section className="px-5 sm:px-6 py-16 max-w-7xl mx-auto w-full border-b border-zinc-100 space-y-10">
           <div className="space-y-2">

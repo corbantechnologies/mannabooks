@@ -79,6 +79,8 @@ export default function FeaturesPage() {
               { href: "#catalog-showcase", label: "Digital Catalog & Rate Cards" },
               { href: "#inventory", label: "Smart Inventory & Reconciler" },
               { href: "#wms-bins", label: "Storage Bins & Shelves" },
+              { href: "#cost-centers", label: "Cost Centers & Overhead" },
+              { href: "#commercial-privacy", label: "Cost-Price Blindness" },
               { href: "#fefo-expiry", label: "FEFO & Expiry Risk" },
               { href: "#bom-manufacturing", label: "BOM & Manufacturing" },
               { href: "#stocktake-audit", label: "Stocktake Audit Wizard" },
@@ -107,6 +109,32 @@ export default function FeaturesPage() {
                 {link.label}
               </a>
             ))}
+          </div>
+
+          {/* CROSS-LINK DISCOVERY BANNER */}
+          <div className="bg-zinc-950 text-white border border-zinc-800 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-6">
+            <div className="space-y-1">
+              <span className="text-[10px] font-mono uppercase text-emerald-400 font-bold block">
+                ★ Real Enterprise Data &amp; Accounting Walkthroughs
+              </span>
+              <p className="text-xs sm:text-sm font-sans text-zinc-300">
+                Want to see these modules solving real-world Kenyan supply chain and manufacturing puzzles with real KES numbers?
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <Link
+                href="/use-cases"
+                className="btn-primary-emerald px-5 py-2.5 text-xs font-mono font-bold uppercase tracking-wider"
+              >
+                Use Cases Portal →
+              </Link>
+              <Link
+                href="/industries"
+                className="btn-secondary-emerald px-5 py-2.5 text-xs font-mono font-semibold uppercase tracking-wider"
+              >
+                Industry Blueprints
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -952,6 +980,62 @@ export default function FeaturesPage() {
             </div>
           </div>
 
+          {/* MODULE 32: DEPARTMENTAL COST CENTERS & OVERHEAD ABSORPTION */}
+          <div id="cost-centers" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 32</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Departmental Cost Centers &amp; Factory Overhead Absorption
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Track expenditure by department, production line, or business division. Allocate direct technician labor, machinery power, and indirect factory overhead directly into Work-in-Progress (WIP) and Finished Goods inventory asset valuation.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Multi-Tier Cost Center Hierarchy", body: "Structure cost centers by operational division (e.g. CC-101 Mixing, CC-102 Bottling, CC-103 Quality Lab, CC-105 Logistics) for granular performance tracking." },
+                { title: "Direct Expense Tagging", body: "Tag vendor bills, petty cash vouchers, utility invoices, and payroll runs to specific cost centers for real-time departmental P&L breakdown." },
+                { title: "IFRS/GAAP Overhead Absorption", body: "Capitalize direct manufacturing wages and machine power directly into inventory asset value instead of treating them as immediate period expenses." },
+                { title: "Variance & Utilization Analysis", body: "Compare budgeted departmental allocations against actual expenditure to identify operational leakages and machine inefficiency." },
+                { title: "Multi-Stage WIP Accounting", body: "Track cost accumulation from raw materials issuance to intermediate blending, packaging, and finished goods capitalization." },
+                { title: "Departmental P&L Export", body: "Generate board-ready financial reports showing revenue, direct costs, and contribution margins per department or production line." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODULE 33: COMMERCIAL COST-PRICE BLINDNESS & RBAC */}
+          <div id="commercial-privacy" className="space-y-6 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-200/80 pb-4">
+              <span className="font-mono text-xs font-bold bg-[#064e3b] text-white px-2.5 py-1 uppercase rounded-md shrink-0">MODULE 33</span>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black font-sans">
+                Commercial Cost-Price Blindness &amp; Spending Governance
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 max-w-3xl leading-relaxed">
+              Protect sensitive business margins from internal and external leakage. Blind storekeepers, cashiers, and inventory clerks to supplier purchase costs while enforcing multi-tier executive approval limits.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Cost-Price Blindness (hideCostPrices)", body: "Storekeepers and counter cashiers can view stock on hand, receive GRNs, and scan sales, but purchase cost prices and profit margins are completely hidden." },
+                { title: "Multi-Tier Approval Ceilings", body: "Configure direct approval thresholds per supervisor (e.g. KES 50,000). Requisitions exceeding the limit route automatically to the Managing Director or CFO." },
+                { title: "Two-Step Stock Transfers (IN_TRANSIT)", body: "Goods moving between the main factory and regional depots stay in transit status until the receiving manager performs physical verification." },
+                { title: "Role-Scoped System Presets", body: "Tailored permission presets for Storekeepers, Cashiers, Dispatchers, Chemists, Accountants, and Branch Managers with zero data commingling." },
+                { title: "Immutable Audit Trails", body: "Every GRN intake, stock transfer, approval signature, and adjustment is permanently logged with timestamps and operator identity." },
+                { title: "Commercial Margin Confidentiality", body: "Keep wholesale supplier contracts and negotiated volume discount terms strictly between executive leadership and senior finance." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </section>
 
         {/* CTA BANNER */}
@@ -998,8 +1082,10 @@ export default function FeaturesPage() {
       {/* FOOTER */}
       <footer className="border-t border-zinc-200/80 px-6 py-8 flex flex-col sm:flex-row justify-between items-center bg-zinc-50 text-xs text-zinc-500 font-mono gap-4">
         <p>© 2026 Manna Books LTD. All rights reserved. Powered by <Link href="https://corbantechnologies.org/" target="_blank" className="hover:underline text-[#064e3b] font-semibold">Corban Technologies LTD</Link></p>
-        <div className="flex gap-6">
+        <div className="flex flex-wrap gap-6">
           <Link href="/features" className="hover:underline hover:text-[#064e3b]">Features</Link>
+          <Link href="/industries" className="hover:underline hover:text-[#064e3b]">Industries</Link>
+          <Link href="/use-cases" className="hover:underline hover:text-[#064e3b]">Use Cases</Link>
           <Link href="/pricing" className="hover:underline hover:text-[#064e3b]">Pricing</Link>
           <Link href="/guide" className="hover:underline hover:text-[#064e3b]">Guide</Link>
           <Link href="/terms" className="hover:underline hover:text-[#064e3b]">Terms</Link>

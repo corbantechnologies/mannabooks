@@ -63,44 +63,50 @@ export default function LandingPage() {
           <div className="lg:col-span-7 space-y-7 relative z-10">
             <div className="inline-flex items-center gap-2 border border-emerald-200 px-3.5 py-1.5 text-[11px] font-mono uppercase tracking-widest bg-emerald-50 rounded-full font-semibold text-[#064e3b]">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
-              Edition 2026.9 — CRM Pipeline, Interactive Proposals, Contracts &amp; Statutory Accounting
+              Edition 2026.9 — Enterprise Production, WMS Bins, Cost Centers, eTIMS &amp; Statutory Compliance
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-[1.02] uppercase text-black">
-              Financial velocity &amp; statutory compliance<br className="hidden sm:block" />
-              <span className="gradient-text-emerald"> for Kenyan SMEs.</span>
+              Financial velocity, plant operations &amp; compliance<br className="hidden sm:block" />
+              <span className="gradient-text-emerald"> for Kenyan enterprises.</span>
             </h1>
 
             <p className="text-base md:text-lg text-zinc-600 max-w-xl font-normal leading-relaxed">
-              A complete financial operating system for Kenyan businesses. Visual CRM Kanban pipeline, tiered proposals with drawn e-signatures, retainer contracts with SLA burn-down, multi-rate KRA eTIMS invoices, statutory payroll, walk-in POS, and double-entry accounting — all in one workspace.
+              A complete financial operating system for Kenyan businesses — from multi-tier manufacturing plants and holding conglomerates to retail chains and tech resellers. Multi-stage Bill of Materials (BOM), sub-location bin WMS, departmental cost centers, KRA eTIMS compliance, visual CRM pipeline, and double-entry general ledgers — all in one unified workspace.
             </p>
 
-            <div className="pt-1 flex flex-col sm:flex-row gap-4 font-mono text-xs">
+            <div className="pt-1 flex flex-wrap gap-3 font-mono text-xs">
               <Link
                 href="/signup"
-                className="btn-primary-emerald text-center px-8 py-3.5 text-xs font-bold uppercase tracking-wider"
+                className="btn-primary-emerald text-center px-7 py-3 text-xs font-bold uppercase tracking-wider"
               >
                 Initialize Your Workspace →
               </Link>
               <Link
-                href="/features"
-                className="btn-secondary-emerald text-center px-8 py-3.5 text-xs font-semibold uppercase tracking-wider"
+                href="/use-cases"
+                className="btn-secondary-emerald text-center px-7 py-3 text-xs font-semibold uppercase tracking-wider"
               >
-                Explore All Features
+                Live Use Cases (KES) →
+              </Link>
+              <Link
+                href="/features"
+                className="border border-zinc-300 hover:border-black bg-zinc-50 hover:bg-white text-zinc-800 text-center px-6 py-3 text-xs font-semibold uppercase tracking-wider rounded-md transition-colors"
+              >
+                Explore Features
               </Link>
             </div>
 
             {/* TRUST STATS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
               {[
-                { title: "CRM Deals Pipeline", text: "Visual Kanban with weighted conversion forecasting." },
-                { title: "Tiered Proposals", text: "Client e-signatures & 1-click invoice conversion." },
-                { title: "Retainer Contracts", text: "Monthly SLA hours burn-down & auto-invoicing." },
+                { title: "Production & BOM", text: "Multi-stage assembly recipes, scrap tolerances & direct labor absorption." },
+                { title: "WMS & Storage Bins", text: "Sub-location coordinates, FEFO expiry & cycle count audits." },
+                { title: "Department Cost Centers", text: "Granular expense tagging, absorption costing & line profitability." },
+                { title: "Commercial Cost Privacy", text: "Blind storekeepers & cashiers to supplier wholesale margins." },
                 { title: "KRA eTIMS Integrated", text: "Multi-rate VAT & CU serial control mapping." },
                 { title: "Statutory Payroll", text: "PAYE, SHIF 2.75%, AHL 1.5% & NSSF Tier I/II." },
-                { title: "Walk-in POS Terminal", text: "Rapid checkout with instant stock deduction." },
-                { title: "Project Workspaces", text: "Timesheet approvals & milestone phased billing." },
-                { title: "Double-Entry GL", text: "Standardized accounts, periods & auto-budgets." },
+                { title: "Retainer Contracts & SLAs", text: "Monthly SLA hours burn-down & automated recurring billing." },
+                { title: "Double-Entry GL", text: "Standardized accounts, periods, auto-budgets & balance sheet." },
               ].map((feat, i) => (
                 <div key={i} className="card-emerald-accent p-4 text-left">
                   <h4 className="font-bold text-xs uppercase text-black mb-1.5">{feat.title}</h4>
@@ -196,6 +202,148 @@ export default function LandingPage() {
                   <span className="text-emerald-700 font-bold">● LIVE SYSTEM</span>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* INDUSTRY SOLUTIONS & USE CASES SHOWCASE */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <section className="border-b border-zinc-200/80 bg-zinc-50/70 py-20 px-6">
+          <div className="max-w-7xl mx-auto space-y-12">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div className="space-y-3 max-w-2xl">
+                <span className="font-mono text-[10px] text-[#064e3b] bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full uppercase tracking-widest font-semibold inline-block">
+                  Tailored Business Blueprints
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-bold uppercase tracking-tight text-black font-sans">
+                  Engineered for your exact industry &amp; operational reality.
+                </h2>
+                <p className="text-sm text-zinc-600 font-sans leading-relaxed">
+                  Whether running a chemical plant, a multi-entity holding group, or a zero-stock tech reseller, explore how MannaBooks models your exact workflow with real Kenyan numbers (KES) and balanced general ledgers.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <Link
+                  href="/use-cases"
+                  className="btn-primary-emerald px-6 py-3 text-xs font-mono font-bold uppercase tracking-wider"
+                >
+                  All 9 Use Cases (KES) →
+                </Link>
+                <Link
+                  href="/industries"
+                  className="btn-secondary-emerald px-6 py-3 text-xs font-mono font-semibold uppercase tracking-wider"
+                >
+                  All Industries
+                </Link>
+              </div>
+            </div>
+
+            {/* 6 Industry Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                {
+                  slug: "manufacturing-production",
+                  icon: "⚙️",
+                  tag: "LIGHT & HEAVY MANUFACTURING",
+                  title: "Manufacturing & Production",
+                  desc: "Multi-stage Bill of Materials (BOM), WIP staging floor, departmental cost centers (CC-101 to CC-106), and factory labor/utility absorption.",
+                  linkText: "Explore Production Blueprint →",
+                },
+                {
+                  slug: "holding-companies",
+                  icon: "🏛️",
+                  tag: "MULTI-ENTITY & CONGLOMERATES",
+                  title: "Holding Companies & Groups",
+                  desc: "One executive sign-on across multiple registered subsidiaries with isolated KRA PINs, dedicated bank ledgers, and KES 50k approval ceilings.",
+                  linkText: "Explore Holding Group Blueprint →",
+                },
+                {
+                  slug: "tech-integrators",
+                  icon: "💻",
+                  tag: "TECH RESELLERS & INTEGRATORS",
+                  title: "On-Demand Hardware & Setup",
+                  desc: "Zero-stock pass-through procurement from master distributors, line-item device serial numbers (S/N) for warranty, and milestone SLA billing.",
+                  linkText: "Explore Tech Reseller Blueprint →",
+                },
+                {
+                  slug: "fmcg-distribution",
+                  icon: "📦",
+                  tag: "FMCG, PHARMA & PERISHABLES",
+                  title: "FEFO Cold-Chain & WMS Bins",
+                  desc: "First-Expired First-Out batch picking, multi-tier aisle-rack-shelf bin coordinates, and 1-click cycle count audit reconciliations.",
+                  linkText: "Explore FMCG Blueprint →",
+                },
+                {
+                  slug: "professional-services",
+                  icon: "⚖️",
+                  tag: "CONSULTING, LAW & AUDIT",
+                  title: "Professional Retainers & Time",
+                  desc: "Capture every billable hour, automate monthly SLA contract burndowns, and convert approved timesheets directly into eTIMS invoices.",
+                  linkText: "Explore Service Firm Blueprint →",
+                },
+                {
+                  slug: "retail-chains",
+                  icon: "🏪",
+                  tag: "RETAIL CHAINS & HARDWARE",
+                  title: "Multi-Branch Retail & POS",
+                  desc: "Fast counter walk-in POS, Two-Step Inter-Branch stock transfers with in-transit protection, and commercial cost-price blindness.",
+                  linkText: "Explore Retail Chain Blueprint →",
+                },
+              ].map((ind) => (
+                <div
+                  key={ind.slug}
+                  className="bg-white border border-zinc-200/90 rounded-2xl p-6 space-y-4 hover:border-black transition-all shadow-xs flex flex-col justify-between"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-3xl p-2 bg-zinc-50 border border-zinc-200 rounded-xl inline-block">
+                        {ind.icon}
+                      </span>
+                      <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700">
+                        {ind.tag}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-base uppercase text-zinc-950 font-sans tracking-tight">
+                      {ind.title}
+                    </h3>
+                    <p className="text-xs text-zinc-600 font-sans leading-relaxed">
+                      {ind.desc}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-zinc-100 flex items-center justify-between">
+                    <Link
+                      href={`/industries/${ind.slug}`}
+                      className="text-xs font-mono font-bold uppercase text-[#064e3b] hover:underline"
+                    >
+                      {ind.linkText}
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* LIVE SCENARIO BANNER */}
+            <div className="bg-zinc-950 text-white border border-zinc-800 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl">
+              <div className="space-y-1.5 max-w-2xl">
+                <span className="text-[10px] font-mono font-bold uppercase text-emerald-400 tracking-wider">
+                  ★ Dedicated Public Portal
+                </span>
+                <h3 className="text-lg sm:text-xl font-bold uppercase tracking-tight text-white font-sans">
+                  Explore The Interactive Use Cases Portal
+                </h3>
+                <p className="text-xs text-zinc-400 font-sans leading-relaxed">
+                  Filter through 9 full operational scenarios complete with cost center structures, storekeeper privacy configurations, step-by-step supply chain flows, and audited double-entry journal entries.
+                </p>
+              </div>
+              <Link
+                href="/use-cases"
+                className="btn-primary-emerald whitespace-nowrap px-6 py-3 text-xs font-mono font-bold uppercase tracking-wider shrink-0"
+              >
+                Launch Use Cases Portal →
+              </Link>
             </div>
           </div>
         </section>
@@ -407,6 +555,8 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-wrap gap-5">
             <Link href="/features" className="hover:underline hover:text-[#064e3b] transition-colors">Features</Link>
+            <Link href="/industries" className="hover:underline hover:text-[#064e3b] transition-colors">Industries</Link>
+            <Link href="/use-cases" className="hover:underline hover:text-[#064e3b] transition-colors">Use Cases</Link>
             <Link href="/pricing" className="hover:underline hover:text-[#064e3b] transition-colors">Pricing</Link>
             <Link href="/guide" className="hover:underline hover:text-[#064e3b] transition-colors">Operator Guide</Link>
             <Link href="/terms" className="hover:underline hover:text-[#064e3b] transition-colors">Terms</Link>

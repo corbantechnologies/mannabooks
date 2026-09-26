@@ -51,13 +51,13 @@ export default async function WorkspacesDirectoryPage() {
   const rawPlan = isLifetime ? "LIFETIME PRO" : (currentUser?.plan || "FREE").toUpperCase();
 
   return (
-    <div className="min-h-screen bg-white text-black flex flex-col justify-between p-6 sm:p-12 md:p-16 selection:bg-black selection:text-white">
+    <div className="min-h-screen bg-white text-black flex flex-col justify-between p-4 sm:p-12 md:p-16 selection:bg-black selection:text-white">
       
       {/* TOP META BAR */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-6">
         <div>
           <span className="text-xs text-zinc-400 font-medium">Account Workspaces &amp; Staff Directory</span>
-          <div className="flex items-center gap-3 mt-1">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 mt-1">
             <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight font-sans text-black">
               Workspace Central
             </h1>
@@ -74,7 +74,7 @@ export default async function WorkspacesDirectoryPage() {
                 <span>LIFETIME PRO</span>
               </span>
             ) : (
-              <div className="flex items-center gap-1.5 font-mono text-[10px]">
+              <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px]">
                 <span className={`font-bold px-2 py-0.5 rounded-md border uppercase ${
                   rawPlan === "ENTERPRISE"
                     ? "bg-purple-50 text-purple-900 border-purple-300"
@@ -96,11 +96,11 @@ export default async function WorkspacesDirectoryPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
           {currentUser?.isSuperAdmin && (
             <Link
               href="/admin"
-              className="bg-black hover:bg-zinc-800 text-amber-300 border border-amber-500/40 px-3.5 py-2 rounded-lg font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-2xs no-underline transition-all"
+              className="bg-black hover:bg-zinc-800 text-amber-300 border border-amber-500/40 px-3.5 py-2.5 sm:py-2 rounded-lg font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-2xs no-underline transition-all"
             >
               <span>👑</span>
               <span>Admin Terminal</span>
@@ -109,7 +109,7 @@ export default async function WorkspacesDirectoryPage() {
 
           <Link 
             href="/onboarding/create-shop"
-            className="btn-secondary-modern px-4 py-2 text-xs font-semibold uppercase tracking-wider"
+            className="btn-secondary-modern px-4 py-2.5 sm:py-2 text-xs font-semibold uppercase tracking-wider text-center justify-center flex items-center"
           >
             + Provision New Shop
           </Link>
@@ -117,7 +117,7 @@ export default async function WorkspacesDirectoryPage() {
       </header>
 
       {/* WORKSPACE DIRECTORY & STAFF ROSTER */}
-      <main className="my-10 max-w-4xl w-full mx-auto space-y-4">
+      <main className="my-8 sm:my-10 max-w-4xl w-full mx-auto space-y-4">
         <WorkspaceDirectoryClient
           currentUser={currentUser}
           rawPlan={rawPlan}
@@ -129,13 +129,13 @@ export default async function WorkspacesDirectoryPage() {
       </main>
 
       {/* BOTTOM FOOTER TRACKER */}
-      <footer className="border-t border-zinc-200 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2 font-mono text-[10px] text-zinc-400">
+      <footer className="border-t border-zinc-200 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 font-mono text-[10px] text-zinc-400 text-center sm:text-left">
         <div>
           <span>Operator: <strong className="text-black">{currentUser?.name}</strong> ({currentUser?.email})</span>
-          <span className="mx-2">•</span>
-          <span>Account Tier: <strong className="text-black">{rawPlan}</strong></span>
+          <span className="mx-2 hidden sm:inline">•</span>
+          <span className="block sm:inline mt-1 sm:mt-0">Account Tier: <strong className="text-black">{rawPlan}</strong></span>
         </div>
-        <form action={logoutAction}>
+        <form action={logoutAction} className="w-full sm:w-auto">
           <button type="submit" className="text-black font-bold hover:underline uppercase cursor-pointer bg-transparent border-none p-0 font-mono text-[10px]">
             De-authenticate Console
           </button>

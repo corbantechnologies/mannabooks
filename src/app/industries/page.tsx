@@ -33,87 +33,92 @@ export const metadata: Metadata = {
 
 const industries = [
   {
-    icon: "🏦",
-    tag: "FINANCIAL & LEGAL SERVICES",
-    title: "Wealth Managers, SACCOs, Microfinance, Law Chambers & Consultancies",
+    slug: "manufacturing-production",
+    icon: "⚙️",
+    tag: "MANUFACTURING & ASSEMBLIES",
+    title: "Chemical Blenders, Commercial Bakeries & Light Production",
     description:
-      "Engineered specifically for financial entities, SACCOs, wealth managers, law firms, and advisory practices managing client accounts, creditor commitments, bank reconciliations, and statutory reporting with zero physical stock.",
+      "Engineered for producers combining raw ingredients, packaging components, direct labor, and factory overhead into finished products with Bill of Materials (BOM) precision.",
     bulletPoints: [
-      "Complete Client (AR 1100) & Supplier (AP 2100) sub-ledger integration with instant statements of account.",
-      "Compound multi-line journal entry builder for fund splits, statutory payroll accruals, and partner draws.",
-      "Bank & M-Pesa CSV reconciliation with automated inverted matching and KES 0.00 zero-variance target.",
-      "Strict monthly period closing/reopening guards and 1-click CSV/PDF export for Trial Balance, P&L, & Balance Sheet."
+      "Multi-item Bill of Materials (BOM) with configurable wastage and spillage tolerances.",
+      "1-click batch assembly execution with automated raw stock deductions and finished unit capitalization.",
+      "Accurate unit cost pricing incorporating direct technician wages and factory overhead.",
+      "Finished stock tracking with FIFO valuation and batch expiry monitoring."
     ],
     highlight: true,
   },
   {
-    icon: "🏗️",
-    tag: "HYBRID ENTERPRISE",
-    title: "Contractors, Wholesalers & Commercial Hybrid Firms",
+    slug: "holding-companies",
+    icon: "🏛️",
+    tag: "CONGLOMERATES & MULTI-ENTITY",
+    title: "Holding Groups, Conglomerates & Corporate Subsidiaries",
     description:
-      "The unified architecture for companies billing physical equipment alongside professional installation labor, engineering consulting hours, and recurring maintenance retainers.",
+      "A single executive control center for managing multiple legal entities across real estate, logistics, trading, and retail with isolated General Ledgers and strict spending limits.",
     bulletPoints: [
-      "Track complex commercial contracts from initial CRM proposal through to delivered project milestones.",
-      "Single unified tax invoice billing physical inventory (with FIFO stock deductions) and non-stock service fees.",
-      "Consolidated double-entry General Ledger reconciling warehouse asset accounts with corporate payables.",
-      "Batch vendor bill approvals and consolidated EFT/M-Pesa payment runs for high-volume project procurement.",
-      "Switch workspace business mode to Hybrid in one click to surface both POS and deep financial tools."
+      "1-click subsidiary switcher with isolated KRA PINs, bank accounts, and invoice sequences.",
+      "Multi-tier corporate spending governance with direct approval thresholds (e.g. KES 50k cap).",
+      "Commercial privacy / cost-price blindness protecting supplier buying costs from operational staff.",
+      "Executive consolidated reporting with 1-click export of subsidiary P&L and Balance Sheet ledgers."
     ],
     highlight: false,
   },
   {
+    slug: "tech-integrators",
+    icon: "💻",
+    tag: "TECH RESELLERS & VALUE-ADDED INTEGRATORS",
+    title: "IT Equipment Dealers, Computer Resellers & System Integrators",
+    description:
+      "The on-demand zero-stock architecture for computer dealers and installers who procure hardware from master distributors only after clients approve quotes.",
+    bulletPoints: [
+      "Pass-through zero-stock procurement with margin protection and KRA eTIMS invoicing.",
+      "Project milestone billing bundling hardware supply with on-site deployment labor.",
+      "Line-item serial number logging (`S/N`) on Delivery Notes for foolproof client warranty verification.",
+      "Subcontractor cost tracking via vendor bills to safeguard overall project profit margins."
+    ],
+    highlight: false,
+  },
+  {
+    slug: "fmcg-distribution",
+    icon: "📦",
+    tag: "FMCG, PHARMA & PERISHABLES",
+    title: "Pharmaceutical Depots, FMCG Wholesalers & Perishable Food Chains",
+    description:
+      "Built for operations tracking lot numbers, regulatory expiration dates, and multi-tier warehouse pallet coordinates (`Aisle - Rack - Shelf - Bin`).",
+    bulletPoints: [
+      "First-Expired, First-Out (FEFO) picking logic to eradicate expired stock write-offs.",
+      "Granular sub-location bin architecture for 3.5x faster warehouse pick-and-pack routing.",
+      "Physical stocktake audit wizard with mobile blind counts and automated variance journals.",
+      "Near-expiry color-coded monitoring alerts (90d, 60d, 30d critical windows)."
+    ],
+    highlight: false,
+  },
+  {
+    slug: "professional-services",
+    icon: "⚖️",
+    tag: "CONSULTING, LAW & CORPORATE SERVICES",
+    title: "Law Chambers, Wealth Managers, SACCOs & Management Consultancies",
+    description:
+      "Designed for service-based businesses billing brainpower, retainer SLA contracts, and staff timesheets with zero physical inventory requirements.",
+    bulletPoints: [
+      "Client retainer contracts with monthly SLA hour burndown tracking and automated over-scope billing.",
+      "Staff billable timesheet queues with project manager review, approval, and 1-click invoicing.",
+      "Complete Client (AR 1100) & Supplier (AP 2100) sub-ledger integration with instant statements of account.",
+      "Bank & M-Pesa CSV reconciliation with automated inverted matching and KES 0.00 zero-variance target."
+    ],
+    highlight: false,
+  },
+  {
+    slug: "retail-chains",
     icon: "🏪",
-    tag: "RETAIL & WHOLESALE",
-    title: "Retail Counters, Supermarkets & Hardware Stores",
+    tag: "RETAIL CHAINS & HARDWARE STORES",
+    title: "Retail Supermarkets, Hardware Depots & Multi-Branch Outlets",
     description:
-      "Engineered for fast-paced walk-in environments that need rapid POS terminals, product catalog lookups, and immediate stock reconciliation without creating customer profiles.",
+      "High-speed walk-in counter operations, cash drawer reconciliation, driver dispatch transfers, and commercial cost privacy for cashier staff.",
     bulletPoints: [
-      "Walk-in POS terminal with cash change calculation & M-Pesa ref logger.",
-      "Low-stock alert thresholds to prevent out-of-stock order disruptions.",
-      "Real-time stock deduction upon completion of receipts or POS sales.",
-      "Product catalog supporting SKU barcodes, selling price, and cost price."
-    ],
-    highlight: false,
-  },
-  {
-    icon: "💼",
-    tag: "PROFESSIONAL SERVICES",
-    title: "Agencies, Consultants, Freelancers & Service Providers",
-    description:
-      "Designed for service-based businesses billing local or international clients with CRM pipelines, tiered e-signed proposals, retainer SLA contracts, and project timesheets.",
-    bulletPoints: [
-      "Visual CRM deals pipeline with 6-stage Kanban and weighted conversion forecasting.",
-      "Tiered interactive proposals (Silver, Gold, Platinum) with drawn touch/mouse client e-signatures.",
-      "Retainer contracts with monthly SLA hours burndown ledgers and automated 30-day/60-day renewal alerts.",
-      "Project workspaces with staff hourly billable rates, timesheet approvals, and phased milestone invoicing."
-    ],
-    highlight: false,
-  },
-  {
-    icon: "🏭",
-    tag: "DISTRIBUTION & LOGISTICS",
-    title: "Wholesale Distributors & Multi-Warehouse Supply Chains",
-    description:
-      "Perfect for organizations managing inventory across multiple storage locations, moving stock via transit pipelines, and issuing formal procurement documents.",
-    bulletPoints: [
-      "Multi-location warehousing to isolate stock on-hand per branch or depot.",
-      "Two-step stock transfers with DISPATCH (Transit status) and RECEIVE (Partial support).",
-      "Procurement document flow including Purchase Orders, LPOs, and GRNs.",
-      "Weighted average cost valuation & ABC Pareto revenue-tier categorization."
-    ],
-    highlight: false,
-  },
-  {
-    icon: "🇰🇪",
-    tag: "STATUTORY COMPLIANCE",
-    title: "Kenyan SMEs with Payroll & Tax Obligations",
-    description:
-      "Provides end-to-end statutory calculations, monthly VAT aggregates, and progressive payroll runs that align perfectly with KRA iTax rules.",
-    bulletPoints: [
-      "Gross-to-net payroll compiler covering PAYE progressive, SHIF 2.75%, AHL 1.5%, & NSSF.",
-      "Landscape A4 Payroll Voucher PDF output with 11 unbundled ledger columns.",
-      "Live 20th KRA VAT return tracker with color-coded deadline countdown alerts.",
-      "Fixed asset wear-and-tear registers, Corporate Income Tax, & Turnover Tax (TOT) calculators."
+      "Walk-in POS terminal with barcode scanning, cash change calculation, and instant M-Pesa ref logger.",
+      "Two-step inter-branch stock transfers with in-transit status locks to prevent van delivery leakage.",
+      "Cost-price blindness hiding supplier buying costs from counter clerks and storekeepers.",
+      "Daily cashier till closing with automated physical cash vs system ledger reconciliation."
     ],
     highlight: false,
   },
@@ -266,45 +271,82 @@ export default function IndustriesPage() {
         </section>
 
         {/* INDUSTRIES SECTION */}
-        <section className="max-w-7xl mx-auto w-full px-6 py-16 space-y-16">
+        <section className="max-w-7xl mx-auto w-full px-6 py-16 space-y-12">
+          {/* USE CASES PROMO BANNER */}
+          <div className="border border-emerald-300 bg-emerald-50/70 p-6 sm:p-8 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xs">
+            <div className="space-y-1.5 max-w-2xl">
+              <div className="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
+                <span>⚡ Real-World Operational Breakdown</span>
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold uppercase text-emerald-950 font-sans tracking-tight">
+                Explore 8 Detailed Field Use Cases &amp; Sample General Ledgers
+              </h3>
+              <p className="text-xs text-emerald-900/80 font-sans leading-relaxed">
+                Step-by-step supply chain flows, KRA eTIMS invoice generation, and double-entry debit/credit ledger examples for back-to-back tech dealers, chemical manufacturers, and multi-subsidiary holding groups.
+              </p>
+            </div>
+            <Link
+              href="/use-cases"
+              className="bg-black text-white hover:bg-zinc-800 text-xs font-mono font-bold uppercase tracking-wider px-5 py-3 rounded-xl shrink-0 shadow-sm transition-colors w-full md:w-auto text-center"
+            >
+              Explore Use Cases Portal →
+            </Link>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {industries.map((ind) => (
               <div
                 key={ind.title}
-                className={`border rounded-2xl p-8 space-y-6 transition-all ${
+                className={`border rounded-2xl p-8 space-y-6 transition-all flex flex-col justify-between ${
                   ind.highlight
                     ? "border-black bg-zinc-950 text-white shadow-xl"
                     : "border-zinc-200 bg-white hover:border-zinc-400 hover:shadow-md"
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-3xl">{ind.icon}</span>
-                  <span className={`font-mono text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded ${
-                    ind.highlight ? "bg-white/10 text-emerald-400" : "bg-zinc-100 text-zinc-500"
-                  }`}>
-                    {ind.tag}
-                  </span>
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-3xl">{ind.icon}</span>
+                    <span className={`font-mono text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded ${
+                      ind.highlight ? "bg-white/10 text-emerald-400" : "bg-zinc-100 text-zinc-500"
+                    }`}>
+                      {ind.tag}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h2 className="text-xl font-bold font-sans uppercase tracking-tight">{ind.title}</h2>
+                    <p className={`text-xs leading-relaxed font-sans ${ind.highlight ? "text-zinc-400" : "text-zinc-600"}`}>
+                      {ind.description}
+                    </p>
+                  </div>
+
+                  <div className={`h-px ${ind.highlight ? "bg-white/10" : "bg-zinc-100"}`} />
+
+                  <ul className="space-y-3 font-sans text-xs">
+                    {ind.bulletPoints.map((bp) => (
+                      <li key={bp} className="flex items-start gap-2.5">
+                        <svg className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${ind.highlight ? "text-emerald-400" : "text-emerald-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <span className={ind.highlight ? "text-zinc-300" : "text-zinc-600"}>{bp}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
-                <div className="space-y-2">
-                  <h2 className="text-xl font-bold font-sans uppercase tracking-tight">{ind.title}</h2>
-                  <p className={`text-xs leading-relaxed font-sans ${ind.highlight ? "text-zinc-400" : "text-zinc-600"}`}>
-                    {ind.description}
-                  </p>
+                <div className={`border-t pt-4 mt-2 ${ind.highlight ? "border-zinc-800" : "border-zinc-100"}`}>
+                  <Link
+                    href={`/industries/${ind.slug}`}
+                    className={`inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider transition-colors ${
+                      ind.highlight
+                        ? "text-emerald-400 hover:text-white"
+                        : "text-zinc-950 hover:text-emerald-700 hover:underline"
+                    }`}
+                  >
+                    <span>Read Full Industry Blueprint &amp; Case Study</span>
+                    <span>→</span>
+                  </Link>
                 </div>
-
-                <div className={`h-px ${ind.highlight ? "bg-white/10" : "bg-zinc-100"}`} />
-
-                <ul className="space-y-3 font-sans text-xs">
-                  {ind.bulletPoints.map((bp) => (
-                    <li key={bp} className="flex items-start gap-2.5">
-                      <svg className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${ind.highlight ? "text-emerald-400" : "text-emerald-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/>
-                      </svg>
-                      <span className={ind.highlight ? "text-zinc-300" : "text-zinc-600"}>{bp}</span>
-                    </li>
-                  ))}
-                </ul>
               </div>
             ))}
           </div>

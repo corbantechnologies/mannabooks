@@ -95,18 +95,18 @@ export function WorkspaceDirectoryClient({
   return (
     <div className="space-y-6">
       {/* TABS CONTROLLER */}
-      <div className="flex items-center justify-between border-b border-zinc-200">
-        <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-200 pb-2 sm:pb-0">
+        <div className="flex gap-4 overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => setActiveTab("WORKSPACES")}
-            className={`pb-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
+            className={`pb-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === "WORKSPACES"
                 ? "border-black text-black"
                 : "border-transparent text-zinc-400 hover:text-zinc-700"
             }`}
           >
-            <Building2 className="w-4 h-4" />
+            <Building2 className="w-4 h-4 shrink-0" />
             <span>Authorized Workspaces ({memberships.length})</span>
           </button>
 
@@ -114,33 +114,33 @@ export function WorkspaceDirectoryClient({
             <button
               type="button"
               onClick={() => setActiveTab("STAFF")}
-              className={`pb-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
+              className={`pb-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all whitespace-nowrap cursor-pointer shrink-0 ${
                 activeTab === "STAFF"
                   ? "border-black text-black"
                   : "border-transparent text-zinc-400 hover:text-zinc-700"
               }`}
             >
-              <Users className="w-4 h-4" />
-              <span>Organization Staff Roster ({roster.length})</span>
+              <Users className="w-4 h-4 shrink-0" />
+              <span>Staff Roster ({roster.length})</span>
             </button>
           )}
         </div>
 
-        <div className="pb-2">
-          {ownedShops.length > 0 && (
+        {ownedShops.length > 0 && (
+          <div className="w-full sm:w-auto pb-2">
             <button
               type="button"
               onClick={() => {
                 setInviteShopId(ownedShops[0]?.id || "");
                 setShowInviteModal(true);
               }}
-              className="bg-black text-white hover:bg-zinc-800 text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded flex items-center gap-1.5 transition-all cursor-pointer"
+              className="w-full sm:w-auto justify-center bg-black text-white hover:bg-zinc-800 text-[11px] font-bold uppercase tracking-wider px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
             >
-              <UserPlus className="w-3.5 h-3.5" />
+              <UserPlus className="w-3.5 h-3.5 shrink-0" />
               <span>+ Add / Assign Staff</span>
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* ── TAB 1: WORKSPACE CARDS ── */}
@@ -153,46 +153,48 @@ export function WorkspaceDirectoryClient({
             return (
               <div
                 key={member.id}
-                className="p-5 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-zinc-50/60 transition-colors"
+                className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 hover:bg-zinc-50/60 transition-colors"
               >
-                <Link
-                  href={`/workspaces/${member.shop.slug}`}
-                  className="space-y-1 group min-w-0 flex-1 no-underline"
-                >
-                  <div className="flex items-center gap-2.5">
+                <div className="space-y-1.5 min-w-0 flex-1">
+                  <Link
+                    href={`/workspaces/${member.shop.slug}`}
+                    className="group inline-flex items-center gap-2.5 no-underline max-w-full"
+                  >
                     <span
-                      className="w-3.5 h-3.5 border border-black/30 rounded-sm shrink-0 inline-block"
+                      className="w-3.5 h-3.5 border border-black/30 rounded-xs shrink-0 inline-block"
                       style={{ backgroundColor: member.shop.primaryColor || "#000000" }}
                     />
-                    <h3 className="text-lg sm:text-xl font-bold uppercase tracking-tight font-sans text-black group-hover:underline decoration-2 underline-offset-4 truncate">
+                    <h3 className="text-base sm:text-lg md:text-xl font-bold uppercase tracking-tight font-sans text-black group-hover:underline decoration-2 underline-offset-4 truncate">
                       {member.shop.shortName || member.shop.name}
                     </h3>
-                  </div>
+                  </Link>
+
                   <p className="font-mono text-xs text-zinc-400 truncate">
                     /workspaces/{member.shop.slug}
                   </p>
-                </Link>
 
-                <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] shrink-0">
-                  {/* ROLE BADGE */}
-                  <span className="border border-zinc-300 px-2.5 py-0.5 font-bold uppercase bg-white text-zinc-800 rounded">
-                    {member.role}
-                  </span>
+                  {/* METADATA BADGES */}
+                  <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px] pt-0.5">
+                    <span className="border border-zinc-300 px-2 py-0.5 font-bold uppercase bg-zinc-50 text-zinc-800 rounded">
+                      {member.role}
+                    </span>
+                    <span className="bg-zinc-100 border border-zinc-200 text-zinc-600 px-2 py-0.5 font-semibold rounded">
+                      {member.shop.currency}
+                    </span>
+                  </div>
+                </div>
 
-                  {/* CURRENCY */}
-                  <span className="bg-zinc-100 border border-zinc-200 text-zinc-600 px-2.5 py-0.5 font-semibold rounded">
-                    {member.shop.currency}
-                  </span>
-
+                {/* ACTION BUTTONS (STACK ON MOBILE, ROW ON SM+) */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100">
                   {/* QUICK MANAGE TEAM BUTTON */}
                   {isOwnerOrAdmin && (
                     <button
                       type="button"
                       onClick={() => setSelectedShopForTeam(member.shop)}
-                      className="border border-zinc-300 hover:border-black bg-zinc-50 hover:bg-black hover:text-white px-3 py-1 font-bold text-zinc-700 rounded transition-all flex items-center gap-1.5 cursor-pointer"
+                      className="w-full sm:w-auto justify-center border border-zinc-300 hover:border-black bg-white hover:bg-zinc-50 text-zinc-800 px-3.5 py-2 sm:py-1.5 font-bold text-xs rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                       title="Manage team members for this branch"
                     >
-                      <Users className="w-3 h-3" />
+                      <Users className="w-3.5 h-3.5 shrink-0" />
                       <span>Manage Team</span>
                     </button>
                   )}
@@ -200,10 +202,10 @@ export function WorkspaceDirectoryClient({
                   {/* ENTER WORKSPACE BUTTON */}
                   <Link
                     href={`/workspaces/${member.shop.slug}`}
-                    className="bg-black hover:bg-zinc-800 text-white px-3.5 py-1 font-bold uppercase rounded flex items-center gap-1 no-underline transition-all"
+                    className="w-full sm:w-auto justify-center bg-black hover:bg-zinc-800 text-white px-4 py-2 sm:py-1.5 font-bold uppercase tracking-wider text-xs rounded-lg flex items-center gap-1.5 no-underline transition-all shadow-2xs"
                   >
-                    <span>Enter</span>
-                    <ArrowRight className="w-3 h-3" />
+                    <span>Enter Workspace</span>
+                    <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                   </Link>
                 </div>
               </div>
@@ -215,7 +217,7 @@ export function WorkspaceDirectoryClient({
       {/* ── TAB 2: CONSOLIDATED STAFF ROSTER ── */}
       {activeTab === "STAFF" && (
         <div className="card-modern bg-white overflow-hidden">
-          <div className="p-4 bg-zinc-50 border-b border-zinc-200 flex justify-between items-center">
+          <div className="p-4 bg-zinc-50 border-b border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h3 className="font-bold text-xs uppercase tracking-wider text-black">
                 Organization Staff Matrix
@@ -224,13 +226,13 @@ export function WorkspaceDirectoryClient({
                 Staff members and their designated access roles across your business workspaces.
               </p>
             </div>
-            <span className="text-[10px] font-mono text-zinc-400 bg-white border border-zinc-200 px-2 py-0.5 rounded">
+            <span className="text-[10px] font-mono text-zinc-500 bg-white border border-zinc-200 px-2 py-0.5 rounded self-start sm:self-auto">
               {roster.length} Accounts Registered
             </span>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-sans">
+            <table className="w-full text-left text-xs font-sans min-w-[620px]">
               <thead className="bg-zinc-100/60 border-b border-zinc-200 text-zinc-500 font-mono text-[10px] uppercase">
                 <tr>
                   <th className="py-2.5 px-4 font-semibold">Staff Member</th>
@@ -283,7 +285,7 @@ export function WorkspaceDirectoryClient({
                           setInviteEmail(staff.email);
                           setShowInviteModal(true);
                         }}
-                        className="text-[10px] font-mono font-bold text-black border border-zinc-300 hover:border-black px-2 py-1 rounded bg-white hover:bg-black hover:text-white transition-all cursor-pointer"
+                        className="text-[10px] font-mono font-bold text-black border border-zinc-300 hover:border-black px-2 py-1 rounded bg-white hover:bg-black hover:text-white transition-all cursor-pointer whitespace-nowrap"
                       >
                         + Assign to Workspace
                       </button>
@@ -305,8 +307,8 @@ export function WorkspaceDirectoryClient({
 
       {/* ── MODAL: INVITE / ASSIGN STAFF ── */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="card-modern max-w-md w-full bg-white p-6 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50">
+          <div className="card-modern max-w-md w-full bg-white p-5 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-zinc-200 pb-3">
               <h3 className="font-bold text-sm uppercase tracking-wider text-black flex items-center gap-2">
                 <UserPlus className="w-4 h-4" />
@@ -416,18 +418,18 @@ export function WorkspaceDirectoryClient({
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-100">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-3 border-t border-zinc-100">
                 <button
                   type="button"
                   onClick={() => setShowInviteModal(false)}
-                  className="px-4 py-2 border border-zinc-300 rounded text-xs font-semibold text-zinc-600 hover:bg-zinc-50 cursor-pointer"
+                  className="w-full sm:w-auto px-4 py-2 border border-zinc-300 rounded text-xs font-semibold text-zinc-600 hover:bg-zinc-50 cursor-pointer text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="bg-black text-white hover:bg-zinc-800 px-5 py-2 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="w-full sm:w-auto justify-center bg-black text-white hover:bg-zinc-800 px-5 py-2 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {isPending ? <Spinner size={14} /> : <Check className="w-3.5 h-3.5" />}
                   <span>Authorize &amp; Assign</span>
@@ -441,7 +443,7 @@ export function WorkspaceDirectoryClient({
       {/* ── DRAWER: MANAGE SPECIFIC WORKSPACE TEAM ── */}
       {selectedShopForTeam && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex justify-end z-50">
-          <div className="w-full max-w-lg bg-white h-full shadow-2xl p-6 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200">
+          <div className="w-full max-w-lg bg-white h-full shadow-2xl p-4 sm:p-6 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200">
             <div className="space-y-5">
               <div className="flex justify-between items-start border-b border-zinc-200 pb-4">
                 <div>
@@ -531,17 +533,17 @@ export function WorkspaceDirectoryClient({
               </div>
             </div>
 
-            <div className="pt-6 border-t border-zinc-200 flex justify-between items-center">
+            <div className="pt-6 border-t border-zinc-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <Link
                 href={`/workspaces/${selectedShopForTeam.slug}/team`}
-                className="text-xs font-semibold text-zinc-600 hover:text-black underline"
+                className="text-xs font-semibold text-zinc-600 hover:text-black underline text-center sm:text-left"
               >
                 Open Full Team Settings &rarr;
               </Link>
               <button
                 type="button"
                 onClick={() => setSelectedShopForTeam(null)}
-                className="btn-secondary-modern px-4 py-1.5 text-xs font-semibold"
+                className="btn-secondary-modern px-4 py-2 sm:py-1.5 text-xs font-semibold w-full sm:w-auto justify-center"
               >
                 Done
               </button>

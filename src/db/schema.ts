@@ -57,10 +57,15 @@ export const expenseClaimStatusEnum = pgEnum('expense_claim_status', ['DRAFT', '
 
 export const approvalRequestTypeEnum = pgEnum('approval_request_type', [
     'PURCHASE_REQUISITION',
+    'PURCHASE_ORDER',
     'EXPENSE_CLAIM',
     'CREDIT_NOTE',
     'STOCK_ADJUSTMENT',
-    'BUDGET_OVERRUN'
+    'STOCK_WRITEOFF',
+    'BUDGET_OVERRUN',
+    'QUOTE_DISCOUNT',
+    'INVOICE_CANCELLATION',
+    'CUSTOM'
 ]);
 export const approvalStatusEnum = pgEnum('approval_status', [
     'DRAFT',
@@ -1341,6 +1346,8 @@ export const usersRelations = relations(users, ({ many }) => ({
     memberships: many(shopMembers),
     sessions: many(sessions),
     employeeProfiles: many(employees),
+    approvalRequestsRequested: many(approvalRequests, { relationName: 'approval_requester' }),
+    approvalRequestsDecided: many(approvalRequests, { relationName: 'approval_decider' }),
 }));
 
 export const shopsRelations = relations(shops, ({ one, many }) => ({

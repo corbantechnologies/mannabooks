@@ -48,66 +48,75 @@ async function getNextRequestNumber(shopId: string): Promise<string> {
  * Retrieves all approval policies configured for a workspace.
  */
 export async function getApprovalPolicies(shopId: string) {
-    const session = await verifyAndGetSession();
-    if (!session) return [];
+    try {
+        const session = await verifyAndGetSession();
+        if (!session) return [];
 
-    let policies = await db.query.approvalPolicies.findMany({
-        where: eq(approvalPolicies.shopId, shopId),
-        orderBy: [desc(approvalPolicies.createdAt)],
-    });
-
-    // Auto-seed default baseline policies if none exist
-    if (policies.length === 0) {
-        const defaultSeeds = [
-            {
-                shopId,
-                requestType: "PURCHASE_REQUISITION" as const,
-                name: "Purchase Orders > KES 20,000",
-                minAmount: "20000.00",
-                maxAmount: null,
-                requiredRole: "MANAGER" as const,
-                autoApproveBelow: "20000.00",
-                isActive: true,
-            },
-            {
-                shopId,
-                requestType: "CREDIT_NOTE" as const,
-                name: "Credit Notes & Refunds > KES 10,000",
-                minAmount: "10000.00",
-                maxAmount: null,
-                requiredRole: "ADMIN" as const,
-                autoApproveBelow: "10000.00",
-                isActive: true,
-            },
-            {
-                shopId,
-                requestType: "STOCK_ADJUSTMENT" as const,
-                name: "Inventory Write-Offs > KES 15,000",
-                minAmount: "15000.00",
-                maxAmount: null,
-                requiredRole: "MANAGER" as const,
-                autoApproveBelow: "15000.00",
-                isActive: true,
-            },
-            {
-                shopId,
-                requestType: "EXPENSE_CLAIM" as const,
-                name: "Employee Claims > KES 5,000",
-                minAmount: "5000.00",
-                maxAmount: null,
-                requiredRole: "MANAGER" as const,
-                autoApproveBelow: "5000.00",
-                isActive: true,
-            },
-        ];
-
-        await db.insert(approvalPolicies).values(defaultSeeds);
-        policies = await db.query.approvalPolicies.findMany({
+        let policies = await db.query.approvalPolicies.findMany({
             where: eq(approvalPolicies.shopId, shopId),
+            orderBy: [desc(approvalPolicies.createdAt)],
         });
-    }
 
-    return policies;
+        // Auto-seed default baseline policies if none exist
+        if (policies.length === 0) {
+            try {
+                const defaultSeeds = [
+                    {
+                        shopId,
+                        requestType: "PURCHASE_REQUISITION" as const,
+                        name: "Purchase Orders > KES 20,000",
+                        minAmount: "20000.00",
+                        maxAmount: null,
+                        requiredRole: "MANAGER" as const,
+                        autoApproveBelow: "20000.00",
+                        isActive: true,
+                    },
+                    {
+                        shopId,
+                        requestType: "CREDIT_NOTE" as const,
+                        name: "Credit Notes & Refunds > KES 10,000",
+                        minAmount: "10000.00",
+                        maxAmount: null,
+                        requiredRole: "ADMIN" as const,
+                        autoApproveBelow: "10000.00",
+                        isActive: true,
+                    },
+                    {
+                        shopId,
+                        requestType: "STOCK_ADJUSTMENT" as const,
+                        name: "Inventory Write-Offs > KES 15,000",
+                        minAmount: "15000.00",
+                        maxAmount: null,
+                        requiredRole: "MANAGER" as const,
+                        autoApproveBelow: "15000.00",
+                        isActive: true,
+                    },
+                    {
+                        shopId,
+                        requestType: "EXPENSE_CLAIM" as const,
+                        name: "Employee Claims > KES 5,000",
+                        minAmount: "5000.00",
+                        maxAmount: null,
+                        requiredRole: "MANAGER" as const,
+                        autoApproveBelow: "5000.00",
+                        isActive: true,
+                    },
+                ];
+
+                await db.insert(approvalPolicies).values(defaultSeeds);
+                policies = await db.query.approvalPolicies.findMany({
+                    where: eq(approvalPolicies.shopId, shopId),
+                });
+            } catch (seedErr) {
+                console.warn("Could not auto-seed default approval policies:", seedErr);
+            }
+        }
+
+        return policies;
+    } catch (err) {
+        console.error("Error in getApprovalPolicies:", err);
+        return [];
+    }
 }
 
 /**
@@ -163,28 +172,33 @@ export async function upsertApprovalPolicyAction(input: {
  * Retrieves approval requests for a workspace with full relations.
  */
 export async function getApprovalRequests(shopId: string, filter?: { status?: string }) {
-    const session = await verifyAndGetSession();
-    if (!session) return [];
+    try {
+        const session = await verifyAndGetSession();
+        if (!session) return [];
 
-    let conditions: any[] = [eq(approvalRequests.shopId, shopId)];
+        let conditions: any[] = [eq(approvalRequests.shopId, shopId)];
 
-    if (filter?.status && filter.status !== "ALL") {
-        conditions.push(eq(approvalRequests.status, filter.status as any));
-    }
+        if (filter?.status && filter.status !== "ALL") {
+            conditions.push(eq(approvalRequests.status, filter.status as any));
+        }
 
-    return await db.query.approvalRequests.findMany({
-        where: and(...conditions),
-        orderBy: [desc(approvalRequests.createdAt)],
-        with: {
-            requester: true,
-            decisionBy: true,
-            policy: true,
-            timeline: {
-                with: { user: true },
-                orderBy: (t, { asc }) => [asc(t.createdAt)],
+        return await db.query.approvalRequests.findMany({
+            where: and(...conditions),
+            orderBy: [desc(approvalRequests.createdAt)],
+            with: {
+                requester: true,
+                decisionBy: true,
+                policy: true,
+                timeline: {
+                    with: { user: true },
+                    orderBy: (t, { asc }) => [asc(t.createdAt)],
+                },
             },
-        },
-    });
+        });
+    } catch (err) {
+        console.error("Error in getApprovalRequests:", err);
+        return [];
+    }
 }
 
 /**

@@ -16,10 +16,17 @@ export default async function ApprovalsPage({ params }: ApprovalsPageProps) {
   const { slug } = await params;
   const { shop, user, role } = await getActiveWorkspaceContext(slug);
 
-  const [requests, policies] = await Promise.all([
-    getApprovalRequests(shop.id),
-    getApprovalPolicies(shop.id),
-  ]);
+  let requests: any[] = [];
+  let policies: any[] = [];
+
+  try {
+    [requests, policies] = await Promise.all([
+      getApprovalRequests(shop.id),
+      getApprovalPolicies(shop.id),
+    ]);
+  } catch (err) {
+    console.error("Failed to load approvals data for workspace:", slug, err);
+  }
 
   return (
     <div className="space-y-6">

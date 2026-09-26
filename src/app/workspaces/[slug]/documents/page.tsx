@@ -82,6 +82,16 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
     with: {
       client: true,
       supplier: true,
+      parentDocument: {
+        columns: {
+          id: true,
+          docNumber: true,
+          type: true,
+          status: true,
+          grandTotal: true,
+          issueDate: true,
+        },
+      },
     },
   });
 
@@ -257,6 +267,15 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
             status: doc.status,
             grandTotal: doc.grandTotal,
             issueDate: String(doc.issueDate),
+            parentDocumentId: doc.parentDocumentId || null,
+            parentDocument: doc.parentDocument ? {
+              id: doc.parentDocument.id,
+              docNumber: doc.parentDocument.docNumber,
+              type: doc.parentDocument.type,
+              status: doc.parentDocument.status,
+              grandTotal: doc.parentDocument.grandTotal,
+              issueDate: String(doc.parentDocument.issueDate),
+            } : null,
             requiresEtims: doc.requiresEtims,
             kraCuInvoiceNumber: doc.kraCuInvoiceNumber,
             client: doc.client ? {

@@ -88,6 +88,21 @@ function determineDefaultStatus(type: DocumentType, sourceDocType?: DocumentType
 }
 
 /**
+ * Generates an unambiguous random uppercase alphanumeric code (e.g. 6 chars from 32 distinct chars).
+ * Excludes easily confused characters (0, O, 1, I).
+ * 32^6 = 1,073,741,824 unique combinations per document type/FY/shop.
+ */
+function generateRandomDocSuffix(length = 6): string {
+    const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const bytes = crypto.randomBytes(length);
+    let result = "";
+    for (let i = 0; i < length; i++) {
+        result += chars[bytes[i] % chars.length];
+    }
+    return result;
+}
+
+/**
  * Main compilation engine that structures, handles math calculations, and saves formal billing records.
  */
 export async function createBillingDocument(input: CreateDocumentInput): Promise<{ success: true; documentId: string; serial: string } | { success: false; error: string }> {
@@ -111,28 +126,9 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
 
             const isVatActive = shopProfile.isVatRegistered;
 
-            // 2. Resolve or generate standard human-readable document sequence (e.g., CORBA-INV-FY26-0001)
+            // 2. Resolve or generate standard human-readable document sequence with 6-char random alphanumeric suffix (e.g., GEARH-INV-FY26-7K4M2X)
             const fiscalYearRange = getFiscalYearRange(shopProfile.fiscalYearStartMonth || 1);
             const fySuffix = getFyDocSuffix(shopProfile.fiscalYearStartMonth || 1);
-
-            const latestDoc = await tx.query.documents.findFirst({
-                where: and(
-                    eq(documents.shopId, input.shopId),
-                    eq(documents.type, input.type),
-                    gte(documents.issueDate, fiscalYearRange.start),
-                    lte(documents.issueDate, fiscalYearRange.end)
-                ),
-                orderBy: [desc(documents.createdAt)],
-            });
-
-            let nextSequence = 1;
-            if (latestDoc) {
-                const parts = latestDoc.docNumber.split("-");
-                const lastNum = parseInt(parts[parts.length - 1], 10);
-                if (!isNaN(lastNum)) {
-                    nextSequence = lastNum + 1;
-                }
-            }
 
             const merchantPrefix = (shopProfile.code || shopProfile.shortName || shopProfile.name.slice(0, 5))
                 .replace(/[^a-zA-Z0-9]/g, "")
@@ -153,8 +149,32 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 PAYROLL_VOUCHER: "PAY",
             };
             const typeCode = docTypeMap[input.type] || "DOC";
-            const paddedSeq = String(nextSequence).padStart(4, "0");
-            const formattedSerial = `${merchantPrefix}-${typeCode}-${fySuffix}-${paddedSeq}`;
+
+            // Generate non-sequential 6-character random alphanumeric suffix with collision check
+            let formattedSerial = "";
+            let isUnique = false;
+            let attempts = 0;
+            while (!isUnique && attempts < 10) {
+                attempts++;
+                const randomSuffix = generateRandomDocSuffix(6);
+                formattedSerial = `${merchantPrefix}-${typeCode}-${fySuffix}-${randomSuffix}`;
+                const existing = await tx.query.documents.findFirst({
+                    where: and(
+                        eq(documents.shopId, input.shopId),
+                        eq(documents.docNumber, formattedSerial),
+                        eq(documents.type, input.type)
+                    ),
+                    columns: { id: true },
+                });
+                if (!existing) {
+                    isUnique = true;
+                }
+            }
+
+            // Fallback in astronomical case of 10 collisions
+            if (!isUnique) {
+                formattedSerial = `${merchantPrefix}-${typeCode}-${fySuffix}-${Date.now().toString(36).toUpperCase().slice(-6)}`;
+            }
 
             // 3. Fallback Client resolution for Walk-In POS operations
             let finalClientId = input.clientId;

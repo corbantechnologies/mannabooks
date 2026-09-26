@@ -259,8 +259,14 @@ export async function commitPayrollVoucherRun(input: {
                 return { line, calcs };
             });
 
-            // 2. Commit single master payroll voucher document
-            const voucherDocNumber = `PAY-${input.payrollPeriodCode.toUpperCase().replace(/\s+/g, "-")}-${Math.floor(1000 + Math.random() * 9000)}`;
+            // 2. Commit single master payroll voucher document with 6-char random alphanumeric suffix
+            const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+            const randomBytes = crypto.randomBytes(6);
+            let randomSuffix = "";
+            for (let i = 0; i < 6; i++) {
+                randomSuffix += chars[randomBytes[i] % chars.length];
+            }
+            const voucherDocNumber = `PAY-${input.payrollPeriodCode.toUpperCase().replace(/\s+/g, "-")}-${randomSuffix}`;
 
             const [voucher] = await tx.insert(documents).values({
                 shopId: input.shopId,

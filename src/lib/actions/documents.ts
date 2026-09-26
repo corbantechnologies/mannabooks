@@ -150,9 +150,38 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
             };
             const typeCode = docTypeMap[input.type] || "DOC";
 
-            // Generate non-sequential 6-character random alphanumeric suffix with collision check
+            // Lineage suffix inheritance: if this document is converted from a parent,
+            // inherit the parent's 6-character suffix for instant visual cross-referencing.
             let formattedSerial = "";
             let isUnique = false;
+
+            if (input.parentDocumentId) {
+                const parentDoc = await tx.query.documents.findFirst({
+                    where: eq(documents.id, input.parentDocumentId),
+                    columns: { docNumber: true },
+                });
+                if (parentDoc?.docNumber) {
+                    const parts = parentDoc.docNumber.split("-");
+                    const candidateSuffix = parts[parts.length - 1];
+                    if (candidateSuffix && candidateSuffix.length === 6) {
+                        const candidateSerial = `${merchantPrefix}-${typeCode}-${fySuffix}-${candidateSuffix}`;
+                        const existingCandidate = await tx.query.documents.findFirst({
+                            where: and(
+                                eq(documents.shopId, input.shopId),
+                                eq(documents.docNumber, candidateSerial),
+                                eq(documents.type, input.type)
+                            ),
+                            columns: { id: true },
+                        });
+                        if (!existingCandidate) {
+                            formattedSerial = candidateSerial;
+                            isUnique = true;
+                        }
+                    }
+                }
+            }
+
+            // Generate non-sequential 6-character random alphanumeric suffix with collision check
             let attempts = 0;
             while (!isUnique && attempts < 10) {
                 attempts++;

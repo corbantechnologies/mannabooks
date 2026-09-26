@@ -267,6 +267,16 @@ export function DocumentActionsPopover({
             </>
           )}
 
+          {/* RECEIPT CONVERSIONS — Delivery Note only */}
+          {docType === "RECEIPT" && (
+            <button
+              onClick={() => handleConvert("DELIVERY_NOTE")}
+              className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
+            >
+              <span>🚚</span> Generate Delivery Note
+            </button>
+          )}
+
           {/* GOODS RECEIVED NOTE CONVERSIONS */}
           {docType === "GOODS_RECEIVED_NOTE" && (
             <button
@@ -296,7 +306,17 @@ export function DocumentActionsPopover({
           )}
 
           {/* GENERIC FALLBACK CONVERSIONS */}
-          {docType !== "QUOTATION" && docType !== "INVOICE" && docType !== "LPO" && docType !== "PO" && docType !== "GOODS_RECEIVED_NOTE" && docType !== "DELIVERY_NOTE" && (
+          {docType !== "QUOTATION" &&
+           docType !== "INVOICE" &&
+           docType !== "RECEIPT" &&
+           docType !== "LPO" &&
+           docType !== "PO" &&
+           docType !== "GOODS_RECEIVED_NOTE" &&
+           docType !== "DELIVERY_NOTE" &&
+           docType !== "CREDIT_NOTE" &&
+           docType !== "DEBIT_NOTE" &&
+           docType !== "PAYMENT_VOUCHER" &&
+           docType !== "PAYROLL_VOUCHER" && (
             <button
               onClick={() => handleConvert("INVOICE")}
               className="w-full text-left px-4 py-2.5 hover:bg-black hover:text-white font-bold uppercase text-[11px] transition-colors"

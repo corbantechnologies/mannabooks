@@ -997,6 +997,39 @@ export async function updateDocumentReceiptAndSettlementAction(
     }
 }
 
+/**
+ * Updates or removes the media attachment on any existing document regardless of state.
+ */
+export async function updateDocumentAttachmentAction(
+    documentId: string,
+    shopId: string,
+    shopSlug: string,
+    data: {
+        attachmentUrl?: string | null;
+        attachmentName?: string | null;
+        attachmentSize?: number | null;
+    }
+) {
+    try {
+        await enforcePermission(shopId, "manage_documents");
+        await db.update(documents)
+            .set({
+                attachmentUrl: data.attachmentUrl ? data.attachmentUrl.trim() : null,
+                attachmentName: data.attachmentName ? data.attachmentName.trim() : null,
+                attachmentSize: data.attachmentSize || null,
+            })
+            .where(and(eq(documents.id, documentId), eq(documents.shopId, shopId)));
+
+        revalidatePath(`/workspaces/${shopSlug}/documents/${documentId}`);
+        revalidatePath(`/workspaces/${shopSlug}/documents`);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update document attachment:", error);
+        return { success: false, error: "Failed to update document attachment." };
+    }
+}
+
 interface UpdateDocumentItemInput {
     productId?: string;
     description: string;

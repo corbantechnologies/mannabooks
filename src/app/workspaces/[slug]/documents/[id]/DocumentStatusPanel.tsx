@@ -9,7 +9,7 @@ import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 
 import { DocumentActionsPopover } from "./DocumentActionsPopover";
-import { updateDocumentKraCuNumberAction, updateDocumentReceiptAndSettlementAction, DocumentType } from "@/lib/actions/documents";
+import { updateDocumentKraCuNumberAction, updateDocumentReceiptAndSettlementAction, updateDocumentAttachmentAction, DocumentType } from "@/lib/actions/documents";
 import { isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 import { ThermalReceiptModal, type ThermalReceiptData } from "@/components/ThermalReceiptModal";
@@ -844,6 +844,60 @@ export function DocumentStatusPanel({
               {savingCu ? "Saving..." : "Save CU"}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* UNIVERSAL MEDIA ATTACHMENT FOR EXISTING DOCUMENTS (INVOICES, LPOs, LSOs, ETC.) */}
+      {docType !== "PAYMENT_VOUCHER" && (
+        <div className="border-t border-zinc-100 pt-3">
+          <ReceiptAttachmentUploader
+            shopSlug={shopSlug}
+            category={
+              docType === "INVOICE"
+                ? "receipts"
+                : docType === "LPO" || docType === "PO"
+                ? "payment-vouchers"
+                : "attachments"
+            }
+            attachmentUrl={attachmentUrl}
+            attachmentName={attachmentName}
+            attachmentSize={attachmentSize}
+            onUploadSuccess={async (data) => {
+              setAttachmentUrl(data.url);
+              setAttachmentName(data.name);
+              setAttachmentSize(data.size);
+              await updateDocumentAttachmentAction(documentId, shopId, shopSlug, {
+                attachmentUrl: data.url,
+                attachmentName: data.name,
+                attachmentSize: data.size,
+              });
+              router.refresh();
+            }}
+            onRemove={async () => {
+              setAttachmentUrl("");
+              setAttachmentName("");
+              setAttachmentSize(undefined);
+              await updateDocumentAttachmentAction(documentId, shopId, shopSlug, {
+                attachmentUrl: null,
+                attachmentName: null,
+                attachmentSize: null,
+              });
+              router.refresh();
+            }}
+            label={
+              docType === "INVOICE"
+                ? "Attached Tax Invoice / Stamped Client Copy (MinIO)"
+                : docType === "LPO" || docType === "PO"
+                ? "Attached Supplier Proforma / Order Acceptance (MinIO)"
+                : docType === "LSO" || docType === "SERVICE_COMPLETION_NOTE"
+                ? "Attached Service Completion Certificate / Sign-off (MinIO)"
+                : docType === "DELIVERY_NOTE" || docType === "GOODS_RECEIVED_NOTE"
+                ? "Attached Stamped Delivery Note / Gate Pass (MinIO)"
+                : "Document Attachment / Media Proof (MinIO)"
+            }
+            helperText="Attach signed copy, eTIMS invoice scan, delivery note, or photo proof (Max 10MB to media.mannabooks.co.ke)"
+            compact
+          />
         </div>
       )}
 

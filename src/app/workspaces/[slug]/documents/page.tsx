@@ -138,7 +138,11 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
   ).length;
 
   const paidThisMonth = statsAll
-    .filter((d) => d.status === "PAID" && new Date(d.issueDate) >= startOfMonth)
+    .filter((d) => {
+      const isSales = d.type === "INVOICE" || d.type === "RECEIPT";
+      const isReceiptFromInvoice = d.type === "RECEIPT" && Boolean(d.parentDocumentId);
+      return isSales && !isReceiptFromInvoice && d.status === "PAID" && new Date(d.issueDate) >= startOfMonth;
+    })
     .reduce((acc, d) => acc + parseFloat(d.grandTotal || "0"), 0);
 
   const openQuotes = statsAll.filter(

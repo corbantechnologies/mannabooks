@@ -105,7 +105,7 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
       ],
     },
     {
-      label: "Accounting",
+      label: "Finance & Accounting",
       children: [
         { href: `/workspaces/${slug}/finance/tax/settings`, label: "Tax Profile" },
         { href: `/workspaces/${slug}/finance/tax/computation`, label: "Tax Computation" },

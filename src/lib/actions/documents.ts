@@ -1319,7 +1319,7 @@ export async function repairLedgerAction(
                         await createJournalEntry({
                             shopId,
                             entryDate,
-                            description: `Invoice ${doc.docNumber} — Issued (Repaired)`,
+                            description: `Invoice ${doc.docNumber} — Issued`,
                             debitAccountCode: "1100",  // Accounts Receivable
                             creditAccountCode: "4100", // Sales Revenue
                             amount,
@@ -1332,7 +1332,7 @@ export async function repairLedgerAction(
                         await createJournalEntry({
                             shopId,
                             entryDate,
-                            description: `Invoice ${doc.docNumber} — Settled (Repaired)`,
+                            description: `Invoice ${doc.docNumber} — Settled`,
                             debitAccountCode: "1200",  // Cash & Bank
                             creditAccountCode: "1100", // Accounts Receivable
                             amount,
@@ -1345,7 +1345,7 @@ export async function repairLedgerAction(
                         await createJournalEntry({
                             shopId,
                             entryDate,
-                            description: `Invoice ${doc.docNumber} — Cancelled/Reverted (Repaired)`,
+                            description: `Invoice ${doc.docNumber} — Cancelled/Reverted`,
                             debitAccountCode: "4100",  // Sales Revenue
                             creditAccountCode: "1100", // Accounts Receivable
                             amount,
@@ -1360,7 +1360,7 @@ export async function repairLedgerAction(
                     await createJournalEntry({
                         shopId,
                         entryDate,
-                        description: `Receipt ${doc.docNumber} — Direct POS sale (Repaired)`,
+                        description: `Receipt ${doc.docNumber} — Direct POS sale`,
                         debitAccountCode: "1200",  // Cash & Bank
                         creditAccountCode: "4100", // Sales Revenue
                         amount,
@@ -1375,7 +1375,7 @@ export async function repairLedgerAction(
                     await createJournalEntry({
                         shopId,
                         entryDate,
-                        description: `Credit Note ${doc.docNumber} — ${doc.parentDocumentId ? "Credited against invoice" : "Sales refund"} (Repaired)`,
+                        description: `Credit Note ${doc.docNumber} — ${doc.parentDocumentId ? "Credited against invoice" : "Sales refund"}`,
                         debitAccountCode: "4100",  // Sales Revenue (debit reduces revenue)
                         creditAccountCode: creditAccount,
                         amount,
@@ -1389,7 +1389,7 @@ export async function repairLedgerAction(
                     await createJournalEntry({
                         shopId,
                         entryDate,
-                        description: `Debit Note ${doc.docNumber} — Additional billing (Repaired)`,
+                        description: `Debit Note ${doc.docNumber} — Additional billing`,
                         debitAccountCode: "1100",  // Accounts Receivable
                         creditAccountCode: "4100", // Sales Revenue
                         amount,
@@ -1409,7 +1409,7 @@ export async function repairLedgerAction(
                         await createJournalEntry({
                             shopId,
                             entryDate,
-                            description: `${doc.type} ${doc.docNumber} — Direct cost / disbursement (Repaired)`,
+                            description: `${doc.type} ${doc.docNumber} — Direct cost / disbursement`,
                             debitAccountCode,
                             creditAccountCode: "1200", // Cash & Bank
                             amount,
@@ -1424,7 +1424,7 @@ export async function repairLedgerAction(
                     await createJournalEntry({
                         shopId,
                         entryDate,
-                        description: `Payroll Voucher ${doc.docNumber} — Net wages disbursed (Repaired)`,
+                        description: `Payroll Voucher ${doc.docNumber} — Net wages disbursed`,
                         debitAccountCode: "6300",  // Salaries & Wages Expense
                         creditAccountCode: "1200", // Cash & Bank
                         amount,

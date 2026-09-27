@@ -5,8 +5,16 @@ import { redirect } from "next/navigation";
 import { getChartOfAccounts } from "@/lib/actions/gl";
 import GeneralLedgerClient from "./GeneralLedgerClient";
 
-export default async function GeneralLedgerPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function GeneralLedgerPage({
+    params,
+    searchParams,
+}: {
+    params: Promise<{ slug: string }>;
+    searchParams?: Promise<{ search?: string }>;
+}) {
     const { slug } = await params;
+    const resolvedSearchParams = searchParams ? await searchParams : undefined;
+    const initialSearch = resolvedSearchParams?.search || "";
     const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
     if (!shop) redirect("/dashboard");
 
@@ -47,6 +55,7 @@ export default async function GeneralLedgerPage({ params }: { params: Promise<{ 
                 shopId={shop.id}
                 shopSlug={slug}
                 glOnboardingMode={shop.glOnboardingMode}
+                initialSearch={initialSearch}
                 accounts={accounts.map(a => ({ id: a.id, code: a.code, name: a.name, accountType: a.accountType }))}
                 costCenters={shopCostCenters.map(c => ({ id: c.id, code: c.code, name: c.name }))}
                 entries={entries.map(e => ({

@@ -141,7 +141,7 @@ export function DesktopSideNav({ slug, brandColor = "#064e3b", businessMode = "H
       ],
     },
     {
-      label: "Accounting",
+      label: "Finance & Accounting",
       icon: Calculator,
       children: [
         { href: `/workspaces/${slug}/finance/tax/settings`, label: "Tax Profile", icon: ShieldCheck },

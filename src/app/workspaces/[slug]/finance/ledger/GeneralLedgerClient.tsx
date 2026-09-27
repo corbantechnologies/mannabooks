@@ -18,6 +18,7 @@ interface Props {
     shopId: string; shopSlug: string; glOnboardingMode: boolean;
     accounts: Account[]; entries: JournalEntry[];
     costCenters?: Array<{ id: string; code: string; name: string }>;
+    initialSearch?: string;
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -38,14 +39,14 @@ function fmt(n: string | number) {
     return `KES ${v.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function GeneralLedgerClient({ shopId, shopSlug, glOnboardingMode, accounts, entries: initialEntries, costCenters = [] }: Props) {
+export default function GeneralLedgerClient({ shopId, shopSlug, glOnboardingMode, accounts, entries: initialEntries, costCenters = [], initialSearch = "" }: Props) {
     const [entries, setEntries] = useState<JournalEntry[]>(initialEntries);
     const [showForm, setShowForm] = useState(false);
     const [entryMode, setEntryMode] = useState<"COMPOUND" | "SIMPLE">("COMPOUND");
     const [isPending, startTransition] = useTransition();
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [filterSource, setFilterSource] = useState<string>("ALL");
-    const [searchTerm, setSearchTerm] = useState("");
+    const [searchTerm, setSearchTerm] = useState(initialSearch);
 
     // Form state (Simple)
     const [form, setForm] = useState({
@@ -215,9 +216,17 @@ export default function GeneralLedgerClient({ shopId, shopSlug, glOnboardingMode
     // Filtering
     const filtered = entries.filter(e => {
         if (filterSource !== "ALL" && e.sourceType !== filterSource) return false;
-        if (searchTerm) {
-            const s = searchTerm.toLowerCase();
-            return e.description.toLowerCase().includes(s) || e.debitAccountName.toLowerCase().includes(s) || e.creditAccountName.toLowerCase().includes(s);
+        if (searchTerm.trim()) {
+            const s = searchTerm.trim().toLowerCase();
+            return (
+                e.description.toLowerCase().includes(s) ||
+                e.debitAccountName.toLowerCase().includes(s) ||
+                e.creditAccountName.toLowerCase().includes(s) ||
+                e.debitAccountCode.toLowerCase().includes(s) ||
+                e.creditAccountCode.toLowerCase().includes(s) ||
+                (e.costCenterCode && e.costCenterCode.toLowerCase().includes(s)) ||
+                (e.costCenterName && e.costCenterName.toLowerCase().includes(s))
+            );
         }
         return true;
     });
@@ -274,9 +283,24 @@ export default function GeneralLedgerClient({ shopId, shopSlug, glOnboardingMode
                     ))}
                 </div>
                 <div className="flex gap-2">
-                    <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                        placeholder="Search entries..."
-                        className="border border-zinc-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-black w-48" />
+                    <div className="relative">
+                        <input
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            placeholder="Search code, name, desc..."
+                            className="border border-zinc-200 rounded-lg pl-3 pr-7 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-black w-56 font-sans bg-white"
+                        />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchTerm("")}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 text-xs font-bold"
+                                title="Clear search"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
                     <button onClick={handleCsvExport}
                         className="px-3.5 py-2 rounded-lg font-mono text-xs uppercase font-bold border border-zinc-200 bg-white hover:border-zinc-400 transition-colors">
                         Export CSV
@@ -561,8 +585,13 @@ export default function GeneralLedgerClient({ shopId, shopSlug, glOnboardingMode
 
             {/* Summary Bar */}
             <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm">
-                <span className="text-zinc-500">{filtered.length} entries</span>
-                <span className="font-mono text-sm font-bold text-black">{fmt(totalAmount)} total</span>
+                <span className="text-zinc-500 font-mono text-xs">
+                    {filtered.length} {filtered.length === 1 ? "entry" : "entries"} {searchTerm.trim() ? `matching "${searchTerm.trim()}"` : ""}
+                </span>
+                <span className="font-mono text-xs font-bold text-zinc-900">
+                    <span className="text-zinc-400 font-normal mr-1.5 uppercase tracking-wider text-[10px]">Journalized Volume:</span>
+                    {fmt(totalAmount)}
+                </span>
             </div>
 
             {/* Ledger Table */}

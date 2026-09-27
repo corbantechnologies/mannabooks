@@ -88,6 +88,17 @@ export function QuickCreatePopover({ slug }: QuickCreatePopoverProps) {
               </div>
             </Link>
             <Link
+              href={`/workspaces/${slug}/documents/new?type=LSO`}
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-zinc-800 hover:bg-emerald-50 hover:text-emerald-950 rounded-lg transition-colors no-underline"
+            >
+              <span className="text-sm">🛠️</span>
+              <div>
+                <span className="font-semibold block leading-tight">Service Order (LSO)</span>
+                <span className="text-[10px] text-zinc-500 block leading-tight font-sans">Order services &amp; works</span>
+              </div>
+            </Link>
+            <Link
               href={`/workspaces/${slug}/expenses`}
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-zinc-800 hover:bg-emerald-50 hover:text-emerald-950 rounded-lg transition-colors no-underline"

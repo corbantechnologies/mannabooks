@@ -112,12 +112,30 @@ export function SupplierActionsPopover({
             </Link>
 
             <Link
+              href={`/workspaces/${shopSlug}/documents/new?supplierId=${supplier.id}&type=LSO`}
+              onClick={() => setIsOpen(false)}
+              className="w-full text-left px-3.5 py-2 hover:bg-zinc-100 font-medium text-xs text-zinc-800 hover:text-black transition-colors flex items-center gap-2.5"
+            >
+              <span className="text-zinc-500">🛠️</span>
+              <span>Issue Local Service Order (LSO)</span>
+            </Link>
+
+            <Link
               href={`/workspaces/${shopSlug}/documents/new?supplierId=${supplier.id}&type=GOODS_RECEIVED_NOTE`}
               onClick={() => setIsOpen(false)}
               className="w-full text-left px-3.5 py-2 hover:bg-zinc-100 font-medium text-xs text-zinc-800 hover:text-black transition-colors flex items-center gap-2.5"
             >
               <span className="text-zinc-500">📥</span>
               <span>Goods Received Note (GRN)</span>
+            </Link>
+
+            <Link
+              href={`/workspaces/${shopSlug}/documents/new?supplierId=${supplier.id}&type=SERVICE_COMPLETION_NOTE`}
+              onClick={() => setIsOpen(false)}
+              className="w-full text-left px-3.5 py-2 hover:bg-zinc-100 font-medium text-xs text-zinc-800 hover:text-black transition-colors flex items-center gap-2.5"
+            >
+              <span className="text-zinc-500">📋</span>
+              <span>Service Completion Certificate (SCC)</span>
             </Link>
 
             <Link

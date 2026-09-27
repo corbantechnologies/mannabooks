@@ -99,6 +99,15 @@ export function SupplierRowPopover({ supplier, shopId, shopSlug }: SupplierRowPo
               <span>📦</span>
               <span>Issue Purchase Order</span>
             </Link>
+
+            <Link
+              href={`/workspaces/${shopSlug}/documents/new?supplierId=${supplier.id}&type=LSO`}
+              onClick={() => setIsOpen(false)}
+              className="w-full text-left px-3.5 py-2 hover:bg-zinc-100 font-medium text-xs text-zinc-800 hover:text-black transition-colors flex items-center gap-2"
+            >
+              <span>🛠️</span>
+              <span>Issue Service Order (LSO)</span>
+            </Link>
           </div>
 
           <div className="py-1">

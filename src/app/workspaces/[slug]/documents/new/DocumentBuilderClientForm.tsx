@@ -11,6 +11,7 @@ import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 import { CatalogProductPicker, CatalogProductItem } from "@/components/CatalogProductPicker";
 import { PartyPicker } from "@/components/PartyPicker";
+import ReceiptAttachmentUploader from "@/components/ReceiptAttachmentUploader";
 
 interface BuilderProps {
   shop: any;
@@ -131,6 +132,9 @@ export function DocumentBuilderClientForm({
   const [paymentReference, setPaymentReference] = useState(
     initialDocument?.paymentReference || ""
   );
+  const [attachmentUrl, setAttachmentUrl] = useState<string>(initialDocument?.attachmentUrl || "");
+  const [attachmentName, setAttachmentName] = useState<string>(initialDocument?.attachmentName || "");
+  const [attachmentSize, setAttachmentSize] = useState<number | undefined>(initialDocument?.attachmentSize || undefined);
   const [requiresEtims, setRequiresEtims] = useState(initialDocument?.requiresEtims || false);
   const [currency, setCurrency] = useState(initialDocument?.currency || shop.currency || "KES");
   const [exchangeRate, setExchangeRate] = useState<string>(() => {
@@ -477,6 +481,9 @@ export function DocumentBuilderClientForm({
           kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
           paymentChannel: paymentChannel.trim() || undefined,
           paymentReference: paymentReference.trim() || undefined,
+          attachmentUrl: attachmentUrl.trim() || undefined,
+          attachmentName: attachmentName.trim() || undefined,
+          attachmentSize,
           requiresEtims: isFiscalDocType(docType) ? requiresEtims : false,
           currency,
           exchangeRate: parseFloat(exchangeRate) || 1.0,
@@ -496,6 +503,9 @@ export function DocumentBuilderClientForm({
           kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
           paymentChannel: paymentChannel.trim() || undefined,
           paymentReference: paymentReference.trim() || undefined,
+          attachmentUrl: attachmentUrl.trim() || undefined,
+          attachmentName: attachmentName.trim() || undefined,
+          attachmentSize,
           requiresEtims: isFiscalDocType(docType) ? requiresEtims : false,
           currency,
           exchangeRate: parseFloat(exchangeRate) || 1.0,
@@ -814,6 +824,31 @@ export function DocumentBuilderClientForm({
                   className="w-full px-3 py-2.5 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-mono text-xs uppercase h-10 font-semibold"
                 />
               </div>
+
+              {/* ATTACH SUPPLIER RECEIPT / PROOF FOR PAYMENT VOUCHER */}
+              {docType === "PAYMENT_VOUCHER" && (
+                <div className="md:col-span-12 border-t border-zinc-200/80 pt-3">
+                  <ReceiptAttachmentUploader
+                    shopSlug={shopSlug}
+                    category="payment-vouchers"
+                    attachmentUrl={attachmentUrl}
+                    attachmentName={attachmentName}
+                    attachmentSize={attachmentSize}
+                    onUploadSuccess={(data) => {
+                      setAttachmentUrl(data.url);
+                      setAttachmentName(data.name);
+                      setAttachmentSize(data.size);
+                    }}
+                    onRemove={() => {
+                      setAttachmentUrl("");
+                      setAttachmentName("");
+                      setAttachmentSize(undefined);
+                    }}
+                    label="Attach Vendor Tax Invoice / Official Receipt Scan"
+                    helperText="Upload official eTIMS CU receipt PDF, photo of paper receipt, or bank disbursement slip to MinIO"
+                  />
+                </div>
+              )}
             </>
           )}
 

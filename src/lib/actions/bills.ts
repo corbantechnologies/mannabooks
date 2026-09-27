@@ -28,6 +28,9 @@ export interface CreateVendorBillInput {
     sourceGrnId?: string;
     varianceNotes?: string;
     allowVarianceOverride?: boolean;
+    attachmentUrl?: string;
+    attachmentName?: string;
+    attachmentSize?: number;
     items: CreateVendorBillItemInput[];
 }
 
@@ -301,6 +304,9 @@ export async function createVendorBill(shopSlug: string, input: CreateVendorBill
             priceVarianceAmount: priceVarianceAmount.toFixed(2),
             quantityVarianceCount: quantityVarianceCount.toFixed(2),
             varianceNotes: input.varianceNotes?.trim() || null,
+            attachmentUrl: input.attachmentUrl?.trim() || null,
+            attachmentName: input.attachmentName?.trim() || null,
+            attachmentSize: input.attachmentSize || null,
         }).returning();
 
         for (const item of computedItems) {
@@ -691,3 +697,42 @@ export async function deleteVendorBill(billId: string, shopSlug: string) {
 
     return { success: true };
 }
+
+/**
+ * Update or attach a receipt / vendor invoice document to an existing bill
+ */
+export async function updateVendorBillAttachment(
+    billId: string,
+    shopSlug: string,
+    data: {
+        attachmentUrl?: string | null;
+        attachmentName?: string | null;
+        attachmentSize?: number | null;
+    }
+) {
+    try {
+        const shop = await db.query.shops.findFirst({
+            where: eq(shops.slug, shopSlug),
+        });
+
+        if (!shop) {
+            return { success: false, error: "Workspace not found" };
+        }
+
+        await enforcePermission(shop.id, "manage_expenses");
+
+        await db.update(vendorBills).set({
+            attachmentUrl: data.attachmentUrl ? data.attachmentUrl.trim() : null,
+            attachmentName: data.attachmentName ? data.attachmentName.trim() : null,
+            attachmentSize: data.attachmentSize || null,
+            updatedAt: new Date(),
+        }).where(and(eq(vendorBills.id, billId), eq(vendorBills.shopId, shop.id)));
+
+        revalidatePath(`/workspaces/${shopSlug}/finance/bills`);
+        return { success: true };
+    } catch (err: any) {
+        console.error("Failed to update vendor bill attachment:", err);
+        return { success: false, error: err?.message || "Failed to update attachment" };
+    }
+}
+

@@ -9,9 +9,12 @@ import {
   payVendorBill,
   cancelVendorBill,
   deleteVendorBill,
+  updateVendorBillAttachment,
   type CreateVendorBillInput,
   type PayVendorBillInput,
 } from "@/lib/actions/bills";
+import ReceiptAttachmentUploader from "@/components/ReceiptAttachmentUploader";
+import toast from "react-hot-toast";
 
 export interface SerializedBillItem {
   id: string;
@@ -46,6 +49,9 @@ export interface SerializedBill {
   status: string;
   paymentChannel: string | null;
   paymentReference: string | null;
+  attachmentUrl?: string | null;
+  attachmentName?: string | null;
+  attachmentSize?: number | null;
   notes: string | null;
   sourcePoId?: string | null;
   sourceGrnId?: string | null;
@@ -164,6 +170,9 @@ export function VendorBillsClient({
   const [notes, setNotes] = useState("");
   const [varianceJustification, setVarianceJustification] = useState("");
   const [allowVarianceOverride, setAllowVarianceOverride] = useState(false);
+  const [attachmentUrl, setAttachmentUrl] = useState<string>("");
+  const [attachmentName, setAttachmentName] = useState<string>("");
+  const [attachmentSize, setAttachmentSize] = useState<number | undefined>(undefined);
 
   const defaultExpenseAccount = accounts.find((a) => a.code === "6900" || a.accountType === "EXPENSE") || accounts[0];
 
@@ -445,6 +454,9 @@ export function VendorBillsClient({
       sourceGrnId: selectedGrnId || undefined,
       varianceNotes: varianceJustification || undefined,
       allowVarianceOverride,
+      attachmentUrl: attachmentUrl.trim() || undefined,
+      attachmentName: attachmentName.trim() || undefined,
+      attachmentSize,
       items: formItems.map((it) => ({
         accountId: it.accountId,
         description: it.description,
@@ -486,6 +498,9 @@ export function VendorBillsClient({
         status: "DRAFT",
         paymentChannel: null,
         paymentReference: null,
+        attachmentUrl: attachmentUrl.trim() || null,
+        attachmentName: attachmentName.trim() || null,
+        attachmentSize: attachmentSize || null,
         notes: notes || null,
         sourcePoId: selectedPoId || null,
         sourceGrnId: selectedGrnId || null,
@@ -544,6 +559,9 @@ export function VendorBillsClient({
       setNotes("");
       setVarianceJustification("");
       setAllowVarianceOverride(false);
+      setAttachmentUrl("");
+      setAttachmentName("");
+      setAttachmentSize(undefined);
       setWhtRate(0);
       setFormItems([
         {
@@ -879,7 +897,20 @@ export function VendorBillsClient({
               return (
                 <tr key={b.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
                   <td className="p-4 border-r border-zinc-100">
-                    <span className="font-semibold text-zinc-900 block">{b.billNumber}</span>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-semibold text-zinc-900 block">{b.billNumber}</span>
+                      {b.attachmentUrl && (
+                        <a
+                          href={b.attachmentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-emerald-700 hover:text-emerald-900 text-xs px-1 hover:bg-emerald-50 rounded no-underline"
+                          title={`Attached Invoice: ${b.attachmentName || 'View'}`}
+                        >
+                          📎
+                        </a>
+                      )}
+                    </div>
                     {b.reference && <span className="text-[10px] text-zinc-400 font-mono">Ref: {b.reference}</span>}
                   </td>
 
@@ -1213,6 +1244,30 @@ export function VendorBillsClient({
                     <option value={15}>15% — Non-Resident / Royalty</option>
                   </select>
                 </div>
+              </div>
+
+              {/* ATTACH VENDOR INVOICE DOCUMENT (MINIO) */}
+              <div className="p-3 bg-zinc-50/80 rounded-xl border border-zinc-200/80">
+                <ReceiptAttachmentUploader
+                  shopSlug={shopSlug}
+                  category="vendor-bills"
+                  attachmentUrl={attachmentUrl}
+                  attachmentName={attachmentName}
+                  attachmentSize={attachmentSize}
+                  onUploadSuccess={(data) => {
+                    setAttachmentUrl(data.url);
+                    setAttachmentName(data.name);
+                    setAttachmentSize(data.size);
+                  }}
+                  onRemove={() => {
+                    setAttachmentUrl("");
+                    setAttachmentName("");
+                    setAttachmentSize(undefined);
+                  }}
+                  label="Vendor Invoice / Official Bill Scan (MinIO)"
+                  helperText="Upload vendor's tax invoice PDF or scan for 3-way audit compliance"
+                  compact
+                />
               </div>
 
               {/* 3-Way Match Real-time Status Card */}
@@ -1589,6 +1644,51 @@ export function VendorBillsClient({
                     <p className="text-zinc-800 italic mt-0.5">{inspectingBill.varianceNotes}</p>
                   </div>
                 )}
+              </div>
+
+              {/* ATTACHED VENDOR INVOICE DOCUMENT (MINIO) */}
+              <div className="p-4 rounded-xl border border-zinc-200 bg-white">
+                <ReceiptAttachmentUploader
+                  shopSlug={shopSlug}
+                  category="vendor-bills"
+                  attachmentUrl={inspectingBill.attachmentUrl}
+                  attachmentName={inspectingBill.attachmentName}
+                  attachmentSize={inspectingBill.attachmentSize}
+                  onUploadSuccess={async (data) => {
+                    const updated = {
+                      ...inspectingBill,
+                      attachmentUrl: data.url,
+                      attachmentName: data.name,
+                      attachmentSize: data.size,
+                    };
+                    setInspectingBill(updated);
+                    setBills((prev) => prev.map((b) => (b.id === inspectingBill.id ? updated : b)));
+                    await updateVendorBillAttachment(inspectingBill.id, shopSlug, {
+                      attachmentUrl: data.url,
+                      attachmentName: data.name,
+                      attachmentSize: data.size,
+                    });
+                    toast.success("Vendor invoice attached to bill!");
+                  }}
+                  onRemove={async () => {
+                    const updated = {
+                      ...inspectingBill,
+                      attachmentUrl: null,
+                      attachmentName: null,
+                      attachmentSize: null,
+                    };
+                    setInspectingBill(updated);
+                    setBills((prev) => prev.map((b) => (b.id === inspectingBill.id ? updated : b)));
+                    await updateVendorBillAttachment(inspectingBill.id, shopSlug, {
+                      attachmentUrl: null,
+                      attachmentName: null,
+                      attachmentSize: null,
+                    });
+                    toast.success("Attachment removed.");
+                  }}
+                  label="Vendor Invoice / Tax Receipt Document (MinIO)"
+                  helperText="Upload vendor's tax invoice PDF or scan for 3-way audit compliance"
+                />
               </div>
             </div>
 

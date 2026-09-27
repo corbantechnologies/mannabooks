@@ -101,6 +101,8 @@ export default function FeaturesPage() {
               { href: "#reconciliation", label: "Bank & M-Pesa Reconciliation" },
               { href: "#compound-journals", label: "Compound Multi-Line Journals" },
               { href: "#accounts-payable", label: "Accounts Payable & Bills" },
+              { href: "#threeway-matching", label: "Automated 3-Way Match" },
+              { href: "#holding-consolidation", label: "Holding Group Consolidation" },
               { href: "#bulk-actions", label: "Bulk Operations" },
               { href: "#fiscal-periods", label: "Fiscal Periods & Exports" },
               { href: "#business-modes", label: "3 Workspace Modes" },
@@ -1027,6 +1029,72 @@ export default function FeaturesPage() {
                 { title: "Role-Scoped System Presets", body: "Tailored permission presets for Storekeepers, Cashiers, Dispatchers, Chemists, Accountants, and Branch Managers with zero data commingling." },
                 { title: "Immutable Audit Trails", body: "Every GRN intake, stock transfer, approval signature, and adjustment is permanently logged with timestamps and operator identity." },
                 { title: "Commercial Margin Confidentiality", body: "Keep wholesale supplier contracts and negotiated volume discount terms strictly between executive leadership and senior finance." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════ */}
+          {/* 31. AUTOMATED 3-WAY MATCHING ENGINE */}
+          {/* ═══════════════════════════════════════════════════════ */}
+          <div id="threeway-matching" className="space-y-6 pt-16 border-t border-zinc-200">
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-xs text-[#064e3b] font-bold uppercase tracking-widest bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                Module 31 • Inbound Procurement Governance
+              </span>
+              <span className="text-xs text-zinc-400 font-mono">PO ↔ GRN ↔ Vendor Bill Audit</span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight uppercase text-black">
+              Automated 3-Way Matching Engine
+            </h2>
+            <p className="text-zinc-600 text-sm max-w-3xl leading-relaxed">
+              Eliminate accounts payable fraud, billing overcharges, and payments for unreceived merchandise. Manna Books autonomously reconciles authorized Purchase Orders (PO/LPO), receiving dock Goods Received Notes (GRN), and inbound supplier invoices with line-item precision.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Automated Line-Item Variance Engine", body: "Calculates unit price differentials (ΔP = Billed Price − PO Price) and physical quantity shortfalls (ΔQ = Billed Quantity − GRN Intake) in real-time." },
+                { title: "Real-Time Matching Feedback", body: "Live visual badges (🟢 Perfect Match, 🟡 Price Variance, 🔴 Quantity Shortfall) alert operators immediately before bills are committed to Accounts Payable." },
+                { title: "Controller Override Authorization", body: "Inbound invoices exhibiting price or quantity variances are locked from payment until a finance controller inputs a mandatory justification note." },
+                { title: "Direct PO/GRN Bill Generation", body: "Select any approved Purchase Order to automatically populate agreed supplier prices and verified GRN intake quantities in a single click." },
+                { title: "Side-by-Side Reconciliation Audit Drawer", body: "Inspect PO number, GRN intake receipt, and vendor invoice side-by-side with full line-by-line delta breakdowns." },
+                { title: "Double-Entry GL Liability Safeguard", body: "Ensures General Ledger Account 2100 (Accounts Payable) only recognizes approved, verified liabilities, preventing duplicate disbursements." },
+              ].map((item) => (
+                <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
+                  <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>
+                  <p className="text-zinc-600 text-xs font-sans leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════ */}
+          {/* 32. MULTI-ENTITY CONSOLIDATED GROUP FINANCIALS */}
+          {/* ═══════════════════════════════════════════════════════ */}
+          <div id="holding-consolidation" className="space-y-6 pt-16 border-t border-zinc-200">
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-xs text-[#064e3b] font-bold uppercase tracking-widest bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                Module 32 • Multi-Tenant Conglomerates
+              </span>
+              <span className="text-xs text-zinc-400 font-mono">Holding Company Consolidation</span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight uppercase text-black">
+              Multi-Entity Consolidated Group Financials
+            </h2>
+            <p className="text-zinc-600 text-sm max-w-3xl leading-relaxed">
+              Consolidate sister companies, operating subsidiaries, and parent holding entities into unified financial statements. Generate multi-column P&amp;Ls and Balance Sheets with automated Inter-Company Eliminations and Minority Non-Controlling Interest calculations.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: "Multi-Column Consolidated P&L", body: "Side-by-side revenue, COGS, and operating expense columns for Entity A, Entity B, Inter-Company Eliminations, and the Consolidated Group Total." },
+                { title: "Multi-Column Consolidated Balance Sheet", body: "Aggregates Cash, Accounts Receivable, Inventory, Fixed Assets, and Liabilities across all subsidiaries with automated balance reconciliation verification." },
+                { title: "Inter-Company Elimination Ledger", body: "Cancels out internal billing (e.g. Entity A billing Entity B for management services or IT support) to prevent artificial revenue and expense inflation." },
+                { title: "Minority / Non-Controlling Interest", body: "Automates minority shareholder equity and profit allocations for subsidiaries with less than 100% parent equity ownership." },
+                { title: "Corporate Hierarchy Governance", body: "Manage parent, subsidiary, and sister company relationships with customized ownership percentage caps and reporting currencies." },
+                { title: "Board-Ready Reporting & Audits", body: "Export standardized holding group reports for institutional investors, bank financing syndicates, and statutory annual tax returns." },
               ].map((item) => (
                 <div key={item.title} className="card-emerald-accent p-6 bg-white space-y-3">
                   <span className="text-[#064e3b] font-bold uppercase block text-xs font-sans">{item.title}</span>

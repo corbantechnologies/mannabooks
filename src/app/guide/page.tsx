@@ -66,6 +66,8 @@ const GUIDE_MODULES = [
   { href: "#module-27", label: "[27] Storage Bins & FEFO Expiry Risk" },
   { href: "#module-28", label: "[28] BOM & Light Manufacturing" },
   { href: "#module-29", label: "[29] Stocktake Audit & Reconciliation" },
+  { href: "#module-30", label: "[30] Automated 3-Way Matching" },
+  { href: "#module-31", label: "[31] Consolidated Group Financials" },
 ];
 
 export default function PublicOperatorGuidePage() {
@@ -881,6 +883,44 @@ export default function PublicOperatorGuidePage() {
                 <li><strong>System Stock Freeze:</strong> Instant snapshot of current ledger quantities across warehouse products.</li>
                 <li><strong>Interactive Count Sheet:</strong> Real-time variance tracking with color-coded shortages and surpluses.</li>
                 <li><strong>Automatic Adjustment Posting:</strong> Atomically generates stock ledger entries and updates on-hand balances.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* MODULE 30: AUTOMATED 3-WAY MATCHING */}
+          <section id="module-30" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 30]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Automated 3-Way Matching Engine (PO ↔ GRN ↔ Vendor Bill)</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Eliminate accounts payable fraud, price markups, and phantom billing. Connect authorized Purchase Orders (PO/LPO), Goods Received Notes (GRN), and inbound supplier invoices. Manna Books verifies unit prices and quantities in real-time, requiring controller justification notes before any variance can be posted to the General Ledger.
+            </p>
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">3-Way Matching Key Workflows:</h4>
+              <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>1-Click Bill Pre-population:</strong> Select an approved PO to pre-fill agreed pricing and verified dock quantities.</li>
+                <li><strong>Real-time Variance Computation:</strong> Live mathematical diff flags price premiums (ΔP &gt; 0) and intake shortfalls (ΔQ &gt; 0).</li>
+                <li><strong>Controller Sign-Off Audit Trail:</strong> Bills with discrepancies are locked from disbursement until an executive justification note is logged.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* MODULE 31: CONSOLIDATED GROUP FINANCIALS */}
+          <section id="module-31" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 31]</span>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Multi-Entity Consolidated Group Financials &amp; Holding Companies</h2>
+            </div>
+            <p className="font-sans text-sm text-zinc-600 leading-relaxed">
+              Consolidate operating subsidiaries, sister entities, and holding corporations into unified board-ready financial statements. Multi-column P&amp;Ls and Balance Sheets with automated Inter-Company Eliminations and Minority Non-Controlling Interest calculations.
+            </p>
+            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs">Holding Consolidation Workflows:</h4>
+              <ul className="list-disc list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
+                <li><strong>Multi-Column Spreadsheet Views:</strong> Side-by-side statements: Entity A | Entity B | Eliminations | Consolidated Total.</li>
+                <li><strong>Inter-Company Elimination Ledger:</strong> Cancels out internal management fees, shared IT services, and cross-entity inventory supply.</li>
+                <li><strong>Minority Non-Controlling Interest (NCI):</strong> Automatically calculates minority shareholder equity and net profit shares for partially owned subsidiaries.</li>
               </ul>
             </div>
           </section>

@@ -41,6 +41,8 @@ const GUIDE_MODULES = [
   { id: "mod-28", label: "[28] Storage Bins Hierarchy & FEFO Expiry Risk", category: "WMS" },
   { id: "mod-29", label: "[29] Bill of Materials (BOM) & Light Manufacturing", category: "Operations" },
   { id: "mod-30", label: "[30] Physical Stocktake Audit & Reconciliation", category: "Operations" },
+  { id: "mod-31", label: "[31] Automated 3-Way Matching Engine", category: "Accounting" },
+  { id: "mod-32", label: "[32] Consolidated Group Financials", category: "Accounting" },
 ];
 
 export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageProps) {
@@ -1274,6 +1276,52 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
             </div>
             <p className="text-xs text-zinc-600 leading-relaxed">
               Conduct periodic cycle counts and full physical inventory audits per warehouse branch. Freeze ledger balances, print count sheets, record actual on-hand quantities, and view real-time variance quantities and shrinkage costs. Post one-click reconciliation adjustments that generate immutable stock ledger journals and balance sheet inventory corrections.
+            </p>
+          </section>
+
+          {/* MODULE 31: AUTOMATED 3-WAY MATCHING ENGINE */}
+          <section id="mod-31" className="card-modern p-6 space-y-4 bg-white border border-zinc-200 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="bg-black text-white px-2.5 py-1 font-bold uppercase font-mono text-[10px] rounded">
+                  [MODULE 31]
+                </span>
+                <h2 className="text-base sm:text-lg font-bold uppercase text-black">
+                  Automated 3-Way Matching Engine (PO ↔ GRN ↔ AP Bill)
+                </h2>
+              </div>
+              <Link
+                href={`/workspaces/${slug}/finance/bills`}
+                className="btn-secondary-modern px-3 py-1 font-mono text-[10px] font-bold uppercase shrink-0"
+              >
+                Vendor Bills &amp; 3-Way Match →
+              </Link>
+            </div>
+            <p className="text-xs text-zinc-600 leading-relaxed">
+              Safeguard Accounts Payable from over-billing and fraudulent invoices. When creating a Vendor Bill, link the approved Purchase Order (PO/LPO) and the physical Goods Received Note (GRN). Manna Books autonomously reconciles billed unit prices against agreed PO rates and billed quantities against verified intake counts. Discrepancies trigger Price Variance or Quantity Variance alerts, locking bill approval until a finance controller inputs a mandatory justification note for audit trails.
+            </p>
+          </section>
+
+          {/* MODULE 32: CONSOLIDATED GROUP FINANCIALS */}
+          <section id="mod-32" className="card-modern p-6 space-y-4 bg-white border border-zinc-200 scroll-mt-24">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="bg-black text-white px-2.5 py-1 font-bold uppercase font-mono text-[10px] rounded">
+                  [MODULE 32]
+                </span>
+                <h2 className="text-base sm:text-lg font-bold uppercase text-black">
+                  Multi-Entity Consolidated Group Financials &amp; Holding Companies
+                </h2>
+              </div>
+              <Link
+                href={`/workspaces/${slug}/finance/group-consolidation`}
+                className="btn-secondary-modern px-3 py-1 font-mono text-[10px] font-bold uppercase shrink-0"
+              >
+                Consolidated Financials →
+              </Link>
+            </div>
+            <p className="text-xs text-zinc-600 leading-relaxed">
+              Designed for conglomerates, holding corporations, and multi-entity enterprises governing sister companies (e.g., Company A and Company B). Group subsidiary workspaces under a parent holding entity to generate multi-column Consolidated P&amp;L Statements and Consolidated Balance Sheets. Log inter-company management fees, shared costs, and inventory supply in the Inter-Company Elimination Ledger, which automatically deducts equal parts revenue and expense to prevent artificial group turnover inflation. Automatically calculates minority Non-Controlling Interest (NCI) for partially owned subsidiaries.
             </p>
           </section>
 

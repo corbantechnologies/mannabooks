@@ -117,6 +117,11 @@ export const INDUSTRIES_DATA: IndustryDetail[] = [
         description: "Toggle Cost-Price Blindness for storekeepers and line cashiers, preventing supplier margin leakage, while enforcing executive approval caps on supervisor purchase orders.",
         modules: ["Commercial Privacy", "User Governance", "Approval Caps"],
       },
+      {
+        title: "Automated 3-Way Matching Procurement Governance",
+        description: "Autonomously reconcile bulk raw material Purchase Orders (PO/LPO), dock Goods Received Notes (GRN), and inbound supplier invoices with line-item unit price and quantity variance controls.",
+        modules: ["3-Way Matching", "Vendor Bills (AP)", "Variance Controls"],
+      },
     ],
     costCenters: [
       { code: "CC-101", department: "Bulk Chemical Mixing & Reaction", absorbedExpenses: "Industrial 3-phase power, boiler diesel, reaction catalysts, mixing vat maintenance" },
@@ -145,9 +150,9 @@ export const INDUSTRIES_DATA: IndustryDetail[] = [
     workflowSteps: [
       {
         stepNumber: "01",
-        title: "Inbound PO Receiving to Sub-Location Bins",
-        action: "Storekeeper scans supplier PO for 20x 200L chemical drums. System generates GRN and logs items to Sub-location CHEM-VAULT (Bin A02-R01) with Cost-Price Blindness enabled.",
-        accountingImpact: "Accounts Payable credited; Raw Materials Inventory (1310) debited.",
+        title: "Inbound PO Receiving & Automated 3-Way Match",
+        action: "Storekeeper scans supplier PO for 20x 200L chemical drums and generates dock GRN to Chemical Vault. When vendor bill arrives, MannaBooks automatically reconciles PO price vs billed price and GRN count vs invoice quantity.",
+        accountingImpact: "Accounts Payable credited upon 3-Way verification; Raw Materials Inventory (1310) debited.",
       },
       {
         stepNumber: "02",
@@ -287,6 +292,11 @@ export const INDUSTRIES_DATA: IndustryDetail[] = [
         description: "Enforce cost-price blindness across subsidiary storekeepers and counter clerks, ensuring internal wholesale margins remain private.",
         modules: ["Commercial Privacy", "User Governance", "Branch Scoping"],
       },
+      {
+        title: "Multi-Entity Group Consolidation & Elimination Engine",
+        description: "Generate multi-column Consolidated P&L and Balance Sheet statements (Entity A | Entity B | Eliminations | Consolidated Group) with single-click inter-company turnover elimination and minority interest (NCI) calculations.",
+        modules: ["Consolidated Financials", "Elimination Ledger", "Holding Governance"],
+      },
     ],
     workflowSteps: [
       {
@@ -309,9 +319,9 @@ export const INDUSTRIES_DATA: IndustryDetail[] = [
       },
       {
         stepNumber: "04",
-        title: "Executive Group Financial Review",
-        action: "Group CFO exports Trial Balance, P&L, and Balance Sheet for each entity, then reviews consolidated performance.",
-        accountingImpact: "Clean statutory accounts ready for statutory auditor sign-off and KRA annual corporate returns.",
+        title: "Multi-Column Group Financial Consolidation",
+        action: "Group CFO generates Consolidated P&L and Balance Sheet across all 3 entities, running the Inter-Company Elimination Engine to cancel out internal management fees and inter-entity payables.",
+        accountingImpact: "Presents true third-party consolidated group turnover and assets to the Board and lenders without artificial double-counting.",
       },
     ],
     sampleLedger: [
@@ -328,6 +338,20 @@ export const INDUSTRIES_DATA: IndustryDetail[] = [
         creditAccount: "Due to Parent Entity A (2180 - Entity B)",
         amountKes: "250,000.00",
         explanation: "Entity B records corresponding allowable tax deduction under KRA guidelines.",
+      },
+      {
+        stage: "Group Inter-Company Revenue/Expense Elimination",
+        debitAccount: "Management Fee Revenue Elimination (4200 - Consolidation)",
+        creditAccount: "Management Fee Expense Elimination (5800 - Consolidation)",
+        amountKes: "250,000.00",
+        explanation: "Consolidation Engine removes internal billing to ensure group turnover only reflects genuine third-party commercial sales.",
+      },
+      {
+        stage: "Group Balance Sheet Asset/Liability Elimination",
+        debitAccount: "Due to Parent Entity A (2180 - Elimination)",
+        creditAccount: "Due from Subsidiary B (1180 - Elimination)",
+        amountKes: "250,000.00",
+        explanation: "Cancels out inter-company receivable and payable balances so group assets and liabilities reflect only external claims.",
       },
     ],
     caseStudy: {
@@ -413,9 +437,9 @@ export const INDUSTRIES_DATA: IndustryDetail[] = [
       },
       {
         stepNumber: "03",
-        title: "Procure Hardware from Distributor",
-        action: "Issue LPO to Distributor for 10 units @ KES 55,000 (KES 550,000). Record Vendor Bill with distributor invoice.",
-        accountingImpact: "Accounts Payable credited KES 550,000; Cost of Goods Sold capitalized.",
+        title: "Procure Hardware & Automated 3-Way Match",
+        action: "Issue LPO to Distributor for 10 units @ KES 55,000 (KES 550,000). Record dock GRN upon delivery. When distributor invoice arrives, MannaBooks runs 3-Way Matching: verifies prices and quantities against PO and GRN before authorizing Accounts Payable release.",
+        accountingImpact: "Accounts Payable credited KES 550,000 upon 3-Way verification; Cost of Goods Sold capitalized.",
       },
       {
         stepNumber: "04",

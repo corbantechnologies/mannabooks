@@ -101,12 +101,12 @@ export default function LandingPage() {
               {[
                 { title: "Production & BOM", text: "Multi-stage assembly recipes, scrap tolerances & direct labor absorption." },
                 { title: "WMS & Storage Bins", text: "Sub-location coordinates, FEFO expiry & cycle count audits." },
+                { title: "Automated 3-Way Match", text: "PO ↔ GRN ↔ AP bill verification with price & quantity variance alerts." },
+                { title: "Holding Group Consolidation", text: "Multi-column P&L, balance sheets & inter-company elimination engine." },
                 { title: "Department Cost Centers", text: "Granular expense tagging, absorption costing & line profitability." },
                 { title: "Commercial Cost Privacy", text: "Blind storekeepers & cashiers to supplier wholesale margins." },
                 { title: "KRA eTIMS Integrated", text: "Multi-rate VAT & CU serial control mapping." },
                 { title: "Statutory Payroll", text: "PAYE, SHIF 2.75%, AHL 1.5% & NSSF Tier I/II." },
-                { title: "Retainer Contracts & SLAs", text: "Monthly SLA hours burn-down & automated recurring billing." },
-                { title: "Double-Entry GL", text: "Standardized accounts, periods, auto-budgets & balance sheet." },
               ].map((feat, i) => (
                 <div key={i} className="card-emerald-accent p-4 text-left">
                   <h4 className="font-bold text-xs uppercase text-black mb-1.5">{feat.title}</h4>
@@ -256,7 +256,7 @@ export default function LandingPage() {
                   icon: "🏛️",
                   tag: "MULTI-ENTITY & CONGLOMERATES",
                   title: "Holding Companies & Groups",
-                  desc: "One executive sign-on across multiple registered subsidiaries with isolated KRA PINs, dedicated bank ledgers, and KES 50k approval ceilings.",
+                  desc: "Multi-entity consolidation with automated inter-company eliminations, multi-column P&L and Balance Sheet statements, and minority non-controlling interest governance.",
                   linkText: "Explore Holding Group Blueprint →",
                 },
                 {

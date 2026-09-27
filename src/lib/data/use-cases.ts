@@ -205,7 +205,7 @@ export const USE_CASES_DATA: UseCaseItem[] = [
     problemStatement:
       "A family holding office owns a logistics fleet, a commercial real estate firm, and a retail hardware store. Commingled bank transfers and mixed tax records were triggering red flags with KRA and costing weeks of audit reconciliation.",
     mannaSolution:
-      "MannaBooks Multi-Workspace Directory gives the Group CEO and CFO single-sign-on access to all 3 entities, with completely isolated General Ledgers, dedicated KRA PINs, separate invoice sequences, and inter-company management fee tracking.",
+      "MannaBooks Multi-Workspace Directory & Group Consolidation Engine gives the Group CEO and CFO single-sign-on access to all 3 entities, with completely isolated General Ledgers, dedicated KRA PINs, separate invoice sequences, inter-company elimination ledgers, and multi-column Consolidated P&L and Balance Sheet statements.",
     workflowSteps: [
       {
         phase: "Step 1: Entity Provisioning",
@@ -220,8 +220,8 @@ export const USE_CASES_DATA: UseCaseItem[] = [
         description: "Record inter-company shared HQ IT and audit fees without messy co-mingled banking entries.",
       },
       {
-        phase: "Step 4: Consolidated Review",
-        description: "Export clean P&L and Balance Sheet per subsidiary in seconds for quarterly board presentations.",
+        phase: "Step 4: Consolidated Financials & Elimination Engine",
+        description: "Generate multi-column Consolidated P&L and Balance Sheet (Transit Logistics | Skyline Properties | Savanna Hardware | Eliminations | Consolidated Group Total) with single-click inter-company turnover elimination.",
       },
     ],
     accountingEntry: {

@@ -202,7 +202,11 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
             <p className="text-base font-semibold mt-1 font-mono" style={{ color: brandColor }}>{doc.docNumber}</p>
             {doc.kraCuInvoiceNumber ? (
               <p className="text-[10px] font-semibold text-black border border-zinc-300 px-1.5 py-0.5 bg-zinc-50 inline-block rounded">
-                KRA eTIMS CU #: {doc.kraCuInvoiceNumber}
+                {doc.type === "PAYMENT_VOUCHER" ? "Supplier Receipt / CU #:" : "KRA eTIMS CU #:"} {doc.kraCuInvoiceNumber}
+              </p>
+            ) : doc.type === "PAYMENT_VOUCHER" ? (
+              <p className="text-[10px] font-semibold text-amber-900 border border-amber-300 bg-amber-50 px-1.5 py-0.5 inline-block rounded">
+                ⚠️ Supplier Receipt # Pending
               </p>
             ) : isFiscalDocType(doc.type) && doc.requiresEtims ? (
               <p className="text-[10px] font-semibold text-amber-900 border border-amber-300 bg-amber-50 px-1.5 py-0.5 inline-block rounded">

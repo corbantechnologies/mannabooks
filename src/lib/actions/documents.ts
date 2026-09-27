@@ -60,6 +60,8 @@ interface CreateDocumentInput {
     restockInventory?: boolean; // For CREDIT_NOTE: restore products to stock
     loyaltyPointsRedeemed?: number;
     loyaltyDiscountAmount?: number;
+    paymentChannel?: string;
+    paymentReference?: string;
     items: CreateDocumentItemInput[];
 }
 
@@ -296,6 +298,8 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 requiresEtims: isFiscalDocType(input.type) ? (input.requiresEtims || false) : false,
                 notes: input.notes || null,
                 termsAndConditions: finalTerms || null,
+                paymentChannel: input.paymentChannel?.trim() || null,
+                paymentReference: input.paymentReference?.trim() || null,
                 currency: docCurrency,
                 exchangeRate: rateVal.toFixed(4),
                 baseCurrency: baseCurr,
@@ -935,6 +939,46 @@ export async function updateDocumentPaymentDetailsAction(
     }
 }
 
+/**
+ * Updates or sets supplier receipt / eTIMS CU invoice number along with settlement channel and reference.
+ */
+export async function updateDocumentReceiptAndSettlementAction(
+    documentId: string,
+    shopId: string,
+    shopSlug: string,
+    data: {
+        kraCuInvoiceNumber?: string;
+        paymentChannel?: string;
+        paymentReference?: string;
+    }
+) {
+    try {
+        await enforcePermission(shopId, "manage_documents");
+        const updateData: any = {};
+        if (data.kraCuInvoiceNumber !== undefined) {
+            updateData.kraCuInvoiceNumber = data.kraCuInvoiceNumber.trim() || null;
+        }
+        if (data.paymentChannel !== undefined) {
+            updateData.paymentChannel = data.paymentChannel.trim() || null;
+        }
+        if (data.paymentReference !== undefined) {
+            updateData.paymentReference = data.paymentReference.trim() || null;
+        }
+
+        await db.update(documents)
+            .set(updateData)
+            .where(and(eq(documents.id, documentId), eq(documents.shopId, shopId)));
+
+        revalidatePath(`/workspaces/${shopSlug}/documents/${documentId}`);
+        revalidatePath(`/workspaces/${shopSlug}/documents`);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update receipt and settlement details:", error);
+        return { success: false, error: "Failed to update receipt and settlement details." };
+    }
+}
+
 interface UpdateDocumentItemInput {
     productId?: string;
     description: string;
@@ -953,6 +997,8 @@ interface UpdateDocumentInput {
     type: DocumentType;
     dueDate?: Date;
     kraCuInvoiceNumber?: string;
+    paymentChannel?: string;
+    paymentReference?: string;
     requiresEtims?: boolean;
     notes?: string;
     termsAndConditions?: string;
@@ -1020,6 +1066,8 @@ export async function updateBillingDocument(input: UpdateDocumentInput) {
                     type: input.type,
                     dueDate: input.dueDate || null,
                     kraCuInvoiceNumber: input.kraCuInvoiceNumber || null,
+                    paymentChannel: input.paymentChannel !== undefined ? (input.paymentChannel?.trim() || null) : doc.paymentChannel,
+                    paymentReference: input.paymentReference !== undefined ? (input.paymentReference?.trim() || null) : doc.paymentReference,
                     requiresEtims: isFiscalDocType(input.type) ? (input.requiresEtims || false) : false,
                     notes: input.notes || null,
                     termsAndConditions: input.termsAndConditions !== undefined ? (input.termsAndConditions || null) : doc.termsAndConditions,

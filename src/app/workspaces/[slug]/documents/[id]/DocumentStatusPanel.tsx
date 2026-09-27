@@ -9,7 +9,7 @@ import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 
 import { DocumentActionsPopover } from "./DocumentActionsPopover";
-import { updateDocumentKraCuNumberAction, DocumentType } from "@/lib/actions/documents";
+import { updateDocumentKraCuNumberAction, updateDocumentReceiptAndSettlementAction, DocumentType } from "@/lib/actions/documents";
 import { isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 import { ThermalReceiptModal, type ThermalReceiptData } from "@/components/ThermalReceiptModal";
@@ -141,9 +141,10 @@ export function DocumentStatusPanel({
   const router = useRouter();
   const [status, setStatus] = useState<"DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED" | "CANCELLED" | "CONFIRMED">(currentStatus as any);
   const [cuNumber, setCuNumber] = useState(kraCuInvoiceNumber || "");
-  const [paymentChannel, setPaymentChannel] = useState(initialPaymentChannel || "");
+  const [paymentChannel, setPaymentChannel] = useState(initialPaymentChannel || (docType === "PAYMENT_VOUCHER" ? "BANK" : ""));
   const [paymentReference, setPaymentReference] = useState(initialPaymentReference || "");
   const [savingCu, setSavingCu] = useState(false);
+  const [savingSettlement, setSavingSettlement] = useState(false);
   const [sending, setSending] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showThermalModal, setShowThermalModal] = useState(false);
@@ -177,6 +178,31 @@ export function DocumentStatusPanel({
       toast.error("Failed to update eTIMS CU Number.");
     } finally {
       setSavingCu(false);
+    }
+  }
+
+  async function handleSaveSettlement() {
+    setSavingSettlement(true);
+    try {
+      const res = await updateDocumentReceiptAndSettlementAction(documentId, shopId, shopSlug, {
+        kraCuInvoiceNumber: cuNumber,
+        paymentChannel,
+        paymentReference,
+      });
+      if (res.success) {
+        toast.success(
+          docType === "PAYMENT_VOUCHER"
+            ? "Supplier receipt & disbursement details recorded!"
+            : "Settlement & receipt details saved."
+        );
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to save settlement details.");
+      }
+    } catch {
+      toast.error("An unexpected error occurred while saving settlement.");
+    } finally {
+      setSavingSettlement(false);
     }
   }
 
@@ -667,8 +693,85 @@ export function DocumentStatusPanel({
         </div>
       </div>
 
+      {/* VENDOR RECEIPT & SETTLEMENT DETAILS FOR PAYMENT VOUCHER */}
+      {docType === "PAYMENT_VOUCHER" && (
+        <div className="border-t border-zinc-200/80 pt-4 space-y-3 bg-zinc-50/70 p-4 rounded-lg border border-zinc-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <p className="font-sans text-xs font-bold text-black uppercase tracking-tight flex items-center gap-1.5">
+                <span>🧾</span>
+                <span>Supplier Official Receipt &amp; Settlement Recording</span>
+              </p>
+              <p className="font-sans text-[11px] text-zinc-500 mt-0.5">
+                Record the vendor&apos;s ETR tax invoice / eTIMS receipt number and disbursement reference for compliance.
+              </p>
+            </div>
+            {cuNumber ? (
+              <span className="badge-emerald text-[10px] shrink-0">✓ Receipt Recorded</span>
+            ) : (
+              <span className="badge-amber text-[10px] shrink-0">⚠️ Receipt Pending</span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+            <div className="space-y-1">
+              <label className="text-[10px] text-zinc-500 font-semibold uppercase block">
+                Supplier Receipt / eTIMS CU # *
+              </label>
+              <input
+                type="text"
+                value={cuNumber}
+                onChange={(e) => setCuNumber(e.target.value)}
+                placeholder="e.g. CU0123456789/2026 or REC-9821"
+                className="w-full px-2.5 py-1.5 border border-zinc-300 rounded text-xs uppercase font-mono bg-white focus:outline-none focus:border-black font-semibold h-[33px]"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] text-zinc-500 font-semibold uppercase block">
+                Disbursement Channel
+              </label>
+              <select
+                value={paymentChannel}
+                onChange={(e) => setPaymentChannel(e.target.value)}
+                className="w-full px-2.5 py-1.5 border border-zinc-300 rounded text-xs font-semibold uppercase bg-white focus:outline-none focus:border-black h-[33px]"
+              >
+                <option value="BANK">Bank Transfer (EFT / RTGS)</option>
+                <option value="MPESA">M-Pesa (Paybill / Till / Direct)</option>
+                <option value="CASH">Cash / Petty Cash</option>
+                <option value="CHEQUE">Bank Cheque</option>
+                <option value="OTHER">Other Disbursement</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] text-zinc-500 font-semibold uppercase block">
+                Transaction Reference #
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={paymentReference}
+                  onChange={(e) => setPaymentReference(e.target.value)}
+                  placeholder="e.g. QAB71239X or CHQ-0045"
+                  className="w-full px-2.5 py-1.5 border border-zinc-300 rounded text-xs font-mono bg-white focus:outline-none focus:border-black font-semibold uppercase h-[33px]"
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveSettlement}
+                  disabled={savingSettlement}
+                  className="btn-primary-modern px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider shrink-0 h-[33px]"
+                >
+                  {savingSettlement ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* COMPACT KRA eTIMS CU SERIAL NUMBER (IF FISCAL DOC TYPE) */}
-      {isFiscalDocType(docType) && (
+      {isFiscalDocType(docType) && docType !== "PAYMENT_VOUCHER" && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-zinc-100 pt-3">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-semibold uppercase text-zinc-500">Statutory KRA eTIMS CU:</span>

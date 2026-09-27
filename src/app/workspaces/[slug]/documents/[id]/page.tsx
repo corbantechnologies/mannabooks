@@ -268,8 +268,14 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
           )}
           {doc.kraCuInvoiceNumber ? (
             <p className="font-mono text-[10px] font-bold text-black border-t border-zinc-200 pt-1 mt-1">
-              KRA eTIMS CU #: {doc.kraCuInvoiceNumber}
+              {doc.type === "PAYMENT_VOUCHER" ? "Supplier Receipt / eTIMS CU #:" : "KRA eTIMS CU #:"} {doc.kraCuInvoiceNumber}
             </p>
+          ) : doc.type === "PAYMENT_VOUCHER" ? (
+            <div className="border-t border-zinc-200 pt-1 mt-1">
+              <span className="inline-block border border-amber-400 bg-amber-50 text-amber-900 text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-tight rounded-md">
+                ⚠️ Supplier Receipt # Pending
+              </span>
+            </div>
           ) : isFiscalDocType(doc.type) && doc.requiresEtims ? (
             <div className="border-t border-zinc-200 pt-1 mt-1">
               <span className="inline-block border border-amber-400 bg-amber-50 text-amber-900 text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-tight rounded-md">
@@ -363,7 +369,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
       })()}
 
       {/* PAYMENT SETTLEMENT & INSTALLMENTS SUB-LEDGER */}
-      {(doc.type === "INVOICE" || (doc.payments && doc.payments.length > 0)) && (
+      {(doc.type === "INVOICE" || doc.type === "PAYMENT_VOUCHER" || (doc.payments && doc.payments.length > 0)) && (
         <PaymentHistorySubLedger
           documentId={doc.id}
           shopId={shop.id}

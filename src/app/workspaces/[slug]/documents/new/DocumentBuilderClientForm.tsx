@@ -125,6 +125,12 @@ export function DocumentBuilderClientForm({
     parseFloat(initialDocument?.loyaltyDiscountAmount || "0")
   );
   const [kraCuInvoiceNumber, setKraCuInvoiceNumber] = useState(initialDocument?.kraCuInvoiceNumber || "");
+  const [paymentChannel, setPaymentChannel] = useState(
+    initialDocument?.paymentChannel || (initialDocType === "PAYMENT_VOUCHER" ? "BANK" : (initialDocType === "RECEIPT" ? "MPESA" : ""))
+  );
+  const [paymentReference, setPaymentReference] = useState(
+    initialDocument?.paymentReference || ""
+  );
   const [requiresEtims, setRequiresEtims] = useState(initialDocument?.requiresEtims || false);
   const [currency, setCurrency] = useState(initialDocument?.currency || shop.currency || "KES");
   const [exchangeRate, setExchangeRate] = useState<string>(() => {
@@ -204,6 +210,11 @@ export function DocumentBuilderClientForm({
 
   function handleDocTypeChange(newType: DocumentType) {
     setDocType(newType);
+    if (newType === "PAYMENT_VOUCHER" && !paymentChannel) {
+      setPaymentChannel("BANK");
+    } else if (newType === "RECEIPT" && !paymentChannel) {
+      setPaymentChannel("MPESA");
+    }
     if (isProcurementDocType(newType) && partyType !== "SUPPLIER") {
       setPartyType("SUPPLIER");
       setTargetId("");
@@ -464,6 +475,8 @@ export function DocumentBuilderClientForm({
           type: docType,
           dueDate: dueDate ? new Date(dueDate) : undefined,
           kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
+          paymentChannel: paymentChannel.trim() || undefined,
+          paymentReference: paymentReference.trim() || undefined,
           requiresEtims: isFiscalDocType(docType) ? requiresEtims : false,
           currency,
           exchangeRate: parseFloat(exchangeRate) || 1.0,
@@ -481,6 +494,8 @@ export function DocumentBuilderClientForm({
           type: docType,
           dueDate: dueDate ? new Date(dueDate) : undefined,
           kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
+          paymentChannel: paymentChannel.trim() || undefined,
+          paymentReference: paymentReference.trim() || undefined,
           requiresEtims: isFiscalDocType(docType) ? requiresEtims : false,
           currency,
           exchangeRate: parseFloat(exchangeRate) || 1.0,
@@ -593,23 +608,36 @@ export function DocumentBuilderClientForm({
             </select>
           </div>
 
-          {/* KRA eTIMS CU SERIAL NUMBER */}
+          {/* KRA eTIMS CU SERIAL NUMBER / SUPPLIER RECEIPT */}
           <div className="flex flex-col justify-end">
             <div className="h-7 flex items-end justify-between mb-1.5">
-              <label className="text-[10px] text-zinc-400 uppercase font-semibold">KRA eTIMS CU Serial #</label>
+              <label className="text-[10px] text-zinc-400 uppercase font-semibold">
+                {docType === "PAYMENT_VOUCHER"
+                  ? "Supplier Receipt / eTIMS CU #"
+                  : isProcurementDocType(docType)
+                  ? "Supplier Ref / CU #"
+                  : "KRA eTIMS CU Serial #"}
+              </label>
               <span className="text-[9px] text-zinc-400 italic">
-                {isFiscalDocType(docType) ? "Optional" : "N/A for Non-Fiscal"}
+                {docType === "PAYMENT_VOUCHER"
+                  ? "Vendor Receipt / ETR #"
+                  : isFiscalDocType(docType)
+                  ? "Optional"
+                  : "Optional"}
               </span>
             </div>
             <input
               type="text"
               value={kraCuInvoiceNumber}
               onChange={(e) => setKraCuInvoiceNumber(e.target.value)}
-              disabled={!isFiscalDocType(docType)}
-              placeholder={isFiscalDocType(docType) ? "e.g. CU0123456789/2026" : "Not applicable"}
-              className={`w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-mono text-xs uppercase h-10 ${
-                isFiscalDocType(docType) ? "border-zinc-300 bg-white" : "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed"
-              }`}
+              placeholder={
+                docType === "PAYMENT_VOUCHER"
+                  ? "e.g. CU0123456789/2026 or REC-9821"
+                  : isFiscalDocType(docType)
+                  ? "e.g. CU0123456789/2026"
+                  : "Optional reference #"
+              }
+              className="w-full px-3 py-2.5 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-mono text-xs uppercase h-10 font-semibold"
             />
           </div>
 
@@ -752,6 +780,41 @@ export function DocumentBuilderClientForm({
                 )}
               </div>
             </div>
+          )}
+
+          {/* PAYMENT & DISBURSEMENT SETTLEMENT (FOR PAYMENT VOUCHERS & RECEIPTS) */}
+          {(docType === "PAYMENT_VOUCHER" || docType === "RECEIPT") && (
+            <>
+              <div className="md:col-span-4 space-y-1.5">
+                <label className="text-[10px] text-zinc-400 uppercase font-semibold block">
+                  {docType === "PAYMENT_VOUCHER" ? "Disbursement Method" : "Payment Method"}
+                </label>
+                <select
+                  value={paymentChannel}
+                  onChange={(e) => setPaymentChannel(e.target.value)}
+                  className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-mono text-xs font-bold uppercase h-10"
+                >
+                  <option value="BANK">Bank Transfer (EFT / RTGS)</option>
+                  <option value="MPESA">M-Pesa (Paybill / Till / Direct)</option>
+                  <option value="CASH">Cash / Petty Cash</option>
+                  <option value="CHEQUE">Bank Cheque</option>
+                  <option value="OTHER">Other Disbursement</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-4 space-y-1.5">
+                <label className="text-[10px] text-zinc-400 uppercase font-semibold block">
+                  Transaction / Payment Ref #
+                </label>
+                <input
+                  type="text"
+                  value={paymentReference}
+                  onChange={(e) => setPaymentReference(e.target.value)}
+                  placeholder={docType === "PAYMENT_VOUCHER" ? "e.g. MPESA QAB71239X, Cheque #0045" : "e.g. MPESA Ref, Cheque #"}
+                  className="w-full px-3 py-2.5 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-mono text-xs uppercase h-10 font-semibold"
+                />
+              </div>
+            </>
           )}
 
           {/* STOCK DISPATCH LOCATION SELECTOR */}

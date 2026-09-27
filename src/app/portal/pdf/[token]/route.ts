@@ -305,7 +305,7 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
     const headerRightChildren = [
         React.createElement(ReactPDF.Text, { key: "badge", style: styles.typeBadge }, `${doc.type ? String(doc.type).replace(/_/g, " ") : "DOCUMENT"} SNAPSHOT`),
         React.createElement(ReactPDF.Text, { key: "serial", style: styles.docSerial }, String(doc.docNumber || "")),
-        doc.kraCuInvoiceNumber ? React.createElement(ReactPDF.Text, { key: "kra", style: { textAlign: "right", fontSize: 7.5, fontWeight: "bold", color: "#000000", marginTop: 2 } }, "KRA eTIMS CU #: " + doc.kraCuInvoiceNumber) : null,
+        doc.kraCuInvoiceNumber ? React.createElement(ReactPDF.Text, { key: "kra", style: { textAlign: "right", fontSize: 7.5, fontWeight: "bold", color: "#000000", marginTop: 2 } }, (doc.type === "PAYMENT_VOUCHER" ? "Supplier Receipt / CU #: " : "KRA eTIMS CU #: ") + doc.kraCuInvoiceNumber) : null,
         doc.paymentChannel ? React.createElement(ReactPDF.Text, { key: "channel", style: { textAlign: "right", fontSize: 7.5, fontWeight: "bold", color: "#047857", marginTop: 2 } }, "Paid via: " + doc.paymentChannel + (doc.paymentReference ? " (Ref: " + doc.paymentReference + ")" : "")) : null,
         React.createElement(ReactPDF.Text, { key: "issued", style: { textAlign: "right", fontSize: 7.5, color: "#71717a", marginTop: 2 } }, "Issued: " + new Date(doc.issueDate).toLocaleDateString()),
         doc.dueDate ? React.createElement(ReactPDF.Text, { key: "due", style: { textAlign: "right", fontSize: 7.5, color: "#e11d48", fontWeight: "bold" } }, "Maturity: " + new Date(doc.dueDate).toLocaleDateString()) : null

@@ -237,7 +237,9 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
           )}
           {doc.location && (
             <>
-              <p className="font-mono text-[10px] text-zinc-400 uppercase mt-2">Fulfillment Location</p>
+              <p className="font-mono text-[10px] text-zinc-400 uppercase mt-2">
+                {doc.type === "LSO" || doc.type === "SERVICE_COMPLETION_NOTE" ? "Service Site / Operating Branch" : "Fulfillment Location"}
+              </p>
               <p className="font-mono text-xs font-semibold text-black">📍 {doc.location.name} {doc.location.code ? `(${doc.location.code})` : ""}</p>
             </>
           )}

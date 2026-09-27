@@ -20,10 +20,12 @@ export type DocumentType =
   | "RECEIPT" 
   | "LPO" 
   | "PO" 
+  | "LSO"
   | "DELIVERY_NOTE" 
   | "CREDIT_NOTE" 
   | "DEBIT_NOTE" 
   | "GOODS_RECEIVED_NOTE" 
+  | "SERVICE_COMPLETION_NOTE"
   | "PAYMENT_VOUCHER"
   | "PAYROLL_VOUCHER";
 
@@ -77,11 +79,13 @@ function determineDefaultStatus(type: DocumentType, sourceDocType?: DocumentType
         case "DELIVERY_NOTE":
             return "ISSUED";
         case "GOODS_RECEIVED_NOTE":
+        case "SERVICE_COMPLETION_NOTE":
             return "RECEIVED";
         case "QUOTATION":
         case "INVOICE":
         case "LPO":
         case "PO":
+        case "LSO":
         default:
             return "DRAFT";
     }
@@ -141,10 +145,12 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 RECEIPT: "RCT",
                 LPO: "LPO",
                 PO: "PO",
+                LSO: "LSO",
                 DELIVERY_NOTE: "DN",
                 CREDIT_NOTE: "CN",
                 DEBIT_NOTE: "DN",
                 GOODS_RECEIVED_NOTE: "GRN",
+                SERVICE_COMPLETION_NOTE: "SCC",
                 PAYMENT_VOUCHER: "PV",
                 PAYROLL_VOUCHER: "PAY",
             };
@@ -255,7 +261,7 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
 
             // 5. Resolve Commercial Terms & Conditions
             let finalTerms = input.termsAndConditions;
-            const isSupplierDoc = Boolean(input.supplierId || ["LPO", "PO", "GOODS_RECEIVED_NOTE", "PAYMENT_VOUCHER"].includes(input.type));
+            const isSupplierDoc = Boolean(input.supplierId || ["LPO", "PO", "LSO", "GOODS_RECEIVED_NOTE", "SERVICE_COMPLETION_NOTE", "PAYMENT_VOUCHER"].includes(input.type));
             if ((finalTerms === undefined || finalTerms === null) && !isSupplierDoc) {
                 const isCatalogQuote = input.type === "QUOTATION" && (input.notes?.includes("Public Digital Product Catalog") || input.sourceDocType === "QUOTATION");
                 const defaultTerms = await tx.query.shopTerms.findMany({
@@ -477,8 +483,10 @@ function getAllowedStatuses(type: DocumentType): string[] {
             return ["PAID"];
         case "LPO":
         case "PO":
+        case "LSO":
             return ["DRAFT", "ISSUED", "RECEIVED", "PAID", "CANCELLED"];
         case "GOODS_RECEIVED_NOTE":
+        case "SERVICE_COMPLETION_NOTE":
             return ["RECEIVED", "PAID"];
         case "DELIVERY_NOTE":
         case "DEBIT_NOTE":
@@ -777,6 +785,13 @@ export async function convertDocumentAction(
                     status: "CONFIRMED",
                 });
             } else if (targetType === "GOODS_RECEIVED_NOTE" && (sourceDoc.type === "PO" || sourceDoc.type === "LPO")) {
+                await updateDocumentStatus({
+                    documentId: sourceDoc.id,
+                    shopId,
+                    shopSlug,
+                    status: "RECEIVED",
+                });
+            } else if (targetType === "SERVICE_COMPLETION_NOTE" && sourceDoc.type === "LSO") {
                 await updateDocumentStatus({
                     documentId: sourceDoc.id,
                     shopId,

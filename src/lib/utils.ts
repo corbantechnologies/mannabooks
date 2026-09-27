@@ -42,7 +42,7 @@ export function isFiscalDocType(type: string | null | undefined): boolean {
  */
 export function isProcurementDocType(type: string | null | undefined): boolean {
     if (!type) return false;
-    return type === "LPO" || type === "PO" || type === "GOODS_RECEIVED_NOTE" || type === "PAYMENT_VOUCHER";
+    return type === "LPO" || type === "PO" || type === "LSO" || type === "GOODS_RECEIVED_NOTE" || type === "SERVICE_COMPLETION_NOTE" || type === "PAYMENT_VOUCHER";
 }
 
 export interface LineItemCalculationInput {

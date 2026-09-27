@@ -174,7 +174,7 @@ export function DocumentBuilderClientForm({
 
   // Automatically switch partyType when selecting Procurement documents (LPO, PO, GRN, PV)
   useEffect(() => {
-    if (docType === "LPO" || docType === "PO" || docType === "GOODS_RECEIVED_NOTE" || docType === "PAYMENT_VOUCHER") {
+    if (docType === "LPO" || docType === "PO" || docType === "LSO" || docType === "GOODS_RECEIVED_NOTE" || docType === "SERVICE_COMPLETION_NOTE" || docType === "PAYMENT_VOUCHER") {
       if (partyType !== "SUPPLIER") {
         setPartyType("SUPPLIER");
         if (!initialSupplierId) setTargetId("");
@@ -535,12 +535,14 @@ export function DocumentBuilderClientForm({
               <option value="INVOICE">INV — Customer Invoice</option>
               <option value="RECEIPT">RCT — Official Receipt</option>
               <option value="QUOTATION">QT — Quotation / Estimate</option>
-              <option value="LPO">LPO — Local Purchase Order</option>
+              <option value="LPO">LPO — Local Purchase Order (Goods)</option>
               <option value="PO">PO — Purchase Order</option>
+              <option value="LSO">LSO — Local Service Order (Services/Works)</option>
               <option value="DELIVERY_NOTE">DN — Delivery Note</option>
               <option value="CREDIT_NOTE">CN — Credit Note</option>
               <option value="DEBIT_NOTE">DBN — Debit Note</option>
               <option value="GOODS_RECEIVED_NOTE">GRN — Goods Received Note</option>
+              <option value="SERVICE_COMPLETION_NOTE">SCC — Service Completion Certificate</option>
               <option value="PAYMENT_VOUCHER">PV — Payment Voucher</option>
             </select>
           </div>
@@ -711,10 +713,14 @@ export function DocumentBuilderClientForm({
             <div className="md:col-span-4 space-y-1.5">
               <div className="flex justify-between items-center">
                 <label className="text-[10px] text-zinc-400 uppercase font-semibold">
-                  Stock Fulfillment Location
+                  {docType === "LSO" || docType === "SERVICE_COMPLETION_NOTE"
+                    ? "Service Site / Operating Branch (Optional)"
+                    : "Stock Fulfillment Location"}
                 </label>
                 <span className="text-[9px] text-zinc-400 italic font-mono">
-                  Inventory Flow
+                  {docType === "LSO" || docType === "SERVICE_COMPLETION_NOTE"
+                    ? "No Inventory Inflow/Outflow"
+                    : "Inventory Flow"}
                 </span>
               </div>
               <select

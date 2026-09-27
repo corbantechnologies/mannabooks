@@ -267,6 +267,34 @@ export function DocumentActionsPopover({
             </>
           )}
 
+          {/* LSO CONVERSIONS */}
+          {docType === "LSO" && (
+            <>
+              <button
+                onClick={() => handleConvert("SERVICE_COMPLETION_NOTE")}
+                className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
+              >
+                <span>📋</span> Sign Off Service Completion (SCC)
+              </button>
+              <button
+                onClick={() => handleConvert("PAYMENT_VOUCHER")}
+                className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
+              >
+                <span>💳</span> Issue Payment Voucher
+              </button>
+            </>
+          )}
+
+          {/* SERVICE COMPLETION NOTE CONVERSIONS */}
+          {docType === "SERVICE_COMPLETION_NOTE" && (
+            <button
+              onClick={() => handleConvert("PAYMENT_VOUCHER")}
+              className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-950 font-semibold text-[11px] transition-colors cursor-pointer flex items-center gap-2 text-zinc-800"
+            >
+              <span>💳</span> Issue Payment Voucher
+            </button>
+          )}
+
           {/* RECEIPT CONVERSIONS — Delivery Note only */}
           {docType === "RECEIPT" && (
             <button
@@ -303,7 +331,9 @@ export function DocumentActionsPopover({
            docType !== "RECEIPT" &&
            docType !== "LPO" &&
            docType !== "PO" &&
+           docType !== "LSO" &&
            docType !== "GOODS_RECEIVED_NOTE" &&
+           docType !== "SERVICE_COMPLETION_NOTE" &&
            docType !== "DELIVERY_NOTE" &&
            docType !== "CREDIT_NOTE" &&
            docType !== "DEBIT_NOTE" &&

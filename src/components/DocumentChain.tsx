@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export type ChainDocType =
   | "QUOTATION" | "INVOICE" | "RECEIPT" | "CREDIT_NOTE" | "DEBIT_NOTE"
-  | "LPO" | "PO" | "DELIVERY_NOTE" | "GOODS_RECEIVED_NOTE"
+  | "LPO" | "PO" | "LSO" | "DELIVERY_NOTE" | "GOODS_RECEIVED_NOTE" | "SERVICE_COMPLETION_NOTE"
   | "PAYMENT_VOUCHER" | "PAYROLL_VOUCHER";
 
 export interface ChainNode {
@@ -30,8 +30,10 @@ const TYPE_ICON: Record<string, string> = {
   DEBIT_NOTE: "↪️",
   LPO: "📦",
   PO: "📦",
+  LSO: "🛠️",
   DELIVERY_NOTE: "🚚",
   GOODS_RECEIVED_NOTE: "✅",
+  SERVICE_COMPLETION_NOTE: "📋",
   PAYMENT_VOUCHER: "💳",
   PAYROLL_VOUCHER: "👥",
 };

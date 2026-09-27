@@ -1128,7 +1128,7 @@ export function VendorBillsClient({
 
                 <div>
                   <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                    Link Purchase Order (PO/LPO)
+                    Link Order (PO / LPO / LSO)
                   </label>
                   <select
                     value={selectedPoId}
@@ -1138,7 +1138,7 @@ export function VendorBillsClient({
                     <option value="">None (Direct Vendor Bill)</option>
                     {supplierPos.map((po) => (
                       <option key={po.id} value={po.id}>
-                        {po.docNumber} — {formatCurrency(parseFloat(po.grandTotal), currency)}
+                        {po.type === "LSO" ? "🛠️ " : "📦 "} {po.docNumber} ({po.type}) — {formatCurrency(parseFloat(po.grandTotal), currency)}
                       </option>
                     ))}
                   </select>
@@ -1147,21 +1147,21 @@ export function VendorBillsClient({
 
                 <div>
                   <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                    Link Goods Received Note (GRN)
+                    Link Receipt / Sign-Off (GRN / SCC)
                   </label>
                   <select
                     value={selectedGrnId}
                     onChange={(e) => handleSelectGrn(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white font-mono focus:outline-none focus:ring-1 focus:ring-black"
                   >
-                    <option value="">None (Unchecked delivery)</option>
+                    <option value="">None (Unverified Quantities / Services)</option>
                     {supplierGrns.map((grn) => (
                       <option key={grn.id} value={grn.id}>
-                        {grn.docNumber} ({new Date(grn.issueDate).toLocaleDateString("en-KE")})
+                        {grn.type === "SERVICE_COMPLETION_NOTE" ? "📋 " : "📦 "} {grn.docNumber} ({grn.type === "SERVICE_COMPLETION_NOTE" ? "SCC" : "GRN"})
                       </option>
                     ))}
                   </select>
-                  <p className="text-[10px] text-zinc-400 mt-1">Verifies physically received quantities</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">Verifies dock intake / service sign-off</p>
                 </div>
               </div>
 

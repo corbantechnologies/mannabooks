@@ -10,10 +10,12 @@ export const docTypeEnum = pgEnum('doc_type', [
     'RECEIPT',
     'LPO',
     'PO',
+    'LSO',
     'DELIVERY_NOTE',
     'CREDIT_NOTE',
     'DEBIT_NOTE',
     'GOODS_RECEIVED_NOTE',
+    'SERVICE_COMPLETION_NOTE',
     'PAYMENT_VOUCHER',
     'PAYROLL_VOUCHER'
 ]);

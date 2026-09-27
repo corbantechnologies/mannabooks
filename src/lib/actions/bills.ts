@@ -55,7 +55,7 @@ export async function getApprovedPosAndGrns(shopSlug: string, supplierId?: strin
 
     const poConditions = [
         eq(documents.shopId, shop.id),
-        inArray(documents.type, ["PO", "LPO"]),
+        inArray(documents.type, ["PO", "LPO", "LSO"]),
     ];
     if (supplierId && supplierId !== "ALL") {
         poConditions.push(eq(documents.supplierId, supplierId));
@@ -72,7 +72,7 @@ export async function getApprovedPosAndGrns(shopSlug: string, supplierId?: strin
 
     const grnConditions = [
         eq(documents.shopId, shop.id),
-        eq(documents.type, "GOODS_RECEIVED_NOTE"),
+        inArray(documents.type, ["GOODS_RECEIVED_NOTE", "SERVICE_COMPLETION_NOTE"]),
     ];
     if (supplierId && supplierId !== "ALL") {
         grnConditions.push(eq(documents.supplierId, supplierId));

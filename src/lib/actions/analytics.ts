@@ -207,7 +207,7 @@ export async function getWorkspaceAnalyticsData(
     filteredDocs.forEach((d) => {
       const val = parseFloat(d.grandTotal || "0");
       const isSales = d.type === "INVOICE" || d.type === "RECEIPT"; // QUOTATION excluded — not settled revenue
-      const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER" || d.type === "GOODS_RECEIVED_NOTE" || d.type === "PAYROLL_VOUCHER";
+      const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "LSO" || d.type === "PAYMENT_VOUCHER" || d.type === "GOODS_RECEIVED_NOTE" || d.type === "SERVICE_COMPLETION_NOTE" || d.type === "PAYROLL_VOUCHER";
 
       // A RECEIPT generated from an invoice (has parentDocumentId) must be skipped — 
       // its parent invoice is already PAID and counted as inflow. Only count standalone receipts.

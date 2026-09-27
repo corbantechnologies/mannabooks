@@ -699,7 +699,7 @@ export async function getSupplierStatement(
             let debit = 0;
             let credit = 0;
 
-            if (doc.type === "INVOICE" || doc.type === "GOODS_RECEIVED_NOTE" || doc.type === "PO" || doc.type === "LPO") {
+            if (doc.type === "INVOICE" || doc.type === "GOODS_RECEIVED_NOTE" || doc.type === "SERVICE_COMPLETION_NOTE" || doc.type === "PO" || doc.type === "LPO" || doc.type === "LSO") {
                 // Inbound bill/PO: Credit Accounts Payable (liability increases)
                 if (doc.status !== "CANCELLED") {
                     credit = amount;
@@ -730,8 +730,10 @@ export async function getSupplierStatement(
             const docTypeLabel: Record<string, string> = {
                 INVOICE: "Supplier Bill",
                 GOODS_RECEIVED_NOTE: "Goods Received Note",
+                SERVICE_COMPLETION_NOTE: "Service Completion Certificate (SCC)",
                 LPO: "Local Purchase Order",
                 PO: "Purchase Order",
+                LSO: "Local Service Order",
                 PAYMENT_VOUCHER: "Payment Voucher",
                 RECEIPT: "Supplier Receipt",
                 CREDIT_NOTE: "Credit Note",

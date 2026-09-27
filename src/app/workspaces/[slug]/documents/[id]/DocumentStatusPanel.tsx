@@ -72,15 +72,17 @@ function getStatusOptions(docType: DocumentType): { value: string; label: string
       ];
     case "LPO":
     case "PO":
+    case "LSO":
       return [
         { value: "DRAFT",    label: "Draft",    color: "zinc" },
         { value: "ISSUED",   label: "Issued",   color: "blue" },
-        { value: "RECEIVED", label: "Received", color: "purple" },
+        { value: "RECEIVED", label: docType === "LSO" ? "Completed" : "Received", color: "purple" },
         { value: "PAID",     label: "Paid",     color: "emerald" },
       ];
     case "GOODS_RECEIVED_NOTE":
+    case "SERVICE_COMPLETION_NOTE":
       return [
-        { value: "RECEIVED", label: "Received", color: "purple" },
+        { value: "RECEIVED", label: docType === "SERVICE_COMPLETION_NOTE" ? "Signed Off" : "Received", color: "purple" },
         { value: "PAID",     label: "Paid",     color: "emerald" },
       ];
     // Immutable documents — no status toggle rendered
@@ -392,10 +394,37 @@ export function DocumentStatusPanel({
             </div>
           )}
 
+          {/* QUICK SIGN-OFF ACTION FOR LSO */}
+          {docType === "LSO" && status !== "RECEIVED" && status !== "PAID" && status !== "CANCELLED" && (
+            <div className="bg-purple-50 border border-purple-200 p-3.5 rounded flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <p className="font-sans text-xs font-bold text-purple-900">📋 Service Satisfactorily Rendered?</p>
+                <p className="font-sans text-[11px] text-purple-700 mt-0.5">
+                  Sign off service completion without affecting warehouse inventory balances.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleStatusUpdate("RECEIVED")}
+                disabled={updateStatusMutation.isPending}
+                className="bg-purple-700 hover:bg-purple-800 text-white font-sans text-xs font-semibold px-3.5 py-1.5 rounded transition-colors shrink-0 shadow-2xs"
+              >
+                {updateStatusMutation.isPending && updateStatusMutation.variables?.status === "RECEIVED" ? "Signing Off..." : "Sign Off Service"}
+              </button>
+            </div>
+          )}
+
           {status === "RECEIVED" && (docType === "LPO" || docType === "PO" || docType === "GOODS_RECEIVED_NOTE") && (
             <div className="bg-emerald-50 border border-emerald-200 px-3 py-2 rounded text-xs font-semibold text-emerald-900 flex items-center gap-2 font-sans">
               <span>✓</span>
               <span>Goods marked as received. Inventory quantities and location balances have been credited.</span>
+            </div>
+          )}
+
+          {status === "RECEIVED" && (docType === "LSO" || docType === "SERVICE_COMPLETION_NOTE") && (
+            <div className="bg-purple-50 border border-purple-200 px-3 py-2 rounded text-xs font-semibold text-purple-900 flex items-center gap-2 font-sans">
+              <span>✓</span>
+              <span>Service verified and completed. Ready for 3-Way Matching against inbound Vendor Bill.</span>
             </div>
           )}
 

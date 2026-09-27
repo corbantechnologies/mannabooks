@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/db";
-import { vendorBills, vendorBillItems, shops, suppliers, chartOfAccounts, journalEntries, accountingPeriods, whtPayments } from "@/db/schema";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { vendorBills, vendorBillItems, shops, suppliers, chartOfAccounts, journalEntries, accountingPeriods, whtPayments, documents, documentItems } from "@/db/schema";
+import { eq, and, desc, asc, inArray } from "drizzle-orm";
 import { enforcePermission } from "./rbac";
 import { revalidatePath } from "next/cache";
 
@@ -12,6 +12,9 @@ export interface CreateVendorBillItemInput {
     quantity: number;
     unitPrice: number;
     taxRate: number;
+    poItemId?: string;
+    poUnitPrice?: number;
+    grnQuantity?: number;
 }
 
 export interface CreateVendorBillInput {
@@ -21,6 +24,10 @@ export interface CreateVendorBillInput {
     dueDate?: string;
     whtRate: number; // 0, 5, 10 etc.
     notes?: string;
+    sourcePoId?: string;
+    sourceGrnId?: string;
+    varianceNotes?: string;
+    allowVarianceOverride?: boolean;
     items: CreateVendorBillItemInput[];
 }
 
@@ -30,6 +37,57 @@ export interface PayVendorBillInput {
     paymentReference: string;
     paymentDate: string;
     notes?: string;
+}
+
+/**
+ * Fetch approved Purchase Orders (PO/LPO) and Goods Received Notes (GRN) for 3-Way Matching
+ */
+export async function getApprovedPosAndGrns(shopSlug: string, supplierId?: string) {
+    const shop = await db.query.shops.findFirst({
+        where: eq(shops.slug, shopSlug),
+    });
+
+    if (!shop) {
+        throw new Error("Workspace not found");
+    }
+
+    await enforcePermission(shop.id, "view_finance");
+
+    const poConditions = [
+        eq(documents.shopId, shop.id),
+        inArray(documents.type, ["PO", "LPO"]),
+    ];
+    if (supplierId && supplierId !== "ALL") {
+        poConditions.push(eq(documents.supplierId, supplierId));
+    }
+
+    const pos = await db.query.documents.findMany({
+        where: and(...poConditions),
+        orderBy: [desc(documents.issueDate)],
+        with: {
+            items: true,
+            supplier: true,
+        },
+    });
+
+    const grnConditions = [
+        eq(documents.shopId, shop.id),
+        eq(documents.type, "GOODS_RECEIVED_NOTE"),
+    ];
+    if (supplierId && supplierId !== "ALL") {
+        grnConditions.push(eq(documents.supplierId, supplierId));
+    }
+
+    const grns = await db.query.documents.findMany({
+        where: and(...grnConditions),
+        orderBy: [desc(documents.issueDate)],
+        with: {
+            items: true,
+            supplier: true,
+        },
+    });
+
+    return { pos, grns };
 }
 
 /**
@@ -59,6 +117,16 @@ export async function getVendorBills(shopSlug: string, filters?: { status?: stri
         orderBy: [desc(vendorBills.billDate)],
         with: {
             supplier: true,
+            sourcePo: {
+                with: {
+                    items: true,
+                },
+            },
+            sourceGrn: {
+                with: {
+                    items: true,
+                },
+            },
             items: {
                 with: {
                     account: true,
@@ -88,6 +156,16 @@ export async function getVendorBillById(billId: string, shopSlug: string) {
         where: and(eq(vendorBills.id, billId), eq(vendorBills.shopId, shop.id)),
         with: {
             supplier: true,
+            sourcePo: {
+                with: {
+                    items: true,
+                },
+            },
+            sourceGrn: {
+                with: {
+                    items: true,
+                },
+            },
             items: {
                 with: {
                     account: true,
@@ -100,7 +178,7 @@ export async function getVendorBillById(billId: string, shopSlug: string) {
 }
 
 /**
- * Create a new Vendor Bill with line items and automatic tax/WHT calculations
+ * Create a new Vendor Bill with line items, 3-Way Matching variance calculation and automatic tax/WHT
  */
 export async function createVendorBill(shopSlug: string, input: CreateVendorBillInput) {
     const shop = await db.query.shops.findFirst({
@@ -124,9 +202,15 @@ export async function createVendorBill(shopSlug: string, input: CreateVendorBill
     });
     const billNumber = `BILL-${String(count.length + 1).padStart(4, "0")}`;
 
-    // 2. Compute financial totals
+    // 2. Compute financial totals and 3-Way Matching Variances
     let subTotal = 0;
     let taxAmount = 0;
+    let priceVarianceAmount = 0;
+    let quantityVarianceCount = 0;
+    let hasPriceVariance = false;
+    let hasQtyVariance = false;
+
+    const hasSourceDocs = Boolean(input.sourcePoId || input.sourceGrnId);
 
     const computedItems = input.items.map((it) => {
         const qty = Number(it.quantity) || 1;
@@ -139,6 +223,25 @@ export async function createVendorBill(shopSlug: string, input: CreateVendorBill
         subTotal += lineSub;
         taxAmount += lineTax;
 
+        // 3-Way Matching comparisons
+        if (it.poUnitPrice !== undefined && it.poUnitPrice !== null) {
+            const poPrice = Number(it.poUnitPrice) || 0;
+            const diffPrice = price - poPrice;
+            if (diffPrice > 0.01) {
+                hasPriceVariance = true;
+                priceVarianceAmount += diffPrice * qty;
+            }
+        }
+
+        if (it.grnQuantity !== undefined && it.grnQuantity !== null) {
+            const recQty = Number(it.grnQuantity) || 0;
+            const diffQty = qty - recQty;
+            if (diffQty > 0.01) {
+                hasQtyVariance = true;
+                quantityVarianceCount += 1;
+            }
+        }
+
         return {
             accountId: it.accountId,
             description: it.description || "Vendor line expense",
@@ -146,8 +249,28 @@ export async function createVendorBill(shopSlug: string, input: CreateVendorBill
             unitPrice: price.toFixed(2),
             taxRate: rate.toFixed(2),
             totalAmount: lineTotal.toFixed(2),
+            poItemId: it.poItemId || null,
+            poUnitPrice: it.poUnitPrice !== undefined && it.poUnitPrice !== null ? Number(it.poUnitPrice).toFixed(2) : null,
+            grnQuantity: it.grnQuantity !== undefined && it.grnQuantity !== null ? Number(it.grnQuantity).toFixed(2) : null,
         };
     });
+
+    let matchingStatus: "PERFECT_MATCH" | "PRICE_VARIANCE" | "QUANTITY_VARIANCE" | "PRICE_AND_QTY_VARIANCE" | "UNMATCHED" | "MANUAL_OVERRIDE" = "UNMATCHED";
+    if (hasSourceDocs) {
+        if (hasPriceVariance && hasQtyVariance) {
+            matchingStatus = "PRICE_AND_QTY_VARIANCE";
+        } else if (hasPriceVariance) {
+            matchingStatus = "PRICE_VARIANCE";
+        } else if (hasQtyVariance) {
+            matchingStatus = "QUANTITY_VARIANCE";
+        } else {
+            matchingStatus = "PERFECT_MATCH";
+        }
+    }
+
+    if (input.allowVarianceOverride && matchingStatus !== "PERFECT_MATCH" && matchingStatus !== "UNMATCHED") {
+        matchingStatus = "MANUAL_OVERRIDE";
+    }
 
     const totalAmount = subTotal + taxAmount;
     const whtRate = Number(input.whtRate) || 0;
@@ -172,6 +295,12 @@ export async function createVendorBill(shopSlug: string, input: CreateVendorBill
             amountPaid: "0.00",
             status: "DRAFT",
             notes: input.notes?.trim() || null,
+            sourcePoId: input.sourcePoId || null,
+            sourceGrnId: input.sourceGrnId || null,
+            matchingStatus,
+            priceVarianceAmount: priceVarianceAmount.toFixed(2),
+            quantityVarianceCount: quantityVarianceCount.toFixed(2),
+            varianceNotes: input.varianceNotes?.trim() || null,
         }).returning();
 
         for (const item of computedItems) {
@@ -183,6 +312,9 @@ export async function createVendorBill(shopSlug: string, input: CreateVendorBill
                 unitPrice: item.unitPrice,
                 taxRate: item.taxRate,
                 totalAmount: item.totalAmount,
+                poItemId: item.poItemId,
+                poUnitPrice: item.poUnitPrice,
+                grnQuantity: item.grnQuantity,
             });
         }
 
@@ -192,7 +324,7 @@ export async function createVendorBill(shopSlug: string, input: CreateVendorBill
     revalidatePath(`/workspaces/${shopSlug}/finance/bills`);
     revalidatePath(`/workspaces/${shopSlug}/finance/reports/payables-aging`);
 
-    return { success: true, billId: newBill.id, billNumber: newBill.billNumber };
+    return { success: true, billId: newBill.id, billNumber: newBill.billNumber, matchingStatus: newBill.matchingStatus };
 }
 
 /**
@@ -201,7 +333,11 @@ export async function createVendorBill(shopSlug: string, input: CreateVendorBill
  * Credit: 2100 Accounts Payable (net amount)
  * Credit: 2350 WHT Payable (withholding tax if applicable)
  */
-export async function approveVendorBill(billId: string, shopSlug: string) {
+export async function approveVendorBill(
+    billId: string, 
+    shopSlug: string,
+    options?: { overrideNotes?: string; allowVarianceOverride?: boolean }
+) {
     const shop = await db.query.shops.findFirst({
         where: eq(shops.slug, shopSlug),
     });
@@ -229,9 +365,18 @@ export async function approveVendorBill(billId: string, shopSlug: string) {
     }
 
     await db.transaction(async (tx) => {
+        const isVariance = ["PRICE_VARIANCE", "QUANTITY_VARIANCE", "PRICE_AND_QTY_VARIANCE"].includes(bill.matchingStatus || "");
+        const shouldOverride = options?.allowVarianceOverride || (isVariance && options?.overrideNotes);
+        const newMatchingStatus = shouldOverride ? "MANUAL_OVERRIDE" : bill.matchingStatus;
+        const updatedVarianceNotes = options?.overrideNotes 
+            ? `${bill.varianceNotes ? bill.varianceNotes + " | " : ""}Approved with override: ${options.overrideNotes}`
+            : bill.varianceNotes;
+
         // 1. Update bill status
         await tx.update(vendorBills).set({
             status: "APPROVED",
+            matchingStatus: newMatchingStatus,
+            varianceNotes: updatedVarianceNotes,
             updatedAt: new Date(),
         }).where(eq(vendorBills.id, bill.id));
 

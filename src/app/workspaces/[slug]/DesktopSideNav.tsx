@@ -155,6 +155,7 @@ export function DesktopSideNav({ slug, brandColor = "#064e3b", businessMode = "H
         { href: `/workspaces/${slug}/finance/cost-centers`, label: "Cost Centers", icon: Layers },
         { href: `/workspaces/${slug}/finance/reports/pl`, label: "P&L Statement", icon: TrendingUp },
         { href: `/workspaces/${slug}/finance/reports/balance-sheet`, label: "Balance Sheet", icon: Scale },
+        { href: `/workspaces/${slug}/finance/group-consolidation`, label: "Consolidated Financials", icon: Building2 },
         { href: `/workspaces/${slug}/finance/reports/cashflow`, label: "Cash Flow", icon: BarChart },
         { href: `/workspaces/${slug}/finance/reports/trial-balance`, label: "Trial Balance", icon: FileBarChart },
         { href: `/workspaces/${slug}/finance/reports/payables-aging`, label: "Payables Aging (AP)", icon: AlertTriangle },

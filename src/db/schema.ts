@@ -637,6 +637,13 @@ export const vendorBills = pgTable('vendor_bills', {
     paymentChannel: varchar('payment_channel', { length: 50 }), // 'BANK' | 'MPESA' | 'CASH' | 'CHEQUE'
     paymentReference: varchar('payment_reference', { length: 100 }),
     paidAt: timestamp('paid_at'),
+    // 3-Way Matching Links & Integrity Fields
+    sourcePoId: uuid('source_po_id').references((): any => documents.id, { onDelete: 'set null' }),
+    sourceGrnId: uuid('source_grn_id').references((): any => documents.id, { onDelete: 'set null' }),
+    matchingStatus: varchar('matching_status', { length: 30 }).default('UNMATCHED').notNull(), // 'PERFECT_MATCH' | 'PRICE_VARIANCE' | 'QUANTITY_VARIANCE' | 'PRICE_AND_QTY_VARIANCE' | 'UNMATCHED' | 'MANUAL_OVERRIDE'
+    priceVarianceAmount: numeric('price_variance_amount', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    quantityVarianceCount: numeric('quantity_variance_count', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    varianceNotes: text('variance_notes'),
     notes: text('notes'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -644,6 +651,7 @@ export const vendorBills = pgTable('vendor_bills', {
     index('idx_vendor_bills_shop').on(table.shopId),
     index('idx_vendor_bills_supplier').on(table.supplierId),
     index('idx_vendor_bills_status').on(table.status),
+    index('idx_vendor_bills_matching').on(table.matchingStatus),
 ]);
 
 export const vendorBillItems = pgTable('vendor_bill_items', {
@@ -655,6 +663,50 @@ export const vendorBillItems = pgTable('vendor_bill_items', {
     unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
     taxRate: numeric('tax_rate', { precision: 5, scale: 2 }).default('0.00').notNull(),
     totalAmount: numeric('total_amount', { precision: 12, scale: 2 }).notNull(),
+    // 3-Way Matching Line Item Comparisons
+    poItemId: uuid('po_item_id'),
+    poUnitPrice: numeric('po_unit_price', { precision: 12, scale: 2 }),
+    grnQuantity: numeric('grn_quantity', { precision: 12, scale: 2 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ==========================================
+// GROUP ENTITIES & HOLDING CONSOLIDATION TABLES
+// ==========================================
+
+export const groupEntities = pgTable('group_entities', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    name: varchar('name', { length: 150 }).notNull(),
+    code: varchar('code', { length: 20 }).notNull().unique(),
+    reportingCurrency: varchar('reporting_currency', { length: 3 }).default('KES').notNull(),
+    ownerId: uuid('owner_id').references(() => users.id).notNull(),
+    description: text('description'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const groupMemberships = pgTable('group_memberships', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    groupId: uuid('group_id').references(() => groupEntities.id, { onDelete: 'cascade' }).notNull(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    entityType: varchar('entity_type', { length: 30 }).default('SUBSIDIARY').notNull(), // 'PARENT' | 'SUBSIDIARY' | 'SISTER' | 'DIVISION'
+    ownershipPercentage: numeric('ownership_percentage', { precision: 5, scale: 2 }).default('100.00').notNull(),
+    joinedAt: timestamp('joined_at').defaultNow().notNull(),
+}, (table) => [
+    unique('unique_group_shop').on(table.groupId, table.shopId),
+]);
+
+export const interCompanyTransactions = pgTable('inter_company_transactions', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    groupId: uuid('group_id').references(() => groupEntities.id, { onDelete: 'cascade' }).notNull(),
+    sourceShopId: uuid('source_shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    targetShopId: uuid('target_shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    sourceDocumentId: uuid('source_document_id').references((): any => documents.id, { onDelete: 'set null' }),
+    targetBillId: uuid('target_bill_id').references((): any => vendorBills.id, { onDelete: 'set null' }),
+    amount: numeric('amount', { precision: 15, scale: 2 }).notNull(),
+    currency: varchar('currency', { length: 3 }).default('KES').notNull(),
+    transactionType: varchar('transaction_type', { length: 50 }).default('MANAGEMENT_SERVICES').notNull(),
+    isEliminated: boolean('is_eliminated').default(true).notNull(),
+    notes: text('notes'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -1393,6 +1445,7 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
     billOfMaterials: many(billOfMaterials),
     productionOrders: many(productionOrders),
     stocktakes: many(stocktakes),
+    groupMemberships: many(groupMemberships),
 }));
 
 export const shopCurrenciesRelations = relations(shopCurrencies, ({ one }) => ({
@@ -1563,6 +1616,8 @@ export const whtPaymentsRelations = relations(whtPayments, ({ one }) => ({
 export const vendorBillsRelations = relations(vendorBills, ({ one, many }) => ({
     shop: one(shops, { fields: [vendorBills.shopId], references: [shops.id] }),
     supplier: one(suppliers, { fields: [vendorBills.supplierId], references: [suppliers.id] }),
+    sourcePo: one(documents, { fields: [vendorBills.sourcePoId], references: [documents.id], relationName: 'vendor_bill_source_po' }),
+    sourceGrn: one(documents, { fields: [vendorBills.sourceGrnId], references: [documents.id], relationName: 'vendor_bill_source_grn' }),
     items: many(vendorBillItems),
 }));
 
@@ -1839,3 +1894,23 @@ export const stocktakeItemsRelations = relations(stocktakeItems, ({ one }) => ({
     bin: one(storageBins, { fields: [stocktakeItems.binId], references: [storageBins.id] }),
     batch: one(productBatches, { fields: [stocktakeItems.batchId], references: [productBatches.id] }),
 }));
+
+export const groupEntitiesRelations = relations(groupEntities, ({ one, many }) => ({
+    owner: one(users, { fields: [groupEntities.ownerId], references: [users.id] }),
+    memberships: many(groupMemberships),
+    interCompanyTransactions: many(interCompanyTransactions),
+}));
+
+export const groupMembershipsRelations = relations(groupMemberships, ({ one }) => ({
+    group: one(groupEntities, { fields: [groupMemberships.groupId], references: [groupEntities.id] }),
+    shop: one(shops, { fields: [groupMemberships.shopId], references: [shops.id] }),
+}));
+
+export const interCompanyTransactionsRelations = relations(interCompanyTransactions, ({ one }) => ({
+    group: one(groupEntities, { fields: [interCompanyTransactions.groupId], references: [groupEntities.id] }),
+    sourceShop: one(shops, { fields: [interCompanyTransactions.sourceShopId], references: [shops.id], relationName: 'inter_co_source_shop' }),
+    targetShop: one(shops, { fields: [interCompanyTransactions.targetShopId], references: [shops.id], relationName: 'inter_co_target_shop' }),
+    sourceDocument: one(documents, { fields: [interCompanyTransactions.sourceDocumentId], references: [documents.id] }),
+    targetBill: one(vendorBills, { fields: [interCompanyTransactions.targetBillId], references: [vendorBills.id] }),
+}));
+

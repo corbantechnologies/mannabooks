@@ -118,6 +118,7 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
         { href: `/workspaces/${slug}/finance/cost-centers`, label: "Cost Centers" },
         { href: `/workspaces/${slug}/finance/reports/pl`, label: "P&L Statement" },
         { href: `/workspaces/${slug}/finance/reports/balance-sheet`, label: "Balance Sheet" },
+        { href: `/workspaces/${slug}/finance/group-consolidation`, label: "Consolidated Financials" },
         { href: `/workspaces/${slug}/finance/reports/cashflow`, label: "Cash Flow" },
         { href: `/workspaces/${slug}/finance/reports/trial-balance`, label: "Trial Balance" },
         { href: `/workspaces/${slug}/finance/reports/payables-aging`, label: "Payables Aging (AP)" },

@@ -35,6 +35,17 @@ interface UiRowItem {
   taxType: "V_16" | "V_0" | "EXEMPT";
 }
 
+function getDueDateFromTerms(terms?: string | null): string {
+  const d = new Date();
+  if (terms === "NET_30") d.setDate(d.getDate() + 30);
+  else if (terms === "NET_15" || terms === "NET_14") d.setDate(d.getDate() + 15);
+  else if (terms === "NET_7") d.setDate(d.getDate() + 7);
+  else if (terms === "NET_60") d.setDate(d.getDate() + 60);
+  else if (terms === "COD" || terms === "IMMEDIATE") d.setDate(d.getDate());
+  else d.setDate(d.getDate() + 30);
+  return d.toISOString().split("T")[0];
+}
+
 export function DocumentBuilderClientForm({
   shop,
   shopSlug,
@@ -52,6 +63,18 @@ export function DocumentBuilderClientForm({
   const searchParams = useSearchParams();
   const initialClientId = searchParams.get("clientId") || (initialDocument?.clientId) || "";
   const initialSupplierId = searchParams.get("supplierId") || (initialDocument?.supplierId) || "";
+  const requestedType = (searchParams.get("type") as DocumentType | null) || null;
+
+  const initialDocType: DocumentType =
+    initialDocument?.type ||
+    requestedType ||
+    (initialSupplierId ? "LPO" : "INVOICE");
+
+  const isProcurement = Boolean(
+    initialDocument?.supplierId ||
+    initialSupplierId ||
+    isProcurementDocType(initialDocType)
+  );
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,17 +87,24 @@ export function DocumentBuilderClientForm({
 
   // Form Parameters
   const [partyType, setPartyType] = useState<"CLIENT" | "SUPPLIER">(
-    initialSupplierId ? "SUPPLIER" : "CLIENT"
+    isProcurement ? "SUPPLIER" : "CLIENT"
   );
   const [targetId, setTargetId] = useState(
     initialSupplierId || initialClientId || ""
   );
-  const [docType, setDocType] = useState<DocumentType>(
-    initialDocument?.type || (initialSupplierId ? "LPO" : "INVOICE")
-  );
-  const [dueDate, setDueDate] = useState(
-    initialDocument?.dueDate ? new Date(initialDocument.dueDate).toISOString().split('T')[0] : ""
-  );
+  const [docType, setDocType] = useState<DocumentType>(initialDocType);
+  const [dueDate, setDueDate] = useState<string>(() => {
+    if (initialDocument?.dueDate) {
+      return new Date(initialDocument.dueDate).toISOString().split('T')[0];
+    }
+    if (initialSupplierId) {
+      const sup = suppliers.find((s: any) => s.id === initialSupplierId);
+      if (sup?.paymentTerms) {
+        return getDueDateFromTerms(sup.paymentTerms);
+      }
+    }
+    return "";
+  });
 
   // Inventory Stock Location selection
   const [locationId, setLocationId] = useState<string>(() => {
@@ -172,15 +202,26 @@ export function DocumentBuilderClientForm({
     return "";
   });
 
-  // Automatically switch partyType when selecting Procurement documents (LPO, PO, GRN, PV)
-  useEffect(() => {
-    if (docType === "LPO" || docType === "PO" || docType === "LSO" || docType === "GOODS_RECEIVED_NOTE" || docType === "SERVICE_COMPLETION_NOTE" || docType === "PAYMENT_VOUCHER") {
-      if (partyType !== "SUPPLIER") {
-        setPartyType("SUPPLIER");
-        if (!initialSupplierId) setTargetId("");
-      }
+  function handleDocTypeChange(newType: DocumentType) {
+    setDocType(newType);
+    if (isProcurementDocType(newType) && partyType !== "SUPPLIER") {
+      setPartyType("SUPPLIER");
+      setTargetId("");
+    } else if (!isProcurementDocType(newType) && partyType === "SUPPLIER") {
+      setPartyType("CLIENT");
+      setTargetId("");
     }
-  }, [docType, partyType, initialSupplierId]);
+  }
+
+  function handlePartyTypeChange(newParty: "CLIENT" | "SUPPLIER") {
+    setPartyType(newParty);
+    setTargetId("");
+    if (newParty === "SUPPLIER" && !isProcurementDocType(docType)) {
+      setDocType("LPO");
+    } else if (newParty === "CLIENT" && isProcurementDocType(docType)) {
+      setDocType("INVOICE");
+    }
+  }
 
   // Update eTIMS preference when selecting target client or supplier (only for fiscal documents)
   useEffect(() => {
@@ -495,14 +536,14 @@ export function DocumentBuilderClientForm({
               <div className="flex bg-zinc-100 p-0.5 rounded border border-zinc-200 text-[9px]">
                 <button
                   type="button"
-                  onClick={() => { setPartyType("CLIENT"); setTargetId(""); }}
+                  onClick={() => handlePartyTypeChange("CLIENT")}
                   className={`px-2 py-0.5 font-semibold uppercase rounded transition-colors ${partyType === "CLIENT" ? "bg-black text-white shadow-sm" : "text-zinc-600 hover:text-black"}`}
                 >
                   Client
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setPartyType("SUPPLIER"); setTargetId(""); }}
+                  onClick={() => handlePartyTypeChange("SUPPLIER")}
                   className={`px-2 py-0.5 font-semibold uppercase rounded transition-colors ${partyType === "SUPPLIER" ? "bg-black text-white shadow-sm" : "text-zinc-600 hover:text-black"}`}
                 >
                   Supplier
@@ -514,11 +555,16 @@ export function DocumentBuilderClientForm({
               partyType={partyType}
               parties={partyType === "CLIENT" ? clientRegistry : suppliers}
               selectedId={targetId}
-              onSelect={(id) => setTargetId(id)}
-              onPartyTypeChange={(type) => {
-                setPartyType(type);
-                setTargetId("");
+              onSelect={(id) => {
+                setTargetId(id);
+                if (partyType === "SUPPLIER" && !dueDate) {
+                  const sup = suppliers.find((s: any) => s.id === id);
+                  if (sup?.paymentTerms) {
+                    setDueDate(getDueDateFromTerms(sup.paymentTerms));
+                  }
+                }
               }}
+              onPartyTypeChange={handlePartyTypeChange}
             />
           </div>
 
@@ -529,7 +575,7 @@ export function DocumentBuilderClientForm({
             </div>
             <select
               value={docType}
-              onChange={(e) => setDocType(e.target.value as DocumentType)}
+              onChange={(e) => handleDocTypeChange(e.target.value as DocumentType)}
               className="w-full px-3 py-2.5 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black font-mono text-xs font-bold uppercase h-10"
             >
               <option value="INVOICE">INV — Customer Invoice</option>
@@ -927,7 +973,8 @@ export function DocumentBuilderClientForm({
 
                     {/* CONTEXT-AWARE INVENTORY STATUS BADGE */}
                     {matchedCatalogProduct && matchedCatalogProduct.trackStock && (
-                      isProcurementDocType(docType) || partyType === "SUPPLIER" ? (
+                      docType === "LSO" || docType === "SERVICE_COMPLETION_NOTE" ? null :
+                      (isProcurementDocType(docType) || partyType === "SUPPLIER") ? (
                         <div className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded flex items-center gap-1.5 font-mono">
                           <span>📦</span>
                           <span>Inbound Restock: Current stock is {parseFloat(matchedCatalogProduct.stockQuantity || "0")} units ({rowQty > 0 ? `ordering +${rowQty}` : "enter qty"})</span>

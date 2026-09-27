@@ -4,6 +4,7 @@ import { shops } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getStockLocationDetail } from "@/lib/actions/inventory";
+import { getStorageBins } from "@/lib/actions/wms";
 import { LocationDetailClientView } from "./LocationDetailClientView";
 
 interface LocationDetailPageProps {
@@ -16,7 +17,10 @@ export default async function LocationDetailPage({ params }: LocationDetailPageP
   const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
   if (!shop) notFound();
 
-  const detail = await getStockLocationDetail(shop.id, id);
+  const [detail, bins] = await Promise.all([
+    getStockLocationDetail(shop.id, id),
+    getStorageBins(shop.id, id),
+  ]);
   if (!detail) notFound();
 
   return (
@@ -27,6 +31,7 @@ export default async function LocationDetailPage({ params }: LocationDetailPageP
       location={detail.location}
       metrics={detail.metrics}
       items={detail.items}
+      bins={bins}
       recentMovements={detail.recentMovements}
       transfers={detail.transfers}
     />

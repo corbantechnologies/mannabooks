@@ -24,7 +24,7 @@ export default async function StocktakeAuditPage({ params }: StocktakeAuditPageP
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-5 sm:p-7 space-y-6">
       <StocktakeAuditClient
         shopId={shop.id}
         shopSlug={shop.slug}

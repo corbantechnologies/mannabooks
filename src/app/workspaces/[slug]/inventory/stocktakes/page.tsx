@@ -23,7 +23,7 @@ export default async function StocktakesPage({ params }: StocktakesPageProps) {
   ]);
 
   return (
-    <div className="space-y-6">
+    <div className="p-5 sm:p-7 space-y-6">
       <div>
         <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-400">
           Warehouse Auditing &amp; Control

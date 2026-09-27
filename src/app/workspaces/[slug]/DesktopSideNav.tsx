@@ -96,7 +96,6 @@ export function DesktopSideNav({ slug, brandColor = "#064e3b", businessMode = "H
         { href: `/workspaces/${slug}/crm/contracts`, label: "Contracts & SLAs", icon: Briefcase },
       ],
     },
-    { href: `/workspaces/${slug}/projects`, label: "Projects", icon: FolderKanban },
     {
       label: "Contacts",
       icon: Users,
@@ -105,6 +104,7 @@ export function DesktopSideNav({ slug, brandColor = "#064e3b", businessMode = "H
         { href: `/workspaces/${slug}/suppliers`, label: "Suppliers", icon: Truck },
       ],
     },
+    { href: `/workspaces/${slug}/projects`, label: "Projects", icon: FolderKanban },
     { href: `/workspaces/${slug}/products`, label: isServicesOnly ? "Services & Rates" : "Product Catalog", icon: Package },
     ...(!isServicesOnly ? [{
       label: "Inventory",

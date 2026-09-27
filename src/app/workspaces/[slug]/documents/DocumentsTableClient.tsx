@@ -27,6 +27,9 @@ export interface StreamDocument {
   parentDocument?: ParentDocSummary | null;
   requiresEtims?: boolean;
   kraCuInvoiceNumber?: string | null;
+  attachmentUrl?: string | null;
+  attachmentName?: string | null;
+  attachmentSize?: number | null;
   client?: { id: string; name: string; email?: string | null; phone?: string | null; taxPin?: string | null } | null;
   supplier?: { id: string; name: string; email?: string | null; phone?: string | null; taxPin?: string | null } | null;
 }
@@ -570,6 +573,17 @@ export function DocumentsTableClient({
                           >
                             {doc.docNumber}
                           </Link>
+                          {doc.attachmentUrl && (
+                            <a
+                              href={doc.attachmentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-emerald-700 hover:text-emerald-900 text-xs px-1 hover:bg-emerald-50 rounded no-underline ml-1"
+                              title={`Attached Receipt / Document: ${doc.attachmentName || 'View'}`}
+                            >
+                              📎
+                            </a>
+                          )}
                         </div>
 
                         {/* Lineage Summary Hints */}

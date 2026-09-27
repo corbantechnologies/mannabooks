@@ -289,6 +289,24 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
               {doc.paymentReference && <p className="text-zinc-600">Ref #: {doc.paymentReference}</p>}
             </div>
           )}
+          {doc.attachmentUrl && (
+            <div className="font-mono text-[10px] border-t border-zinc-200 pt-1.5 mt-1.5 flex items-center justify-between gap-2 bg-emerald-50/60 p-2 rounded border border-emerald-200/60">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-sm">📎</span>
+                <span className="truncate font-semibold text-emerald-950" title={doc.attachmentName || "Attached Document"}>
+                  {doc.attachmentName || "Attached Receipt"}
+                </span>
+              </div>
+              <a
+                href={doc.attachmentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-800 hover:text-emerald-950 font-bold hover:underline shrink-0 bg-white px-2 py-0.5 rounded border border-emerald-300 text-[10px] no-underline"
+              >
+                View ↗
+              </a>
+            </div>
+          )}
         </div>
       </div>
 
@@ -427,6 +445,9 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         partyPhone={party.phone}
         partyTaxPin={party.taxPin}
         issueDate={doc.issueDate}
+        initialAttachmentUrl={doc.attachmentUrl}
+        initialAttachmentName={doc.attachmentName}
+        initialAttachmentSize={doc.attachmentSize}
       />
 
       {/* INTERNAL NOTES & OPERATOR AUDIT TRAIL */}

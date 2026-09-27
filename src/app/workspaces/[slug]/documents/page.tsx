@@ -278,6 +278,9 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
             } : null,
             requiresEtims: doc.requiresEtims,
             kraCuInvoiceNumber: doc.kraCuInvoiceNumber,
+            attachmentUrl: doc.attachmentUrl,
+            attachmentName: doc.attachmentName,
+            attachmentSize: doc.attachmentSize,
             client: doc.client ? {
               id: doc.client.id,
               name: doc.client.name,

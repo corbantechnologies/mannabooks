@@ -62,6 +62,9 @@ interface CreateDocumentInput {
     loyaltyDiscountAmount?: number;
     paymentChannel?: string;
     paymentReference?: string;
+    attachmentUrl?: string;
+    attachmentName?: string;
+    attachmentSize?: number;
     items: CreateDocumentItemInput[];
 }
 
@@ -300,6 +303,9 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 termsAndConditions: finalTerms || null,
                 paymentChannel: input.paymentChannel?.trim() || null,
                 paymentReference: input.paymentReference?.trim() || null,
+                attachmentUrl: input.attachmentUrl?.trim() || null,
+                attachmentName: input.attachmentName?.trim() || null,
+                attachmentSize: input.attachmentSize || null,
                 currency: docCurrency,
                 exchangeRate: rateVal.toFixed(4),
                 baseCurrency: baseCurr,
@@ -950,19 +956,31 @@ export async function updateDocumentReceiptAndSettlementAction(
         kraCuInvoiceNumber?: string;
         paymentChannel?: string;
         paymentReference?: string;
+        attachmentUrl?: string | null;
+        attachmentName?: string | null;
+        attachmentSize?: number | null;
     }
 ) {
     try {
         await enforcePermission(shopId, "manage_documents");
         const updateData: any = {};
         if (data.kraCuInvoiceNumber !== undefined) {
-            updateData.kraCuInvoiceNumber = data.kraCuInvoiceNumber.trim() || null;
+            updateData.kraCuInvoiceNumber = data.kraCuInvoiceNumber ? data.kraCuInvoiceNumber.trim() : null;
         }
         if (data.paymentChannel !== undefined) {
-            updateData.paymentChannel = data.paymentChannel.trim() || null;
+            updateData.paymentChannel = data.paymentChannel ? data.paymentChannel.trim() : null;
         }
         if (data.paymentReference !== undefined) {
-            updateData.paymentReference = data.paymentReference.trim() || null;
+            updateData.paymentReference = data.paymentReference ? data.paymentReference.trim() : null;
+        }
+        if (data.attachmentUrl !== undefined) {
+            updateData.attachmentUrl = data.attachmentUrl ? data.attachmentUrl.trim() : null;
+        }
+        if (data.attachmentName !== undefined) {
+            updateData.attachmentName = data.attachmentName ? data.attachmentName.trim() : null;
+        }
+        if (data.attachmentSize !== undefined) {
+            updateData.attachmentSize = data.attachmentSize || null;
         }
 
         await db.update(documents)
@@ -999,6 +1017,9 @@ interface UpdateDocumentInput {
     kraCuInvoiceNumber?: string;
     paymentChannel?: string;
     paymentReference?: string;
+    attachmentUrl?: string;
+    attachmentName?: string;
+    attachmentSize?: number;
     requiresEtims?: boolean;
     notes?: string;
     termsAndConditions?: string;
@@ -1068,6 +1089,9 @@ export async function updateBillingDocument(input: UpdateDocumentInput) {
                     kraCuInvoiceNumber: input.kraCuInvoiceNumber || null,
                     paymentChannel: input.paymentChannel !== undefined ? (input.paymentChannel?.trim() || null) : doc.paymentChannel,
                     paymentReference: input.paymentReference !== undefined ? (input.paymentReference?.trim() || null) : doc.paymentReference,
+                    attachmentUrl: input.attachmentUrl !== undefined ? (input.attachmentUrl?.trim() || null) : doc.attachmentUrl,
+                    attachmentName: input.attachmentName !== undefined ? (input.attachmentName?.trim() || null) : doc.attachmentName,
+                    attachmentSize: input.attachmentSize !== undefined ? (input.attachmentSize || null) : doc.attachmentSize,
                     requiresEtims: isFiscalDocType(input.type) ? (input.requiresEtims || false) : false,
                     notes: input.notes || null,
                     termsAndConditions: input.termsAndConditions !== undefined ? (input.termsAndConditions || null) : doc.termsAndConditions,

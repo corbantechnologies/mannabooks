@@ -276,9 +276,13 @@ export const documents = pgTable('documents', {
     notes: text('notes'),
     termsAndConditions: text('terms_and_conditions'), // Serialized JSON array or formatted string of applied commercial terms
 
-    // Optional Settlement Confirmation Details
     paymentChannel: varchar('payment_channel', { length: 50 }), // e.g. BANK, MPESA, CASH, CHEQUE, OTHER
     paymentReference: varchar('payment_reference', { length: 100 }), // e.g. M-Pesa Code QAB71239X or Bank Ref FT261900123
+
+    // External Media / Attachment Proof (MinIO)
+    attachmentUrl: text('attachment_url'), // Media storage URL for attached receipt or vendor invoice
+    attachmentName: varchar('attachment_name', { length: 255 }), // Original filename
+    attachmentSize: integer('attachment_size'), // File size in bytes
 
     // Multi-currency and High-precision frozen metrics
     currency: varchar('currency', { length: 3 }), // Defaults to shop currency if null
@@ -639,6 +643,10 @@ export const vendorBills = pgTable('vendor_bills', {
     paymentChannel: varchar('payment_channel', { length: 50 }), // 'BANK' | 'MPESA' | 'CASH' | 'CHEQUE'
     paymentReference: varchar('payment_reference', { length: 100 }),
     paidAt: timestamp('paid_at'),
+    // External Media / Attachment Proof (MinIO)
+    attachmentUrl: text('attachment_url'), // Media storage URL for attached vendor invoice or receipt
+    attachmentName: varchar('attachment_name', { length: 255 }), // Original filename
+    attachmentSize: integer('attachment_size'), // File size in bytes
     // 3-Way Matching Links & Integrity Fields
     sourcePoId: uuid('source_po_id').references((): any => documents.id, { onDelete: 'set null' }),
     sourceGrnId: uuid('source_grn_id').references((): any => documents.id, { onDelete: 'set null' }),

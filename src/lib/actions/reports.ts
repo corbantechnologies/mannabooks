@@ -100,18 +100,67 @@ export async function getPLStatement(
             where: and(eq(incomes.shopId, shopId), gte(incomes.incomeDate, startDate), lte(incomes.incomeDate, endDate)),
         });
 
-        // Calculate Sales Revenue (no double-counting)
+        // Calculate Sales Revenue and Direct Procurement Costs (no double-counting)
+        const allDocMap = new Map(allDocs.map((doc) => [doc.id, doc]));
+
+        const getRootProcurementDoc = (doc: typeof allDocs[0]): typeof allDocs[0] => {
+            let curr = doc;
+            const seen = new Set<string>();
+            while (curr.parentDocumentId && allDocMap.has(curr.parentDocumentId) && !seen.has(curr.id)) {
+                seen.add(curr.id);
+                curr = allDocMap.get(curr.parentDocumentId)!;
+            }
+            return curr;
+        };
+
+        const settledParentDocIds = new Set<string>();
+        allDocs.forEach((doc) => {
+            if (doc.type === "PAYMENT_VOUCHER" && doc.status === "PAID") {
+                let parentId = doc.parentDocumentId;
+                const seen = new Set<string>();
+                while (parentId && allDocMap.has(parentId) && !seen.has(parentId)) {
+                    seen.add(parentId);
+                    settledParentDocIds.add(parentId);
+                    parentId = allDocMap.get(parentId)?.parentDocumentId || null;
+                }
+            }
+        });
+
+        // Expenses broken down by category
+        const expenseByCategoryMap: Record<string, number> = {};
+        allExpenses.forEach(exp => {
+            const cat = exp.category;
+            expenseByCategoryMap[cat] = (expenseByCategoryMap[cat] || 0) + parseFloat(exp.amount || "0");
+        });
+
         let salesRevenue = 0;
         let cogs = 0;
         filteredDocs.forEach(d => {
+            const val = parseFloat(d.grandTotal || "0");
             const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
             const isSalesDoc = d.type === "RECEIPT" || (d.type === "INVOICE" && d.status === "PAID") || (d.type === "CREDIT_NOTE" && d.status === "PAID");
             if (!isReceiptFromInvoice && isSalesDoc) {
                 const factor = d.type === "CREDIT_NOTE" ? -1 : 1;
-                salesRevenue += parseFloat(d.grandTotal || "0") * factor;
+                salesRevenue += val * factor;
                 d.items.forEach(item => {
                     cogs += parseFloat(item.quantity || "1") * parseFloat(item.product?.costPrice || "0") * factor;
                 });
+            } else if (d.status === "PAID") {
+                if (d.type === "PAYMENT_VOUCHER") {
+                    const rootDoc = getRootProcurementDoc(d);
+                    if (rootDoc.type === "LSO" || rootDoc.type === "LPO" || rootDoc.type === "PO") {
+                        // Direct Service / Goods Procurement -> Direct COGS
+                        cogs += val;
+                    } else if (rootDoc.type === "PAYROLL_VOUCHER") {
+                        expenseByCategoryMap["SALARIES"] = (expenseByCategoryMap["SALARIES"] || 0) + val;
+                    } else {
+                        expenseByCategoryMap["OTHER"] = (expenseByCategoryMap["OTHER"] || 0) + val;
+                    }
+                } else if ((d.type === "LSO" || d.type === "LPO" || d.type === "PO") && !settledParentDocIds.has(d.id)) {
+                    cogs += val;
+                } else if (d.type === "PAYROLL_VOUCHER" && !settledParentDocIds.has(d.id)) {
+                    expenseByCategoryMap["SALARIES"] = (expenseByCategoryMap["SALARIES"] || 0) + val;
+                }
             }
         });
 
@@ -121,13 +170,6 @@ export async function getPLStatement(
         const totalRevenue = salesRevenue + nonOperatingIncome;
         const grossProfit = salesRevenue - cogs;
         const grossProfitMargin = salesRevenue > 0 ? (grossProfit / salesRevenue) * 100 : 0;
-
-        // Expenses broken down by category
-        const expenseByCategoryMap: Record<string, number> = {};
-        allExpenses.forEach(exp => {
-            const cat = exp.category;
-            expenseByCategoryMap[cat] = (expenseByCategoryMap[cat] || 0) + parseFloat(exp.amount || "0");
-        });
 
         const categoryLabels: Record<string, string> = {
             RENT: "Rent & Lease",
@@ -189,26 +231,19 @@ export async function getTrialBalance(
     periodId?: string
 ): Promise<{ success: true; data: TrialBalanceRow[]; totalDebits: number; totalCredits: number; isBalanced: boolean } | { success: false; error: string }> {
     try {
-        const accounts = await db.query.chartOfAccounts.findMany({
-            where: eq(shops.id, shopId), // shopId guard
-            with: {
-                debitEntries: true,
-                creditEntries: true,
-            },
-        });
-
-        // This query needs to be done via journalEntries for proper filtering
-        const { journalEntries: je } = await import("@/db/schema");
+        const { journalEntries: je, chartOfAccounts: coa } = await import("@/db/schema");
         const entries = await db.query.journalEntries.findMany({
-            where: eq(je.shopId, shopId),
+            where: periodId 
+                ? and(eq(je.shopId, shopId), eq(je.periodId, periodId))
+                : eq(je.shopId, shopId),
             with: { debitAccount: true, creditAccount: true },
         });
 
         const balanceMap: Record<string, { code: string; name: string; accountType: string; debits: number; credits: number }> = {};
 
-        // Initialize all accounts
+        // Initialize all accounts for this workspace
         const allAccounts = await db.query.chartOfAccounts.findMany({
-            where: eq(require("@/db/schema").chartOfAccounts.shopId, shopId),
+            where: eq(coa.shopId, shopId),
         });
         allAccounts.forEach(acc => {
             balanceMap[acc.id] = { code: acc.code, name: acc.name, accountType: acc.accountType, debits: 0, credits: 0 };
@@ -288,6 +323,20 @@ export async function getCashFlowStatement(
             where: and(eq(incomes.shopId, shopId), gte(incomes.incomeDate, startDate), lte(incomes.incomeDate, endDate)),
         });
 
+        const allDocMap = new Map(allDocs.map((doc) => [doc.id, doc]));
+        const settledParentDocIds = new Set<string>();
+        allDocs.forEach((doc) => {
+            if (doc.type === "PAYMENT_VOUCHER" && doc.status === "PAID") {
+                let parentId = doc.parentDocumentId;
+                const seen = new Set<string>();
+                while (parentId && allDocMap.has(parentId) && !seen.has(parentId)) {
+                    seen.add(parentId);
+                    settledParentDocIds.add(parentId);
+                    parentId = allDocMap.get(parentId)?.parentDocumentId || null;
+                }
+            }
+        });
+
         let receiptsFromClients = 0;
         let paymentsToSuppliers = 0;
         let payrollPaid = 0;
@@ -300,11 +349,15 @@ export async function getCashFlowStatement(
                 const factor = d.type === "CREDIT_NOTE" ? -1 : 1;
                 receiptsFromClients += val * factor;
             }
-            if ((d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER") && d.status === "PAID") {
-                paymentsToSuppliers += val;
+            if ((d.type === "LPO" || d.type === "PO" || d.type === "LSO" || d.type === "PAYMENT_VOUCHER") && d.status === "PAID") {
+                if (!settledParentDocIds.has(d.id)) {
+                    paymentsToSuppliers += val;
+                }
             }
             if (d.type === "PAYROLL_VOUCHER" && d.status === "PAID") {
-                payrollPaid += val;
+                if (!settledParentDocIds.has(d.id)) {
+                    payrollPaid += val;
+                }
             }
         });
 

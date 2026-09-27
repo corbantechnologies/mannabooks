@@ -46,3 +46,6 @@ marketing_plan.md
 crm_and_future_roadmap.md
 
 /dev_docs
+# scripts and scratch tools
+/scripts/*
+!/scripts/make-admin.ts

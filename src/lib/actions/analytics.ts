@@ -121,10 +121,13 @@ export interface AnalyticsData {
  */
 export async function getWorkspaceAnalyticsData(
   shopId: string,
-  timeframe: TimeframeFilter = "THIS_MONTH"
+  timeframe: TimeframeFilter = "THIS_MONTH",
+  skipAuth: boolean = false
 ): Promise<{ success: true; data: AnalyticsData } | { success: false; error: string }> {
   try {
-    await enforcePermission(shopId, "view_finance");
+    if (!skipAuth) {
+      await enforcePermission(shopId, "view_finance");
+    }
 
     const shop = await db.query.shops.findFirst({
       where: eq(shops.id, shopId),
@@ -198,11 +201,39 @@ export async function getWorkspaceAnalyticsData(
     });
 
     // 4. Compute Executive KPIs
+    const allDocMap = new Map(allDocs.map((doc) => [doc.id, doc]));
+
+    // Helper to find the root procurement doc in an LSO/LPO -> SCC/GRN -> PV chain
+    const getRootProcurementDoc = (doc: typeof allDocs[0]): typeof allDocs[0] => {
+      let curr = doc;
+      const seen = new Set<string>();
+      while (curr.parentDocumentId && allDocMap.has(curr.parentDocumentId) && !seen.has(curr.id)) {
+        seen.add(curr.id);
+        curr = allDocMap.get(curr.parentDocumentId)!;
+      }
+      return curr;
+    };
+
+    // Set of parent doc IDs settled via a child PAYMENT_VOUCHER with status PAID
+    const settledParentDocIds = new Set<string>();
+    allDocs.forEach((doc) => {
+      if (doc.type === "PAYMENT_VOUCHER" && doc.status === "PAID") {
+        let parentId = doc.parentDocumentId;
+        const seen = new Set<string>();
+        while (parentId && allDocMap.has(parentId) && !seen.has(parentId)) {
+          seen.add(parentId);
+          settledParentDocIds.add(parentId);
+          parentId = allDocMap.get(parentId)?.parentDocumentId || null;
+        }
+      }
+    });
+
     let totalSettledInflow = 0;
     let totalSettledOutflow = 0;
     let totalCostOfGoodsSold = 0;
     let pendingReceivables = 0;
     let accountsPayableDebt = 0;
+    let totalProcurementOperatingExpenses = 0;
 
     filteredDocs.forEach((d) => {
       const val = parseFloat(d.grandTotal || "0");
@@ -222,11 +253,32 @@ export async function getWorkspaceAnalyticsData(
             totalCostOfGoodsSold += qty * cost;
           });
         } else if (isOutflow) {
-          totalSettledOutflow += val;
+          // If this document is an LSO / LPO / SCC / GRN that has a paid child Payment Voucher,
+          // skip it here to avoid double-counting the outflow (the PV will record it).
+          if (!settledParentDocIds.has(d.id)) {
+            totalSettledOutflow += val;
+
+            const rootDoc = getRootProcurementDoc(d);
+            if (rootDoc.type === "LSO" || rootDoc.type === "LPO" || rootDoc.type === "PO") {
+              // Direct procurement of services / goods / subcontracted work -> Direct COGS
+              totalCostOfGoodsSold += val;
+            } else if (rootDoc.type === "PAYROLL_VOUCHER") {
+              totalProcurementOperatingExpenses += val;
+            } else if (d.type === "PAYMENT_VOUCHER") {
+              // Standalone payment voucher -> Operating Expense
+              totalProcurementOperatingExpenses += val;
+            }
+          }
         }
-      } else if (d.status === "ISSUED" || d.status === "OVERDUE") {
-        if (isSales) pendingReceivables += val;
-        else if (isOutflow && d.type !== "PAYROLL_VOUCHER") accountsPayableDebt += val;
+      } else if (d.status === "ISSUED" || d.status === "OVERDUE" || d.status === "RECEIVED") {
+        if (isSales) {
+          if (d.status !== "RECEIVED") pendingReceivables += val;
+        } else if (isOutflow && d.type !== "PAYROLL_VOUCHER") {
+          // Only count towards AP if not already settled by a child PV
+          if (!settledParentDocIds.has(d.id) && d.type !== "GOODS_RECEIVED_NOTE" && d.type !== "SERVICE_COMPLETION_NOTE") {
+            accountsPayableDebt += val;
+          }
+        }
       } else if (d.type === "CREDIT_NOTE" && d.status === "PAID") {
         totalSettledInflow -= val;
         d.items.forEach((item) => {
@@ -237,7 +289,7 @@ export async function getWorkspaceAnalyticsData(
       }
     });
 
-    let totalOperatingExpenses = 0;
+    let totalOperatingExpenses = totalProcurementOperatingExpenses;
     allExpenses.forEach(exp => {
       totalOperatingExpenses += parseFloat(exp.amount || "0");
     });
@@ -247,9 +299,6 @@ export async function getWorkspaceAnalyticsData(
       totalOtherIncome += parseFloat(inc.amount || "0");
     });
 
-    // We add other income to settled inflow so the overall cash flow is accurate,
-    // but we might want to keep it separate from operating profit in the future.
-    // For now, let's keep netOperatingCashFlow strictly operational, and let Other Income just be tracked.
     const netOperatingCashFlow = totalSettledInflow - (totalSettledOutflow + totalOperatingExpenses);
     const netGrossProfit = totalSettledInflow - totalCostOfGoodsSold;
     const netOperatingProfit = netGrossProfit - totalOperatingExpenses;
@@ -270,14 +319,14 @@ export async function getWorkspaceAnalyticsData(
       if (monthlyTimelineMap[label]) {
         const val = parseFloat(d.grandTotal || "0");
         const isSales = d.type === "INVOICE" || d.type === "RECEIPT"; // QUOTATION excluded — not settled revenue
-        const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER" || d.type === "PAYROLL_VOUCHER";
+        const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "LSO" || d.type === "PAYMENT_VOUCHER" || d.type === "PAYROLL_VOUCHER";
 
         // Same rule: skip receipts derived from invoices to avoid double-counting in the chart
         const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
 
         if (!isReceiptFromInvoice && (d.status === "PAID" || d.type === "RECEIPT")) {
           if (isSales) monthlyTimelineMap[label].inflow += val;
-          else if (isOutflow) monthlyTimelineMap[label].outflow += val;
+          else if (isOutflow && !settledParentDocIds.has(d.id)) monthlyTimelineMap[label].outflow += val;
         } else if (d.type === "CREDIT_NOTE" && d.status === "PAID") {
           monthlyTimelineMap[label].inflow -= val;
         }
@@ -489,12 +538,12 @@ export async function getWorkspaceAnalyticsData(
       if (twelveMonthTimelineMap[label]) {
         const val = parseFloat(d.grandTotal || "0");
         const isSales = d.type === "INVOICE" || d.type === "RECEIPT";
-        const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "PAYMENT_VOUCHER" || d.type === "PAYROLL_VOUCHER";
+        const isOutflow = d.type === "LPO" || d.type === "PO" || d.type === "LSO" || d.type === "PAYMENT_VOUCHER" || d.type === "PAYROLL_VOUCHER";
         const isReceiptFromInvoice = d.type === "RECEIPT" && d.parentDocumentId;
 
         if (!isReceiptFromInvoice && (d.status === "PAID" || d.type === "RECEIPT")) {
           if (isSales) twelveMonthTimelineMap[label].inflow += val;
-          else if (isOutflow) twelveMonthTimelineMap[label].outflow += val;
+          else if (isOutflow && !settledParentDocIds.has(d.id)) twelveMonthTimelineMap[label].outflow += val;
         } else if (d.type === "CREDIT_NOTE" && d.status === "PAID") {
           twelveMonthTimelineMap[label].inflow -= val;
         }

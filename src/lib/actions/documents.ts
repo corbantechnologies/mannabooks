@@ -456,6 +456,39 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 }
             }
 
+            // AUTO-JOURNAL: Payment Voucher / Paid Procurement Disbursal → DR Cost of Goods Sold (5100) or Expense / CR Cash & Bank (1200)
+            if (newDoc.status === "PAID" && (input.type === "PAYMENT_VOUCHER" || ["LPO", "PO", "LSO"].includes(input.type))) {
+                const amount = parseFloat(calculatedTotals.grandTotal.toString());
+                if (amount > 0) {
+                    let debitAccountCode = "5100"; // Cost of Goods Sold / Direct Cost
+                    let descReason = "Direct cost of sales / supplier disbursement";
+
+                    if (input.parentDocumentId) {
+                        const parentDoc = await tx.query.documents.findFirst({
+                            where: eq(documents.id, input.parentDocumentId),
+                        });
+                        if (parentDoc?.type === "PAYROLL_VOUCHER") {
+                            debitAccountCode = "6300"; // Salaries & Wages
+                            descReason = "Payroll wages disbursed";
+                        }
+                    } else if (input.type === "PAYMENT_VOUCHER") {
+                        debitAccountCode = "6900"; // Other Operating Expenses
+                        descReason = "Operating disbursement";
+                    }
+
+                    await createJournalEntry({
+                        shopId: input.shopId,
+                        entryDate: docEntryDate,
+                        description: `${input.type} ${formattedSerial} — ${descReason}`,
+                        debitAccountCode,
+                        creditAccountCode: "1200", // Cash & Bank
+                        amount,
+                        sourceType: "document",
+                        sourceId: newDoc.id,
+                    });
+                }
+            }
+
             return { success: true, documentId: newDoc.id, serial: formattedSerial };
         });
     } catch (error) {
@@ -614,13 +647,28 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
                         sourceType: "document",
                         sourceId: existing.id,
                     });
-                } else if (existing.type === "LPO" || existing.type === "PO" || existing.type === "PAYMENT_VOUCHER") {
-                    // Supplier payment: DR Accounts Payable / CR Cash & Bank
+                } else if (existing.type === "LPO" || existing.type === "PO" || existing.type === "LSO" || existing.type === "PAYMENT_VOUCHER") {
+                    let debitAccountCode = "5100"; // Cost of Goods Sold / Direct Cost
+                    let descReason = "Direct cost of sales / supplier disbursement";
+
+                    if (existing.parentDocumentId) {
+                        const parentDoc = await db.query.documents.findFirst({
+                            where: eq(documents.id, existing.parentDocumentId),
+                        });
+                        if (parentDoc?.type === "PAYROLL_VOUCHER") {
+                            debitAccountCode = "6300"; // Salaries & Wages
+                            descReason = "Payroll wages disbursed";
+                        }
+                    } else if (existing.type === "PAYMENT_VOUCHER") {
+                        debitAccountCode = "6900"; // Other Operating Expenses
+                        descReason = "Operating disbursement";
+                    }
+
                     await createJournalEntry({
                         shopId: input.shopId,
                         entryDate: new Date(),
-                        description: `${existing.type} ${existing.docNumber} — Paid to supplier`,
-                        debitAccountCode: "2100", // Accounts Payable
+                        description: `${existing.type} ${existing.docNumber} — ${descReason}`,
+                        debitAccountCode,
                         creditAccountCode: "1200", // Cash & Bank
                         amount,
                         sourceType: "document",
@@ -1244,11 +1292,11 @@ export async function repairLedgerAction(
                 });
             }
 
-            // 1. Delete all existing document-related journal entries for this shop
+            // 1. Delete all existing document-related and legacy migrated journal entries for this shop
             await tx.delete(journalEntries).where(
                 and(
                     eq(journalEntries.shopId, shopId),
-                    eq(journalEntries.sourceType, "document")
+                    inArray(journalEntries.sourceType, ["document", "migrated"])
                 )
             );
 
@@ -1350,27 +1398,34 @@ export async function repairLedgerAction(
                     });
                 }
 
-                // LPO / PO / PAYMENT VOUCHER
-                if ((doc.type === "LPO" || doc.type === "PO" || doc.type === "PAYMENT_VOUCHER") && doc.status === "PAID") {
-                    await createJournalEntry({
-                        shopId,
-                        entryDate,
-                        description: `${doc.type} ${doc.docNumber} — Paid to supplier (Repaired)`,
-                        debitAccountCode: "2100",  // Accounts Payable
-                        creditAccountCode: "1200", // Cash & Bank
-                        amount,
-                        sourceType: "document",
-                        sourceId: doc.id,
-                    });
+                // LPO / PO / LSO / PAYMENT VOUCHER
+                if ((doc.type === "LPO" || doc.type === "PO" || doc.type === "LSO" || doc.type === "PAYMENT_VOUCHER") && doc.status === "PAID") {
+                    const hasPaidChild = allDocs.some(other => other.parentDocumentId === doc.id && other.type === "PAYMENT_VOUCHER" && other.status === "PAID");
+                    if (!hasPaidChild) {
+                        let debitAccountCode = "5100";
+                        if (doc.type === "PAYMENT_VOUCHER" && !doc.parentDocumentId) {
+                            debitAccountCode = "6900";
+                        }
+                        await createJournalEntry({
+                            shopId,
+                            entryDate,
+                            description: `${doc.type} ${doc.docNumber} — Direct cost / disbursement (Repaired)`,
+                            debitAccountCode,
+                            creditAccountCode: "1200", // Cash & Bank
+                            amount,
+                            sourceType: "document",
+                            sourceId: doc.id,
+                        });
+                    }
                 }
 
-                // PAYROLL VOUCHER — DR Salaries Expense / CR Cash & Bank
+                // PAYROLL VOUCHER — DR Salaries Expense (6300) / CR Cash & Bank (1200)
                 if (doc.type === "PAYROLL_VOUCHER" && doc.status === "PAID") {
                     await createJournalEntry({
                         shopId,
                         entryDate,
                         description: `Payroll Voucher ${doc.docNumber} — Net wages disbursed (Repaired)`,
-                        debitAccountCode: "6100",  // Salaries & Wages Expense
+                        debitAccountCode: "6300",  // Salaries & Wages Expense
                         creditAccountCode: "1200", // Cash & Bank
                         amount,
                         sourceType: "payroll",

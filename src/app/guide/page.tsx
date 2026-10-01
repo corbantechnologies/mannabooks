@@ -197,6 +197,29 @@ export default function PublicOperatorGuidePage() {
                 <li>Click <strong>Commit Changes</strong> to save.</li>
               </ol>
             </div>
+
+            {/* DANGER ZONE: PERMANENT WORKSPACE PURGE */}
+            <div className="bg-rose-50/50 border border-rose-200 p-5 space-y-3 rounded-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h4 className="font-bold uppercase text-rose-900 text-xs font-mono flex items-center gap-1.5">
+                  <span>⚠️</span>
+                  <span>Danger Zone: Permanently Deleting a Workspace</span>
+                </h4>
+                <span className="font-mono text-[9px] uppercase font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-200 self-start sm:self-auto">
+                  Owner / Super Admin Only
+                </span>
+              </div>
+              <p className="font-sans text-xs text-zinc-700 leading-relaxed">
+                If an organization winds down or a staging workspace is retired, authorized owners can permanently delete the workspace:
+              </p>
+              <ol className="list-decimal list-inside space-y-1.5 text-zinc-700 font-sans text-xs leading-relaxed">
+                <li>Log in as the <strong>Workspace Owner</strong> or a <strong>Platform Super Admin</strong>.</li>
+                <li>Navigate to <strong>System Settings</strong> (<code>/workspaces/[slug]/settings</code>) and scroll to the bottom <strong>Danger Zone</strong> card.</li>
+                <li>Click <strong>🗑️ Delete Workspace Completely</strong> to open the security challenge modal.</li>
+                <li>Type the workspace slug (e.g. <code>my-company</code>) or the word <code>DELETE</code> to verify intent.</li>
+                <li>Confirm deletion. The server atomically cascades and purges all documents, invoices, general ledger entries, inventory stock levels, and client records.</li>
+              </ol>
+            </div>
           </section>
 
           {/* ─────────────────────────────────────────── */}

@@ -244,6 +244,57 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
                 </p>
               </div>
             </div>
+
+            {/* DANGER ZONE & WORKSPACE DELETION */}
+            <div className="bg-rose-50/60 border border-rose-200 rounded-xl p-5 space-y-3 mt-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-base select-none">⚠️</span>
+                  <h3 className="font-bold uppercase font-mono text-xs text-rose-900 tracking-wide">
+                    Danger Zone: Permanently Deleting a Workspace
+                  </h3>
+                </div>
+                <span className="font-mono text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-200 self-start sm:self-auto">
+                  Owner / Super Admin Only
+                </span>
+              </div>
+
+              <p className="text-xs text-rose-950/80 leading-relaxed">
+                If an organization closes down or you need to decommission a staging/test workspace, you can permanently and irrevocably purge the entire workspace and all its data.
+              </p>
+
+              <div className="bg-white p-4 rounded-lg border border-rose-100 space-y-3 text-xs text-zinc-700">
+                <span className="font-mono text-[11px] font-bold uppercase text-black block">
+                  How to Execute Workspace Deletion:
+                </span>
+                <ol className="list-decimal list-inside space-y-1.5 leading-relaxed">
+                  <li>
+                    Log in as the <strong>Workspace Owner</strong> (the account that created the workspace) or a <strong>Platform Super Admin</strong>.
+                  </li>
+                  <li>
+                    Navigate to <strong>Settings</strong> (<code>/workspaces/{slug}/settings</code>) and scroll down to the bottom <strong>Danger Zone</strong> card.
+                  </li>
+                  <li>
+                    Click the red <strong>🗑️ Delete Workspace Completely</strong> button.
+                  </li>
+                  <li>
+                    In the confirmation modal, type the workspace slug (<code className="font-mono font-bold text-rose-600">{slug}</code>) or the word <code className="font-mono font-bold text-rose-600">DELETE</code> into the confirmation field to verify intent.
+                  </li>
+                  <li>
+                    Click <strong>Delete Workspace Completely</strong>. The server performs an atomic cascade delete. Once purged, you are seamlessly redirected to another active workspace or to create a new workspace.
+                  </li>
+                </ol>
+              </div>
+
+              <div className="p-3 bg-rose-100/60 rounded-lg border border-rose-200 text-[11px] text-rose-950 space-y-1 leading-relaxed">
+                <strong className="block font-mono uppercase text-[10px] tracking-wide text-rose-900">
+                  Permanent Cascade Scope (Cannot Be Undone):
+                </strong>
+                <p>
+                  Deleting a workspace purges all documents (invoices, receipts, quotes, credit notes), customers and suppliers, product catalogs, warehouse stock ledgers, bank feeds and reconciliation files, general ledger journal entries, accounting periods, and team memberships. Ensure all statutory reports and PDF packs are exported before confirming deletion.
+                </p>
+              </div>
+            </div>
           </section>
 
           {/* ─────────────────────────────────────────── */}

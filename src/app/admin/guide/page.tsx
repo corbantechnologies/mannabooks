@@ -131,6 +131,22 @@ GET /api/admin/bootstrap?email=user@corbantechnologies.org
                             <li>This permanently sets <code className="bg-amber-100 px-1 rounded font-bold">is_lifetime_pro = true</code>, granting unlimited team members, unlimited warehouses, and the full General Ledger suite with <strong>no expiration date</strong>.</li>
                         </ul>
                     </div>
+
+                    <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 space-y-2">
+                        <div className="flex items-center gap-2 font-bold text-rose-900 text-xs uppercase">
+                            <span>🗑️</span>
+                            <span>Super Admin Workspace Deletion &amp; Purge</span>
+                        </div>
+                        <p className="text-rose-800 text-[11px]">
+                            To decommission or permanently purge a tenant workspace across the platform:
+                        </p>
+                        <ul className="list-disc list-inside space-y-1 text-[11px] text-rose-900 pt-1">
+                            <li>Visit <Link href="/admin/workspaces" className="font-bold underline text-rose-950">/admin/workspaces</Link>.</li>
+                            <li>Click the <strong>Delete</strong> button next to the workspace to open the security modal.</li>
+                            <li>Type the workspace slug or <code>DELETE</code> to verify intent.</li>
+                            <li>The action triggers an atomic cascade delete that purges all documents, GL journals, inventory, and linked relations cleanly.</li>
+                        </ul>
+                    </div>
                 </div>
             </section>
 

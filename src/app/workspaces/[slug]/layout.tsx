@@ -8,6 +8,7 @@ import { fiscalYears } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 import { GracePeriodBanner } from "@/components/GracePeriodBanner";
+import { FiscalYearNoticeBanner } from "@/components/FiscalYearNoticeBanner";
 import { MobileNavDrawer } from "./MobileNavDrawer";
 import { DesktopSideNav } from "./DesktopSideNav";
 import { DesktopSidebarShell } from "./DesktopSidebarShell";
@@ -135,24 +136,7 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
         contentChildren={
           <>
             {planDetails && <GracePeriodBanner slug={slug} planDetails={planDetails} />}
-            {!hasFiscalYear && (
-              <div className="bg-emerald-50/80 border-b border-emerald-200/80 p-3.5 sm:p-4 font-sans text-sm text-emerald-950 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <div>
-                  <p className="font-bold flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide text-emerald-900">
-                    💡 Accounting Notice: Fiscal Year Auto-Provisioning
-                  </p>
-                  <p className="text-xs text-emerald-800/90 mt-1">
-                    Your Fiscal Year and accounting periods are automatically provisioned on your first transaction. You can review or declare custom accounting dates in Tax & Settings anytime.
-                  </p>
-                </div>
-                <Link
-                  href={`/workspaces/${slug}/finance/tax/settings`}
-                  className="bg-emerald-800 hover:bg-emerald-900 text-white font-mono text-[10px] uppercase font-bold px-3 py-1.5 rounded transition-colors shrink-0"
-                >
-                  Configure
-                </Link>
-              </div>
-            )}
+            {!hasFiscalYear && <FiscalYearNoticeBanner slug={slug} shopId={shop.id} />}
             {children}
             {/* Bottom tab bar safe-area spacer on mobile */}
             <div className="h-14 lg:hidden" />

@@ -663,22 +663,67 @@ export default function PublicOperatorGuidePage() {
           {/* ─────────────────────────────────────────── */}
           {/* MODULE 19: FISCAL PERIODS & MONTH CLOSING */}
           {/* ─────────────────────────────────────────── */}
-          <section id="module-19" className="space-y-4 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
+          <section id="module-19" className="space-y-6 scroll-mt-20 border-t border-zinc-100 pt-10 pb-8">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <span className="bg-[#064e3b] text-white px-2.5 py-1 text-xs font-bold uppercase font-mono rounded-md shrink-0">[MODULE 19]</span>
-              <h2 className="text-xl font-bold uppercase font-sans text-black">Fiscal Calendar, Monthly Period Closing &amp; Reopening</h2>
+              <h2 className="text-xl font-bold uppercase font-sans text-black">Fiscal Calendar, Monthly Period Closing &amp; Audit Governance</h2>
             </div>
             <p className="font-sans text-sm text-zinc-600 leading-relaxed">
               Enforce strict financial governance. Set up 12-month fiscal years, lock completed months against retroactive changes, and log audit justifications for reopened periods.
             </p>
 
-            <div className="bg-emerald-50/40 border border-emerald-100 p-5 space-y-3 rounded-xl">
-              <h4 className="font-bold uppercase text-black text-xs">Period Closing &amp; Reopening Protocol:</h4>
-              <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
-                <li><strong>Declare Fiscal Year:</strong> Navigate to <strong>Finance &rarr; Accounting Periods</strong> and declare your 12-month fiscal year. The system automatically populates 12 monthly periods in <code>OPEN</code> status.</li>
-                <li><strong>Month-End Closing:</strong> Once bank reconciliation and payroll postings are complete, click <strong>Close Period</strong>. Postings and edits for that calendar month are strictly locked.</li>
+            {/* EDUCATIONAL SECTION: WHY ACCOUNTING YEARS MATTER */}
+            <div className="bg-emerald-50/40 border border-emerald-100 p-6 space-y-4 rounded-xl">
+              <h4 className="font-bold uppercase text-black text-xs font-mono tracking-wider flex items-center gap-2">
+                <span>📚</span>
+                <span>Why Having a Defined Accounting Year Matters for Your Business:</span>
+              </h4>
+              <p className="font-sans text-xs text-zinc-700 leading-relaxed">
+                An <strong>Accounting Year</strong> (Fiscal Year) is the official 12-month operational period used to report taxable earnings, corporate tax, and audited financial statements:
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
+                <div className="bg-white p-4 rounded-lg border border-emerald-200/60 space-y-1.5 shadow-2xs">
+                  <strong className="text-black block text-xs">⚖️ Statutory &amp; KRA Tax Alignment:</strong>
+                  <p className="text-zinc-600 leading-relaxed">
+                    Under the Kenya Companies Act and KRA Income Tax Act, businesses must file annual returns within 6 months of year-end. Declaring your fiscal year establishes clean statutory reporting windows for corporate income tax, Wear &amp; Tear deductions, and VAT audit files.
+                  </p>
+                </div>
+
+                <div className="bg-white p-4 rounded-lg border border-emerald-200/60 space-y-1.5 shadow-2xs">
+                  <strong className="text-black block text-xs">🔄 P&amp;L Reset &amp; Retained Earnings:</strong>
+                  <p className="text-zinc-600 leading-relaxed">
+                    Income and expense accounts must reset to zero at year-end so current performance is distinct from prior years. Closing a fiscal year sweeps net profit or loss directly into <strong>Retained Earnings (Equity Account 3300)</strong> on the Balance Sheet.
+                  </p>
+                </div>
+
+                <div className="bg-white p-4 rounded-lg border border-emerald-200/60 space-y-1.5 shadow-2xs">
+                  <strong className="text-black block text-xs">🔒 Period Locks &amp; Fraud Prevention:</strong>
+                  <p className="text-zinc-600 leading-relaxed">
+                    Closing monthly periods protects reconciled bank balances and issued invoices from post-closing alterations or accidental deletions. Reopenings require elevated administrator authority and a logged justification.
+                  </p>
+                </div>
+
+                <div className="bg-white p-4 rounded-lg border border-emerald-200/60 space-y-1.5 shadow-2xs">
+                  <strong className="text-black block text-xs">⚡ Automated JIT Provisioning:</strong>
+                  <p className="text-zinc-600 leading-relaxed">
+                    For operators who simply want to issue invoices, quotes, or POS sales and exit, Manna Books automatically establishes the active fiscal year and 12 monthly periods in the background on your first transaction. Setup is frictionless and instant.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-white/80 rounded-lg border border-emerald-200 text-xs text-emerald-950 font-sans">
+                💡 <strong>Multi-Year Concurrency:</strong> Manna Books supports multiple concurrent open fiscal years, meaning your team can seamlessly transact in the new year while accountants and external auditors review and close the previous year.
+              </div>
+            </div>
+
+            <div className="bg-zinc-50 border border-zinc-200 p-5 space-y-3 rounded-xl font-sans">
+              <h4 className="font-bold uppercase text-black text-xs font-mono">Period Closing &amp; Reopening Protocol:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-zinc-700 text-xs leading-relaxed">
+                <li><strong>Declare Fiscal Year:</strong> Navigate to <strong>Finance &rarr; Tax &amp; Settings</strong> and declare your 12-month fiscal year (or let the system auto-provision it). The system generates 12 monthly periods in <code>OPEN</code> status.</li>
+                <li><strong>Month-End Closing:</strong> Once bank reconciliation and payroll postings are complete, navigate to <strong>Finance &rarr; Accounting Periods</strong> and click <strong>Close Period</strong>. Postings and edits for that calendar month are strictly locked.</li>
                 <li><strong>Reopening for Adjustments:</strong> If a late invoice is discovered during an audit, an authorized admin clicks <strong>Reopen Period</strong> and submits an audit justification reason to temporarily unlock the period.</li>
-                <li><strong>Year-End Sweep:</strong> When all 12 periods are closed, click <strong>Close Fiscal Year</strong> to automatically sweep net Revenue and Expenses into Retained Earnings (3300) and reset P&L accounts for the new year.</li>
+                <li><strong>Year-End Sweep:</strong> When all 12 periods are closed, click <strong>Close Fiscal Year</strong> on the Fiscal Year Detail page to automatically sweep net Revenue and Expenses into Retained Earnings (3300) and reset P&L accounts for the new year.</li>
               </ol>
             </div>
           </section>

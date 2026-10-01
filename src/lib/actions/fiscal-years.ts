@@ -7,6 +7,7 @@ import { verifyAndGetSession } from "./auth";
 import { enforcePermission } from "./rbac";
 import { revalidatePath } from "next/cache";
 import { createJournalEntry } from "./gl";
+import { logAudit } from "./audit";
 
 export async function getFiscalYears(shopId: string) {
     return db.query.fiscalYears.findMany({
@@ -556,6 +557,19 @@ export async function closeFiscalYear(shopId: string, shopSlug: string, fyId: st
         revalidatePath(`/workspaces/${shopSlug}/finance/periods`);
         revalidatePath(`/workspaces/${shopSlug}/finance/fiscal-years/${fyId}`);
         revalidatePath(`/workspaces/${shopSlug}/finance/tax/settings`);
+
+        // AUDIT
+        logAudit({
+            shopId,
+            userId: session.userId,
+            action: "FISCAL_YEAR_CLOSED",
+            tableName: "fiscal_years",
+            recordId: fyId,
+            recordLabel: fy.label,
+            before: { isClosed: false },
+            after: { isClosed: true },
+        });
+
         return { success: true };
     } catch (error: any) {
         console.error("Failed to close fiscal year:", error);
@@ -613,6 +627,19 @@ export async function reopenFiscalYear(shopId: string, shopSlug: string, fyId: s
         revalidatePath(`/workspaces/${shopSlug}/finance/periods`);
         revalidatePath(`/workspaces/${shopSlug}/finance/fiscal-years/${fyId}`);
         revalidatePath(`/workspaces/${shopSlug}/finance/tax/settings`);
+
+        // AUDIT
+        logAudit({
+            shopId,
+            userId: session.userId,
+            action: "FISCAL_YEAR_REOPENED",
+            tableName: "fiscal_years",
+            recordId: fyId,
+            recordLabel: fy.label,
+            before: { isClosed: true },
+            after: { isClosed: false },
+        });
+
         return { success: true };
     } catch (error: any) {
         console.error("Failed to reopen fiscal year:", error);

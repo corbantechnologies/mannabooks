@@ -8,6 +8,7 @@ import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { verifyAndGetSession } from "./auth";
 import { enforcePermission } from "./rbac";
+import { logAudit } from "./audit";
 
 import { applyDocumentStockMovements } from "@/lib/actions/stock";
 import { getFiscalYearRange, getFyDocSuffix } from "@/lib/fiscalYear";
@@ -717,6 +718,19 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
                 }
             }
         }
+
+        // AUDIT: Record status transition
+        const session = await verifyAndGetSession();
+        logAudit({
+            shopId: input.shopId,
+            userId: session?.userId,
+            action: "STATUS_CHANGE",
+            tableName: "documents",
+            recordId: input.documentId,
+            recordLabel: `${existing.type} ${existing.docNumber}`,
+            before: { status: existing.status },
+            after: { status: input.status },
+        });
 
         return { success: true };
     } catch (error: any) {
@@ -1473,6 +1487,12 @@ export async function repairLedgerAction(
 export async function cancelQuotationAction(shopId: string, docId: string, shopSlug: string) {
     try {
         await enforcePermission(shopId, "manage_documents");
+        const session = await verifyAndGetSession();
+
+        const quotation = await db.query.documents.findFirst({
+            where: and(eq(documents.id, docId), eq(documents.shopId, shopId)),
+        });
+
         await db.update(documents)
             .set({ status: "CANCELLED" })
             .where(
@@ -1485,6 +1505,19 @@ export async function cancelQuotationAction(shopId: string, docId: string, shopS
         
         revalidatePath(`/workspaces/${shopSlug}/documents`);
         revalidatePath(`/workspaces/${shopSlug}/documents/${docId}`);
+
+        // AUDIT
+        logAudit({
+            shopId,
+            userId: session?.userId,
+            action: "CANCELLATION",
+            tableName: "documents",
+            recordId: docId,
+            recordLabel: quotation ? `QUOTATION ${quotation.docNumber}` : docId,
+            before: { status: quotation?.status ?? "DRAFT" },
+            after: { status: "CANCELLED" },
+        });
+
         return { success: true };
     } catch (error: any) {
         console.error("Quotation cancellation failed:", error);
@@ -1537,14 +1570,27 @@ export async function cancelInvoiceAction(shopId: string, docId: string, shopSlu
                 });
             }
 
-            return { success: true };
+            return { success: true, docNumber: invoice.docNumber, grandTotal: invoice.grandTotal };
         });
 
         if (res.success) {
             revalidatePath(`/workspaces/${shopSlug}/documents`);
             revalidatePath(`/workspaces/${shopSlug}/documents/${docId}`);
+
+            // AUDIT: Invoice cancelled
+            const session = await verifyAndGetSession();
+            logAudit({
+                shopId,
+                userId: session?.userId,
+                action: "CANCELLATION",
+                tableName: "documents",
+                recordId: docId,
+                recordLabel: `INVOICE ${ (res as any).docNumber ?? docId }`,
+                before: { status: "ISSUED" },
+                after: { status: "CANCELLED", reversalAmount: (res as any).grandTotal },
+            });
         }
-        return res;
+        return { success: res.success, ...(!(res as any).success && { error: (res as any).error }) };
     } catch (error: any) {
         console.error("Invoice cancellation failed:", error);
         return { success: false, error: error.message || "Failed to cancel invoice." };
@@ -1696,6 +1742,23 @@ export async function recordDocumentPaymentAction(input: {
         revalidatePath(`/workspaces/${input.shopSlug}/documents`);
         revalidatePath(`/workspaces/${input.shopSlug}`);
 
+        // AUDIT: Record payment
+        logAudit({
+            shopId: input.shopId,
+            userId: session.userId,
+            action: "PAYMENT_RECORDED",
+            tableName: "document_payments",
+            recordId: input.documentId,
+            recordLabel: `${doc.type} ${doc.docNumber}`,
+            after: {
+                amount: input.amount,
+                paymentChannel: input.paymentChannel,
+                paymentReference: input.paymentReference ?? null,
+                newStatus: nextStatus,
+                remainingBalance,
+            },
+        });
+
         return { success: true, status: nextStatus, remainingBalance };
     } catch (error: any) {
         console.error("Failed to record document payment:", error);
@@ -1746,6 +1809,17 @@ export async function deleteDocumentPaymentAction(input: {
         revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.documentId}`);
         revalidatePath(`/workspaces/${input.shopSlug}/documents`);
         revalidatePath(`/workspaces/${input.shopSlug}`);
+
+        // AUDIT: Payment deleted
+        const auditSession = await verifyAndGetSession();
+        logAudit({
+            shopId: input.shopId,
+            userId: auditSession?.userId,
+            action: "PAYMENT_DELETED",
+            tableName: "document_payments",
+            recordId: input.paymentId,
+            recordLabel: `Payment on document ${input.documentId}`,
+        });
 
         return { success: true };
     } catch (error: any) {

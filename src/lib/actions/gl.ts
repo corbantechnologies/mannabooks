@@ -218,6 +218,120 @@ interface JournalEntryInput {
 }
 
 /**
+ * Resolves the accounting period for a given transaction date.
+ * If no period exists, it JIT-provisions the Fiscal Year and all 12 monthly accounting periods
+ * according to the shop's configured fiscalYearStartMonth (defaulting to January).
+ */
+export async function ensureAccountingPeriod(shopId: string, entryDate: Date | string, tx: any = db) {
+    const dateObj = entryDate instanceof Date ? entryDate : new Date(entryDate);
+    const entryDateStr = dateObj.toISOString().split("T")[0];
+
+    // 1. Check if period already exists
+    let period = await tx.query.accountingPeriods.findFirst({
+        where: and(
+            eq(accountingPeriods.shopId, shopId),
+            lte(accountingPeriods.startDate, entryDateStr),
+            gte(accountingPeriods.endDate, entryDateStr),
+        ),
+    });
+
+    if (period) return period;
+
+    // 2. Fetch shop settings to know fiscalYearStartMonth (1 = January, 7 = July, etc.)
+    const shop = await tx.query.shops.findFirst({ where: eq(shops.id, shopId) });
+    const startMonth = Math.max(0, Math.min(11, (shop?.fiscalYearStartMonth || 1) - 1)); // 0-indexed
+
+    const dateYear = dateObj.getFullYear();
+    const dateMonth = dateObj.getMonth();
+
+    // Determine fiscal year start year
+    let fyStartYear = dateYear;
+    if (dateMonth < startMonth) {
+        fyStartYear = dateYear - 1;
+    }
+
+    const fyStart = new Date(fyStartYear, startMonth, 1);
+    const fyEnd = new Date(fyStartYear + 1, startMonth, 0); // End of 12th month
+
+    const startStr = fyStart.toISOString().split("T")[0];
+    const endStr = fyEnd.toISOString().split("T")[0];
+    const fyLabel = startMonth === 0 
+        ? `Fiscal Year ${fyStartYear}` 
+        : `Fiscal Year ${fyStartYear}/${fyStartYear + 1}`;
+
+    // 3. Find or auto-create the fiscal year
+    let fy = await tx.query.fiscalYears.findFirst({
+        where: and(
+            eq(fiscalYears.shopId, shopId),
+            eq(fiscalYears.startDate, startStr),
+            eq(fiscalYears.endDate, endStr),
+        ),
+    });
+
+    if (!fy) {
+        const existingByLabel = await tx.query.fiscalYears.findFirst({
+            where: and(
+                eq(fiscalYears.shopId, shopId),
+                eq(fiscalYears.label, fyLabel),
+            ),
+        });
+
+        if (existingByLabel) {
+            fy = existingByLabel;
+        } else {
+            const [createdFy] = await tx.insert(fiscalYears).values({
+                shopId,
+                label: fyLabel,
+                startDate: startStr,
+                endDate: endStr,
+                isClosed: false,
+            }).returning();
+            fy = createdFy;
+        }
+    }
+
+    // 4. Auto-generate the 12 monthly periods for this fiscal year
+    let current = new Date(fyStart.getFullYear(), fyStart.getMonth(), 1);
+    let matchedPeriod = null;
+
+    while (current <= fyEnd) {
+        const pStart = new Date(current.getFullYear(), current.getMonth(), 1);
+        const pEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+
+        const periodName = pStart.toLocaleDateString("en-KE", { month: "long", year: "numeric" });
+        const pStartStr = pStart.toISOString().split("T")[0];
+        const pEndStr = pEnd.toISOString().split("T")[0];
+
+        let p = await tx.query.accountingPeriods.findFirst({
+            where: and(
+                eq(accountingPeriods.shopId, shopId),
+                eq(accountingPeriods.startDate, pStartStr),
+            ),
+        });
+
+        if (!p) {
+            const [createdP] = await tx.insert(accountingPeriods).values({
+                shopId,
+                fiscalYearId: fy.id,
+                periodName,
+                startDate: pStartStr,
+                endDate: pEndStr,
+                status: "OPEN",
+            }).returning();
+            p = createdP;
+        }
+
+        if (entryDateStr >= pStartStr && entryDateStr <= pEndStr) {
+            matchedPeriod = p;
+        }
+
+        current.setMonth(current.getMonth() + 1);
+    }
+
+    return matchedPeriod;
+}
+
+/**
  * Core journal entry creation. Validates period status and backdating rules.
  * Can be called from other server actions (expenses, documents, payroll).
  */
@@ -237,18 +351,12 @@ export async function createJournalEntry(input: JournalEntryInput) {
 
     if (!debitAccount || !creditAccount) return; // Accounts not found — skip
 
-    // Find or determine period
-    const entryDateStr = input.entryDate.toISOString().split("T")[0];
-    let period = await db.query.accountingPeriods.findFirst({
-        where: and(
-            eq(accountingPeriods.shopId, input.shopId),
-            lte(accountingPeriods.startDate, entryDateStr),
-            gte(accountingPeriods.endDate, entryDateStr),
-        ),
-    });
+    // Find or auto-provision period
+    const period = await ensureAccountingPeriod(input.shopId, input.entryDate);
 
     if (!period) {
-        throw new Error(`No active accounting period found for date ${entryDateStr}. Transaction date must fall within a declared Fiscal Year.`);
+        console.warn(`[GL] Unable to establish accounting period for date ${input.entryDate}`);
+        return;
     }
 
     // Validate period access
@@ -389,22 +497,6 @@ export async function getPeriodDetails(shopId: string, periodId: string) {
     }
 }
 
-/**
- * Ensures an accounting period exists for the given month.
- * Creates it if it doesn't yet exist.
- */
-export async function ensureAccountingPeriod(shopId: string, date: Date): Promise<string | null> {
-    const start = new Date(date.getFullYear(), date.getMonth(), 1);
-    const startStr = start.toISOString().split("T")[0];
-
-    const existing = await db.query.accountingPeriods.findFirst({
-        where: and(eq(accountingPeriods.shopId, shopId), eq(accountingPeriods.startDate, startStr)),
-    });
-
-    if (existing) return existing.id;
-
-    throw new Error(`Accounting period starting ${startStr} is not defined. Please declare a Fiscal Year covering this period.`);
-}
 
 export async function closePeriod(shopId: string, shopSlug: string, periodId: string) {
     try {
@@ -672,18 +764,11 @@ export async function postCompoundJournalEntry(
             return { success: false, error: "One or more selected accounts could not be verified." };
         }
 
-        // Find or determine accounting period
-        const entryDateStr = data.entryDate.toISOString().split("T")[0];
-        const period = await db.query.accountingPeriods.findFirst({
-            where: and(
-                eq(accountingPeriods.shopId, shopId),
-                lte(accountingPeriods.startDate, entryDateStr),
-                gte(accountingPeriods.endDate, entryDateStr),
-            ),
-        });
+        // Find or auto-provision accounting period
+        const period = await ensureAccountingPeriod(shopId, data.entryDate);
 
         if (!period) {
-            return { success: false, error: `No active accounting period found for date ${entryDateStr}. Transaction date must fall within a declared Fiscal Year.` };
+            return { success: false, error: `No active accounting period found for date ${data.entryDate.toISOString().split("T")[0]}.` };
         }
 
         if (period.status === "CLOSED" && !shop.glOnboardingMode) {

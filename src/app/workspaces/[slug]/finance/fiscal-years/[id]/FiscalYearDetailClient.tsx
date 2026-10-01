@@ -1062,7 +1062,7 @@ export default function FiscalYearDetailClient({
                         </p>
 
                         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 space-y-1">
-                            <p>⚠ Only one fiscal year can be active at a time.</p>
+                            <p>✓ Multiple fiscal years can remain open concurrently during year-end audit & transition.</p>
                             <p>✓ Monthly periods can then be reopened individually for adjustments.</p>
                         </div>
 

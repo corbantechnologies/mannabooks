@@ -16,8 +16,32 @@ export async function getFiscalYears(shopId: string) {
 }
 
 export async function getActiveFiscalYear(shopId: string) {
-    return db.query.fiscalYears.findFirst({
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    // 1. Prioritize open fiscal year covering today's date
+    const currentOpenFy = await db.query.fiscalYears.findFirst({
+        where: and(
+            eq(fiscalYears.shopId, shopId),
+            eq(fiscalYears.isClosed, false),
+            lte(fiscalYears.startDate, todayStr),
+            gte(fiscalYears.endDate, todayStr),
+        ),
+    });
+
+    if (currentOpenFy) return currentOpenFy;
+
+    // 2. Fallback to latest open fiscal year
+    const latestOpenFy = await db.query.fiscalYears.findFirst({
         where: and(eq(fiscalYears.shopId, shopId), eq(fiscalYears.isClosed, false)),
+        orderBy: (f, { desc }) => [desc(f.startDate)],
+    });
+
+    if (latestOpenFy) return latestOpenFy;
+
+    // 3. Fallback to latest declared fiscal year
+    return db.query.fiscalYears.findFirst({
+        where: eq(fiscalYears.shopId, shopId),
+        orderBy: (f, { desc }) => [desc(f.startDate)],
     });
 }
 
@@ -356,13 +380,7 @@ export async function declareFiscalYear(shopId: string, shopSlug: string, data: 
             return { success: false, error: "End Date must be after Start Date." };
         }
 
-        // 1. Enforce only one open fiscal year at a time
-        const openFy = await db.query.fiscalYears.findFirst({
-            where: and(eq(fiscalYears.shopId, shopId), eq(fiscalYears.isClosed, false)),
-        });
-        if (openFy) {
-            return { success: false, error: `Only one fiscal year can be open at a time. Please close the active fiscal year "${openFy.label}" first.` };
-        }
+
 
         // 2. Overlap check
         const allFy = await db.query.fiscalYears.findMany({
@@ -558,16 +576,7 @@ export async function reopenFiscalYear(shopId: string, shopSlug: string, fyId: s
         if (!fy) return { success: false, error: "Fiscal Year not found." };
         if (!fy.isClosed) return { success: false, error: "Fiscal Year is already open." };
 
-        // Ensure no other fiscal year is currently open
-        const openFy = await db.query.fiscalYears.findFirst({
-            where: and(eq(fiscalYears.shopId, shopId), eq(fiscalYears.isClosed, false)),
-        });
-        if (openFy) {
-            return {
-                success: false,
-                error: `Cannot reopen "${fy.label}". Fiscal Year "${openFy.label}" is currently open. Only one fiscal year can be open at a time.`,
-            };
-        }
+
 
         const periodIds = fy.periods.map(p => p.id);
 

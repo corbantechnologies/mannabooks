@@ -136,20 +136,20 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
           <>
             {planDetails && <GracePeriodBanner slug={slug} planDetails={planDetails} />}
             {!hasFiscalYear && (
-              <div className="bg-amber-50 border-b border-amber-200/80 p-4 font-sans text-sm text-amber-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="bg-emerald-50/80 border-b border-emerald-200/80 p-3.5 sm:p-4 font-sans text-sm text-emerald-950 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                  <p className="font-bold flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide">
-                    ⚠️ Action Required: Declare Fiscal Year
+                  <p className="font-bold flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide text-emerald-900">
+                    💡 Accounting Notice: Fiscal Year Auto-Provisioning
                   </p>
-                  <p className="text-xs text-amber-700 mt-1">
-                    General Ledger is active, but you have not declared a descriptive Fiscal Year. Financial entries and document locks will remain unassigned or locked until a Fiscal Year is declared.
+                  <p className="text-xs text-emerald-800/90 mt-1">
+                    Your Fiscal Year and accounting periods are automatically provisioned on your first transaction. You can review or declare custom accounting dates in Tax & Settings anytime.
                   </p>
                 </div>
                 <Link
                   href={`/workspaces/${slug}/finance/tax/settings`}
-                  className="bg-amber-800 hover:bg-amber-900 text-white font-mono text-[10px] uppercase font-bold px-3 py-1.5 rounded transition-colors shrink-0"
+                  className="bg-emerald-800 hover:bg-emerald-900 text-white font-mono text-[10px] uppercase font-bold px-3 py-1.5 rounded transition-colors shrink-0"
                 >
-                  Setup Now
+                  Configure
                 </Link>
               </div>
             )}

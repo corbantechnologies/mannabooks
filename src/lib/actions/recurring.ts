@@ -67,6 +67,7 @@ export async function toggleRecurringInvoiceAction(input: {
   documentId: string;
   isRecurring: boolean;
   recurringInterval?: "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY";
+  nextRecurringDate?: Date | string | null;
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await verifyAndGetSession();
@@ -75,13 +76,18 @@ export async function toggleRecurringInvoiceAction(input: {
 
     let nextDate: Date | null = null;
     if (input.isRecurring) {
-      const interval = input.recurringInterval || "MONTHLY";
-      const d = new Date();
-      if (interval === "WEEKLY") d.setDate(d.getDate() + 7);
-      else if (interval === "MONTHLY") d.setMonth(d.getMonth() + 1);
-      else if (interval === "QUARTERLY") d.setMonth(d.getMonth() + 3);
-      else if (interval === "YEARLY") d.setFullYear(d.getFullYear() + 1);
-      nextDate = d;
+      if (input.nextRecurringDate) {
+        nextDate = new Date(input.nextRecurringDate);
+      } else {
+        const interval = input.recurringInterval || "MONTHLY";
+        const d = new Date();
+        if (interval === "WEEKLY") d.setDate(d.getDate() + 7);
+        else if (interval === "MONTHLY") d.setMonth(d.getMonth() + 1);
+        else if (interval === "QUARTERLY") d.setMonth(d.getMonth() + 3);
+        else if (interval === "YEARLY") d.setFullYear(d.getFullYear() + 1);
+        d.setHours(0, 0, 0, 0);
+        nextDate = d;
+      }
     }
 
     await db.update(documents)

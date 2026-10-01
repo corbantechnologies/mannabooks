@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { updateWorkspacePlanAction, toggleWorkspaceSuspensionAction } from "@/lib/actions/admin";
+import { deleteWorkspaceAction } from "@/lib/actions/workspace";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { Spinner } from "@/components/Spinner";
 
 interface WorkspaceSummary {
   id: string;
@@ -55,6 +57,35 @@ export function AdminWorkspacesClient({ initialWorkspaces, totalCount }: AdminWo
   const [suspendingShop, setSuspendingShop] = useState<WorkspaceSummary | null>(null);
   const [suspendReason, setSuspendReason] = useState<string>("");
   const [isTogglingSuspend, setIsTogglingSuspend] = useState<boolean>(false);
+
+  // Deletion Modal State
+  const [deletingShop, setDeletingShop] = useState<WorkspaceSummary | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  async function handleDeleteShop(e: React.FormEvent) {
+    e.preventDefault();
+    if (!deletingShop) return;
+
+    setIsDeleting(true);
+    const toastId = toast.loading(`Purging tenant ${deletingShop.name}...`);
+
+    const res = await deleteWorkspaceAction({
+      shopId: deletingShop.id,
+      confirmationInput: deleteConfirmation,
+    });
+
+    setIsDeleting(false);
+    if (!res.success) {
+      toast.error(res.error || "Failed to purge workspace.", { id: toastId });
+    } else {
+      toast.success(`Workspace "${deletingShop.name}" permanently deleted!`, { id: toastId });
+      setWorkspaces((prev) => prev.filter((item) => item.id !== deletingShop.id));
+      setDeletingShop(null);
+      setDeleteConfirmation("");
+      router.refresh();
+    }
+  }
 
   // Filter workspaces in-memory for instant feedback
   const filtered = workspaces.filter((w) => {
@@ -362,6 +393,18 @@ export function AdminWorkspacesClient({ initialWorkspaces, totalCount }: AdminWo
                           <span>🚀</span>
                           <span>Access</span>
                         </Link>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDeletingShop(shop);
+                            setDeleteConfirmation("");
+                          }}
+                          className="h-7.5 px-2 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 border border-rose-200 hover:border-rose-600 rounded-lg transition-all font-bold uppercase cursor-pointer"
+                          title="Permanently Delete Workspace"
+                        >
+                          🗑️
+                        </button>
                       </div>
                     </td>
 
@@ -529,6 +572,80 @@ export function AdminWorkspacesClient({ initialWorkspaces, totalCount }: AdminWo
 
             </form>
 
+          </div>
+        </div>
+      )}
+
+      {/* DELETE WORKSPACE MODAL */}
+      {deletingShop && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-rose-200 rounded-xl shadow-2xl max-w-md w-full p-6 space-y-5 animate-in zoom-in-95 font-sans text-xs">
+            <div className="flex justify-between items-start border-b border-zinc-200 pb-3">
+              <div>
+                <span className="font-mono text-[10px] text-rose-600 uppercase font-bold flex items-center gap-1">
+                  <span>🚨</span> Super Admin Purge
+                </span>
+                <h3 className="text-base font-bold text-black uppercase mt-0.5">{deletingShop.name}</h3>
+                <p className="font-mono text-[11px] text-zinc-400">/{deletingShop.slug}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDeletingShop(null)}
+                className="text-zinc-400 hover:text-black font-bold p-1 text-base cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleDeleteShop} className="space-y-4 font-mono text-xs">
+              <div className="bg-rose-50 border border-rose-200 p-3.5 rounded-lg space-y-1">
+                <span className="font-bold text-rose-900 block font-sans">
+                  Irrevocable Tenant Deletion
+                </span>
+                <p className="text-[10px] text-rose-800 leading-normal font-mono">
+                  This will completely wipe all documents, ledger journals, stock records, contacts, and team memberships for this tenant. This cannot be undone.
+                </p>
+              </div>
+
+              <div className="space-y-1.5 font-sans">
+                <label className="text-[11px] font-bold text-zinc-700 block">
+                  Type <span className="font-mono text-rose-600 font-bold">{deletingShop.slug}</span> or <span className="font-mono text-rose-600 font-bold">DELETE</span> to confirm:
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  placeholder={`Type "${deletingShop.slug}" to confirm`}
+                  className="w-full px-3 py-2 border border-rose-300 rounded bg-white text-xs font-mono text-black focus:outline-none focus:border-rose-500"
+                  autoFocus
+                />
+              </div>
+
+              <div className="pt-3 border-t border-zinc-200 flex justify-end gap-2 font-sans">
+                <button
+                  type="button"
+                  onClick={() => setDeletingShop(null)}
+                  disabled={isDeleting}
+                  className="px-3.5 py-2 border border-zinc-300 hover:bg-zinc-100 font-bold uppercase text-[11px] rounded cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isDeleting || !deleteConfirmation.trim()}
+                  className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase text-[11px] px-4 py-2 rounded shadow-sm disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Spinner size={10} color="white" />
+                      <span>Purging...</span>
+                    </>
+                  ) : (
+                    "Permanently Delete"
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

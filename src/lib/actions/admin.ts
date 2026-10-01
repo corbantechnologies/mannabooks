@@ -1,10 +1,23 @@
 "use server";
 
 import { db } from "@/db";
-import { users, shops, documents, shopMembers, stockLocations, productLocationStock } from "@/db/schema";
-import { count, eq, and, sql, desc, ilike, or } from "drizzle-orm";
-import { verifyAndGetSession } from "./auth";
+import {
+    users,
+    shops,
+    documents,
+    shopMembers,
+    stockLocations,
+    productLocationStock,
+    sessions,
+    approvalRequests,
+    approvalTimeline,
+    stocktakes,
+    groupEntities,
+} from "@/db/schema";
+import { count, eq, and, sql, desc, ilike, or, inArray } from "drizzle-orm";
+import { verifyAndGetSession, invalidateSession } from "./auth";
 import { revalidatePath } from "next/cache";
+import { purgeShopDataComplete } from "./workspace";
 
 /**
  * Validates the current session and ensures the user is a Super Admin.
@@ -525,5 +538,114 @@ export async function toggleSuperAdminAction({ userId, isSuperAdmin }: { userId:
     } catch (error) {
         console.error("Failed to toggle super admin status:", error);
         return { success: false, error: "Failed to update user administrative status." };
+    }
+}
+
+/**
+ * Permanently purges a user account from the platform.
+ * Can be executed by a Super Admin (to delete any user) or by the user themselves.
+ * Cascades through all owned workspaces, sessions, and memberships.
+ */
+export async function deleteUserAccountAction(input: {
+    userId: string;
+    confirmationInput: string;
+}): Promise<{ success: boolean; error?: string; message?: string }> {
+    try {
+        const session = await verifyAndGetSession();
+        if (!session || !session.user) {
+            return { success: false, error: "Authentication required." };
+        }
+
+        const isSuperAdmin = Boolean(session.user.isSuperAdmin);
+        const isSelf = session.userId === input.userId;
+
+        if (!isSuperAdmin && !isSelf) {
+            return { success: false, error: "Unauthorized. Super Admin privileges required to delete other users." };
+        }
+
+        const targetUser = await db.query.users.findFirst({
+            where: eq(users.id, input.userId),
+        });
+
+        if (!targetUser) {
+            return { success: false, error: "Target user account not found." };
+        }
+
+        // Prevent deleting the sole remaining Super Admin
+        if (targetUser.isSuperAdmin) {
+            const superAdmins = await db.select({ value: count() }).from(users).where(eq(users.isSuperAdmin, true));
+            if ((superAdmins[0]?.value || 0) <= 1) {
+                return { success: false, error: "Security restriction: Cannot delete the only remaining Super Admin on the platform." };
+            }
+        }
+
+        // Validate confirmation text: must match email, username, or "DELETE"
+        const allowedConfirmations = [
+            targetUser.email.toLowerCase().trim(),
+            targetUser.name.toLowerCase().trim(),
+            "delete",
+        ];
+        const normalizedInput = (input.confirmationInput || "").toLowerCase().trim();
+        if (!allowedConfirmations.includes(normalizedInput)) {
+            return {
+                success: false,
+                error: `Confirmation mismatch. Please type "${targetUser.email}" or "DELETE" to confirm permanent purge.`,
+            };
+        }
+
+        // Atomic purge sequence
+        await db.transaction(async (tx) => {
+            // 1. Purge all workspaces owned by this user
+            const ownedShops = await tx.query.shops.findMany({
+                where: eq(shops.ownerId, targetUser.id),
+                columns: { id: true }
+            });
+            for (const shop of ownedShops) {
+                await purgeShopDataComplete(tx, shop.id);
+            }
+
+            // 2. Delete business groups owned by user
+            await tx.delete(groupEntities).where(eq(groupEntities.ownerId, targetUser.id));
+
+            // 3. Clean up approval requests requested by user
+            const appReqs = await tx.query.approvalRequests.findMany({
+                where: eq(approvalRequests.requesterUserId, targetUser.id),
+                columns: { id: true }
+            });
+            const appReqIds = appReqs.map((r: any) => r.id);
+            if (appReqIds.length > 0) {
+                await tx.delete(approvalTimeline).where(inArray(approvalTimeline.requestId, appReqIds));
+            }
+            await tx.delete(approvalRequests).where(eq(approvalRequests.requesterUserId, targetUser.id));
+
+            // 4. Clean up stocktakes conducted by user
+            await tx.delete(stocktakes).where(eq(stocktakes.conductedByUserId, targetUser.id));
+
+            // 5. Purge all sessions for this user
+            await tx.delete(sessions).where(eq(sessions.userId, targetUser.id));
+
+            // 6. Delete all shop memberships
+            await tx.delete(shopMembers).where(eq(shopMembers.userId, targetUser.id));
+
+            // 7. Finally, delete user account row
+            await tx.delete(users).where(eq(users.id, targetUser.id));
+        });
+
+        if (isSelf) {
+            await invalidateSession();
+        }
+
+        revalidatePath("/admin");
+        revalidatePath("/admin/users");
+        revalidatePath("/admin/workspaces");
+        revalidatePath("/workspaces");
+
+        return {
+            success: true,
+            message: `User ${targetUser.email} and all owned workspaces have been permanently purged.`,
+        };
+    } catch (error: any) {
+        console.error("Critical failure during user account purge sequence:", error);
+        return { success: false, error: error?.message || "Failed to delete user account." };
     }
 }

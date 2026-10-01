@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { updateShopSettings } from "@/lib/actions/workspace";
+import { updateShopSettings, deleteWorkspaceAction } from "@/lib/actions/workspace";
 import { useAddPaymentMethod, useDeletePaymentMethod, useSetDefaultPaymentMethod, useUpdatePaymentMethod } from "@/hooks/usePayments";
 import { ShopTermItem } from "@/lib/actions/terms";
 import { toast } from "react-hot-toast";
@@ -124,6 +124,41 @@ export function SettingsForm({
   const deletePaymentMutation = useDeletePaymentMethod(shopId, shopSlug);
   const setDefaultPaymentMutation = useSetDefaultPaymentMethod(shopId, shopSlug);
   const updatePaymentMutation = useUpdatePaymentMethod(shopId, shopSlug);
+
+  // Workspace Deletion Modal State
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDeletingWorkspace, setIsDeletingWorkspace] = useState(false);
+
+  async function handleDeleteWorkspace() {
+    if (!deleteConfirmation.trim()) {
+      toast.error("Please enter the confirmation text.");
+      return;
+    }
+    setIsDeletingWorkspace(true);
+    const toastId = toast.loading("Purging workspace and all related records...");
+    try {
+      const res = await deleteWorkspaceAction({
+        shopId,
+        confirmationInput: deleteConfirmation,
+      });
+      if (res.success) {
+        toast.success("Workspace deleted permanently.", { id: toastId });
+        setShowDeleteModal(false);
+        if (res.nextSlug) {
+          router.push(`/workspaces/${res.nextSlug}`);
+        } else {
+          router.push("/workspaces/new");
+        }
+      } else {
+        toast.error(res.error || "Failed to delete workspace.", { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete workspace.", { id: toastId });
+    } finally {
+      setIsDeletingWorkspace(false);
+    }
+  }
 
   async function handleProfileSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -1163,6 +1198,106 @@ export function SettingsForm({
         </Link>
       </div>
     </div>
+
+    {/* ── DANGER ZONE: WORKSPACE PURGE ── */}
+    <div className="card-modern p-6 bg-rose-50/40 border border-rose-200 font-mono text-xs space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="text-base">🚨</span>
+        <div>
+          <h2 className="font-semibold uppercase tracking-wider text-sm text-rose-900 font-sans">
+            Danger Zone · Purge Workspace
+          </h2>
+          <p className="text-[10px] text-rose-500 uppercase mt-0.5">
+            Irrevocably erase this workspace and all associated business data
+          </p>
+        </div>
+      </div>
+      <div className="border-t border-rose-200 pt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <p className="font-sans text-[11px] text-rose-800 normal-case leading-normal max-w-xl">
+          Permanently delete this entire workspace tenant, including all documents, customers, products, chart of accounts, GL postings, inventory locations, and member accesses. This operation is permanent and cannot be undone.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setDeleteConfirmation("");
+            setShowDeleteModal(true);
+          }}
+          className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold uppercase tracking-wider text-xs rounded transition-colors shrink-0 shadow-sm font-sans cursor-pointer"
+        >
+          🗑️ Delete Workspace Completely
+        </button>
+      </div>
+    </div>
+
+    {/* WORKSPACE DELETION CONFIRMATION MODAL */}
+    {showDeleteModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="bg-white border border-rose-200 rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl">
+          <div className="space-y-2 border-b border-zinc-100 pb-4">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-xs uppercase font-bold text-rose-600 tracking-wider flex items-center gap-1.5">
+                <span>⚠️</span> Extreme Caution
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeletingWorkspace}
+                className="text-zinc-400 hover:text-black font-mono text-xs uppercase"
+              >
+                ✕ Close
+              </button>
+            </div>
+            <h2 className="text-xl font-bold font-sans text-black tracking-tight">
+              Permanently Purge Workspace?
+            </h2>
+            <p className="text-xs text-zinc-600 font-sans leading-relaxed">
+              You are about to permanently delete <strong>{initialName}</strong> (<span className="font-mono text-[11px]">{shopSlug}</span>). All customer data, financial records, inventory items, and general ledger journal entries will be completely removed.
+            </p>
+          </div>
+
+          <div className="space-y-3 font-sans">
+            <label className="font-mono text-[11px] uppercase font-bold text-zinc-700 block">
+              To confirm, type <span className="font-mono text-rose-600 select-all font-bold">{shopSlug}</span> or <span className="font-mono text-rose-600 select-all font-bold">DELETE</span> below:
+            </label>
+            <input
+              type="text"
+              value={deleteConfirmation}
+              onChange={(e) => setDeleteConfirmation(e.target.value)}
+              placeholder={`Type "${shopSlug}" to confirm`}
+              disabled={isDeletingWorkspace}
+              className="w-full px-3 py-2 border border-rose-300 rounded font-mono text-xs text-black focus:outline-none focus:ring-2 focus:ring-rose-500"
+              autoFocus
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-zinc-100 font-sans">
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(false)}
+              disabled={isDeletingWorkspace}
+              className="px-4 py-2 border border-zinc-300 text-zinc-700 hover:bg-zinc-50 rounded text-xs font-semibold uppercase tracking-wider cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteWorkspace}
+              disabled={isDeletingWorkspace || !deleteConfirmation.trim()}
+              className="px-5 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white rounded text-xs font-semibold uppercase tracking-wider flex items-center gap-2 cursor-pointer"
+            >
+              {isDeletingWorkspace ? (
+                <>
+                  <Spinner size={12} color="white" />
+                  <span>Purging Workspace...</span>
+                </>
+              ) : (
+                "Confirm & Delete Forever"
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   </div>
   );
 }

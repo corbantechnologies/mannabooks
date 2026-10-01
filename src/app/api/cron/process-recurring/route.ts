@@ -11,18 +11,30 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
     // 1. Verify Vercel Cron Authentication
     const authHeader = request.headers.get("Authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    const cronSecret = process.env.CRON_SECRET;
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
         return new Response("Unauthorized CRON request", { status: 401 });
     }
 
     try {
         const now = new Date();
         
+        // Resolve current date in Africa/Nairobi (UTC+3)
+        const nairobiDateStr = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "Africa/Nairobi",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+        }).format(now); // e.g., "2026-10-01"
+
+        // Any recurring series due on or before the end of the current Nairobi day is eligible
+        const endOfTodayNairobi = new Date(`${nairobiDateStr}T23:59:59.999+03:00`);
+        
         // 2. Fetch all recurring documents due for generation
         const pendingRecurring = await db.query.documents.findMany({
             where: and(
                 eq(documents.isRecurring, true),
-                lte(documents.nextRecurringDate, now)
+                lte(documents.nextRecurringDate, endOfTodayNairobi)
             ),
             with: {
                 client: true,
@@ -77,6 +89,8 @@ export async function GET(request: Request) {
                     default:
                         nextDate.setMonth(nextDate.getMonth() + 1);
                 }
+                // Normalize time of next run to start of day in Nairobi
+                nextDate.setHours(0, 0, 0, 0);
 
                 await db.update(documents)
                     .set({ nextRecurringDate: nextDate })

@@ -312,7 +312,16 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 baseGrandTotal: baseTotalVal,
                 isRecurring: input.isRecurring || false,
                 recurringInterval: input.recurringInterval || null,
-                nextRecurringDate: input.isRecurring ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : null, // Default to next month if recurring
+                nextRecurringDate: input.isRecurring ? (() => {
+                    const d = new Date();
+                    const interval = input.recurringInterval || "MONTHLY";
+                    if (interval === "WEEKLY") d.setDate(d.getDate() + 7);
+                    else if (interval === "MONTHLY") d.setMonth(d.getMonth() + 1);
+                    else if (interval === "QUARTERLY") d.setMonth(d.getMonth() + 3);
+                    else if (interval === "YEARLY") d.setFullYear(d.getFullYear() + 1);
+                    d.setHours(0, 0, 0, 0);
+                    return d;
+                })() : null,
                 subTotal: calculatedTotals.subTotal.toString(),
                 taxAmount: calculatedTotals.taxAmount.toString(),
                 grandTotal: netGrandTotal.toFixed(2),
@@ -637,16 +646,20 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
             if (amount > 0) {
                 if (existing.type === "INVOICE") {
                     // Invoice paid: DR Cash & Bank / CR AR (clears the receivable)
-                    await createJournalEntry({
-                        shopId: input.shopId,
-                        entryDate: new Date(),
-                        description: `Invoice ${existing.docNumber} — Settled`,
-                        debitAccountCode: "1200",  // Cash & Bank
-                        creditAccountCode: "1100", // Accounts Receivable
-                        amount,
-                        sourceType: "document",
-                        sourceId: existing.id,
-                    });
+                    try {
+                        await createJournalEntry({
+                            shopId: input.shopId,
+                            entryDate: new Date(),
+                            description: `Invoice ${existing.docNumber} — Settled`,
+                            debitAccountCode: "1200",  // Cash & Bank
+                            creditAccountCode: "1100", // Accounts Receivable
+                            amount,
+                            sourceType: "document",
+                            sourceId: existing.id,
+                        });
+                    } catch (glErr: any) {
+                        console.warn(`[GL Warning] Invoice ${existing.docNumber} settlement journal skipped:`, glErr?.message || glErr);
+                    }
                 } else if (existing.type === "LPO" || existing.type === "PO" || existing.type === "LSO" || existing.type === "PAYMENT_VOUCHER") {
                     let debitAccountCode = "5100"; // Cost of Goods Sold / Direct Cost
                     let descReason = "Direct cost of sales / supplier disbursement";
@@ -664,16 +677,20 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
                         descReason = "Operating disbursement";
                     }
 
-                    await createJournalEntry({
-                        shopId: input.shopId,
-                        entryDate: new Date(),
-                        description: `${existing.type} ${existing.docNumber} — ${descReason}`,
-                        debitAccountCode,
-                        creditAccountCode: "1200", // Cash & Bank
-                        amount,
-                        sourceType: "document",
-                        sourceId: existing.id,
-                    });
+                    try {
+                        await createJournalEntry({
+                            shopId: input.shopId,
+                            entryDate: new Date(),
+                            description: `${existing.type} ${existing.docNumber} — ${descReason}`,
+                            debitAccountCode,
+                            creditAccountCode: "1200", // Cash & Bank
+                            amount,
+                            sourceType: "document",
+                            sourceId: existing.id,
+                        });
+                    } catch (glErr: any) {
+                        console.warn(`[GL Warning] Document ${existing.docNumber} payment journal skipped:`, glErr?.message || glErr);
+                    }
                 }
             }
         }
@@ -683,24 +700,28 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
             if (existing.type === "INVOICE") {
                 const amount = parseFloat(existing.grandTotal || "0");
                 if (amount > 0) {
-                    await createJournalEntry({
-                        shopId: input.shopId,
-                        entryDate: new Date(),
-                        description: `Invoice ${existing.docNumber} — Issued`,
-                        debitAccountCode: "1100",  // Accounts Receivable
-                        creditAccountCode: "4100", // Sales Revenue
-                        amount,
-                        sourceType: "document",
-                        sourceId: existing.id,
-                    });
+                    try {
+                        await createJournalEntry({
+                            shopId: input.shopId,
+                            entryDate: new Date(),
+                            description: `Invoice ${existing.docNumber} — Issued`,
+                            debitAccountCode: "1100",  // Accounts Receivable
+                            creditAccountCode: "4100", // Sales Revenue
+                            amount,
+                            sourceType: "document",
+                            sourceId: existing.id,
+                        });
+                    } catch (glErr: any) {
+                        console.warn(`[GL Warning] Invoice ${existing.docNumber} issuance journal skipped:`, glErr?.message || glErr);
+                    }
                 }
             }
         }
 
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to update document status:", error);
-        return { success: false, error: "Failed to update document status." };
+        return { success: false, error: error?.message || "Failed to update document status." };
     }
 }
 

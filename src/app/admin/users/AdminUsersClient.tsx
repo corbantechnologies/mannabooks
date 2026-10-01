@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { toggleSuperAdminAction, toggleUserLifetimeProAction, updateUserSubscriptionAction } from "@/lib/actions/admin";
+import { toggleSuperAdminAction, toggleUserLifetimeProAction, updateUserSubscriptionAction, deleteUserAccountAction } from "@/lib/actions/admin";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { Spinner } from "@/components/Spinner";
 import { type PlanDefinition } from "@/lib/paywall";
 import { formatCurrency } from "@/lib/utils";
 
@@ -46,6 +47,35 @@ export function AdminUsersClient({ initialUsers, availablePlans = [] }: AdminUse
   const [targetUser, setTargetUser] = useState<AdminUserSummary | null>(null);
   const [modalAction, setModalAction] = useState<"ADMIN" | "LIFETIME_PRO" | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // User Deletion State
+  const [deletingUser, setDeletingUser] = useState<AdminUserSummary | null>(null);
+  const [deleteUserConfirmation, setDeleteUserConfirmation] = useState("");
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
+
+  async function handleDeleteUser(e: React.FormEvent) {
+    e.preventDefault();
+    if (!deletingUser) return;
+
+    setIsDeletingUser(true);
+    const toastId = toast.loading(`Purging user account ${deletingUser.email}...`);
+
+    const res = await deleteUserAccountAction({
+      userId: deletingUser.id,
+      confirmationInput: deleteUserConfirmation,
+    });
+
+    setIsDeletingUser(false);
+    if (!res.success) {
+      toast.error(res.error || "Failed to purge user.", { id: toastId });
+    } else {
+      toast.success(res.message || "User account permanently purged!", { id: toastId });
+      setUsers((prev) => prev.filter((item) => item.id !== deletingUser.id));
+      setDeletingUser(null);
+      setDeleteUserConfirmation("");
+      router.refresh();
+    }
+  }
 
   // Close popover on outside click or escape
   useEffect(() => {
@@ -616,6 +646,19 @@ export function AdminUsersClient({ initialUsers, availablePlans = [] }: AdminUse
                           >
                             {u.isSuperAdmin ? "Revoke Admin" : "Make Admin"}
                           </button>
+
+                          {/* PERMANENT PURGE USER BUTTON */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDeletingUser(u);
+                              setDeleteUserConfirmation("");
+                            }}
+                            className="inline-flex items-center justify-center h-7.5 px-2 rounded-lg font-mono text-[11px] font-semibold transition-all border border-rose-200 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 cursor-pointer shadow-2xs"
+                            title="Permanently Delete User Account"
+                          >
+                            🗑️
+                          </button>
                         </div>
                       </td>
 
@@ -666,6 +709,80 @@ export function AdminUsersClient({ initialUsers, availablePlans = [] }: AdminUse
         }
         isLoading={isProcessing}
       />
+
+      {/* DELETE USER MODAL */}
+      {deletingUser && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-rose-200 rounded-xl shadow-2xl max-w-md w-full p-6 space-y-5 animate-in zoom-in-95 font-sans text-xs">
+            <div className="flex justify-between items-start border-b border-zinc-200 pb-3">
+              <div>
+                <span className="font-mono text-[10px] text-rose-600 uppercase font-bold flex items-center gap-1">
+                  <span>🚨</span> Super Admin User Purge
+                </span>
+                <h3 className="text-base font-bold text-black mt-0.5">{deletingUser.name}</h3>
+                <p className="font-mono text-[11px] text-zinc-400">{deletingUser.email}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDeletingUser(null)}
+                className="text-zinc-400 hover:text-black font-bold p-1 text-base cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleDeleteUser} className="space-y-4 font-mono text-xs">
+              <div className="bg-rose-50 border border-rose-200 p-3.5 rounded-lg space-y-1">
+                <span className="font-bold text-rose-900 block font-sans">
+                  Irrevocable User &amp; Tenant Wipe
+                </span>
+                <p className="text-[10px] text-rose-800 leading-normal font-mono">
+                  This will permanently delete <strong>{deletingUser.name}</strong>, all workspaces owned by this user ({deletingUser.ownedShopsCount} owned), and revoke all active sessions. This cannot be undone.
+                </p>
+              </div>
+
+              <div className="space-y-1.5 font-sans">
+                <label className="text-[11px] font-bold text-zinc-700 block">
+                  Type <span className="font-mono text-rose-600 font-bold">{deletingUser.email}</span> or <span className="font-mono text-rose-600 font-bold">DELETE</span> to confirm:
+                </label>
+                <input
+                  type="text"
+                  value={deleteUserConfirmation}
+                  onChange={(e) => setDeleteUserConfirmation(e.target.value)}
+                  placeholder={`Type "${deletingUser.email}" to confirm`}
+                  className="w-full px-3 py-2 border border-rose-300 rounded bg-white text-xs font-mono text-black focus:outline-none focus:border-rose-500"
+                  autoFocus
+                />
+              </div>
+
+              <div className="pt-3 border-t border-zinc-200 flex justify-end gap-2 font-sans">
+                <button
+                  type="button"
+                  onClick={() => setDeletingUser(null)}
+                  disabled={isDeletingUser}
+                  className="px-3.5 py-2 border border-zinc-300 hover:bg-zinc-100 font-bold uppercase text-[11px] rounded cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isDeletingUser || !deleteUserConfirmation.trim()}
+                  className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase text-[11px] px-4 py-2 rounded shadow-sm disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                >
+                  {isDeletingUser ? (
+                    <>
+                      <Spinner size={10} color="white" />
+                      <span>Purging...</span>
+                    </>
+                  ) : (
+                    "Permanently Delete"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

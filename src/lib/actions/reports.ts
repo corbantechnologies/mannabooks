@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { documents, documentItems, expenses, incomes, shops, clients, suppliers, fixedAssets, productLocationStock, products } from "@/db/schema";
 import { eq, and, gte, lte, desc, sum } from "drizzle-orm";
 import { getFiscalYearRange } from "@/lib/fiscalYear";
+import { getActiveFiscalYearContext, type FiscalYearOption } from "./fiscal-year-context";
 
 
 export type ReportPeriod = "THIS_MONTH" | "LAST_MONTH" | "THIS_QUARTER" | "THIS_YEAR" | "CUSTOM";
@@ -13,7 +14,12 @@ export interface DateRange {
     endDate: Date;
 }
 
-function getDateRange(period: ReportPeriod, customRange?: DateRange, fyStartMonth = 1): DateRange {
+function getDateRange(
+    period: ReportPeriod,
+    customRange?: DateRange,
+    fyStartMonth = 1,
+    activeFiscalYear?: FiscalYearOption | null
+): DateRange {
     const now = new Date();
     if (period === "CUSTOM" && customRange) return customRange;
     if (period === "THIS_MONTH") return {
@@ -32,7 +38,13 @@ function getDateRange(period: ReportPeriod, customRange?: DateRange, fyStartMont
             endDate: new Date(now.getFullYear(), quarter * 3 + 3, 0, 23, 59, 59),
         };
     }
-    // THIS_YEAR = fiscal year
+    // THIS_YEAR = contextual fiscal year or computed FY
+    if (activeFiscalYear) {
+        return {
+            startDate: new Date(activeFiscalYear.startDate + "T00:00:00"),
+            endDate: new Date(activeFiscalYear.endDate + "T23:59:59"),
+        };
+    }
     const { start, end } = getFiscalYearRange(fyStartMonth);
     return { startDate: start, endDate: end };
 }
@@ -75,10 +87,13 @@ export async function getPLStatement(
         const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
         if (!shop) return { success: false, error: "Workspace not found." };
 
-        const { startDate, endDate } = getDateRange(period, customRange, shop.fiscalYearStartMonth);
+        const { activeFiscalYear } = await getActiveFiscalYearContext(shopId);
+        const { startDate, endDate } = getDateRange(period, customRange, shop.fiscalYearStartMonth, activeFiscalYear);
 
         const periodLabel = period === "CUSTOM"
             ? `${startDate.toLocaleDateString("en-KE")} – ${endDate.toLocaleDateString("en-KE")}`
+            : period === "THIS_YEAR" && activeFiscalYear
+            ? activeFiscalYear.label
             : startDate.toLocaleDateString("en-KE", { month: "long", year: "numeric" });
 
         // Fetch all documents and expenses/incomes in range
@@ -308,8 +323,11 @@ export async function getCashFlowStatement(
         const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
         if (!shop) return { success: false, error: "Workspace not found." };
 
-        const { startDate, endDate } = getDateRange(period, customRange, shop.fiscalYearStartMonth);
-        const periodLabel = startDate.toLocaleDateString("en-KE", { month: "long", year: "numeric" });
+        const { activeFiscalYear } = await getActiveFiscalYearContext(shopId);
+        const { startDate, endDate } = getDateRange(period, customRange, shop.fiscalYearStartMonth, activeFiscalYear);
+        const periodLabel = period === "THIS_YEAR" && activeFiscalYear 
+            ? activeFiscalYear.label 
+            : startDate.toLocaleDateString("en-KE", { month: "long", year: "numeric" });
 
         const allDocs = await db.query.documents.findMany({
             where: and(eq(documents.shopId, shopId), gte(documents.issueDate, startDate), lte(documents.issueDate, endDate)),
@@ -424,7 +442,8 @@ export async function getBalanceSheet(
         const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
         if (!shop) return { success: false, error: "Workspace not found." };
 
-        const cutoff = asOfDate || new Date();
+        const { activeFiscalYear } = await getActiveFiscalYearContext(shopId);
+        const cutoff = asOfDate || (activeFiscalYear?.isClosed ? new Date(activeFiscalYear.endDate + "T23:59:59") : new Date());
         const displayDate = cutoff.toLocaleDateString("en-KE", { dateStyle: "long" });
 
         // --- GL-based account balances ---

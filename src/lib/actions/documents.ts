@@ -466,6 +466,38 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 }
             }
 
+            // AUTO-JOURNAL: Invoice issued or paid on creation
+            if (input.type === "INVOICE") {
+                const amount = parseFloat(calculatedTotals.grandTotal.toString());
+                if (amount > 0) {
+                    if (newDoc.status === "PAID") {
+                        // Directly Paid Invoice: DR Cash & Bank / CR Sales Revenue
+                        await createJournalEntry({
+                            shopId: input.shopId,
+                            entryDate: docEntryDate,
+                            description: `Invoice ${formattedSerial} — Settled`,
+                            debitAccountCode: "1200",  // Cash & Bank
+                            creditAccountCode: "4100", // Sales Revenue
+                            amount,
+                            sourceType: "document",
+                            sourceId: newDoc.id,
+                        });
+                    } else if (newDoc.status === "ISSUED" || newDoc.status === "OVERDUE") {
+                        // Outstanding Invoice: DR Accounts Receivable / CR Sales Revenue
+                        await createJournalEntry({
+                            shopId: input.shopId,
+                            entryDate: docEntryDate,
+                            description: `Invoice ${formattedSerial} — Issued`,
+                            debitAccountCode: "1100",  // Accounts Receivable
+                            creditAccountCode: "4100", // Sales Revenue
+                            amount,
+                            sourceType: "document",
+                            sourceId: newDoc.id,
+                        });
+                    }
+                }
+            }
+
             // AUTO-JOURNAL: Payment Voucher / Paid Procurement Disbursal → DR Cost of Goods Sold (5100) or Expense / CR Cash & Bank (1200)
             if (newDoc.status === "PAID" && (input.type === "PAYMENT_VOUCHER" || ["LPO", "PO", "LSO"].includes(input.type))) {
                 const amount = parseFloat(calculatedTotals.grandTotal.toString());

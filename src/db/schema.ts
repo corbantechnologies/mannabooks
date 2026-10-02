@@ -1,4 +1,4 @@
-﻿import { pgTable, uuid, text, varchar, timestamp, numeric, pgEnum, unique, boolean, index, integer, jsonb, date } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, varchar, timestamp, numeric, pgEnum, unique, boolean, index, integer, jsonb, date } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // ==========================================
@@ -507,6 +507,7 @@ export const fiscalYears = pgTable('fiscal_years', {
     startDate: date('start_date').notNull(),
     endDate: date('end_date').notNull(),
     isClosed: boolean('is_closed').default(false).notNull(),
+    isCurrent: boolean('is_current').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
     unique('unique_shop_fy_label').on(table.shopId, table.label),

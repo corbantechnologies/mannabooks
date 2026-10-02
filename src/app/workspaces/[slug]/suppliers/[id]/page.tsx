@@ -166,11 +166,11 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
           </span>
         </div>
 
-        <div className="surface overflow-x-auto">
+        <div className="surface overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-2xs">
           <table className="w-full text-left text-xs border-collapse font-mono">
             <thead>
               <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
-                <th className="px-4 py-3 border-r border-zinc-100">Document #</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Document No</th>
                 <th className="px-4 py-3 border-r border-zinc-100">Document Type</th>
                 <th className="px-4 py-3 border-r border-zinc-100">Issue Date</th>
                 <th className="px-4 py-3 border-r border-zinc-100 text-right">Total Amount</th>
@@ -178,7 +178,7 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
                 <th className="px-4 py-3 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white">
+            <tbody className="bg-white divide-y divide-zinc-100/80">
               {supplierDocuments.map((doc) => (
                 <tr key={doc.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
                   <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider">

@@ -531,6 +531,42 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 }
             }
 
+            // ASYNC eTIMS FISCALIZATION TRIGGER:
+            if (isFiscalDocType(newDoc.type) && (newDoc.status === "ISSUED" || newDoc.status === "PAID")) {
+                (async () => {
+                    try {
+                        const { isApiModuleEnabled } = await import("@/lib/api/flags");
+                        if (isApiModuleEnabled("etims")) {
+                            const { apiClient } = await import("@/lib/api/client");
+                            await apiClient("/v1/etims/transmit", {
+                                method: "POST",
+                                body: JSON.stringify({
+                                    shop_id: input.shopId,
+                                    document_id: newDoc.id,
+                                    customer_name: "Customer",
+                                    sales_type_code: newDoc.type === "CREDIT_NOTE" ? "C" : "N",
+                                    receipt_type_code: newDoc.type === "RECEIPT" ? "S" : "S",
+                                    items: input.items.map((it, idx) => ({
+                                        itemSeq: idx + 1,
+                                        itemCd: it.productId || `ITEM-${idx + 1}`,
+                                        itemNm: it.description,
+                                        qty: it.quantity,
+                                        prc: it.unitPrice,
+                                        splyAmt: it.quantity * it.unitPrice,
+                                        taxTyCd: it.taxType === "V_16" ? "A" : (it.taxType === "V_0" ? "B" : "C"),
+                                        taxblAmt: it.quantity * it.unitPrice,
+                                        taxAmt: it.taxType === "V_16" ? it.quantity * it.unitPrice * 0.16 : 0,
+                                        totAmt: it.quantity * it.unitPrice * (it.taxType === "V_16" ? 1.16 : 1),
+                                    })),
+                                }),
+                            });
+                        }
+                    } catch (eTIMSErr) {
+                        console.warn("[eTIMS Dispatch Warning]", eTIMSErr);
+                    }
+                })();
+            }
+
             return { success: true, documentId: newDoc.id, serial: formattedSerial };
         });
     } catch (error) {
@@ -777,6 +813,8 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
  */
 export async function deleteDocument(documentId: string, shopId: string, shopSlug: string) {
     try {
+        await enforcePermission(shopId, "manage_documents");
+
         const existing = await db.query.documents.findFirst({
             where: and(eq(documents.id, documentId), eq(documents.shopId, shopId)),
         });
@@ -1018,6 +1056,8 @@ export async function updateDocumentKraCuNumberAction(
     kraCuInvoiceNumber: string
 ) {
     try {
+        await enforcePermission(shopId, "manage_documents");
+
         await db.update(documents)
             .set({ kraCuInvoiceNumber: kraCuInvoiceNumber.trim() })
             .where(and(eq(documents.id, documentId), eq(documents.shopId, shopId)));
@@ -1043,6 +1083,8 @@ export async function updateDocumentPaymentDetailsAction(
     paymentReference?: string
 ) {
     try {
+        await enforcePermission(shopId, "manage_documents");
+
         await db.update(documents)
             .set({
                 paymentChannel: paymentChannel?.trim() || null,

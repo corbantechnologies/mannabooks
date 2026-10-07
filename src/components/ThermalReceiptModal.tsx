@@ -37,6 +37,8 @@ export interface ThermalReceiptData {
   amountTendered?: number | string | null;
   changeDue?: number | string | null;
   kraCuInvoiceNumber?: string | null;
+  kraQrCodeUrl?: string | null;
+  kraReceiptSignature?: string | null;
   cashierName?: string | null;
   footerNote?: string | null;
 }
@@ -60,8 +62,10 @@ export function ThermalReceiptModal({ receipt, isOpen, onClose }: ThermalReceipt
   const formattedDate = dateObj.toLocaleDateString("en-KE", { dateStyle: "short" });
   const formattedTime = dateObj.toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" });
 
-  const qrValue = receipt.kraCuInvoiceNumber
-    ? `https://itax.kra.go.ke/KRA-Portal/invoiceVerification.htm?invoiceNo=${encodeURIComponent(receipt.kraCuInvoiceNumber)}`
+  const qrValue = receipt.kraQrCodeUrl
+    ? receipt.kraQrCodeUrl
+    : receipt.kraCuInvoiceNumber
+    ? `https://etims.kra.go.ke/common/link/etims/receipt/index.html?qrCode=${encodeURIComponent(receipt.kraCuInvoiceNumber)}`
     : `https://mannabooks.co.ke/verify/${receipt.docNumber}`;
 
   return (
@@ -262,16 +266,23 @@ export function ThermalReceiptModal({ receipt, isOpen, onClose }: ThermalReceipt
             </div>
 
             {/* 6. KRA eTIMS CU SERIAL & QR CODE */}
-            {receipt.kraCuInvoiceNumber && (
+            {(receipt.kraCuInvoiceNumber || receipt.kraQrCodeUrl) && (
               <>
                 <div className="border-t border-dashed border-black my-2" />
                 <div className="text-center space-y-1.5 pt-1">
                   <p className="font-bold text-[9px] uppercase tracking-wider">
                     KRA eTIMS FISCAL CU SIGNATURE
                   </p>
-                  <p className="font-mono text-[9px] font-bold break-all bg-zinc-100 p-1 border border-zinc-200">
-                    CU #: {receipt.kraCuInvoiceNumber}
-                  </p>
+                  {receipt.kraCuInvoiceNumber && (
+                    <p className="font-mono text-[9px] font-bold break-all bg-zinc-100 p-1 border border-zinc-200">
+                      CU #: {receipt.kraCuInvoiceNumber}
+                    </p>
+                  )}
+                  {receipt.kraReceiptSignature && (
+                    <p className="font-mono text-[8px] text-zinc-600 break-all">
+                      SIGN: {receipt.kraReceiptSignature}
+                    </p>
+                  )}
                   <div className="flex justify-center p-1 bg-white inline-block">
                     <QRCode
                       value={qrValue}
@@ -280,7 +291,7 @@ export function ThermalReceiptModal({ receipt, isOpen, onClose }: ThermalReceipt
                     />
                   </div>
                   <p className="text-[8px] text-zinc-500 leading-tight">
-                    Scan with KRA QR App to verify eTIMS fiscal validity
+                    Scan with KRA eTIMS App to verify fiscal validity
                   </p>
                 </div>
               </>

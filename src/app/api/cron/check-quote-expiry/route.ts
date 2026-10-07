@@ -16,8 +16,11 @@ async function handleCron(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
   const urlSecret = req.nextUrl.searchParams.get("secret");
 
-  // Allow execution if CRON_SECRET matches, or in development mode
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}` && urlSecret !== cronSecret) {
+  // Fail closed if not dev environment
+  const isDev = process.env.NODE_ENV === "development";
+  const isAuthorized = cronSecret && (authHeader === `Bearer ${cronSecret}` || urlSecret === cronSecret);
+
+  if (!isDev && !isAuthorized) {
     return NextResponse.json({ success: false, error: "Unauthorized cron execution." }, { status: 401 });
   }
 

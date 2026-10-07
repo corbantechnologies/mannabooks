@@ -78,12 +78,16 @@ export interface PLStatement {
     netIncome: number;
 }
 
+import { enforcePermission } from "./rbac";
+
 export async function getPLStatement(
     shopId: string,
     period: ReportPeriod = "THIS_MONTH",
     customRange?: DateRange
 ): Promise<{ success: true; data: PLStatement } | { success: false; error: string }> {
     try {
+        await enforcePermission(shopId, "view_finance");
+
         const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
         if (!shop) return { success: false, error: "Workspace not found." };
 

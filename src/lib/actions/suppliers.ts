@@ -6,6 +6,8 @@ import { suppliers } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+import { enforcePermission } from "./rbac";
+
 export interface CreateSupplierInput {
   shopId: string;
   shopSlug: string;
@@ -24,6 +26,8 @@ export interface CreateSupplierInput {
  */
 export async function createSupplierProfile(input: CreateSupplierInput) {
   try {
+    await enforcePermission(input.shopId, "manage_documents");
+
     const cleanEmail = input.email ? input.email.toLowerCase().trim() : "";
     const cleanName = input.name.trim();
     const cleanPin = input.taxPin?.toUpperCase().trim() || null;
@@ -62,6 +66,8 @@ export interface UpdateSupplierInput extends Partial<CreateSupplierInput> {
  */
 export async function updateSupplierProfile({ id, shopId, shopSlug, ...updates }: UpdateSupplierInput) {
   try {
+    await enforcePermission(shopId, "manage_documents");
+
     const existing = await db.query.suppliers.findFirst({
       where: and(eq(suppliers.id, id), eq(suppliers.shopId, shopId)),
     });
@@ -100,6 +106,8 @@ export async function updateSupplierProfile({ id, shopId, shopSlug, ...updates }
  */
 export async function deleteSupplierProfile(id: string, shopId: string, shopSlug: string) {
   try {
+    await enforcePermission(shopId, "manage_documents");
+
     await db.delete(suppliers).where(and(eq(suppliers.id, id), eq(suppliers.shopId, shopId)));
 
     revalidatePath(`/workspaces/${shopSlug}/suppliers`);

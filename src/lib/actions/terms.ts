@@ -33,6 +33,8 @@ export async function getShopTerms(shopId: string): Promise<ShopTermItem[]> {
     }
 }
 
+import { enforcePermission } from "./rbac";
+
 /**
  * Creates a new commercial term in the shop's library.
  */
@@ -45,6 +47,8 @@ export async function createShopTerm(input: {
     isDefaultCatalog?: boolean;
 }) {
     try {
+        await enforcePermission(input.shopId, "manage_settings");
+
         if (!input.title || input.title.trim() === "") {
             return { success: false, error: "Term title is required." };
         }
@@ -88,6 +92,8 @@ export async function updateShopTerm(input: {
     isDefaultCatalog?: boolean;
 }) {
     try {
+        await enforcePermission(input.shopId, "manage_settings");
+
         if (!input.title || input.title.trim() === "") {
             return { success: false, error: "Term title is required." };
         }
@@ -123,6 +129,8 @@ export async function updateShopTerm(input: {
  */
 export async function deleteShopTerm(input: { id: string; shopId: string; shopSlug?: string }) {
     try {
+        await enforcePermission(input.shopId, "manage_settings");
+
         await db
             .delete(shopTerms)
             .where(and(eq(shopTerms.id, input.id), eq(shopTerms.shopId, input.shopId)));

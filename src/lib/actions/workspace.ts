@@ -75,6 +75,9 @@ import { generateUniqueShopCode } from "./shopCode";
 
 import { cache } from "react";
 
+import { isApiModuleEnabled } from "@/lib/api/flags";
+import { apiClient } from "@/lib/api/client";
+
 /**
  * Server-side security guard that extracts session credentials, 
  * verifies tenant membership, and returns the active shop context.
@@ -84,6 +87,18 @@ export const getActiveWorkspaceContext = cache(async function getActiveWorkspace
     const sessionRecord = await verifyAndGetSession();
     if (!sessionRecord) {
         redirect("/logout");
+    }
+
+    // FASTAPI STRANGLER ROUTING:
+    if (isApiModuleEnabled("workspaces")) {
+        const res = await apiClient<{ success: boolean; role: any; shop: any }>(`/v1/workspaces/by-slug/${slug}/context`);
+        if (res.data?.success && res.data.shop) {
+            return {
+                user: sessionRecord.user,
+                shop: res.data.shop,
+                role: res.data.role,
+            };
+        }
     }
 
     // 2. Locate the requested shop profile by its unique URL slug

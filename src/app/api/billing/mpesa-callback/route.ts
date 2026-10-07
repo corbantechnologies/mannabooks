@@ -30,6 +30,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ ResultCode: 0, ResultDesc: "Ignored (no match)" });
         }
 
+        // IDEMPOTENCY GUARD: Skip if already fulfilled
+        if (tx.status === "COMPLETED") {
+            console.log("ℹ️ M-Pesa callback already processed for transaction:", tx.id);
+            return NextResponse.json({ ResultCode: 0, ResultDesc: "Already processed" });
+        }
+
         // On Failure or User Cancelled
         if (ResultCode !== 0) {
             await db.update(billingTransactions).set({

@@ -123,6 +123,40 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
             return { success: false, error: "A document must contain at least one line item entry." };
         }
 
+        // Strangler Pattern: Delegate to FastAPI if enabled
+        const { isApiModuleEnabled } = await import("@/lib/api/flags");
+        if (isApiModuleEnabled("documents")) {
+            const { apiCall } = await import("@/lib/api/client");
+            const apiRes = await apiCall<{ id: string; doc_number: string }>(`/v1/documents?shop_id=${input.shopId}`, {
+                method: "POST",
+                body: JSON.stringify({
+                    client_id: input.clientId || null,
+                    supplier_id: input.supplierId || null,
+                    type: input.type === "QUOTATION" ? "QUOTE" : input.type,
+                    status: determineDefaultStatus(input.type, input.sourceDocType),
+                    requires_etims: input.requiresEtims || false,
+                    notes: input.notes || null,
+                    terms_and_conditions: input.termsAndConditions || null,
+                    currency: input.currency || "KES",
+                    location_id: input.locationId || null,
+                    payment_channel: input.paymentChannel || null,
+                    payment_reference: input.paymentReference || null,
+                    items: input.items.map((it) => ({
+                        product_id: it.productId || null,
+                        description: it.description,
+                        notes: it.notes || null,
+                        quantity: it.quantity,
+                        unit_price: it.unitPrice,
+                        tax_type: it.taxType,
+                    })),
+                }),
+            });
+            if (!apiRes.error && apiRes.data) {
+                revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+                return { success: true, documentId: apiRes.data.id, serial: apiRes.data.doc_number };
+            }
+        }
+
         return await db.transaction(async (tx) => {
 
             // 1. Fetch current shop compliance criteria to determine active tax processing

@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/db";
-import { documents, expenses, incomes, shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { documents, expenses, incomes, shops, journalEntries } from "@/db/schema";
+import { eq, and, isNotNull } from "drizzle-orm";
 import { createJournalEntry } from "./gl";
 import { EXPENSE_CATEGORY_ACCOUNT_MAP } from "../gl-constants";
 import { enforcePermission } from "./rbac";
@@ -12,7 +12,7 @@ import { enforcePermission } from "./rbac";
  * existing transactions (documents, expenses, incomes) in a workspace.
  * 
  * Run once when GL is activated. Each entry is tagged sourceType='migrated'.
- * Safe to call from a server action — all existing data is preserved.
+ * Idempotent: Skips any document, expense, or income that already has a journal entry.
  */
 export async function runGlMigration(shopId: string, shopSlug: string) {
     try {
@@ -24,11 +24,21 @@ export async function runGlMigration(shopId: string, shopSlug: string) {
 
         const results = { documents: 0, expenses: 0, incomes: 0, errors: 0 };
 
+        // Fetch all existing journal entry source IDs to avoid creating duplicates
+        const existingJes = await db.query.journalEntries.findMany({
+            where: and(
+                eq(journalEntries.shopId, shopId),
+                isNotNull(journalEntries.sourceId)
+            ),
+        });
+        const existingSourceIds = new Set(existingJes.map(j => j.sourceId));
+
         // 1. Backfill Documents
         const allDocs = await db.query.documents.findMany({ where: eq(documents.shopId, shopId) });
 
         for (const doc of allDocs) {
             try {
+                if (existingSourceIds.has(doc.id)) continue; // Already journaled!
                 const amount = parseFloat(doc.grandTotal || "0");
                 if (amount <= 0) continue;
                 const isReceiptFromInvoice = doc.type === "RECEIPT" && doc.parentDocumentId;
@@ -113,6 +123,7 @@ export async function runGlMigration(shopId: string, shopSlug: string) {
 
         for (const exp of allExpenses) {
             try {
+                if (existingSourceIds.has(exp.id)) continue; // Already journaled!
                 const amount = parseFloat(exp.amount || "0");
                 if (amount <= 0) continue;
                 const expenseAccountCode = EXPENSE_CATEGORY_ACCOUNT_MAP[exp.category] || "6900";
@@ -136,6 +147,7 @@ export async function runGlMigration(shopId: string, shopSlug: string) {
 
         for (const inc of allIncomes) {
             try {
+                if (existingSourceIds.has(inc.id)) continue; // Already journaled!
                 const amount = parseFloat(inc.amount || "0");
                 if (amount <= 0) continue;
 

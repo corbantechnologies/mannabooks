@@ -1,8 +1,8 @@
 import { db } from "@/db";
-import { shopMembers, shops, users } from "@/db/schema";
+import { shopMembers, shops, users, fiscalYears } from "@/db/schema";
 import { verifyAndGetSession } from "@/lib/actions/auth";
 import { logoutAction } from "@/lib/actions/logout";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray, desc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getOrganizationStaffRoster } from "@/lib/actions/team-directory";
@@ -46,6 +46,25 @@ export default async function WorkspacesDirectoryPage() {
     }),
     getOrganizationStaffRoster(),
   ]);
+
+  const shopIds = memberships.map((m) => m.shopId).filter(Boolean);
+  const allFys = shopIds.length > 0 ? await db.query.fiscalYears.findMany({
+    where: inArray(fiscalYears.shopId, shopIds),
+    orderBy: [desc(fiscalYears.startDate)],
+  }) : [];
+
+  const fiscalYearsByShop: Record<string, { id: string; label: string; startDate: string; endDate: string; isClosed: boolean; isCurrent: boolean }[]> = {};
+  for (const fy of allFys) {
+    if (!fiscalYearsByShop[fy.shopId]) fiscalYearsByShop[fy.shopId] = [];
+    fiscalYearsByShop[fy.shopId].push({
+      id: fy.id,
+      label: fy.label,
+      startDate: fy.startDate,
+      endDate: fy.endDate,
+      isClosed: fy.isClosed,
+      isCurrent: fy.isCurrent,
+    });
+  }
 
   const isLifetime = Boolean(currentUser?.isLifetimePro || currentUser?.isSuperAdmin);
   const rawPlan = isLifetime ? "LIFETIME PRO" : (currentUser?.plan || "FREE").toUpperCase();
@@ -125,6 +144,7 @@ export default async function WorkspacesDirectoryPage() {
           memberships={memberships}
           initialRoster={rosterRes.roster}
           ownedShops={rosterRes.ownedShops}
+          fiscalYearsByShop={fiscalYearsByShop}
         />
       </main>
 

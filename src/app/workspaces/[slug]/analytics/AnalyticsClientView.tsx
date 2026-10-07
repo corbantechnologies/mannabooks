@@ -39,7 +39,7 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
     1
   );
 
-  const fyLabel = getFiscalYearRange(fiscalYearStartMonth).label;
+  const fyLabel = data.activeFiscalYearLabel || getFiscalYearRange(fiscalYearStartMonth).label;
 
   const timeframes: { id: TimeframeFilter; label: string }[] = [
     { id: "THIS_MONTH", label: "This Month" },

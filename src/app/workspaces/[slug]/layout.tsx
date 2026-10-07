@@ -9,6 +9,8 @@ import { eq } from "drizzle-orm";
 
 import { GracePeriodBanner } from "@/components/GracePeriodBanner";
 import { FiscalYearNoticeBanner } from "@/components/FiscalYearNoticeBanner";
+import { FiscalYearSwitcher } from "@/components/FiscalYearSwitcher";
+import { getActiveFiscalYearContext } from "@/lib/actions/fiscal-year-context";
 import { MobileNavDrawer } from "./MobileNavDrawer";
 import { DesktopSideNav } from "./DesktopSideNav";
 import { DesktopSidebarShell } from "./DesktopSidebarShell";
@@ -28,11 +30,10 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
   // 2. Authenticate session and fetch multi-tenant profile fields entirely on the server
   const { shop, user } = await getActiveWorkspaceContext(slug);
   const planDetails = await getShopPlanDetails(shop.id);
+  const { activeFiscalYear, allFiscalYears } = await getActiveFiscalYearContext(shop.id);
 
   // 3. Check if GL is enabled and at least one fiscal year is declared
-  const hasFiscalYear = !shop.isGlEnabled || (await db.query.fiscalYears.findFirst({
-      where: eq(fiscalYears.shopId, shop.id),
-  })) !== undefined;
+  const hasFiscalYear = !shop.isGlEnabled || allFiscalYears.length > 0;
 
   const brandColor = shop.primaryColor || "#064e3b";
   const isLifetime = Boolean(planDetails?.isLifetimePro || user.isSuperAdmin);
@@ -83,7 +84,15 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
       `}</style>
 
       {/* MOBILE TOP NAVIGATION BAR WITH SLIDE DRAWER (< 1024px) */}
-      <MobileNavDrawer slug={slug} shop={shop} user={user} planName={planName} isLifetime={isLifetime} />
+      <MobileNavDrawer
+        slug={slug}
+        shop={shop}
+        user={user}
+        planName={planName}
+        isLifetime={isLifetime}
+        activeFiscalYear={activeFiscalYear}
+        allFiscalYears={allFiscalYears}
+      />
 
       {/* DESKTOP RESPONSIVE SIDEBAR & MAIN VIEWPORT SHELL (1024px+) */}
       <DesktopSidebarShell
@@ -92,6 +101,8 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
         user={user}
         planName={planName}
         isLifetime={isLifetime}
+        activeFiscalYear={activeFiscalYear}
+        allFiscalYears={allFiscalYears}
         sidebarChildren={<DesktopSideNav slug={slug} brandColor={brandColor} businessMode={((shop as any).businessMode || "HYBRID") as "SERVICES" | "RETAIL" | "HYBRID"} />}
         headerChildren={
           <>
@@ -103,6 +114,17 @@ export default async function RefinedWorkspaceLayout({ children, params }: Works
                 <span>👑</span>
                 <span>Platform Admin</span>
               </Link>
+            )}
+
+            {/* HEADER FISCAL YEAR SWITCHER */}
+            {allFiscalYears.length > 0 && (
+              <FiscalYearSwitcher
+                shopId={shop.id}
+                shopSlug={slug}
+                activeFiscalYear={activeFiscalYear}
+                allFiscalYears={allFiscalYears}
+                variant="header"
+              />
             )}
 
             {/* HEADER PLAN BADGE */}

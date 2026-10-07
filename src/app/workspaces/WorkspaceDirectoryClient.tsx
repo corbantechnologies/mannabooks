@@ -3,9 +3,10 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { quickInviteStaffAction, removeStaffFromWorkspaceAction, type OrganizationStaffMember } from "@/lib/actions/team-directory";
+import { switchFiscalYearContextAction } from "@/lib/actions/fiscal-year-context";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
-import { Users, Building2, UserPlus, Trash2, ArrowRight, ShieldCheck, X, Check } from "lucide-react";
+import { Users, Building2, UserPlus, Trash2, ArrowRight, ShieldCheck, X, Check, Calendar } from "lucide-react";
 
 interface WorkspaceDirectoryClientProps {
   currentUser: any;
@@ -20,6 +21,7 @@ interface WorkspaceDirectoryClientProps {
     primaryColor: string;
     memberCount: number;
   }[];
+  fiscalYearsByShop?: Record<string, { id: string; label: string; startDate: string; endDate: string; isClosed: boolean; isCurrent: boolean }[]>;
 }
 
 export function WorkspaceDirectoryClient({
@@ -29,10 +31,12 @@ export function WorkspaceDirectoryClient({
   memberships,
   initialRoster,
   ownedShops,
+  fiscalYearsByShop = {},
 }: WorkspaceDirectoryClientProps) {
   const [activeTab, setActiveTab] = useState<"WORKSPACES" | "STAFF">("WORKSPACES");
   const [roster, setRoster] = useState<OrganizationStaffMember[]>(initialRoster);
   const [isPending, startTransition] = useTransition();
+  const [selectedFyByShop, setSelectedFyByShop] = useState<Record<string, string>>({});
 
   // Selected workspace for slide-over team drawer
   const [selectedShopForTeam, setSelectedShopForTeam] = useState<{
@@ -186,6 +190,35 @@ export function WorkspaceDirectoryClient({
 
                 {/* ACTION BUTTONS (STACK ON MOBILE, ROW ON SM+) */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100">
+                  {/* FISCAL YEAR SELECTOR (if shop has declared fiscal years) */}
+                  {(() => {
+                    const shopFys = fiscalYearsByShop[member.shop.id] || [];
+                    if (shopFys.length === 0) return null;
+                    const currentFy = shopFys.find((f) => f.isCurrent) || shopFys[0];
+                    const chosenFyId = selectedFyByShop[member.shop.id] || currentFy?.id;
+
+                    return (
+                      <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                        <select
+                          value={chosenFyId}
+                          onChange={async (e) => {
+                            const newId = e.target.value;
+                            setSelectedFyByShop((prev) => ({ ...prev, [member.shop.id]: newId }));
+                            await switchFiscalYearContextAction(member.shop.id, member.shop.slug, newId);
+                          }}
+                          className="w-full sm:w-auto bg-zinc-50 hover:bg-white border border-zinc-300 hover:border-black text-black px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold cursor-pointer shadow-2xs transition-colors"
+                          title="Select Contextual Fiscal Year"
+                        >
+                          {shopFys.map((fy) => (
+                            <option key={fy.id} value={fy.id}>
+                              📅 {fy.label} {fy.isCurrent ? "★ Active" : ""} {fy.isClosed ? "(Closed)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })()}
+
                   {/* QUICK MANAGE TEAM BUTTON */}
                   {isOwnerOrAdmin && (
                     <button

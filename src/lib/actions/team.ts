@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { enforcePermission } from "./rbac";
 import { assertCanAddMember } from "@/lib/paywall";
 import { revalidatePath } from "next/cache";
+import { logAudit } from "./audit";
 import crypto from "crypto";
 import { Resend } from "resend";
 
@@ -158,6 +159,18 @@ export async function removeTeamMember(shopId: string, memberId: string) {
         await db.delete(shopMembers).where(eq(shopMembers.id, memberId));
 
         revalidatePath(`/workspaces/${shopId}/team`);
+
+        // AUDIT
+        logAudit({
+            shopId,
+            userId: undefined,
+            action: "MEMBER_REMOVED",
+            tableName: "shop_members",
+            recordId: memberId,
+            recordLabel: `User ${membership.userId} removed (was ${membership.role})`,
+            before: { role: membership.role, userId: membership.userId },
+        });
+
         return { success: true };
     } catch (error: any) {
         console.error("Failed to remove team member:", error);
@@ -231,6 +244,19 @@ export async function updateTeamMemberRoleAndPermissions(
             .where(eq(shopMembers.id, memberId));
 
         revalidatePath(`/workspaces/${shopId}/team`);
+
+        // AUDIT: Role/permission change
+        logAudit({
+            shopId,
+            userId: undefined,
+            action: "ROLE_CHANGE",
+            tableName: "shop_members",
+            recordId: memberId,
+            recordLabel: `User ${membership.userId}`,
+            before: { role: membership.role },
+            after: { role },
+        });
+
         return { success: true };
     } catch (error: any) {
         console.error("Failed to update team member:", error);

@@ -145,19 +145,19 @@ export function ClientDocumentsSubLedger({
       </div>
 
       {/* INSTANTLY FILTERED DOCUMENTS TABLE */}
-      <div className="surface overflow-x-auto">
+      <div className="surface overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-2xs">
         <table className="w-full text-left font-mono text-xs border-collapse">
           <thead>
             <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
-              <th className="px-4 py-3 border-r border-zinc-100">Document #</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Document No</th>
               <th className="px-4 py-3 border-r border-zinc-100">Type</th>
-              <th className="px-4 py-3 border-r border-zinc-100">Date</th>
+              <th className="px-4 py-3 border-r border-zinc-100">Date Issued</th>
               <th className="px-4 py-3 border-r border-zinc-100 text-right">Total Amount</th>
               <th className="px-4 py-3 border-r border-zinc-100 text-center">Status</th>
               <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white">
+          <tbody className="bg-white divide-y divide-zinc-100/80">
             {filteredDocs.map((doc) => (
               <tr key={doc.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
                 <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider">

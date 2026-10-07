@@ -4,6 +4,7 @@ import { useState, useEffect, createContext, useContext } from "react";
 import Link from "next/link";
 import { logoutAction } from "@/lib/actions/logout";
 import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { FiscalYearSwitcher } from "@/components/FiscalYearSwitcher";
 
 interface SidebarContextType {
   isCollapsed: boolean;
@@ -27,6 +28,8 @@ interface DesktopSidebarShellProps {
   user: any;
   planName: string;
   isLifetime: boolean;
+  activeFiscalYear?: any;
+  allFiscalYears?: any[];
   sidebarChildren: React.ReactNode;
   headerChildren: React.ReactNode;
   contentChildren: React.ReactNode;
@@ -38,6 +41,8 @@ export function DesktopSidebarShell({
   user,
   planName,
   isLifetime,
+  activeFiscalYear,
+  allFiscalYears,
   sidebarChildren,
   headerChildren,
   contentChildren,
@@ -184,6 +189,19 @@ export function DesktopSidebarShell({
               ) : null}
             </div>
           </div>
+
+          {/* Contextual Fiscal Year Switcher */}
+          {allFiscalYears && allFiscalYears.length > 0 && (
+            <div className="mt-3.5 pt-3 border-t border-white/5">
+              <FiscalYearSwitcher
+                shopId={shop.id}
+                shopSlug={slug}
+                activeFiscalYear={activeFiscalYear || null}
+                allFiscalYears={allFiscalYears}
+                variant="sidebar"
+              />
+            </div>
+          )}
         </div>
 
         {/* ── 2. Scrollable Nav ──────────────────────────────── */}

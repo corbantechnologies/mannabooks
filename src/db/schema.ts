@@ -507,6 +507,7 @@ export const fiscalYears = pgTable('fiscal_years', {
     startDate: date('start_date').notNull(),
     endDate: date('end_date').notNull(),
     isClosed: boolean('is_closed').default(false).notNull(),
+    isCurrent: boolean('is_current').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
     unique('unique_shop_fy_label').on(table.shopId, table.label),
@@ -553,7 +554,7 @@ export const budgets = pgTable('budgets', {
     id: uuid('id').defaultRandom().primaryKey(),
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
     accountId: uuid('account_id').references(() => chartOfAccounts.id, { onDelete: 'cascade' }).notNull(),
-    month: integer('month').notNull(),   // 1–12
+    month: integer('month').notNull(),   // 1â€“12
     year: integer('year').notNull(),
     monthlyLimit: numeric('monthly_limit', { precision: 15, scale: 2 }).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -854,7 +855,7 @@ export const platformPlans = pgTable('platform_plans', {
     priceKesMonthly: integer('price_kes_monthly').default(0).notNull(),
     priceKesAnnually: integer('price_kes_annually').default(0).notNull(),
     annualDiscountPercent: integer('annual_discount_percent').default(20).notNull(),
-    // Promotional / launch discount prices — null means no active promo
+    // Promotional / launch discount prices â€” null means no active promo
     discountedPriceMonthly: integer('discounted_price_monthly'),
     discountedPriceAnnually: integer('discounted_price_annually'),
     maxMembers: integer('max_members').default(1).notNull(), // -1 = Unlimited
@@ -966,7 +967,7 @@ export const proposalStatusEnum = pgEnum('proposal_status', [
     'DECLINED',
 ]);
 
-// DEALS TABLE — CRM Pipeline Cards
+// DEALS TABLE â€” CRM Pipeline Cards
 export const deals = pgTable('deals', {
     id: uuid('id').defaultRandom().primaryKey(),
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
@@ -979,7 +980,7 @@ export const deals = pgTable('deals', {
     stage: dealStageEnum('stage').default('LEAD').notNull(),
     currency: varchar('currency', { length: 10 }).default('KES').notNull(),
     estimatedValue: numeric('estimated_value', { precision: 14, scale: 2 }).default('0').notNull(),
-    winProbability: integer('win_probability').default(50).notNull(), // 0–100%
+    winProbability: integer('win_probability').default(50).notNull(), // 0â€“100%
     expectedCloseDate: timestamp('expected_close_date'),
     lossReason: text('loss_reason'),
     notes: text('notes'),
@@ -991,7 +992,7 @@ export const deals = pgTable('deals', {
     index('idx_deals_client').on(table.clientId),
 ]);
 
-// DEAL ACTIVITIES TABLE — Timeline / Audit Log per Deal
+// DEAL ACTIVITIES TABLE â€” Timeline / Audit Log per Deal
 export const dealActivities = pgTable('deal_activities', {
     id: uuid('id').defaultRandom().primaryKey(),
     dealId: uuid('deal_id').references(() => deals.id, { onDelete: 'cascade' }).notNull(),
@@ -1003,7 +1004,7 @@ export const dealActivities = pgTable('deal_activities', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// PROPOSALS TABLE — Rich Interactive Proposal Documents
+// PROPOSALS TABLE â€” Rich Interactive Proposal Documents
 export const proposals = pgTable('proposals', {
     id: uuid('id').defaultRandom().primaryKey(),
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
@@ -1038,11 +1039,11 @@ export const proposals = pgTable('proposals', {
     index('idx_proposals_status').on(table.status),
 ]);
 
-// PROPOSAL ITEMS TABLE — Tiered Packages / Line Items
+// PROPOSAL ITEMS TABLE â€” Tiered Packages / Line Items
 export const proposalItems = pgTable('proposal_items', {
     id: uuid('id').defaultRandom().primaryKey(),
     proposalId: uuid('proposal_id').references(() => proposals.id, { onDelete: 'cascade' }).notNull(),
-    packageLabel: varchar('package_label', { length: 100 }), // e.g. "Silver", "Gold", "Enterprise" — null = single tier
+    packageLabel: varchar('package_label', { length: 100 }), // e.g. "Silver", "Gold", "Enterprise" â€” null = single tier
     description: text('description').notNull(),
     notes: text('notes'),
     quantity: numeric('quantity', { precision: 10, scale: 2 }).default('1').notNull(),
@@ -1051,7 +1052,7 @@ export const proposalItems = pgTable('proposal_items', {
     displayOrder: integer('display_order').default(0).notNull(),
 });
 
-// PROPOSAL TOKENS TABLE — Secure 64-char public access links
+// PROPOSAL TOKENS TABLE â€” Secure 64-char public access links
 export const proposalTokens = pgTable('proposal_tokens', {
     id: uuid('id').defaultRandom().primaryKey(),
     proposalId: uuid('proposal_id').references(() => proposals.id, { onDelete: 'cascade' }).notNull().unique(),
@@ -1072,7 +1073,7 @@ export const contractStatusEnum = pgEnum('contract_status', [
     'CANCELLED',
 ]);
 
-// CONTRACTS TABLE — Retainer & SLA Agreements
+// CONTRACTS TABLE â€” Retainer & SLA Agreements
 export const contracts = pgTable('contracts', {
     id: uuid('id').defaultRandom().primaryKey(),
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
@@ -1108,7 +1109,7 @@ export const contracts = pgTable('contracts', {
     index('idx_contracts_next_billing').on(table.nextBillingDate),
 ]);
 
-// CONTRACT HOURS LOG TABLE — Retainer Burn-Down Ledger
+// CONTRACT HOURS LOG TABLE â€” Retainer Burn-Down Ledger
 export const contractHoursLog = pgTable('contract_hours_log', {
     id: uuid('id').defaultRandom().primaryKey(),
     contractId: uuid('contract_id').references(() => contracts.id, { onDelete: 'cascade' }).notNull(),
@@ -1147,7 +1148,7 @@ export const milestoneStatusEnum = pgEnum('milestone_status', [
     'INVOICED',
 ]);
 
-// PROJECTS TABLE — Project Workspaces
+// PROJECTS TABLE â€” Project Workspaces
 export const projects = pgTable('projects', {
     id: uuid('id').defaultRandom().primaryKey(),
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
@@ -1175,7 +1176,7 @@ export const projects = pgTable('projects', {
     index('idx_projects_status').on(table.status),
 ]);
 
-// PROJECT MEMBERS TABLE — Team with individual billable rates
+// PROJECT MEMBERS TABLE â€” Team with individual billable rates
 export const projectMembers = pgTable('project_members', {
     id: uuid('id').defaultRandom().primaryKey(),
     projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).notNull(),
@@ -1189,7 +1190,7 @@ export const projectMembers = pgTable('project_members', {
     unique('unique_project_member').on(table.projectId, table.userId),
 ]);
 
-// TIMESHEETS TABLE — Individual Time Log Entries
+// TIMESHEETS TABLE â€” Individual Time Log Entries
 export const timesheets = pgTable('timesheets', {
     id: uuid('id').defaultRandom().primaryKey(),
     projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).notNull(),
@@ -1213,12 +1214,12 @@ export const timesheets = pgTable('timesheets', {
     index('idx_timesheets_status').on(table.status),
 ]);
 
-// PROJECT MILESTONES TABLE — Phased Billing Gates
+// PROJECT MILESTONES TABLE â€” Phased Billing Gates
 export const projectMilestones = pgTable('project_milestones', {
     id: uuid('id').defaultRandom().primaryKey(),
     projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).notNull(),
     shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
-    title: varchar('title', { length: 255 }).notNull(), // e.g. "Milestone 1 — Mobilization Deposit (30%)"
+    title: varchar('title', { length: 255 }).notNull(), // e.g. "Milestone 1 â€” Mobilization Deposit (30%)"
     description: text('description'),
     percentageOfTotal: numeric('percentage_of_total', { precision: 5, scale: 2 }).default('0').notNull(), // e.g. 30.00
     amount: numeric('amount', { precision: 14, scale: 2 }).notNull(),
@@ -1753,7 +1754,7 @@ export const loyaltyLedgerRelations = relations(loyaltyLedger, ({ one }) => ({
 }));
 
 // ==========================================
-// CRM / CONTRACTS / PROJECTS — RELATIONS
+// CRM / CONTRACTS / PROJECTS â€” RELATIONS
 // ==========================================
 
 export const dealsRelations = relations(deals, ({ one, many }) => ({
@@ -1924,3 +1925,46 @@ export const interCompanyTransactionsRelations = relations(interCompanyTransacti
     targetBill: one(vendorBills, { fields: [interCompanyTransactions.targetBillId], references: [vendorBills.id] }),
 }));
 
+// ==========================================
+// AUDIT LOGS (Immutable Financial Mutation Trail)
+// ==========================================
+export const auditActionEnum = pgEnum('audit_action', [
+    'CREATE',
+    'UPDATE',
+    'DELETE',
+    'STATUS_CHANGE',
+    'ROLE_CHANGE',
+    'PAYMENT_RECORDED',
+    'PAYMENT_DELETED',
+    'PERIOD_CLOSED',
+    'PERIOD_REOPENED',
+    'FISCAL_YEAR_CLOSED',
+    'FISCAL_YEAR_REOPENED',
+    'MEMBER_ADDED',
+    'MEMBER_REMOVED',
+    'CANCELLATION',
+]);
+
+export const auditLogs = pgTable('audit_logs', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    action: auditActionEnum('action').notNull(),
+    tableName: varchar('table_name', { length: 100 }).notNull(),
+    recordId: uuid('record_id'),
+    recordLabel: varchar('record_label', { length: 255 }),
+    before: jsonb('before'),
+    after: jsonb('after'),
+    ipAddress: varchar('ip_address', { length: 45 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+    index('idx_audit_shop_table').on(table.shopId, table.tableName),
+    index('idx_audit_record').on(table.recordId),
+    index('idx_audit_user').on(table.userId),
+    index('idx_audit_shop_created').on(table.shopId, table.createdAt),
+]);
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+    shop: one(shops, { fields: [auditLogs.shopId], references: [shops.id] }),
+    user: one(users, { fields: [auditLogs.userId], references: [users.id] }),
+}));

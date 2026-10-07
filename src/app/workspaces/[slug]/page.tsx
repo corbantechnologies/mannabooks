@@ -50,7 +50,7 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
         supplier: true,
       },
       orderBy: [desc(documents.issueDate)],
-      limit: 6,
+      limit: 10,
     }),
     db.select({ value: count() }).from(clients).where(eq(clients.shopId, shop.id)),
     db.select({ value: count() }).from(products).where(eq(products.shopId, shop.id)),
@@ -366,80 +366,91 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
           </Link>
         </div>
 
-        {/* Row card list */}
-        <div className="space-y-2">
-          {recentDocs.map((doc) => {
-            const docTypeIcon =
-              doc.type === "RECEIPT" ? Receipt :
-              doc.type === "QUOTATION" ? FileCheck :
-              FileText;
-            const DocTypeIcon = docTypeIcon;
+        {/* Documents Table */}
+        <div className="surface overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-2xs">
+          <table className="w-full text-left font-mono text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                <th className="px-4 py-3 border-r border-zinc-100">Document No</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Type</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Client / Party</th>
+                <th className="px-4 py-3 border-r border-zinc-100">Date Issued</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-right">Total</th>
+                <th className="px-4 py-3 border-r border-zinc-100 text-center">Status</th>
+                <th className="px-4 py-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-zinc-100/80">
+              {recentDocs.map((doc) => {
+                const statusColor =
+                  doc.status === "PAID" ? "badge-emerald" :
+                  doc.status === "OVERDUE" ? "badge-rose" :
+                  doc.status === "PARTIALLY_PAID" ? "badge-amber" :
+                  doc.status === "DRAFT" ? "badge-amber" :
+                  "badge-zinc";
 
-            const statusColor =
-              doc.status === "PAID" ? "badge-emerald" :
-              doc.status === "OVERDUE" ? "badge-rose" :
-              doc.status === "PARTIALLY_PAID" ? "badge-amber" :
-              "badge-zinc";
+                return (
+                  <tr key={doc.id} className="hover:bg-zinc-50/80 transition-colors">
+                    <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider">
+                      <Link
+                        href={`/workspaces/${slug}/documents/${doc.id}`}
+                        className="hover:underline underline-offset-2 flex items-center gap-1.5"
+                      >
+                        <span>{doc.docNumber}</span>
+                      </Link>
+                    </td>
+                    <td className="p-4 border-r border-zinc-100">
+                      <span className="badge-zinc">{doc.type}</span>
+                    </td>
+                    <td className="p-4 border-r border-zinc-100 font-sans text-zinc-700">
+                      {doc.client ? (
+                        <Link
+                          href={`/workspaces/${slug}/clients/${doc.client.id}`}
+                          className="hover:underline text-black font-medium"
+                        >
+                          {doc.client.name}
+                        </Link>
+                      ) : doc.supplier ? (
+                        <Link
+                          href={`/workspaces/${slug}/suppliers/${doc.supplier.id}`}
+                          className="hover:underline text-black font-medium"
+                        >
+                          {doc.supplier.name}
+                        </Link>
+                      ) : (
+                        <span className="text-zinc-400 italic">Walk-in Customer</span>
+                      )}
+                    </td>
+                    <td className="p-4 border-r border-zinc-100 text-zinc-500 font-sans">
+                      {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
+                    </td>
+                    <td className="p-4 border-r border-zinc-100 font-semibold text-sm text-black text-right font-mono">
+                      {formatCurrency(doc.grandTotal, shop.currency)}
+                    </td>
+                    <td className="px-4 py-3 border-r border-zinc-100 text-center">
+                      <span className={statusColor}>{doc.status}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <Link
+                        href={`/workspaces/${slug}/documents/${doc.id}`}
+                        className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block no-underline"
+                      >
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
 
-            return (
-              <Link
-                key={doc.id}
-                href={`/workspaces/${slug}/documents/${doc.id}`}
-                className="flex items-center gap-3 sm:gap-4 p-3.5 bg-white rounded-xl border border-zinc-100 hover:border-zinc-200 hover:shadow-sm transition-all group no-underline"
-              >
-                {/* Type icon */}
-                <div className="w-8 h-8 rounded-lg bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0 group-hover:border-zinc-200 transition-colors">
-                  <DocTypeIcon className="w-3.5 h-3.5 text-zinc-400" strokeWidth={2} />
-                </div>
-
-                {/* Doc info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-mono text-[12px] font-bold text-zinc-900">
-                      {doc.docNumber}
-                    </span>
-                    <span className="badge-zinc">{doc.type}</span>
-                  </div>
-                  <p className="text-[11px] text-zinc-400 truncate mt-0.5 font-medium">
-                    {doc.client
-                      ? doc.client.name
-                      : doc.supplier
-                      ? doc.supplier.name
-                      : "Walk-in Customer"}
-                  </p>
-                </div>
-
-                {/* Amount + Status */}
-                <div className="text-right shrink-0 hidden sm:block">
-                  <p className="font-mono text-[13px] font-bold text-zinc-900">
-                    {formatCurrency(doc.grandTotal, shop.currency)}
-                  </p>
-                  <span className={`${statusColor} mt-1`}>{doc.status}</span>
-                </div>
-
-                {/* Date (hidden on mobile) */}
-                <p className="text-[10px] text-zinc-400 font-mono shrink-0 hidden md:block w-20 text-right">
-                  {new Date(doc.issueDate).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
-                </p>
-
-                {/* Arrow */}
-                <ChevronRight className="w-4 h-4 text-zinc-300 group-hover:text-zinc-500 transition-colors shrink-0" />
-              </Link>
-            );
-          })}
-
-          {recentDocs.length === 0 && (
-            <div className="bg-white rounded-xl border border-zinc-100 p-10 text-center">
-              <FileText className="w-8 h-8 text-zinc-200 mx-auto mb-3" strokeWidth={1.5} />
-              <p className="text-sm font-medium text-zinc-400">No recent transactions yet</p>
-              <Link
-                href={`/workspaces/${slug}/documents/new`}
-                className="btn-primary-modern mt-4 inline-flex"
-              >
-                Create your first document
-              </Link>
-            </div>
-          )}
+              {recentDocs.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="p-10 text-center text-zinc-400 font-sans text-xs italic">
+                    No recent transactions yet
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

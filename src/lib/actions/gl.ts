@@ -69,13 +69,16 @@ export async function activateGeneralLedger(
                 });
                 if (existingFy) {
                     targetFyId = existingFy.id;
+                    // Mark as current since we're activating GL for this FY
+                    await tx.update(fiscalYears).set({ isCurrent: true }).where(eq(fiscalYears.id, existingFy.id));
                 } else {
                     const [createdFy] = await tx.insert(fiscalYears).values({
                         shopId,
                         label,
-                        startDate: start.toISOString().split("T")[0],
-                        endDate: end.toISOString().split("T")[0],
+                        startDate: toLocalDateStr(start),
+                        endDate: toLocalDateStr(end),
                         isClosed: false,
+                        isCurrent: true,
                     }).returning();
                     targetFyId = createdFy.id;
                 }
@@ -91,7 +94,7 @@ export async function activateGeneralLedger(
                 const actualEnd = pEnd > end ? end : pEnd;
 
                 const periodName = actualStart.toLocaleDateString("en-KE", { month: "long", year: "numeric" });
-                const actualStartStr = actualStart.toISOString().split("T")[0];
+                const actualStartStr = toLocalDateStr(actualStart);
 
                 const existing = await tx.query.accountingPeriods.findFirst({
                     where: and(
@@ -110,7 +113,7 @@ export async function activateGeneralLedger(
                         fiscalYearId: targetFyId,
                         periodName,
                         startDate: actualStartStr,
-                        endDate: actualEnd.toISOString().split("T")[0],
+                        endDate: toLocalDateStr(actualEnd),
                         status: "OPEN",
                     });
                 }
@@ -222,75 +225,62 @@ interface JournalEntryInput {
  * If no period exists, it JIT-provisions the Fiscal Year and all 12 monthly accounting periods
  * according to the shop's configured fiscalYearStartMonth (defaulting to January).
  */
+/**
+ * Normalize a Date to a local-timezone YYYY-MM-DD string.
+ * CRITICAL: Never use toISOString() for date-only fields — it converts to UTC
+ * which shifts the date for UTC+ timezones (e.g. EAT = UTC+3 shifts Oct 1 → Sep 30).
+ */
+function toLocalDateStr(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+}
+
 export async function ensureAccountingPeriod(shopId: string, entryDate: Date | string, tx: any = db) {
-    const dateObj = entryDate instanceof Date ? entryDate : new Date(entryDate);
-    const entryDateStr = dateObj.toISOString().split("T")[0];
+    // Parse to a local Date object (avoid UTC-converted ISO strings)
+    let dateObj: Date;
+    if (entryDate instanceof Date) {
+        dateObj = entryDate;
+    } else if (typeof entryDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(entryDate)) {
+        // Plain date string like "2025-10-15" — parse as local midnight
+        const [y, mo, d] = entryDate.split("-").map(Number);
+        dateObj = new Date(y, mo - 1, d);
+    } else {
+        dateObj = new Date(entryDate);
+    }
+    const entryDateStr = toLocalDateStr(dateObj);
 
-    // 1. Check if period already exists
-    let period = await tx.query.accountingPeriods.findFirst({
-        where: and(
-            eq(accountingPeriods.shopId, shopId),
-            lte(accountingPeriods.startDate, entryDateStr),
-            gte(accountingPeriods.endDate, entryDateStr),
-        ),
+    // 1. Check if a period already exists that covers this date
+    // Use plain string comparison — periods must be stored as YYYY-MM-DD
+    const allPeriods = await tx.query.accountingPeriods.findMany({
+        where: eq(accountingPeriods.shopId, shopId),
     });
+    const existingPeriod = allPeriods.find(
+        (p: any) => p.startDate <= entryDateStr && p.endDate >= entryDateStr
+    );
+    if (existingPeriod) return existingPeriod;
 
-    if (period) return period;
+    // 2. Find the fiscal year that covers this date
+    const allFys = await tx.query.fiscalYears.findMany({
+        where: and(eq(fiscalYears.shopId, shopId), eq(fiscalYears.isClosed, false)),
+    });
+    const matchingFy = allFys.find(
+        (fy: any) => fy.startDate <= entryDateStr && fy.endDate >= entryDateStr
+    );
 
-    // 2. Fetch shop settings to know fiscalYearStartMonth (1 = January, 7 = July, etc.)
-    const shop = await tx.query.shops.findFirst({ where: eq(shops.id, shopId) });
-    const startMonth = Math.max(0, Math.min(11, (shop?.fiscalYearStartMonth || 1) - 1)); // 0-indexed
-
-    const dateYear = dateObj.getFullYear();
-    const dateMonth = dateObj.getMonth();
-
-    // Determine fiscal year start year
-    let fyStartYear = dateYear;
-    if (dateMonth < startMonth) {
-        fyStartYear = dateYear - 1;
+    // IMPORTANT: Do NOT auto-create fiscal years here. Only provision periods
+    // within an existing fiscal year. If no FY covers this date, return null
+    // and let the caller log a warning — the admin must create the FY first.
+    if (!matchingFy) {
+        console.warn(`[GL] No open fiscal year covers date ${entryDateStr} for shop ${shopId}. Create a fiscal year first.`);
+        return null;
     }
 
-    const fyStart = new Date(fyStartYear, startMonth, 1);
-    const fyEnd = new Date(fyStartYear + 1, startMonth, 0); // End of 12th month
+    // 3. Auto-generate the monthly periods for this fiscal year if missing
+    const fyStart = new Date(matchingFy.startDate + "T00:00:00");
+    const fyEnd = new Date(matchingFy.endDate + "T00:00:00");
 
-    const startStr = fyStart.toISOString().split("T")[0];
-    const endStr = fyEnd.toISOString().split("T")[0];
-    const fyLabel = startMonth === 0 
-        ? `Fiscal Year ${fyStartYear}` 
-        : `Fiscal Year ${fyStartYear}/${fyStartYear + 1}`;
-
-    // 3. Find or auto-create the fiscal year
-    let fy = await tx.query.fiscalYears.findFirst({
-        where: and(
-            eq(fiscalYears.shopId, shopId),
-            eq(fiscalYears.startDate, startStr),
-            eq(fiscalYears.endDate, endStr),
-        ),
-    });
-
-    if (!fy) {
-        const existingByLabel = await tx.query.fiscalYears.findFirst({
-            where: and(
-                eq(fiscalYears.shopId, shopId),
-                eq(fiscalYears.label, fyLabel),
-            ),
-        });
-
-        if (existingByLabel) {
-            fy = existingByLabel;
-        } else {
-            const [createdFy] = await tx.insert(fiscalYears).values({
-                shopId,
-                label: fyLabel,
-                startDate: startStr,
-                endDate: endStr,
-                isClosed: false,
-            }).returning();
-            fy = createdFy;
-        }
-    }
-
-    // 4. Auto-generate the 12 monthly periods for this fiscal year
     let current = new Date(fyStart.getFullYear(), fyStart.getMonth(), 1);
     let matchedPeriod = null;
 
@@ -298,21 +288,18 @@ export async function ensureAccountingPeriod(shopId: string, entryDate: Date | s
         const pStart = new Date(current.getFullYear(), current.getMonth(), 1);
         const pEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0);
 
+        const pStartStr = toLocalDateStr(pStart);
+        const pEndStr = toLocalDateStr(pEnd);
         const periodName = pStart.toLocaleDateString("en-KE", { month: "long", year: "numeric" });
-        const pStartStr = pStart.toISOString().split("T")[0];
-        const pEndStr = pEnd.toISOString().split("T")[0];
 
-        let p = await tx.query.accountingPeriods.findFirst({
-            where: and(
-                eq(accountingPeriods.shopId, shopId),
-                eq(accountingPeriods.startDate, pStartStr),
-            ),
-        });
+        // Check if this period exists (by startDate exact match)
+        const existing = allPeriods.find((p: any) => p.startDate === pStartStr);
+        let p = existing;
 
         if (!p) {
             const [createdP] = await tx.insert(accountingPeriods).values({
                 shopId,
-                fiscalYearId: fy.id,
+                fiscalYearId: matchingFy.id,
                 periodName,
                 startDate: pStartStr,
                 endDate: pEndStr,

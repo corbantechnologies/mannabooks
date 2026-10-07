@@ -6,12 +6,15 @@ import { eq, and, desc, gte, lte } from "drizzle-orm";
 import { calculateDocumentTotals } from "@/lib/utils";
 import { getFiscalQuarterRange, getFiscalYearRange } from "@/lib/fiscalYear";
 import { enforcePermission } from "./rbac";
+import { getActiveFiscalYearContext } from "./fiscal-year-context";
 
 export type TimeframeFilter = "THIS_MONTH" | "LAST_MONTH" | "THIS_QUARTER" | "THIS_YEAR" | "ALL_TIME";
 
 export interface AnalyticsData {
   timeframe: TimeframeFilter;
   currency: string;
+  activeFiscalYearLabel?: string;
+  activeFiscalYearId?: string;
   
   // Executive KPIs
   totalSettledInflow: number; // Receipts + Paid Invoices
@@ -137,7 +140,10 @@ export async function getWorkspaceAnalyticsData(
       return { success: false, error: "Target workspace node not found." };
     }
 
-    // 1. Calculate Date Range Boundaries based on Timeframe
+    // 1. Resolve Active Fiscal Year Context
+    const { activeFiscalYear } = await getActiveFiscalYearContext(shopId);
+
+    // 2. Calculate Date Range Boundaries based on Timeframe
     const now = new Date();
     let startDate: Date | undefined;
     let endDate: Date | undefined;
@@ -155,9 +161,14 @@ export async function getWorkspaceAnalyticsData(
       startDate = start;
       endDate = end;
     } else if (timeframe === "THIS_YEAR") {
-      const { start, end } = getFiscalYearRange(fyStartMonth);
-      startDate = start;
-      endDate = end;
+      if (activeFiscalYear) {
+        startDate = new Date(activeFiscalYear.startDate + "T00:00:00");
+        endDate = new Date(activeFiscalYear.endDate + "T23:59:59");
+      } else {
+        const { start, end } = getFiscalYearRange(fyStartMonth);
+        startDate = start;
+        endDate = end;
+      }
     }
 
     // 2. Query All Workspace Documents
@@ -634,6 +645,8 @@ export async function getWorkspaceAnalyticsData(
       data: {
         timeframe,
         currency: shop.currency,
+        activeFiscalYearLabel: activeFiscalYear?.label,
+        activeFiscalYearId: activeFiscalYear?.id,
         totalSettledInflow,
         totalSettledOutflow,
         netOperatingCashFlow,

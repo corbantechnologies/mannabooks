@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/actions/logout";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Menu, X, ChevronDown, ChevronRight } from "lucide-react";
+import { FiscalYearSwitcher } from "@/components/FiscalYearSwitcher";
 
 interface MobileNavDrawerProps {
   slug: string;
@@ -25,9 +26,19 @@ interface MobileNavDrawerProps {
   };
   planName?: string;
   isLifetime?: boolean;
+  activeFiscalYear?: any;
+  allFiscalYears?: any[];
 }
 
-export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetime = false }: MobileNavDrawerProps) {
+export function MobileNavDrawer({
+  slug,
+  shop,
+  user,
+  planName = "FREE",
+  isLifetime = false,
+  activeFiscalYear,
+  allFiscalYears,
+}: MobileNavDrawerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
@@ -265,6 +276,19 @@ export function MobileNavDrawer({ slug, shop, user, planName = "FREE", isLifetim
               Switch →
             </Link>
           </div>
+
+          {/* Contextual Fiscal Year Switcher for Mobile */}
+          {allFiscalYears && allFiscalYears.length > 0 && (
+            <div className="p-3 border-b border-white/5 bg-black/20">
+              <FiscalYearSwitcher
+                shopId={shop.id}
+                shopSlug={slug}
+                activeFiscalYear={activeFiscalYear || null}
+                allFiscalYears={allFiscalYears}
+                variant="sidebar"
+              />
+            </div>
+          )}
 
           {/* Nav items */}
           <nav className="p-3 flex flex-col gap-0.5 font-sans text-[13px]">

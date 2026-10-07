@@ -5,6 +5,8 @@ import { products, stockLocations, stockLedger, productLocationStock } from "@/d
 import { eq, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { verifyAndGetSession } from "./auth";
+import { isApiModuleEnabled } from "@/lib/api/flags";
+import { apiCall } from "@/lib/api/client";
 
 interface CreateProductInput {
     shopId: string;
@@ -87,6 +89,29 @@ export async function createProductItem(input: CreateProductInput) {
         const isService = input.itemType === "SERVICE";
         const shouldTrack = isService ? false : (input.trackStock || false);
         const openingQty = shouldTrack ? (input.stockQuantity || 0) : 0;
+
+        // Strangler Pattern: Delegate to FastAPI if enabled
+        if (isApiModuleEnabled("items") || isApiModuleEnabled("master")) {
+            const apiRes = await apiCall<{ id: string }>(`/v1/items?shop_id=${input.shopId}`, {
+                method: "POST",
+                body: JSON.stringify({
+                    name: input.name.trim(),
+                    sku: finalSku,
+                    item_type: input.itemType || "PRODUCT",
+                    unit_price: input.unitPrice.toString(),
+                    cost_price: (input.costPrice || 0).toString(),
+                    default_tax_type: input.defaultTaxType,
+                    track_stock: shouldTrack,
+                    stock_quantity: openingQty.toString(),
+                    reorder_threshold: (input.reorderThreshold ?? 5).toString(),
+                    default_location_id: input.locationId || null,
+                }),
+            });
+            if (!apiRes.error && apiRes.data) {
+                revalidatePath(`/workspaces/${input.shopSlug}/inventory`);
+                return { success: true, productId: apiRes.data.id };
+            }
+        }
 
         return await db.transaction(async (tx) => {
             // Resolve location before product insert (may auto-create General Store)

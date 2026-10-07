@@ -5,6 +5,8 @@ import { clients } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { enforcePermission } from "./rbac";
+import { isApiModuleEnabled } from "@/lib/api/flags";
+import { apiCall } from "@/lib/api/client";
 
 interface CreateClientInput {
     shopId: string; // The active shop isolation token from the user session
@@ -29,7 +31,26 @@ export async function createClientProfile(input: CreateClientInput) {
         const cleanName = input.name.trim();
         const cleanPin = input.taxPin?.toUpperCase().trim() || null;
 
-        // 3. Write data safely to the PostgreSQL repository
+        // Strangler Pattern: Delegate to FastAPI if enabled
+        if (isApiModuleEnabled("clients") || isApiModuleEnabled("master")) {
+            const apiRes = await apiCall<{ id: string }>(`/v1/clients?shop_id=${input.shopId}`, {
+                method: "POST",
+                body: JSON.stringify({
+                    name: cleanName,
+                    email: cleanEmail,
+                    phone: input.phone?.trim() || null,
+                    client_type: input.clientType,
+                    tax_pin: cleanPin,
+                    requires_etims: input.requiresEtims || false,
+                }),
+            });
+            if (!apiRes.error && apiRes.data) {
+                revalidatePath(`/workspaces/${input.shopSlug}/clients`);
+                return { success: true, clientId: apiRes.data.id };
+            }
+        }
+
+        // 3. Fallback write data safely to the PostgreSQL repository
         const [newClient] = await db.insert(clients).values({
             shopId: input.shopId,
             name: cleanName,

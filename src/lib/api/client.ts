@@ -64,3 +64,6 @@ export async function apiClient<T = any>(
     };
   }
 }
+
+export const apiCall = apiClient;
+

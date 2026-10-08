@@ -1803,6 +1803,57 @@ export async function recordDocumentPaymentAction(input: {
             return { success: false, error: "Payment amount must be greater than zero." };
         }
 
+        const { isApiModuleEnabled } = await import("@/lib/api/flags");
+        if (isApiModuleEnabled("payments")) {
+            const { apiClient } = await import("@/lib/api/client");
+            const res = await apiClient.post<any>(
+                `/v1/payments/record?shop_id=${input.shopId}&user_id=${session.userId}`,
+                {
+                    document_id: input.documentId,
+                    amount: input.amount,
+                    payment_channel: input.paymentChannel,
+                    payment_reference: input.paymentReference?.trim() || null,
+                    payment_date: input.paymentDate ? input.paymentDate.toISOString() : null,
+                    notes: input.notes?.trim() || null,
+                }
+            );
+
+            if (!res.error && res.data) {
+                try {
+                    revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.documentId}`);
+                    revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+                    revalidatePath(`/workspaces/${input.shopSlug}`);
+                } catch (e) {
+                    // skip outside Next.js
+                }
+
+                logAudit({
+                    shopId: input.shopId,
+                    userId: session.userId,
+                    action: "PAYMENT_RECORDED",
+                    tableName: "document_payments",
+                    recordId: input.documentId,
+                    recordLabel: `${res.data.doc_number || "Document"} Payment`,
+                    after: {
+                        amount: input.amount,
+                        paymentChannel: input.paymentChannel,
+                        paymentReference: input.paymentReference ?? null,
+                        newStatus: res.data.status,
+                        remainingBalance: Number(res.data.remaining_balance),
+                    },
+                });
+
+                return {
+                    success: true,
+                    status: res.data.status,
+                    remainingBalance: Number(res.data.remaining_balance),
+                };
+            }
+            if (res.error) {
+                console.error("FastAPI payments strangler error, falling back to local DB:", res.error);
+            }
+        }
+
         const doc = await db.query.documents.findFirst({
             where: and(eq(documents.id, input.documentId), eq(documents.shopId, input.shopId)),
             with: { payments: true },
@@ -1885,6 +1936,39 @@ export async function deleteDocumentPaymentAction(input: {
 }): Promise<{ success: boolean; error?: string }> {
     try {
         await enforcePermission(input.shopId, "manage_documents");
+
+        const { isApiModuleEnabled } = await import("@/lib/api/flags");
+        if (isApiModuleEnabled("payments")) {
+            const { apiClient } = await import("@/lib/api/client");
+            const res = await apiClient.delete<any>(
+                `/v1/payments/${input.paymentId}?shop_id=${input.shopId}`
+            );
+
+            if (!res.error && res.data) {
+                try {
+                    revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.documentId}`);
+                    revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+                    revalidatePath(`/workspaces/${input.shopSlug}`);
+                } catch (e) {
+                    // skip outside Next.js
+                }
+
+                const auditSession = await verifyAndGetSession();
+                logAudit({
+                    shopId: input.shopId,
+                    userId: auditSession?.userId,
+                    action: "PAYMENT_DELETED",
+                    tableName: "document_payments",
+                    recordId: input.paymentId,
+                    recordLabel: `Payment on document ${input.documentId}`,
+                });
+
+                return { success: true };
+            }
+            if (res.error) {
+                console.error("FastAPI payments delete error, falling back to local DB:", res.error);
+            }
+        }
 
         await db.delete(documentPayments).where(
             and(eq(documentPayments.id, input.paymentId), eq(documentPayments.documentId, input.documentId))

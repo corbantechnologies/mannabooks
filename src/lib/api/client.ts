@@ -65,5 +65,29 @@ export async function apiClient<T = any>(
   }
 }
 
+apiClient.get = function<T = any>(endpoint: string, options?: RequestOptions) {
+  return apiClient<T>(endpoint, { ...options, method: "GET" });
+};
+
+apiClient.post = function<T = any>(endpoint: string, body?: any, options?: RequestOptions) {
+  return apiClient<T>(endpoint, {
+    ...options,
+    method: "POST",
+    body: body !== undefined ? (typeof body === "string" ? body : JSON.stringify(body)) : undefined,
+  });
+};
+
+apiClient.put = function<T = any>(endpoint: string, body?: any, options?: RequestOptions) {
+  return apiClient<T>(endpoint, {
+    ...options,
+    method: "PUT",
+    body: body !== undefined ? (typeof body === "string" ? body : JSON.stringify(body)) : undefined,
+  });
+};
+
+apiClient.delete = function<T = any>(endpoint: string, options?: RequestOptions) {
+  return apiClient<T>(endpoint, { ...options, method: "DELETE" });
+};
+
 export const apiCall = apiClient;
 

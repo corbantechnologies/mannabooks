@@ -18,6 +18,18 @@ export async function GET(request: Request) {
         return new Response("Unauthorized CRON request", { status: 401 });
     }
 
+    const { isApiModuleEnabled } = await import("@/lib/api/flags");
+    if (isApiModuleEnabled("crons")) {
+        const { apiClient } = await import("@/lib/api/client");
+        const res = await apiClient.post<any>("/v1/crons/process-recurring");
+        if (!res.error && res.data) {
+            return NextResponse.json({ success: true, ...res.data });
+        }
+        if (res.error) {
+            console.error("FastAPI process-recurring cron error, falling back to local DB:", res.error);
+        }
+    }
+
     try {
         const now = new Date();
         

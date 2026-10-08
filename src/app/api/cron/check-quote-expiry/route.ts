@@ -24,6 +24,18 @@ async function handleCron(req: NextRequest) {
     return NextResponse.json({ success: false, error: "Unauthorized cron execution." }, { status: 401 });
   }
 
+  const { isApiModuleEnabled } = await import("@/lib/api/flags");
+  if (isApiModuleEnabled("crons")) {
+    const { apiClient } = await import("@/lib/api/client");
+    const res = await apiClient.post<any>("/v1/crons/quote-expiry");
+    if (!res.error && res.data) {
+      return NextResponse.json({ success: true, ...res.data });
+    }
+    if (res.error) {
+      console.error("FastAPI quote-expiry cron error, falling back to local DB:", res.error);
+    }
+  }
+
   const now = new Date();
 
   const summary = {

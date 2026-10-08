@@ -100,6 +100,45 @@ export async function getPLStatement(
             ? activeFiscalYear.label
             : startDate.toLocaleDateString("en-KE", { month: "long", year: "numeric" });
 
+        const { isApiModuleEnabled } = await import("@/lib/api/flags");
+        if (isApiModuleEnabled("reports")) {
+            const { apiClient } = await import("@/lib/api/client");
+            const queryParams = new URLSearchParams({
+                shop_id: shopId,
+                period: period,
+            });
+            if (customRange?.startDate) queryParams.set("start_date", customRange.startDate.toISOString());
+            if (customRange?.endDate) queryParams.set("end_date", customRange.endDate.toISOString());
+
+            const res = await apiClient.get<any>(`/v1/reports/profit-loss?${queryParams.toString()}`);
+            if (!res.error && res.data) {
+                return {
+                    success: true,
+                    data: {
+                        period: res.data.period,
+                        currency: res.data.currency,
+                        salesRevenue: Number(res.data.sales_revenue),
+                        nonOperatingIncome: Number(res.data.non_operating_income),
+                        totalRevenue: Number(res.data.total_revenue),
+                        cogs: Number(res.data.cogs),
+                        grossProfit: Number(res.data.gross_profit),
+                        grossProfitMargin: Number(res.data.gross_profit_margin),
+                        expenseLines: (res.data.expense_lines || []).map((l: any) => ({
+                            label: l.label,
+                            amount: Number(l.amount),
+                            accountCode: l.account_code,
+                        })),
+                        totalOperatingExpenses: Number(res.data.total_operating_expenses),
+                        netOperatingProfit: Number(res.data.net_operating_profit),
+                        netIncome: Number(res.data.net_income),
+                    },
+                };
+            }
+            if (res.error) {
+                console.error("FastAPI getPLStatement strangler error, falling back to local DB:", res.error);
+            }
+        }
+
         // Fetch all documents and expenses/incomes in range
         const allDocs = await db.query.documents.findMany({
             where: eq(documents.shopId, shopId),
@@ -250,6 +289,34 @@ export async function getTrialBalance(
     periodId?: string
 ): Promise<{ success: true; data: TrialBalanceRow[]; totalDebits: number; totalCredits: number; isBalanced: boolean } | { success: false; error: string }> {
     try {
+        const { isApiModuleEnabled } = await import("@/lib/api/flags");
+        if (isApiModuleEnabled("reports")) {
+            const { apiClient } = await import("@/lib/api/client");
+            const queryParams = new URLSearchParams({ shop_id: shopId });
+            if (periodId) queryParams.set("period_id", periodId);
+
+            const res = await apiClient.get<any>(`/v1/reports/trial-balance?${queryParams.toString()}`);
+            if (!res.error && res.data) {
+                return {
+                    success: true,
+                    data: (res.data.rows || []).map((r: any) => ({
+                        code: r.code,
+                        name: r.name,
+                        accountType: r.account_type,
+                        totalDebits: Number(r.total_debits),
+                        totalCredits: Number(r.total_credits),
+                        balance: Number(r.balance),
+                    })),
+                    totalDebits: Number(res.data.total_debits),
+                    totalCredits: Number(res.data.total_credits),
+                    isBalanced: Boolean(res.data.is_balanced),
+                };
+            }
+            if (res.error) {
+                console.error("FastAPI getTrialBalance strangler error, falling back to local DB:", res.error);
+            }
+        }
+
         const { journalEntries: je, chartOfAccounts: coa } = await import("@/db/schema");
         const entries = await db.query.journalEntries.findMany({
             where: periodId 
@@ -449,6 +516,44 @@ export async function getBalanceSheet(
         const { activeFiscalYear } = await getActiveFiscalYearContext(shopId);
         const cutoff = asOfDate || (activeFiscalYear?.isClosed ? new Date(activeFiscalYear.endDate + "T23:59:59") : new Date());
         const displayDate = cutoff.toLocaleDateString("en-KE", { dateStyle: "long" });
+
+        const { isApiModuleEnabled } = await import("@/lib/api/flags");
+        if (isApiModuleEnabled("reports")) {
+            const { apiClient } = await import("@/lib/api/client");
+            const queryParams = new URLSearchParams({ shop_id: shopId });
+            if (asOfDate) queryParams.set("as_of_date", asOfDate.toISOString());
+
+            const res = await apiClient.get<any>(`/v1/reports/balance-sheet?${queryParams.toString()}`);
+            if (!res.error && res.data) {
+                return {
+                    success: true,
+                    data: {
+                        asOfDate: displayDate,
+                        currency: res.data.currency,
+                        cashAndBank: Number(res.data.cash_and_bank),
+                        accountsReceivable: Number(res.data.accounts_receivable),
+                        inventoryValuation: Number(res.data.inventory_valuation),
+                        totalCurrentAssets: Number(res.data.total_current_assets),
+                        fixedAssetsWdv: Number(res.data.fixed_assets_wdv),
+                        totalNonCurrentAssets: Number(res.data.total_non_current_assets),
+                        totalAssets: Number(res.data.total_assets),
+                        accountsPayable: Number(res.data.accounts_payable),
+                        taxPayable: Number(res.data.tax_payable),
+                        totalCurrentLiabilities: Number(res.data.total_current_liabilities),
+                        totalLiabilities: Number(res.data.total_liabilities),
+                        openingBalanceEquity: Number(res.data.opening_balance_equity),
+                        retainedEarnings: Number(res.data.retained_earnings),
+                        currentPeriodNetProfit: Number(res.data.current_period_net_profit),
+                        totalEquity: Number(res.data.total_equity),
+                        isBalanced: Boolean(res.data.is_balanced),
+                        difference: Number(res.data.difference),
+                    },
+                };
+            }
+            if (res.error) {
+                console.error("FastAPI getBalanceSheet strangler error, falling back to local DB:", res.error);
+            }
+        }
 
         // --- GL-based account balances ---
         const { journalEntries: je } = await import("@/db/schema");

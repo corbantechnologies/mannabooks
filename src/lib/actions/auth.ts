@@ -7,6 +7,8 @@ import { cookies } from "next/headers";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { generateUniqueShopCode } from "./shopCode";
+import { isApiModuleEnabled } from "@/lib/api/flags";
+import { apiClient } from "@/lib/api/client";
 
 const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "manna_session_token";
 const SESSION_DURATION_DAYS = Number(process.env.COOKIE_DURATION_DAYS) || 30;
@@ -123,6 +125,48 @@ interface RegisterOwnerInput {
 
 export async function registerOwnerAccount(input: RegisterOwnerInput) {
     try {
+        // FASTAPI STRANGLER ROUTING:
+        if (isApiModuleEnabled("auth")) {
+            const res = await apiClient<{
+                success: boolean;
+                token?: string;
+                shop_slug?: string;
+                error?: string;
+            }>("/v1/auth/register", {
+                method: "POST",
+                body: JSON.stringify({
+                    name: input.name.trim(),
+                    email: input.email.toLowerCase().trim(),
+                    password: input.passwordHex,
+                    business_name: input.businessName.trim(),
+                    invite_token: input.inviteToken,
+                }),
+            });
+
+            if (res.error || !res.data?.success || !res.data?.token) {
+                return {
+                    success: false as const,
+                    error: res.data?.error || res.error || "Account initialization failed. Please try again.",
+                };
+            }
+
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS);
+
+            (await cookies()).set(SESSION_COOKIE_NAME, res.data.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                expires: expiresAt,
+                path: "/",
+            });
+
+            return {
+                success: true as const,
+                shopSlug: res.data.shop_slug || "",
+            };
+        }
+
         // Run all DB writes inside a transaction for atomicity
         const result = await db.transaction(async (tx) => {
 

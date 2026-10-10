@@ -2,7 +2,7 @@
 import { db } from "@/db";
 import { documents, shops } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
-import { notFound } from "next/navigation";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 
@@ -41,14 +41,8 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
   const { slug } = await params;
   const { search, type, status, clientId, fromDate, toDate, view } = await searchParams;
 
-  // 2. Fetch active multi-tenant shop criteria and clients list for dropdown
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
-
-  if (!shop) {
-    notFound();
-  }
+  // 2. Fetch active multi-tenant shop criteria
+  const { shop } = await getActiveWorkspaceContext(slug);
 
   const shopClients = await db.query.clients.findMany({
     where: eq(clients.shopId, shop.id),

@@ -295,27 +295,20 @@ export function SettingsForm({
 
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
-  async function handleCloudinaryUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleMinioUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-    if (!cloudName || !uploadPreset) {
-      toast.error("Cloudinary is not configured. Please set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET in .env.local, or paste a direct image URL.");
-      return;
-    }
-
     setUploadingLogo(true);
-    const toastId = toast.loading("Uploading logo asset to Cloudinary...");
+    const toastId = toast.loading("Uploading logo asset to MinIO...");
 
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("upload_preset", uploadPreset);
+      formData.append("shopSlug", shopSlug || "workspace");
+      formData.append("category", "logos");
 
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      const response = await fetch("/api/upload/minio", {
         method: "POST",
         body: formData,
       });
@@ -323,18 +316,19 @@ export function SettingsForm({
       const data = await response.json();
       setUploadingLogo(false);
 
-      if (data.secure_url) {
-        setLogoUrl(data.secure_url);
-        toast.success("Logo uploaded successfully!", { id: toastId });
+      if (data.url) {
+        setLogoUrl(data.url);
+        toast.success("Logo uploaded to MinIO successfully!", { id: toastId });
       } else {
-        const errorMsg = data.error?.message || "Cloudinary upload failed.";
+        const errorMsg = data.error || "MinIO upload failed.";
         toast.error(errorMsg, { id: toastId });
       }
     } catch (err) {
       setUploadingLogo(false);
-      toast.error("Network error uploading to Cloudinary.", { id: toastId });
+      toast.error("Network error uploading to MinIO storage.", { id: toastId });
     }
   }
+
 
   return (
     <div className="space-y-8">
@@ -481,7 +475,7 @@ export function SettingsForm({
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <label className="text-zinc-400 uppercase block font-semibold">Brand Logo Asset</label>
-            <span className="text-[9px] text-zinc-400 font-mono italic">Cloudinary Enabled</span>
+            <span className="text-[9px] text-zinc-400 font-mono italic">MinIO Storage Enabled</span>
           </div>
 
           {logoUrl && (
@@ -514,11 +508,12 @@ export function SettingsForm({
               <input
                 type="file"
                 accept="image/*"
-                onChange={handleCloudinaryUpload}
+                onChange={handleMinioUpload}
                 disabled={uploadingLogo}
                 className="hidden"
               />
             </label>
+
 
             <input
               type="url"

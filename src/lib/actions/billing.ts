@@ -7,6 +7,7 @@ import { verifyAndGetSession } from "./auth";
 import { PLAN_SPECS, getShopPlanDetails, getDynamicPlanSpecs } from "@/lib/paywall";
 import { sendMpesaStkPush, formatMpesaPhoneNumber, queryMpesaStkPushStatus } from "@/lib/services/mpesa";
 import { revalidatePath } from "next/cache";
+import { apiClient } from "@/lib/api/client";
 
 export interface InitiatePaymentInput {
     shopId: string;
@@ -257,30 +258,42 @@ export async function checkPaymentStatusAction(transactionId: string) {
  * Fetches billing history and plan data for a tenant's billing hub.
  */
 export async function getShopBillingData(shopId: string) {
-    const session = await verifyAndGetSession();
-    if (!session) {
-        return { success: false, error: "Unauthorized." };
-    }
-
     try {
-        const details = await getShopPlanDetails(shopId);
-        const dynamicSpecs = await getDynamicPlanSpecs();
+        const res = await apiClient<{
+            success: boolean;
+            planDetails: any;
+            availablePlans: any[];
+            transactions: any[];
+            error?: string;
+        }>(`/v1/workspaces/${shopId}/billing/overview`);
 
-        // Fetch recent billing transactions
-        const history = await db.query.billingTransactions.findMany({
-            where: eq(billingTransactions.shopId, shopId),
-            orderBy: [desc(billingTransactions.createdAt)],
-            limit: 10,
-        });
+        if (res.data?.success && res.data.planDetails) {
+            return {
+                success: true,
+                planDetails: res.data.planDetails,
+                availablePlans: res.data.availablePlans || [],
+                transactions: res.data.transactions || [],
+            };
+        }
+
+        // Fallback to plan-details endpoint if overview is partial
+        const detailsRes = await apiClient<any>(`/v1/workspaces/${shopId}/plan-details`);
+        const dynamicSpecs = await getDynamicPlanSpecs();
 
         return {
             success: true,
-            planDetails: details,
+            planDetails: detailsRes.data || {
+                plan: "FREE",
+                subscriptionStatus: "ACTIVE",
+                effectivePlan: "FREE",
+                isLifetimePro: false,
+                spec: PLAN_SPECS.FREE,
+            },
             availablePlans: Object.values(dynamicSpecs),
-            transactions: history,
+            transactions: [],
         };
     } catch (error: any) {
-        console.error("Failed to fetch billing data:", error);
+        console.error("Failed to fetch billing data via FastAPI:", error);
         return { success: false, error: error.message || "Failed to load billing details." };
     }
 }

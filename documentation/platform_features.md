@@ -29,7 +29,7 @@ Stay fully compliant with Kenyan tax regulations:
 ### 4. Custom Shop Theme Branding & Logo Assets
 Personalize workspace interfaces to match your company brand:
 * **Dynamic Hex Theme Colors:** Select primary brand theme colors (e.g. Navy Blue `#1e3a8a` or Emerald Green `#065f46`) that dynamically inject across workspace shell navigation, client portals, vector PDFs, and Resend emails.
-* **Cloudinary Asset Uploads:** Upload high-resolution shop logos directly to Cloudinary.
+* **MinIO Asset Uploads:** Upload high-resolution shop logos and receipts directly to MinIO storage.
 * **Extended Profile Metadata:** Store business phone numbers, short names, and website URLs.
 
 ### 5. Payment Channel & Transaction Ref # Tracking

@@ -72,11 +72,11 @@ import { redirect } from "next/navigation";
 import { verifyAndGetSession } from "./auth";
 import { revalidatePath } from "next/cache";
 import { generateUniqueShopCode } from "./shopCode";
+import { apiClient } from "@/lib/api/client";
 
 import { cache } from "react";
 
 import { isApiModuleEnabled } from "@/lib/api/flags";
-import { apiClient } from "@/lib/api/client";
 
 /**
  * Server-side security guard that extracts session credentials, 
@@ -194,50 +194,48 @@ interface UpdateShopSettingsInput {
  */
 export async function updateShopSettings(input: UpdateShopSettingsInput) {
     try {
-        // Re-verify authorization parameters before running mutation
-        const sessionRecord = await verifyAndGetSession();
-        if (!sessionRecord) return { success: false, error: "Authentication expired." };
-
         let primaryColor = input.primaryColor?.trim() || "#000000";
         if (primaryColor && !primaryColor.startsWith("#")) {
             primaryColor = `#${primaryColor}`;
         }
 
-        const updateData: any = {
+        const payload: Record<string, any> = {
             name: input.name.trim(),
-            shortName: input.shortName?.trim() || null,
+            short_name: input.shortName?.trim() || null,
             phone: input.phone?.trim() || null,
             website: input.website?.trim() || null,
-            logoUrl: input.logoUrl?.trim() || null,
-            primaryColor,
-            taxPin: input.taxPin?.trim() || null,
+            logo_url: input.logoUrl?.trim() || null,
+            primary_color: primaryColor,
+            tax_pin: input.taxPin?.trim() || null,
             email: input.email?.trim() || null,
-            isVatRegistered: input.isVatRegistered,
-            vatNumber: input.isVatRegistered ? (input.vatNumber?.trim() || null) : null,
+            is_vat_registered: input.isVatRegistered,
+            vat_number: input.isVatRegistered ? (input.vatNumber?.trim() || null) : null,
             currency: input.currency.toUpperCase().trim(),
-            fiscalYearStartMonth: input.fiscalYearStartMonth,
+            fiscal_year_start_month: input.fiscalYearStartMonth,
         };
 
         if (input.autoStockDeductionEnabled !== undefined) {
-            updateData.autoStockDeductionEnabled = input.autoStockDeductionEnabled;
+            payload.auto_stock_deduction_enabled = input.autoStockDeductionEnabled;
         }
 
         if (input.businessMode !== undefined) {
-            updateData.businessMode = input.businessMode;
+            payload.business_mode = input.businessMode;
         }
 
         if (input.loyaltyEngineMode !== undefined) {
-            updateData.loyaltyEngineMode = input.loyaltyEngineMode;
+            payload.loyalty_engine_mode = input.loyaltyEngineMode;
         }
 
-        await db.update(shops)
-            .set(updateData)
-            .where(eq(shops.id, input.shopId));
+        const res = await apiClient.patch(`/v1/workspaces/${input.shopId}/settings`, payload);
+
+        if (res.error) {
+            return { success: false, error: res.error };
+        }
 
         return { success: true };
-    } catch (error) {
-        console.error("Failed to commit shop settings changes:", error);
-        return { success: false, error: "Failed to persist compliance updates." };
+    } catch (error: any) {
+        console.error("Failed to commit shop settings changes via FastAPI:", error);
+        return { success: false, error: error.message || "Failed to persist compliance updates." };
     }
 }
 

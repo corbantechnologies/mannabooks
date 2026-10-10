@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { documents, documentTokens, shops } from "@/db/schema";
 import { eq, and, or } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 import { DocumentStatusPanel } from "./DocumentStatusPanel";
@@ -20,9 +21,8 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
   const { slug, id } = await params;
   const { converted, from: fromDoc } = await searchParams;
 
-  // 1. Resolve shop
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
-  if (!shop) notFound();
+  // 1. Resolve shop safely via FastAPI context
+  const { shop } = await getActiveWorkspaceContext(slug);
 
   // 2. Fetch document with all related data & parent lineage
   const doc = await db.query.documents.findFirst({

@@ -13,7 +13,7 @@ The application is built on a modern, robust, and unified full-stack TypeScript 
 * **Database Layer:** PostgreSQL hosted on Railway Cloud infrastructure.
 * **ORM Mapping:** Drizzle ORM utilizing strict relational schemas and type-safe transactional compilation macros.
 * **Authentication Pool:** Secure, stateful database cookie session mapping system using native Node crypto and HTTP-Only lax attributes.
-* **Asset Upload Pipeline:** Cloudinary REST API integration for business logo image uploads.
+* **Asset Upload Pipeline:** MinIO S3-compatible REST API integration for business logo image uploads.
 * **Communication Pipelines:** Resend API integration for automated email notifications.
 * **Document Export Module:** Server-side PDF engine utilizing `@react-pdf/renderer` executing on the Node.js native runtime environment.
 * **PWA Engine:** Web App Manifest (`manifest.ts`), Service Worker (`public/sw.js`), offline fallback handling (`/offline`), and custom iOS/Android install prompts.

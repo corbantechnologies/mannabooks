@@ -1,7 +1,4 @@
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { notFound } from "next/navigation";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { getShopBillingData } from "@/lib/actions/billing";
 import { BillingSettingsClient } from "./BillingSettingsClient";
 
@@ -13,14 +10,7 @@ interface BillingSettingsPageProps {
 
 export default async function BillingSettingsPage({ params }: BillingSettingsPageProps) {
   const { slug } = await params;
-
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
-
-  if (!shop) {
-    notFound();
-  }
+  const { shop } = await getActiveWorkspaceContext(slug);
 
   const billingDataRes = await getShopBillingData(shop.id);
 

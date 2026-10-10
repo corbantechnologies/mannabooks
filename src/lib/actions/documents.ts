@@ -151,7 +151,10 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                     })),
                 }),
             });
-            if (!apiRes.error && apiRes.data) {
+            if (apiRes.error) {
+                return { success: false, error: apiRes.error };
+            }
+            if (apiRes.data) {
                 revalidatePath(`/workspaces/${input.shopSlug}/documents`);
                 return { success: true, documentId: apiRes.data.id, serial: apiRes.data.doc_number };
             }

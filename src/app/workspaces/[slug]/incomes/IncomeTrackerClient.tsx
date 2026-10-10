@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation";
 import { createIncome, deleteIncome, IncomeCategory } from "@/lib/actions/incomes";
 import { formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -20,6 +21,8 @@ type Income = {
 };
 
 export default function IncomeTrackerClient({ shopId, currency, initialIncomes }: { shopId: string, currency: string, initialIncomes: Income[] }) {
+    const params = useParams();
+    const shopSlug = (params?.slug as string) || "workspace";
     const [isAdding, setIsAdding] = useState(false);
     
     const [description, setDescription] = useState("");
@@ -50,46 +53,40 @@ export default function IncomeTrackerClient({ shopId, currency, initialIncomes }
         }
     }
 
-    async function handleCloudinaryUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    async function handleMinioUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-        const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-        if (!cloudName || !uploadPreset) {
-            toast.error("Cloudinary is not configured. Please check your environment variables.");
-            return;
-        }
-
-        const toastId = toast.loading("Uploading attachment image...");
+        const toastId = toast.loading("Uploading attachment image to MinIO...");
         setIsUploading(true);
 
         try {
             const formData = new FormData();
             formData.append("file", file);
-            formData.append("upload_preset", uploadPreset);
+            formData.append("shopSlug", shopSlug || "workspace");
+            formData.append("category", "incomes");
 
-            const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+            const response = await fetch("/api/upload/minio", {
                 method: "POST",
                 body: formData,
             });
 
             const data = await response.json();
 
-            if (response.ok) {
-                setAttachmentUrl(data.secure_url);
-                toast.success("Attachment uploaded securely.", { id: toastId });
+            if (response.ok && data.url) {
+                setAttachmentUrl(data.url);
+                toast.success("Attachment uploaded to MinIO storage.", { id: toastId });
             } else {
-                toast.error(data.error?.message || "Cloudinary upload failed.", { id: toastId });
+                toast.error(data.error || "MinIO upload failed.", { id: toastId });
             }
         } catch (error) {
             console.error(error);
-            toast.error("Network error uploading attachment.", { id: toastId });
+            toast.error("Network error uploading attachment to MinIO.", { id: toastId });
         } finally {
             setIsUploading(false);
         }
     }
+
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -249,7 +246,7 @@ export default function IncomeTrackerClient({ shopId, currency, initialIncomes }
                                     <input 
                                         type="file" 
                                         accept="image/*"
-                                        onChange={handleCloudinaryUpload}
+                                        onChange={handleMinioUpload}
                                         disabled={isUploading}
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                                     />

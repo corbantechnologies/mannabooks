@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation";
 import { createExpense, deleteExpense } from "@/lib/actions/expenses";
 import { formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -22,6 +23,9 @@ type Expense = {
 };
 
 export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpenses }: { shopId: string, shopCurrency: string, initialExpenses: Expense[] }) {
+    const params = useParams();
+    const shopSlug = (params?.slug as string) || "workspace";
+
     const [isAdding, setIsAdding] = useState(false);
     const [activeCategory, setActiveCategory] = useState<string>("ALL");
     
@@ -52,42 +56,35 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
         ? initialExpenses 
         : initialExpenses.filter(e => e.category === activeCategory);
 
-    async function handleCloudinaryUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    async function handleMinioUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-        const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-        if (!cloudName || !uploadPreset) {
-            toast.error("Cloudinary is not configured. Please check your environment variables.");
-            return;
-        }
-
-        const toastId = toast.loading("Uploading receipt image...");
+        const toastId = toast.loading("Uploading receipt to MinIO storage...");
         setIsUploading(true);
 
         try {
             const formData = new FormData();
             formData.append("file", file);
-            formData.append("upload_preset", uploadPreset);
+            formData.append("shopSlug", shopSlug);
+            formData.append("category", "expenses");
 
-            const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+            const response = await fetch("/api/upload/minio", {
                 method: "POST",
                 body: formData,
             });
 
             const data = await response.json();
 
-            if (response.ok) {
-                setReceiptUrl(data.secure_url);
-                toast.success("Receipt uploaded securely.", { id: toastId });
+            if (response.ok && data.url) {
+                setReceiptUrl(data.url);
+                toast.success("Receipt uploaded to MinIO storage.", { id: toastId });
             } else {
-                toast.error(data.error?.message || "Cloudinary upload failed.", { id: toastId });
+                toast.error(data.error || "MinIO upload failed.", { id: toastId });
             }
         } catch (error) {
             console.error(error);
-            toast.error("Network error uploading receipt.", { id: toastId });
+            toast.error("Network error uploading receipt to MinIO.", { id: toastId });
         } finally {
             setIsUploading(false);
         }
@@ -263,7 +260,7 @@ export default function ExpenseTrackerClient({ shopId, shopCurrency, initialExpe
                                     <input 
                                         type="file" 
                                         accept="image/*"
-                                        onChange={handleCloudinaryUpload}
+                                        onChange={handleMinioUpload}
                                         disabled={isUploading}
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                                     />

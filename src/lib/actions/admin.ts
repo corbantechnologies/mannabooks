@@ -1,23 +1,8 @@
 "use server";
 
-import { db } from "@/db";
-import {
-    users,
-    shops,
-    documents,
-    shopMembers,
-    stockLocations,
-    productLocationStock,
-    sessions,
-    approvalRequests,
-    approvalTimeline,
-    stocktakes,
-    groupEntities,
-} from "@/db/schema";
-import { count, eq, and, sql, desc, ilike, or, inArray } from "drizzle-orm";
+import { apiClient } from "@/lib/api/client";
 import { verifyAndGetSession, invalidateSession } from "./auth";
 import { revalidatePath } from "next/cache";
-import { purgeShopDataComplete } from "./workspace";
 
 /**
  * Validates the current session and ensures the user is a Super Admin.
@@ -36,7 +21,7 @@ export async function enforceSuperAdmin() {
 }
 
 /**
- * Fetches platform-wide statistics for the global admin dashboard.
+ * Fetches platform-wide statistics for the global admin dashboard via FastAPI.
  */
 export async function getPlatformStats() {
     const adminUser = await enforceSuperAdmin();
@@ -45,60 +30,32 @@ export async function getPlatformStats() {
     }
 
     try {
-        const [
-            totalUsersRes,
-            totalShopsRes,
-            totalDocsRes,
-            totalTurnoverRes,
-            lifetimeProRes,
-            suspendedShopsRes,
-            recentShops,
-            recentUsers
-        ] = await Promise.all([
-            db.select({ value: count() }).from(users),
-            db.select({ value: count() }).from(shops),
-            db.select({ value: count() }).from(documents),
-            db.select({
-                sum: sql<string>`COALESCE(SUM(CAST(${documents.grandTotal} AS NUMERIC)), 0)`
-            }).from(documents).where(or(eq(documents.status, "PAID"), eq(documents.status, "ISSUED"))),
-            db.select({ value: count() }).from(shops).where(eq(shops.isLifetimePro, true)),
-            db.select({ value: count() }).from(shops).where(eq(shops.isSuspended, true)),
-            db.query.shops.findMany({
-                orderBy: [desc(shops.createdAt)],
-                limit: 6,
-                with: {
-                    owner: true,
-                }
-            }),
-            db.query.users.findMany({
-                orderBy: [desc(users.createdAt)],
-                limit: 6,
-            })
-        ]);
+        const res = await apiClient<{
+            success: boolean;
+            stats: {
+                users: number;
+                workspaces: number;
+                documents: number;
+                turnover: number;
+                lifetimeProCount: number;
+                suspendedCount: number;
+                recentShops: any[];
+                recentUsers: any[];
+            };
+            error?: string;
+        }>("/v1/admin/stats");
 
-        const totalUsers = totalUsersRes[0]?.value || 0;
-        const totalWorkspaces = totalShopsRes[0]?.value || 0;
-        const totalDocuments = totalDocsRes[0]?.value || 0;
-        const totalTurnover = parseFloat(totalTurnoverRes[0]?.sum || "0");
-        const lifetimeProCount = lifetimeProRes[0]?.value || 0;
-        const suspendedCount = suspendedShopsRes[0]?.value || 0;
+        if (res.error || !res.data?.success) {
+            return { success: false, error: res.error || "Failed to read analytics from the API." };
+        }
 
         return {
             success: true,
-            stats: {
-                users: totalUsers,
-                workspaces: totalWorkspaces,
-                documents: totalDocuments,
-                turnover: totalTurnover,
-                lifetimeProCount,
-                suspendedCount,
-                recentShops,
-                recentUsers,
-            }
+            stats: res.data.stats,
         };
-    } catch (error) {
-        console.error("Failed to fetch platform stats:", error);
-        return { success: false, error: "Failed to read analytics from the database." };
+    } catch (error: any) {
+        console.error("Failed to fetch platform stats via FastAPI:", error);
+        return { success: false, error: error.message || "Failed to read analytics." };
     }
 }
 
@@ -110,7 +67,7 @@ export interface GetAdminWorkspacesInput {
 }
 
 /**
- * Fetches the paginated tenant workspace directory with owner details & document counts.
+ * Fetches the paginated tenant workspace directory with owner details & document counts via FastAPI.
  */
 export async function getAdminWorkspacesList(input?: GetAdminWorkspacesInput) {
     const adminUser = await enforceSuperAdmin();
@@ -119,113 +76,40 @@ export async function getAdminWorkspacesList(input?: GetAdminWorkspacesInput) {
     }
 
     try {
-        const search = input?.search?.trim() || "";
-        const planFilter = input?.planFilter || "ALL";
-        const page = input?.page || 1;
-        const limit = input?.limit || 20;
-        const offset = (page - 1) * limit;
+        const params: Record<string, string> = {};
+        if (input?.search) params.search = input.search.trim();
+        if (input?.planFilter) params.plan_filter = input.planFilter;
+        if (input?.page) params.page = String(input.page);
+        if (input?.limit) params.limit = String(input.limit);
 
-        // Fetch all matching shops
-        const allShops = await db.query.shops.findMany({
-            orderBy: [desc(shops.createdAt)],
-            with: {
-                owner: true,
-                members: {
-                    with: {
-                        user: true
-                    }
-                }
-            }
-        });
+        const res = await apiClient<{
+            success: boolean;
+            workspaces: any[];
+            totalCount: number;
+            page: number;
+            totalPages: number;
+            error?: string;
+        }>("/v1/admin/workspaces", { params });
 
-        // Filter in memory for rich multi-field matching
-        let filtered = allShops;
-
-        if (search) {
-            const s = search.toLowerCase();
-            filtered = filtered.filter(shop =>
-                shop.name.toLowerCase().includes(s) ||
-                shop.slug.toLowerCase().includes(s) ||
-                (shop.taxPin && shop.taxPin.toLowerCase().includes(s)) ||
-                (shop.owner && shop.owner.email.toLowerCase().includes(s)) ||
-                (shop.owner && shop.owner.name.toLowerCase().includes(s))
-            );
+        if (res.error || !res.data?.success) {
+            return { success: false, error: res.error || "Failed to retrieve tenant workspaces." };
         }
-
-        if (planFilter === "LIFETIME_PRO") {
-            filtered = filtered.filter(shop => shop.isLifetimePro);
-        } else if (planFilter === "SUSPENDED") {
-            filtered = filtered.filter(shop => shop.isSuspended);
-        } else if (planFilter !== "ALL") {
-            filtered = filtered.filter(shop => shop.plan?.toUpperCase() === planFilter.toUpperCase());
-        }
-
-        const totalCount = filtered.length;
-        const paginatedShops = filtered.slice(offset, offset + limit);
-
-        // Fetch document counts for these paginated shops
-        const shopSummaries = await Promise.all(
-            paginatedShops.map(async (shop) => {
-                const [docCountRes, turnoverRes] = await Promise.all([
-                    db.select({ value: count() }).from(documents).where(eq(documents.shopId, shop.id)),
-                    db.select({
-                        sum: sql<string>`COALESCE(SUM(CAST(${documents.grandTotal} AS NUMERIC)), 0)`
-                    }).from(documents).where(and(eq(documents.shopId, shop.id), or(eq(documents.status, "PAID"), eq(documents.status, "ISSUED"))))
-                ]);
-
-                return {
-                    id: shop.id,
-                    name: shop.name,
-                    shortName: shop.shortName,
-                    slug: shop.slug,
-                    taxPin: shop.taxPin,
-                    currency: shop.currency || "KES",
-                    primaryColor: shop.primaryColor,
-                    phone: shop.phone,
-                    email: shop.email,
-                    website: shop.website,
-                    isVatRegistered: shop.isVatRegistered,
-                    isGlEnabled: shop.isGlEnabled,
-                    plan: (shop.owner?.isLifetimePro || shop.owner?.isSuperAdmin || shop.isLifetimePro)
-                        ? "PRO"
-                        : (shop.owner?.plan || shop.plan || "FREE"),
-                    subscriptionStatus: (shop.owner?.isLifetimePro || shop.owner?.isSuperAdmin || shop.isLifetimePro)
-                        ? "LIFETIME_FREE"
-                        : (shop.owner?.subscriptionStatus || shop.subscriptionStatus || "ACTIVE"),
-                    isLifetimePro: Boolean(shop.owner?.isLifetimePro || shop.owner?.isSuperAdmin || shop.isLifetimePro),
-                    isSuspended: shop.isSuspended || false,
-                    suspendedReason: shop.suspendedReason,
-                    createdAt: shop.createdAt,
-                    owner: shop.owner ? {
-                        id: shop.owner.id,
-                        name: shop.owner.name,
-                        email: shop.owner.email,
-                        plan: shop.owner.plan || "FREE",
-                        isLifetimePro: shop.owner.isLifetimePro,
-                        isSuperAdmin: shop.owner.isSuperAdmin,
-                    } : null,
-                    memberCount: shop.members?.length ?? 0,
-                    documentCount: docCountRes[0]?.value || 0,
-                    turnover: parseFloat(turnoverRes[0]?.sum || "0"),
-                };
-            })
-        );
 
         return {
             success: true,
-            workspaces: shopSummaries,
-            totalCount,
-            page,
-            totalPages: Math.ceil(totalCount / limit) || 1,
+            workspaces: res.data.workspaces,
+            totalCount: res.data.totalCount,
+            page: res.data.page,
+            totalPages: res.data.totalPages,
         };
-    } catch (error) {
-        console.error("Failed to list admin workspaces:", error);
-        return { success: false, error: "Failed to retrieve tenant workspaces." };
+    } catch (error: any) {
+        console.error("Failed to list admin workspaces via FastAPI:", error);
+        return { success: false, error: error.message || "Failed to retrieve tenant workspaces." };
     }
 }
 
 /**
- * Deep inspection of a specific tenant workspace.
+ * Deep inspection of a specific tenant workspace via FastAPI.
  */
 export async function getAdminWorkspaceDetails(shopId: string) {
     const adminUser = await enforceSuperAdmin();
@@ -234,52 +118,27 @@ export async function getAdminWorkspaceDetails(shopId: string) {
     }
 
     try {
-        const shop = await db.query.shops.findFirst({
-            where: eq(shops.id, shopId),
-            with: {
-                owner: true,
-                members: {
-                    with: {
-                        user: true
-                    }
-                }
-            }
-        });
+        const res = await apiClient<{
+            success: boolean;
+            shop: any;
+            docStats: any[];
+            recentDocs: any[];
+            error?: string;
+        }>(`/v1/admin/workspaces/${shopId}`);
 
-        if (!shop) {
-            return { success: false, error: "Target workspace not found." };
+        if (res.error || !res.data?.success) {
+            return { success: false, error: res.error || "Failed to load workspace details." };
         }
-
-        // Aggregate document metrics by type
-        const [docStats, recentDocs, inventoryStockRes] = await Promise.all([
-            db.select({
-                type: documents.type,
-                count: count(),
-                totalAmount: sql<string>`COALESCE(SUM(CAST(${documents.grandTotal} AS NUMERIC)), 0)`
-            }).from(documents).where(eq(documents.shopId, shopId)).groupBy(documents.type),
-            db.query.documents.findMany({
-                where: eq(documents.shopId, shopId),
-                orderBy: [desc(documents.createdAt)],
-                limit: 10,
-                with: {
-                    client: true,
-                    supplier: true,
-                }
-            }),
-            db.select({
-                valuation: sql<string>`COALESCE(SUM(CAST(${productLocationStock.quantity} AS NUMERIC)), 0)`
-            }).from(productLocationStock)
-        ]);
 
         return {
             success: true,
-            shop,
-            docStats,
-            recentDocs,
+            shop: res.data.shop,
+            docStats: res.data.docStats,
+            recentDocs: res.data.recentDocs,
         };
-    } catch (error) {
-        console.error("Failed to inspect workspace:", error);
-        return { success: false, error: "Failed to load workspace details." };
+    } catch (error: any) {
+        console.error("Failed to inspect workspace via FastAPI:", error);
+        return { success: false, error: error.message || "Failed to load workspace details." };
     }
 }
 
@@ -291,7 +150,7 @@ export interface UpdateWorkspacePlanInput {
 }
 
 /**
- * Grants/updates a workspace's subscription plan, including 1-click Lifetime PRO whitelist.
+ * Grants/updates a workspace's subscription plan via FastAPI.
  */
 export async function updateWorkspacePlanAction(input: UpdateWorkspacePlanInput) {
     const adminUser = await enforceSuperAdmin();
@@ -300,29 +159,39 @@ export async function updateWorkspacePlanAction(input: UpdateWorkspacePlanInput)
     }
 
     try {
-        const [updated] = await db.update(shops).set({
-            plan: input.plan,
-            isLifetimePro: input.isLifetimePro,
-            subscriptionStatus: input.isLifetimePro ? "LIFETIME_FREE" : (input.subscriptionStatus || "ACTIVE"),
-        }).where(eq(shops.id, input.shopId)).returning();
+        const res = await apiClient<{ success: boolean; message: string; shop?: any; error?: string }>(
+            `/v1/admin/workspaces/${input.shopId}/plan`,
+            {
+                method: "PATCH",
+                body: JSON.stringify({
+                    plan: input.plan,
+                    is_lifetime_pro: input.isLifetimePro,
+                    subscription_status: input.subscriptionStatus || "ACTIVE",
+                }),
+            }
+        );
+
+        if (res.error || !res.data?.success) {
+            return { success: false, error: res.error || "Failed to update plan tier." };
+        }
 
         revalidatePath("/admin");
         revalidatePath("/admin/workspaces");
         revalidatePath(`/admin/workspaces/${input.shopId}`);
-        if (updated?.slug) {
-            revalidatePath(`/workspaces/${updated.slug}`);
-            revalidatePath(`/workspaces/${updated.slug}/settings`);
+        if (res.data.shop?.slug) {
+            revalidatePath(`/workspaces/${res.data.shop.slug}`);
+            revalidatePath(`/workspaces/${res.data.shop.slug}/settings`);
         }
 
         return {
             success: true,
-            message: input.isLifetimePro 
-                ? `👑 Successfully granted Lifetime PRO status to ${updated?.name || "workspace"}!`
-                : `Plan updated to ${input.plan} successfully.`
+            message: res.data.message || (input.isLifetimePro
+                ? "👑 Successfully granted Lifetime PRO status!"
+                : `Plan updated to ${input.plan} successfully.`),
         };
-    } catch (error) {
-        console.error("Failed to update workspace plan:", error);
-        return { success: false, error: "Database error updating plan tier." };
+    } catch (error: any) {
+        console.error("Failed to update workspace plan via FastAPI:", error);
+        return { success: false, error: error.message || "Error updating plan tier." };
     }
 }
 
@@ -333,7 +202,7 @@ export interface ToggleWorkspaceSuspensionInput {
 }
 
 /**
- * Suspends or activates a tenant workspace.
+ * Suspends or activates a tenant workspace via FastAPI.
  */
 export async function toggleWorkspaceSuspensionAction(input: ToggleWorkspaceSuspensionInput) {
     const adminUser = await enforceSuperAdmin();
@@ -342,32 +211,40 @@ export async function toggleWorkspaceSuspensionAction(input: ToggleWorkspaceSusp
     }
 
     try {
-        const [updated] = await db.update(shops).set({
-            isSuspended: input.isSuspended,
-            suspendedReason: input.isSuspended ? (input.reason?.trim() || "Administrative security lockout") : null,
-        }).where(eq(shops.id, input.shopId)).returning();
+        const res = await apiClient<{ success: boolean; message: string; shop?: any; error?: string }>(
+            `/v1/admin/workspaces/${input.shopId}/toggle-suspension`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    is_suspended: input.isSuspended,
+                    reason: input.reason?.trim() || null,
+                }),
+            }
+        );
+
+        if (res.error || !res.data?.success) {
+            return { success: false, error: res.error || "Failed to update suspension status." };
+        }
 
         revalidatePath("/admin");
         revalidatePath("/admin/workspaces");
         revalidatePath(`/admin/workspaces/${input.shopId}`);
-        if (updated?.slug) {
-            revalidatePath(`/workspaces/${updated.slug}`);
+        if (res.data.shop?.slug) {
+            revalidatePath(`/workspaces/${res.data.shop.slug}`);
         }
 
         return {
             success: true,
-            message: input.isSuspended 
-                ? `🔒 Workspace ${updated?.name} has been suspended.`
-                : `✅ Workspace ${updated?.name} is now active.`
+            message: res.data.message,
         };
-    } catch (error) {
-        console.error("Failed to toggle workspace suspension:", error);
-        return { success: false, error: "Database error updating suspension status." };
+    } catch (error: any) {
+        console.error("Failed to toggle workspace suspension via FastAPI:", error);
+        return { success: false, error: error.message || "Error updating suspension status." };
     }
 }
 
 /**
- * Global User Management Directory for Super Admins.
+ * Global User Management Directory for Super Admins via FastAPI.
  */
 export async function getAdminUsersList(searchQuery?: string) {
     const adminUser = await enforceSuperAdmin();
@@ -376,54 +253,27 @@ export async function getAdminUsersList(searchQuery?: string) {
     }
 
     try {
-        const allUsers = await db.query.users.findMany({
-            orderBy: [desc(users.createdAt)],
-            with: {
-                ownedShops: true,
-                memberships: {
-                    with: {
-                        shop: true
-                    }
-                }
-            }
-        });
+        const params: Record<string, string> = {};
+        if (searchQuery?.trim()) params.search = searchQuery.trim();
 
-        let filtered = allUsers;
-        if (searchQuery && searchQuery.trim()) {
-            const s = searchQuery.trim().toLowerCase();
-            filtered = filtered.filter(u =>
-                u.name.toLowerCase().includes(s) ||
-                u.email.toLowerCase().includes(s)
-            );
+        const res = await apiClient<{ success: boolean; users: any[]; error?: string }>("/v1/admin/users", { params });
+
+        if (res.error || !res.data?.success) {
+            return { success: false, error: res.error || "Failed to list platform users." };
         }
-
-        const userSummaries = filtered.map(u => ({
-            id: u.id,
-            name: u.name,
-            email: u.email,
-            isSuperAdmin: u.isSuperAdmin,
-            isLifetimePro: u.isLifetimePro,
-            plan: u.plan || "FREE",
-            subscriptionStatus: u.subscriptionStatus || "ACTIVE",
-            subscriptionExpiresAt: u.subscriptionExpiresAt,
-            createdAt: u.createdAt,
-            ownedShopsCount: u.ownedShops?.length || 0,
-            membershipsCount: u.memberships?.length || 0,
-            ownedShops: u.ownedShops?.map(s => ({ id: s.id, name: s.name, slug: s.slug, plan: s.plan })) || [],
-        }));
 
         return {
             success: true,
-            users: userSummaries,
+            users: res.data.users,
         };
-    } catch (error) {
-        console.error("Failed to fetch user list:", error);
-        return { success: false, error: "Failed to list platform users." };
+    } catch (error: any) {
+        console.error("Failed to fetch user list via FastAPI:", error);
+        return { success: false, error: error.message || "Failed to list platform users." };
     }
 }
 
 /**
- * Updates a user's subscription tier, expiry, or lifetime status.
+ * Updates a user's subscription tier, expiry, or lifetime status via FastAPI.
  */
 export async function updateUserSubscriptionAction({
     userId,
@@ -442,12 +292,21 @@ export async function updateUserSubscriptionAction({
     }
 
     try {
-        const [updated] = await db.update(users).set({
-            plan,
-            isLifetimePro,
-            subscriptionStatus: isLifetimePro ? "LIFETIME_FREE" : "ACTIVE",
-            subscriptionExpiresAt,
-        }).where(eq(users.id, userId)).returning();
+        const res = await apiClient<{ success: boolean; message: string; error?: string }>(
+            `/v1/admin/users/${userId}/subscription`,
+            {
+                method: "PATCH",
+                body: JSON.stringify({
+                    plan,
+                    is_lifetime_pro: isLifetimePro,
+                    subscription_expires_at: subscriptionExpiresAt?.toISOString() || null,
+                }),
+            }
+        );
+
+        if (res.error || !res.data?.success) {
+            return { success: false, error: res.error || "Failed to update user subscription." };
+        }
 
         revalidatePath("/admin");
         revalidatePath("/admin/users");
@@ -456,16 +315,16 @@ export async function updateUserSubscriptionAction({
 
         return {
             success: true,
-            message: `👑 User ${updated?.email} subscription updated to ${isLifetimePro ? "LIFETIME PRO" : plan}!`
+            message: res.data.message || `User subscription updated to ${isLifetimePro ? "LIFETIME PRO" : plan}!`,
         };
-    } catch (error) {
-        console.error("Failed to update user subscription:", error);
-        return { success: false, error: "Failed to update user subscription." };
+    } catch (error: any) {
+        console.error("Failed to update user subscription via FastAPI:", error);
+        return { success: false, error: error.message || "Failed to update user subscription." };
     }
 }
 
 /**
- * Grants or revokes Lifetime PRO access for a user account, cascading to all owned workspaces.
+ * Grants or revokes Lifetime PRO access for a user account, cascading to all owned workspaces via FastAPI.
  */
 export async function toggleUserLifetimeProAction({ userId, isLifetimePro }: { userId: string; isLifetimePro: boolean }) {
     const currentAdmin = await enforceSuperAdmin();
@@ -474,18 +333,17 @@ export async function toggleUserLifetimeProAction({ userId, isLifetimePro }: { u
     }
 
     try {
-        const [updated] = await db.update(users).set({
-            isLifetimePro,
-            plan: isLifetimePro ? "PRO" : "FREE",
-            subscriptionStatus: isLifetimePro ? "LIFETIME_FREE" : "ACTIVE",
-        }).where(eq(users.id, userId)).returning();
+        const res = await apiClient<{ success: boolean; message: string; error?: string }>(
+            `/v1/admin/users/${userId}/toggle-lifetime-pro`,
+            {
+                method: "POST",
+                body: JSON.stringify({ is_lifetime_pro: isLifetimePro }),
+            }
+        );
 
-        // Cascade to all current workspaces owned by this user
-        await db.update(shops).set({
-            isLifetimePro,
-            subscriptionStatus: isLifetimePro ? "LIFETIME_FREE" : "ACTIVE",
-            plan: isLifetimePro ? "PRO" : "FREE",
-        }).where(eq(shops.ownerId, userId));
+        if (res.error || !res.data?.success) {
+            return { success: false, error: res.error || "Failed to update user lifetime status." };
+        }
 
         revalidatePath("/admin");
         revalidatePath("/admin/users");
@@ -494,18 +352,16 @@ export async function toggleUserLifetimeProAction({ userId, isLifetimePro }: { u
 
         return {
             success: true,
-            message: isLifetimePro
-                ? `👑 Lifetime PRO granted to ${updated?.email}! All current and future workspaces owned by this account are permanently upgraded.`
-                : `Lifetime PRO revoked for ${updated?.email}.`
+            message: res.data.message,
         };
-    } catch (error) {
-        console.error("Failed to toggle user lifetime pro status:", error);
-        return { success: false, error: "Failed to update user lifetime status." };
+    } catch (error: any) {
+        console.error("Failed to toggle user lifetime pro status via FastAPI:", error);
+        return { success: false, error: error.message || "Failed to update user lifetime status." };
     }
 }
 
 /**
- * Elevates or demotes a user's Super Admin (ROOT) status.
+ * Elevates or demotes a user's Super Admin (ROOT) status via FastAPI.
  */
 export async function toggleSuperAdminAction({ userId, isSuperAdmin }: { userId: string; isSuperAdmin: boolean }) {
     const currentAdmin = await enforceSuperAdmin();
@@ -513,38 +369,38 @@ export async function toggleSuperAdminAction({ userId, isSuperAdmin }: { userId:
         return { success: false, error: "Access Denied. Super Admin privileges required." };
     }
 
-    try {
-        // Prevent demoting oneself if they are the only admin
-        if (!isSuperAdmin && currentAdmin.id === userId) {
-            const superAdmins = await db.select({ value: count() }).from(users).where(eq(users.isSuperAdmin, true));
-            if ((superAdmins[0]?.value || 0) <= 1) {
-                return { success: false, error: "Cannot demote yourself as the only remaining Super Admin." };
-            }
-        }
+    if (!isSuperAdmin && currentAdmin.id === userId) {
+        return { success: false, error: "Cannot demote yourself as a Super Admin." };
+    }
 
-        const [updated] = await db.update(users).set({
-            isSuperAdmin,
-        }).where(eq(users.id, userId)).returning();
+    try {
+        const res = await apiClient<{ success: boolean; message: string; error?: string }>(
+            `/v1/admin/users/${userId}/toggle-super-admin`,
+            {
+                method: "POST",
+                body: JSON.stringify({ is_super_admin: isSuperAdmin }),
+            }
+        );
+
+        if (res.error || !res.data?.success) {
+            return { success: false, error: res.error || "Failed to update user administrative status." };
+        }
 
         revalidatePath("/admin");
         revalidatePath("/admin/users");
 
         return {
             success: true,
-            message: isSuperAdmin 
-                ? `👑 ${updated?.email} has been elevated to Super Admin (ROOT).`
-                : `User ${updated?.email} Super Admin privileges revoked.`
+            message: res.data.message,
         };
-    } catch (error) {
-        console.error("Failed to toggle super admin status:", error);
-        return { success: false, error: "Failed to update user administrative status." };
+    } catch (error: any) {
+        console.error("Failed to toggle super admin status via FastAPI:", error);
+        return { success: false, error: error.message || "Failed to update user administrative status." };
     }
 }
 
 /**
- * Permanently purges a user account from the platform.
- * Can be executed by a Super Admin (to delete any user) or by the user themselves.
- * Cascades through all owned workspaces, sessions, and memberships.
+ * Permanently purges a user account from the platform via FastAPI.
  */
 export async function deleteUserAccountAction(input: {
     userId: string;
@@ -563,73 +419,24 @@ export async function deleteUserAccountAction(input: {
             return { success: false, error: "Unauthorized. Super Admin privileges required to delete other users." };
         }
 
-        const targetUser = await db.query.users.findFirst({
-            where: eq(users.id, input.userId),
-        });
-
-        if (!targetUser) {
-            return { success: false, error: "Target user account not found." };
-        }
-
-        // Prevent deleting the sole remaining Super Admin
-        if (targetUser.isSuperAdmin) {
-            const superAdmins = await db.select({ value: count() }).from(users).where(eq(users.isSuperAdmin, true));
-            if ((superAdmins[0]?.value || 0) <= 1) {
-                return { success: false, error: "Security restriction: Cannot delete the only remaining Super Admin on the platform." };
-            }
-        }
-
-        // Validate confirmation text: must match email, username, or "DELETE"
-        const allowedConfirmations = [
-            targetUser.email.toLowerCase().trim(),
-            targetUser.name.toLowerCase().trim(),
-            "delete",
-        ];
         const normalizedInput = (input.confirmationInput || "").toLowerCase().trim();
-        if (!allowedConfirmations.includes(normalizedInput)) {
+        if (normalizedInput !== "delete" && normalizedInput !== session.user.email?.toLowerCase().trim()) {
             return {
                 success: false,
-                error: `Confirmation mismatch. Please type "${targetUser.email}" or "DELETE" to confirm permanent purge.`,
+                error: `Confirmation mismatch. Please type your email or "DELETE" to confirm permanent purge.`,
             };
         }
 
-        // Atomic purge sequence
-        await db.transaction(async (tx) => {
-            // 1. Purge all workspaces owned by this user
-            const ownedShops = await tx.query.shops.findMany({
-                where: eq(shops.ownerId, targetUser.id),
-                columns: { id: true }
-            });
-            for (const shop of ownedShops) {
-                await purgeShopDataComplete(tx, shop.id);
+        const res = await apiClient<{ success: boolean; message: string; error?: string }>(
+            `/v1/admin/users/${input.userId}`,
+            {
+                method: "DELETE",
             }
+        );
 
-            // 2. Delete business groups owned by user
-            await tx.delete(groupEntities).where(eq(groupEntities.ownerId, targetUser.id));
-
-            // 3. Clean up approval requests requested by user
-            const appReqs = await tx.query.approvalRequests.findMany({
-                where: eq(approvalRequests.requesterUserId, targetUser.id),
-                columns: { id: true }
-            });
-            const appReqIds = appReqs.map((r: any) => r.id);
-            if (appReqIds.length > 0) {
-                await tx.delete(approvalTimeline).where(inArray(approvalTimeline.requestId, appReqIds));
-            }
-            await tx.delete(approvalRequests).where(eq(approvalRequests.requesterUserId, targetUser.id));
-
-            // 4. Clean up stocktakes conducted by user
-            await tx.delete(stocktakes).where(eq(stocktakes.conductedByUserId, targetUser.id));
-
-            // 5. Purge all sessions for this user
-            await tx.delete(sessions).where(eq(sessions.userId, targetUser.id));
-
-            // 6. Delete all shop memberships
-            await tx.delete(shopMembers).where(eq(shopMembers.userId, targetUser.id));
-
-            // 7. Finally, delete user account row
-            await tx.delete(users).where(eq(users.id, targetUser.id));
-        });
+        if (res.error || !res.data?.success) {
+            return { success: false, error: res.error || "Failed to delete user account." };
+        }
 
         if (isSelf) {
             await invalidateSession();
@@ -642,10 +449,10 @@ export async function deleteUserAccountAction(input: {
 
         return {
             success: true,
-            message: `User ${targetUser.email} and all owned workspaces have been permanently purged.`,
+            message: res.data.message,
         };
     } catch (error: any) {
-        console.error("Critical failure during user account purge sequence:", error);
+        console.error("Critical failure during user account purge sequence via FastAPI:", error);
         return { success: false, error: error?.message || "Failed to delete user account." };
     }
 }

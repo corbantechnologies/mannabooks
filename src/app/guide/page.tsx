@@ -191,7 +191,7 @@ export default function PublicOperatorGuidePage() {
               <ol className="list-decimal list-inside space-y-2 text-zinc-700 font-sans text-sm leading-relaxed">
                 <li>Navigate to <strong>System Settings</strong> in the workspace navigation.</li>
                 <li>Enter your <strong>Business Name</strong>, <strong>KRA Tax PIN</strong>, <strong>Phone Number</strong>, <strong>Short Name</strong>, and <strong>Website URL</strong>.</li>
-                <li>Upload your shop logo asset to Cloudinary via the logo upload button.</li>
+                <li>Upload your shop logo asset to MinIO storage via the logo upload button.</li>
                 <li>Select your shop&apos;s <strong>Primary Theme Hex Color</strong> (e.g. Emerald Green <code>#064e3b</code> or Navy Blue <code>#1e3a8a</code>). This color auto-styles action buttons, invoice portals, vector PDFs, and Resend emails.</li>
                 <li>To enable foreign currency billing, visit <strong>Settings &rarr; Multi-Currency</strong> to configure exchange rates for USD, EUR, GBP, or regional currencies.</li>
                 <li>Click <strong>Commit Changes</strong> to save.</li>

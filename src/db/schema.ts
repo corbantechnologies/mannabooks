@@ -434,7 +434,7 @@ export const expenses = pgTable('expenses', {
     expenseDate: timestamp('expense_date').notNull(),
     paymentChannel: varchar('payment_channel', { length: 50 }), // e.g. BANK, MPESA, CASH, CHEQUE, OTHER
     paymentReference: varchar('payment_reference', { length: 100 }),
-    receiptUrl: text('receipt_url'), // Cloudinary URL for attached receipt
+    receiptUrl: text('receipt_url'), // MinIO URL for attached receipt
     isNonDeductible: boolean('is_non_deductible').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });

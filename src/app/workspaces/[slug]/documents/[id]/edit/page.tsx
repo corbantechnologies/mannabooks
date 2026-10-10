@@ -1,11 +1,11 @@
-import { db } from "@/db";
-import { clients, products, shops, suppliers, documents, shopTerms, stockLocations } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { DocumentBuilderClientForm } from "../../new/DocumentBuilderClientForm";
 import Link from "next/link";
 import { Suspense } from "react";
+import { apiClient } from "@/lib/api/client";
 import { getShopCurrencies } from "@/lib/actions/currencies";
+import { getShopTerms } from "@/lib/actions/terms";
 import { getLoyaltyProgram, getMembershipTiers } from "@/lib/actions/loyalty";
 
 interface EditDocumentPageProps {
@@ -17,21 +17,11 @@ export default async function EditDocumentPage({ params }: EditDocumentPageProps
   const { slug, id } = await params;
 
   // 2. Resolve shop
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
+  const { shop } = await getActiveWorkspaceContext(slug);
 
-  if (!shop) {
-    notFound();
-  }
-
-  // 3. Fetch target document
-  const doc = await db.query.documents.findFirst({
-    where: and(eq(documents.id, id), eq(documents.shopId, shop.id)),
-    with: {
-      items: true,
-    },
-  });
+  // 3. Fetch target document via FastAPI
+  const docRes = await apiClient.get<any>(`/v1/documents/${id}?shop_id=${shop.id}`);
+  const doc = docRes.data;
 
   if (!doc) {
     notFound();
@@ -43,32 +33,69 @@ export default async function EditDocumentPage({ params }: EditDocumentPageProps
   }
 
   // 4. Fetch active registries to feed lookup menus
-  const clientRegistry = await db.query.clients.findMany({
-    where: eq(clients.shopId, shop.id),
-    orderBy: [desc(clients.createdAt)],
-  });
+  const [clientsRes, suppliersRes, itemsRes, locationsRes, termsRegistry, currenciesRegistry] = await Promise.all([
+    apiClient.get<any[]>(`/v1/clients?shop_id=${shop.id}&limit=200`),
+    apiClient.get<any[]>(`/v1/suppliers?shop_id=${shop.id}&limit=200`),
+    apiClient.get<any[]>(`/v1/items?shop_id=${shop.id}&limit=300`),
+    apiClient.get<any[]>(`/v1/items/locations?shop_id=${shop.id}`),
+    getShopTerms(shop.id),
+    getShopCurrencies(shop.id, shop.currency || "KES"),
+  ]);
 
-  const supplierRegistry = await db.query.suppliers.findMany({
-    where: eq(suppliers.shopId, shop.id),
-    orderBy: [desc(suppliers.createdAt)],
-  });
+  const clientRegistry = (clientsRes.data || []).map((c: any) => ({
+    id: String(c.id),
+    name: c.name,
+    email: c.email || "",
+    phone: c.phone || "",
+    taxPin: c.tax_pin || c.taxPin || null,
+    clientType: c.client_type || c.clientType || "BUSINESS",
+    creditLimit: c.credit_limit || c.creditLimit || "0.00",
+    outstandingBalance: c.outstanding_balance || c.outstandingBalance || "0.00",
+    paymentTerms: c.payment_terms || c.paymentTerms || null,
+  }));
 
-  const productRegistry = await db.query.products.findMany({
-    where: eq(products.shopId, shop.id),
-    orderBy: [desc(products.createdAt)],
-  });
+  const supplierRegistry = (suppliersRes.data || []).map((s: any) => ({
+    id: String(s.id),
+    name: s.name,
+    email: s.email || "",
+    phone: s.phone || "",
+    taxPin: s.tax_pin || s.taxPin || null,
+    supplierType: s.supplier_type || s.supplierType || "BUSINESS",
+    paymentTerms: s.payment_terms || s.paymentTerms || null,
+  }));
 
-  const termsRegistry = await db.query.shopTerms.findMany({
-    where: eq(shopTerms.shopId, shop.id),
-  });
+  const productRegistry = (itemsRes.data || []).map((p: any) => ({
+    id: String(p.id),
+    name: p.name,
+    sku: p.sku || null,
+    unitPrice: String(p.unit_price ?? p.unitPrice ?? "0.00"),
+    costPrice: String(p.cost_price ?? p.costPrice ?? "0.00"),
+    defaultTaxType: p.default_tax_type ?? p.defaultTaxType ?? "V_16",
+    trackStock: Boolean(p.track_stock ?? p.trackStock),
+    stockQuantity: String(p.stock_quantity ?? p.stockQuantity ?? "0.00"),
+    itemType: p.item_type ?? p.itemType ?? "PRODUCT",
+  }));
 
-  const locationsRegistry = await db.query.stockLocations.findMany({
-    where: and(eq(stockLocations.shopId, shop.id), eq(stockLocations.isActive, true)),
-  });
+  const locationsRegistry = (locationsRes.data || []).map((l: any) => ({
+    id: String(l.id),
+    name: l.name,
+    address: l.address || null,
+    isDefault: Boolean(l.isDefault ?? l.is_default),
+    isActive: Boolean(l.isActive ?? l.is_active ?? true),
+  }));
 
-  const currenciesRegistry = await getShopCurrencies(shop.id, shop.currency || "KES");
-  const loyaltyProgramRes = await getLoyaltyProgram(shop.id);
-  const membershipTiersRes = await getMembershipTiers(shop.id);
+  let loyaltyProgram: any = null;
+  let membershipTiers: any[] = [];
+  try {
+    const [loyaltyProgramRes, membershipTiersRes] = await Promise.all([
+      getLoyaltyProgram(shop.id),
+      getMembershipTiers(shop.id),
+    ]);
+    if (loyaltyProgramRes?.success) loyaltyProgram = loyaltyProgramRes.data;
+    if (membershipTiersRes?.success && Array.isArray(membershipTiersRes.data)) membershipTiers = membershipTiersRes.data;
+  } catch (err) {
+    console.warn("[EditDocumentPage] Loyalty module bypass:", err);
+  }
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white font-mono text-xs">
@@ -79,13 +106,13 @@ export default async function EditDocumentPage({ params }: EditDocumentPageProps
           href={`/workspaces/${slug}/documents/${doc.id}`}
           className="text-xs font-sans font-bold text-zinc-400 hover:text-black transition-colors block"
         >
-          ← Back to {doc.docNumber}
+          ← Back to {doc.docNumber || doc.doc_number || doc.id}
         </Link>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <span className="font-sans text-xs text-zinc-400 font-bold uppercase tracking-wider block">Edit Transaction</span>
             <h1 className="text-2xl font-bold uppercase tracking-tight text-black font-sans mt-0.5">
-              Edit Draft {doc.docNumber}
+              Edit Draft {doc.docNumber || doc.doc_number || doc.id}
             </h1>
             <p className="font-sans text-xs text-zinc-500 mt-1">
               Modify elements of this draft transaction ledger for {shop.name}.
@@ -109,8 +136,8 @@ export default async function EditDocumentPage({ params }: EditDocumentPageProps
           shopTerms={termsRegistry}
           currencies={currenciesRegistry}
           stockLocations={locationsRegistry}
-          loyaltyProgram={loyaltyProgramRes.success ? loyaltyProgramRes.data : null}
-          membershipTiers={membershipTiersRes.success ? membershipTiersRes.data : []}
+          loyaltyProgram={loyaltyProgram}
+          membershipTiers={membershipTiers}
           initialDocument={doc}
         />
       </Suspense>

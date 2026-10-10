@@ -227,7 +227,7 @@ export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageP
             </div>
 
             <p className="text-xs text-zinc-600 leading-relaxed">
-              Manna Books is a multi-tenant platform. Each workspace functions as an independent legal and financial entity with its own KRA Tax PIN, VAT rules, Cloudinary logo asset, brand accent color, and foreign exchange rates.
+              Manna Books is a multi-tenant platform. Each workspace functions as an independent legal and financial entity with its own KRA Tax PIN, VAT rules, MinIO logo asset, brand accent color, and foreign exchange rates.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

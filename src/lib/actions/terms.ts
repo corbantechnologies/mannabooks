@@ -1,9 +1,7 @@
 // src/lib/actions/terms.ts
 "use server";
 
-import { db } from "@/db";
-import { shopTerms } from "@/db/schema";
-import { eq, and, asc } from "drizzle-orm";
+import { apiClient } from "@/lib/api/client";
 import { revalidatePath } from "next/cache";
 
 export interface ShopTermItem {
@@ -14,29 +12,29 @@ export interface ShopTermItem {
     isDefaultInvoice: boolean;
     isDefaultCatalog: boolean;
     displayOrder: number;
-    createdAt: Date;
+    createdAt?: string | Date;
 }
 
 /**
- * Fetches all saved Terms & Conditions for a specific shop.
+ * Fetches all saved Terms & Conditions for a specific shop via FastAPI.
  */
 export async function getShopTerms(shopId: string): Promise<ShopTermItem[]> {
     try {
-        const terms = await db.query.shopTerms.findMany({
-            where: eq(shopTerms.shopId, shopId),
-            orderBy: [asc(shopTerms.displayOrder), asc(shopTerms.createdAt)],
-        });
-        return terms;
+        const res = await apiClient.get<{ success: boolean; terms: ShopTermItem[] }>(
+            `/v1/workspaces/${shopId}/terms`
+        );
+        if (res.data?.success && Array.isArray(res.data.terms)) {
+            return res.data.terms;
+        }
+        return [];
     } catch (error) {
-        console.error("Failed to fetch shop terms:", error);
+        console.error("Failed to fetch shop terms via FastAPI:", error);
         return [];
     }
 }
 
-import { enforcePermission } from "./rbac";
-
 /**
- * Creates a new commercial term in the shop's library.
+ * Creates a new commercial term in the shop's library via FastAPI.
  */
 export async function createShopTerm(input: {
     shopId: string;
@@ -45,10 +43,9 @@ export async function createShopTerm(input: {
     content: string;
     isDefaultInvoice?: boolean;
     isDefaultCatalog?: boolean;
+    displayOrder?: number;
 }) {
     try {
-        await enforcePermission(input.shopId, "manage_settings");
-
         if (!input.title || input.title.trim() === "") {
             return { success: false, error: "Term title is required." };
         }
@@ -56,31 +53,35 @@ export async function createShopTerm(input: {
             return { success: false, error: "Term clause text is required." };
         }
 
-        const [created] = await db
-            .insert(shopTerms)
-            .values({
-                shopId: input.shopId,
+        const res = await apiClient.post<{ success: boolean; termId: string; error?: string }>(
+            `/v1/workspaces/${input.shopId}/terms`,
+            {
                 title: input.title.trim(),
                 content: input.content.trim(),
-                isDefaultInvoice: input.isDefaultInvoice ?? false,
-                isDefaultCatalog: input.isDefaultCatalog ?? false,
-            })
-            .returning();
+                display_order: input.displayOrder ?? 0,
+                is_default_invoice: input.isDefaultInvoice ?? false,
+                is_default_catalog: input.isDefaultCatalog ?? false,
+            }
+        );
+
+        if (res.error || !res.data?.success) {
+            return { success: false, error: res.error || "Failed to create term." };
+        }
 
         if (input.shopSlug) {
             revalidatePath(`/workspaces/${input.shopSlug}/settings`);
             revalidatePath(`/workspaces/${input.shopSlug}/documents/new`);
         }
 
-        return { success: true, term: created };
+        return { success: true, term: { id: res.data.termId, ...input } };
     } catch (error: any) {
-        console.error("Create shop term error:", error);
+        console.error("Create shop term error via FastAPI:", error);
         return { success: false, error: error.message || "Failed to create term." };
     }
 }
 
 /**
- * Updates an existing term in the shop's library.
+ * Updates an existing term in the shop's library via FastAPI.
  */
 export async function updateShopTerm(input: {
     id: string;
@@ -90,10 +91,9 @@ export async function updateShopTerm(input: {
     content: string;
     isDefaultInvoice?: boolean;
     isDefaultCatalog?: boolean;
+    displayOrder?: number;
 }) {
     try {
-        await enforcePermission(input.shopId, "manage_settings");
-
         if (!input.title || input.title.trim() === "") {
             return { success: false, error: "Term title is required." };
         }
@@ -101,39 +101,20 @@ export async function updateShopTerm(input: {
             return { success: false, error: "Term clause text is required." };
         }
 
-        const [updated] = await db
-            .update(shopTerms)
-            .set({
+        const res = await apiClient.patch(
+            `/v1/workspaces/${input.shopId}/terms/${input.id}`,
+            {
                 title: input.title.trim(),
                 content: input.content.trim(),
-                isDefaultInvoice: input.isDefaultInvoice ?? false,
-                isDefaultCatalog: input.isDefaultCatalog ?? false,
-            })
-            .where(and(eq(shopTerms.id, input.id), eq(shopTerms.shopId, input.shopId)))
-            .returning();
+                display_order: input.displayOrder,
+                is_default_invoice: input.isDefaultInvoice,
+                is_default_catalog: input.isDefaultCatalog,
+            }
+        );
 
-        if (input.shopSlug) {
-            revalidatePath(`/workspaces/${input.shopSlug}/settings`);
-            revalidatePath(`/workspaces/${input.shopSlug}/documents/new`);
+        if (res.error) {
+            return { success: false, error: res.error };
         }
-
-        return { success: true, term: updated };
-    } catch (error: any) {
-        console.error("Update shop term error:", error);
-        return { success: false, error: error.message || "Failed to update term." };
-    }
-}
-
-/**
- * Deletes a term from the shop's library.
- */
-export async function deleteShopTerm(input: { id: string; shopId: string; shopSlug?: string }) {
-    try {
-        await enforcePermission(input.shopId, "manage_settings");
-
-        await db
-            .delete(shopTerms)
-            .where(and(eq(shopTerms.id, input.id), eq(shopTerms.shopId, input.shopId)));
 
         if (input.shopSlug) {
             revalidatePath(`/workspaces/${input.shopSlug}/settings`);
@@ -142,70 +123,41 @@ export async function deleteShopTerm(input: { id: string; shopId: string; shopSl
 
         return { success: true };
     } catch (error: any) {
-        console.error("Delete shop term error:", error);
+        console.error("Update shop term error via FastAPI:", error);
+        return { success: false, error: error.message || "Failed to update term." };
+    }
+}
+
+/**
+ * Deletes a term from the shop's library via FastAPI.
+ */
+export async function deleteShopTerm(input: { id: string; shopId: string; shopSlug?: string }) {
+    try {
+        const res = await apiClient.delete(`/v1/workspaces/${input.shopId}/terms/${input.id}`);
+        if (res.error) {
+            return { success: false, error: res.error };
+        }
+
+        if (input.shopSlug) {
+            revalidatePath(`/workspaces/${input.shopSlug}/settings`);
+            revalidatePath(`/workspaces/${input.shopSlug}/documents/new`);
+        }
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Delete shop term error via FastAPI:", error);
         return { success: false, error: error.message || "Failed to delete term." };
     }
 }
 
 /**
- * Seeds standard Kenyan SME commercial preset terms into a shop.
+ * Seeds standard Kenyan SME commercial preset terms into a shop via FastAPI.
  */
 export async function seedDefaultShopTerms(shopId: string, shopSlug?: string) {
     try {
-        const presets = [
-            {
-                title: "100% Upfront Payment",
-                content: "100% advance payment is required before order processing, fabrication, and dispatch.",
-                isDefaultInvoice: false,
-                isDefaultCatalog: true, // Ideal for public catalog & unknown leads
-                displayOrder: 1,
-            },
-            {
-                title: "Payment on Delivery (COD)",
-                content: "Full payment is due immediately upon physical delivery and inspection of goods.",
-                isDefaultInvoice: true,
-                isDefaultCatalog: false,
-                displayOrder: 2,
-            },
-            {
-                title: "50% Advance / 50% Balance on Delivery",
-                content: "50% non-refundable commitment deposit upon order confirmation; remaining 50% balance payable upon delivery.",
-                isDefaultInvoice: false,
-                isDefaultCatalog: false,
-                displayOrder: 3,
-            },
-            {
-                title: "Quotation 14-Day Price Validity",
-                content: "This quotation is strictly valid for 14 calendar days from the date of issue. Prices may be subject to revision thereafter.",
-                isDefaultInvoice: true,
-                isDefaultCatalog: true,
-                displayOrder: 4,
-            },
-            {
-                title: "Net 30 Days Credit Settlement",
-                content: "Payment is due within 30 calendar days from the invoice issue date. A 2% monthly financing surcharge applies to overdue accounts.",
-                isDefaultInvoice: false,
-                isDefaultCatalog: false,
-                displayOrder: 5,
-            },
-            {
-                title: "Return & Defective Goods Policy",
-                content: "Goods once sold are non-refundable unless damaged or defective upon arrival and reported in writing within 48 hours.",
-                isDefaultInvoice: false,
-                isDefaultCatalog: false,
-                displayOrder: 6,
-            },
-        ];
-
-        for (const p of presets) {
-            await db.insert(shopTerms).values({
-                shopId,
-                title: p.title,
-                content: p.content,
-                isDefaultInvoice: p.isDefaultInvoice,
-                isDefaultCatalog: p.isDefaultCatalog,
-                displayOrder: p.displayOrder,
-            });
+        const res = await apiClient.post(`/v1/workspaces/${shopId}/terms/seed-defaults`);
+        if (res.error) {
+            return { success: false, error: res.error };
         }
 
         if (shopSlug) {
@@ -215,7 +167,7 @@ export async function seedDefaultShopTerms(shopId: string, shopSlug?: string) {
 
         return { success: true };
     } catch (error: any) {
-        console.error("Seed shop terms error:", error);
-        return { success: false, error: error.message || "Failed to seed preset terms." };
+        console.error("Seed default terms error via FastAPI:", error);
+        return { success: false, error: error.message || "Failed to seed default terms." };
     }
 }

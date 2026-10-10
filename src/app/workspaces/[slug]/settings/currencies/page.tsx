@@ -1,7 +1,4 @@
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { notFound } from "next/navigation";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { getShopCurrencies } from "@/lib/actions/currencies";
 import { CurrencySettingsClient } from "./CurrencySettingsClient";
 
@@ -11,14 +8,7 @@ interface CurrencySettingsPageProps {
 
 export default async function CurrencySettingsPage({ params }: CurrencySettingsPageProps) {
   const { slug } = await params;
-
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
-
-  if (!shop) {
-    notFound();
-  }
+  const { shop } = await getActiveWorkspaceContext(slug);
 
   const currencies = await getShopCurrencies(shop.id, shop.currency || "KES");
 

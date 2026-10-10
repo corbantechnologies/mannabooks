@@ -10,7 +10,7 @@
   * Input the exact business name, phone number, website URL, and short name.
   * Enter the mandatory **13-character statutory KRA Tax PIN**.
   * Toggle `isVatRegistered` if the company processes standard 16% VAT.
-  * Upload branding logo asset via Cloudinary.
+  * Upload branding logo asset via MinIO.
   * Select your shop's **Primary Theme Hex Color** (e.g. Navy Blue `#1e3a8a` or Emerald Green `#065f46`).
   * Click **Commit Changes**.
 

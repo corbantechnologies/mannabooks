@@ -1,11 +1,7 @@
 "use server";
 
-import { db } from "@/db";
-import { shopCurrencies, shops } from "@/db/schema";
-import { eq, and, asc } from "drizzle-orm";
+import { apiClient } from "@/lib/api/client";
 import { revalidatePath } from "next/cache";
-import { verifyAndGetSession } from "./auth";
-import { enforcePermission } from "./rbac";
 
 export interface ShopCurrencyRecord {
   id: string;
@@ -15,7 +11,7 @@ export interface ShopCurrencyRecord {
   symbol: string;
   exchangeRate: string;
   isEnabled: boolean;
-  updatedAt: Date;
+  updatedAt: string | Date;
 }
 
 const DEFAULT_CURRENCY_PRESETS = [
@@ -32,44 +28,42 @@ const DEFAULT_CURRENCY_PRESETS = [
 ];
 
 /**
- * Fetch all configured currencies for a shop, auto-seeding standard presets if empty.
+ * Fetch all configured currencies for a shop via FastAPI, auto-seeding standard presets if empty.
  */
 export async function getShopCurrencies(shopId: string, baseCurrency: string = "KES"): Promise<ShopCurrencyRecord[]> {
   try {
-    const existing = await db.query.shopCurrencies.findMany({
-      where: eq(shopCurrencies.shopId, shopId),
-      orderBy: [asc(shopCurrencies.code)],
-    });
+    const res = await apiClient.get<{ success: boolean; currencies: ShopCurrencyRecord[] }>(
+      `/v1/workspaces/${shopId}/currencies`
+    );
 
-    if (existing.length > 0) {
-      return existing;
+    if (res.data?.success && Array.isArray(res.data.currencies) && res.data.currencies.length > 0) {
+      return res.data.currencies;
     }
 
     // Auto-seed initial top presets (USD, EUR, GBP, UGX, TZS)
     const initialSeeds = DEFAULT_CURRENCY_PRESETS.slice(0, 5).filter(c => c.code !== baseCurrency);
     for (const seed of initialSeeds) {
-      await db.insert(shopCurrencies).values({
-        shopId,
+      await apiClient.post(`/v1/workspaces/${shopId}/currencies`, {
         code: seed.code,
         name: seed.name,
         symbol: seed.symbol,
-        exchangeRate: seed.defaultRateKES.toFixed(4),
-        isEnabled: true,
-      }).onConflictDoNothing();
+        exchange_rate: seed.defaultRateKES,
+        is_enabled: true,
+      });
     }
 
-    return await db.query.shopCurrencies.findMany({
-      where: eq(shopCurrencies.shopId, shopId),
-      orderBy: [asc(shopCurrencies.code)],
-    });
+    const recheck = await apiClient.get<{ success: boolean; currencies: ShopCurrencyRecord[] }>(
+      `/v1/workspaces/${shopId}/currencies`
+    );
+    return recheck.data?.currencies || [];
   } catch (error) {
-    console.error("Failed to load shop currencies:", error);
+    console.error("Failed to load shop currencies via FastAPI:", error);
     return [];
   }
 }
 
 /**
- * Save or update a currency definition and its predefined exchange rate.
+ * Save or update a currency definition via FastAPI.
  */
 export async function saveShopCurrencyAction(input: {
   shopId: string;
@@ -81,10 +75,6 @@ export async function saveShopCurrencyAction(input: {
   isEnabled?: boolean;
 }): Promise<{ success: boolean; error?: string }> {
   try {
-    const session = await verifyAndGetSession();
-    if (!session) return { success: false, error: "Unauthorized. Please log in." };
-    await enforcePermission(input.shopId, "manage_settings");
-
     if (!input.code || input.code.trim().length !== 3) {
       return { success: false, error: "Valid 3-letter currency code is required (e.g. USD, EUR)." };
     }
@@ -92,44 +82,29 @@ export async function saveShopCurrencyAction(input: {
       return { success: false, error: "Exchange rate must be greater than zero." };
     }
 
-    const cleanCode = input.code.trim().toUpperCase();
-
-    const existing = await db.query.shopCurrencies.findFirst({
-      where: and(eq(shopCurrencies.shopId, input.shopId), eq(shopCurrencies.code, cleanCode)),
+    const res = await apiClient.post(`/v1/workspaces/${input.shopId}/currencies`, {
+      code: input.code.trim().toUpperCase(),
+      name: input.name.trim(),
+      symbol: input.symbol?.trim() || "$",
+      exchange_rate: input.exchangeRate,
+      is_enabled: input.isEnabled !== undefined ? input.isEnabled : true,
     });
 
-    if (existing) {
-      await db.update(shopCurrencies)
-        .set({
-          name: input.name.trim(),
-          symbol: input.symbol?.trim() || existing.symbol,
-          exchangeRate: input.exchangeRate.toFixed(4),
-          isEnabled: input.isEnabled !== undefined ? input.isEnabled : existing.isEnabled,
-          updatedAt: new Date(),
-        })
-        .where(eq(shopCurrencies.id, existing.id));
-    } else {
-      await db.insert(shopCurrencies).values({
-        shopId: input.shopId,
-        code: cleanCode,
-        name: input.name.trim(),
-        symbol: input.symbol?.trim() || "$",
-        exchangeRate: input.exchangeRate.toFixed(4),
-        isEnabled: input.isEnabled !== undefined ? input.isEnabled : true,
-      });
+    if (res.error) {
+      return { success: false, error: res.error };
     }
 
     revalidatePath(`/workspaces/${input.shopSlug}/settings/currencies`);
     revalidatePath(`/workspaces/${input.shopSlug}/documents/new`);
     return { success: true };
   } catch (error: any) {
-    console.error("Failed to save currency:", error);
+    console.error("Failed to save currency via FastAPI:", error);
     return { success: false, error: error.message || "Failed to save currency settings." };
   }
 }
 
 /**
- * Delete a custom currency definition from workspace portfolio.
+ * Delete a custom currency definition from workspace portfolio via FastAPI.
  */
 export async function deleteShopCurrencyAction(input: {
   shopId: string;
@@ -137,25 +112,22 @@ export async function deleteShopCurrencyAction(input: {
   currencyId: string;
 }): Promise<{ success: boolean; error?: string }> {
   try {
-    const session = await verifyAndGetSession();
-    if (!session) return { success: false, error: "Unauthorized." };
-    await enforcePermission(input.shopId, "manage_settings");
-
-    await db.delete(shopCurrencies).where(
-      and(eq(shopCurrencies.id, input.currencyId), eq(shopCurrencies.shopId, input.shopId))
-    );
+    const res = await apiClient.delete(`/v1/workspaces/${input.shopId}/currencies/${input.currencyId}`);
+    if (res.error) {
+      return { success: false, error: res.error };
+    }
 
     revalidatePath(`/workspaces/${input.shopSlug}/settings/currencies`);
     revalidatePath(`/workspaces/${input.shopSlug}/documents/new`);
     return { success: true };
   } catch (error: any) {
-    console.error("Failed to delete currency:", error);
+    console.error("Failed to delete currency via FastAPI:", error);
     return { success: false, error: error.message || "Failed to delete currency." };
   }
 }
 
 /**
- * Sync all configured shop currencies with live market exchange rates.
+ * Sync all configured shop currencies with live market exchange rates via FastAPI.
  */
 export async function syncShopCurrenciesWithLiveRatesAction(input: {
   shopId: string;
@@ -163,35 +135,30 @@ export async function syncShopCurrenciesWithLiveRatesAction(input: {
   baseCurrency: string;
 }): Promise<{ success: boolean; updatedCount?: number; error?: string }> {
   try {
-    const session = await verifyAndGetSession();
-    if (!session) return { success: false, error: "Unauthorized." };
-    await enforcePermission(input.shopId, "manage_settings");
-
-    const allCurrencies = await db.query.shopCurrencies.findMany({
-      where: eq(shopCurrencies.shopId, input.shopId),
-    });
-
-    if (allCurrencies.length === 0) {
+    const currencies = await getShopCurrencies(input.shopId, input.baseCurrency);
+    if (currencies.length === 0) {
       return { success: true, updatedCount: 0 };
     }
 
     let updatedCount = 0;
     const base = input.baseCurrency.toUpperCase();
 
-    // Fetch rates against base currency
-    for (const curr of allCurrencies) {
+    for (const curr of currencies) {
       try {
         const response = await fetch(`https://open.er-api.com/v6/latest/${curr.code}`);
         if (response.ok) {
           const data = await response.json();
           if (data && data.rates && typeof data.rates[base] === "number") {
             const liveRate = data.rates[base];
-            await db.update(shopCurrencies)
-              .set({
-                exchangeRate: liveRate.toFixed(4),
-                updatedAt: new Date(),
-              })
-              .where(eq(shopCurrencies.id, curr.id));
+            await saveShopCurrencyAction({
+              shopId: input.shopId,
+              shopSlug: input.shopSlug,
+              code: curr.code,
+              name: curr.name,
+              symbol: curr.symbol,
+              exchangeRate: liveRate,
+              isEnabled: curr.isEnabled,
+            });
             updatedCount++;
           }
         }
@@ -204,7 +171,7 @@ export async function syncShopCurrenciesWithLiveRatesAction(input: {
     revalidatePath(`/workspaces/${input.shopSlug}/documents/new`);
     return { success: true, updatedCount };
   } catch (error: any) {
-    console.error("Failed to sync live rates:", error);
+    console.error("Failed to sync live rates via FastAPI:", error);
     return { success: false, error: error.message || "Failed to sync live exchange rates." };
   }
 }

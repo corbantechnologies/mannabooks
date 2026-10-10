@@ -1,13 +1,10 @@
 // src/app/portal/invoice/[token]/page.tsx
-import { db } from "@/db";
-import { documentTokens, documents, shops, paymentMethods } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency, isFiscalDocType } from "@/lib/utils";
-import crypto from "crypto";
 import QRCode from "react-qr-code";
 import { DocumentChain, type ChainNode } from "@/components/DocumentChain";
 import { PortalQuotationActions } from "./PortalQuotationActions";
+import { apiClient } from "@/lib/api/client";
 
 interface PortalPageProps {
   params: Promise<{ token: string }>;
@@ -16,66 +13,16 @@ interface PortalPageProps {
 export default async function PublicInvoicePortalPage({ params }: PortalPageProps) {
   const { token } = await params;
 
-  // 1. Multi-tier resilient token & document resolver
-  let targetDocumentId: string | null = null;
-
-  // Tier 1: Look up exact token match in documentTokens
-  const tokenRecord = await db.query.documentTokens.findFirst({
-    where: eq(documentTokens.token, token),
-  });
-  if (tokenRecord) {
-    targetDocumentId = tokenRecord.documentId;
-  }
-
-  // Tier 2: Look up if token parameter is a documentId in documentTokens
-  if (!targetDocumentId) {
-    const tokenByDoc = await db.query.documentTokens.findFirst({
-      where: eq(documentTokens.documentId, token),
-    });
-    if (tokenByDoc) {
-      targetDocumentId = tokenByDoc.documentId;
-    }
-  }
-
-  // Tier 3: Direct lookup in documents table (auto-provisions missing token for legacy docs)
-  if (!targetDocumentId) {
-    const directDoc = await db.query.documents.findFirst({
-      where: eq(documents.id, token),
-    });
-    if (directDoc) {
-      targetDocumentId = directDoc.id;
-      try {
-        const fallbackToken = token.length === 64 ? token : crypto.randomBytes(32).toString("hex");
-        await db.insert(documentTokens).values({
-          documentId: directDoc.id,
-          token: fallbackToken,
-        }).onConflictDoNothing();
-      } catch (err) {
-        // Ignore duplicate token race condition
-      }
-    }
-  }
-
-  if (!targetDocumentId) {
+  // 1. Fetch document via decoupled FastAPI public endpoint
+  const res = await apiClient<{ success: boolean; document: any; shop: any; paymentMethods: any[] }>(`/v1/documents/public/${token}`);
+  if (!res.data?.success || !res.data.document) {
     notFound();
   }
 
-  // 2. Query full document with client, supplier, shop, and line items
-  const doc = await db.query.documents.findFirst({
-    where: eq(documents.id, targetDocumentId),
-    with: {
-      client: true,
-      supplier: true,
-      shop: true,
-      items: true,
-    },
-  });
+  const doc = res.data.document;
+  const shop = res.data.shop || {};
+  const activeSettlements = res.data.paymentMethods || [];
 
-  if (!doc) {
-    notFound();
-  }
-
-  const shop = doc.shop;
   const party = doc.client || doc.supplier || {
     name: doc.type === "PAYROLL_VOUCHER"
       ? "Internal Company Staff Payroll"
@@ -85,43 +32,19 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
     taxPin: null,
   };
 
-  // 2. Fetch the active shop payment instructions to show settlement channels
-  const activeSettlements = await db.query.paymentMethods.findMany({
-    where: eq(paymentMethods.shopId, shop.id),
-  });
-
   const brandColor = shop.primaryColor || "#000000";
 
   // Build document journey chain for portal display
-  const portalChain: ChainNode[] = [];
-  try {
-    // Walk upward to root
-    let rootId = doc.id;
-    let cursor: typeof doc | null = doc as any;
-    const visited = new Set<string>();
-    while (cursor?.parentDocumentId && !visited.has(cursor.parentDocumentId)) {
-      visited.add(cursor.parentDocumentId);
-      const parent = await db.query.documents.findFirst({
-        where: and(eq(documents.id, cursor.parentDocumentId), eq(documents.shopId, shop.id)),
-      });
-      if (parent) { rootId = parent.id; cursor = parent as any; }
-      else break;
+  const portalChain: ChainNode[] = [
+    {
+      id: doc.id,
+      docNumber: doc.docNumber,
+      type: doc.type,
+      status: doc.status,
+      issueDate: doc.issueDate ? new Date(doc.issueDate) : new Date(),
     }
-    // Recursive descent
-    async function fetchPortalChain(docId: string, depth = 0): Promise<ChainNode[]> {
-      if (depth > 6) return [];
-      const node = await db.query.documents.findFirst({ where: and(eq(documents.id, docId), eq(documents.shopId, shop.id)) });
-      if (!node) return [];
-      const result: ChainNode[] = [{ id: node.id, docNumber: node.docNumber, type: node.type, status: node.status, issueDate: node.issueDate }];
-      const children = await db.query.documents.findMany({
-        where: and(eq(documents.parentDocumentId, node.id), eq(documents.shopId, shop.id)),
-        orderBy: (d, { asc }) => [asc(d.createdAt)],
-      });
-      for (const child of children) result.push(...(await fetchPortalChain(child.id, depth + 1)));
-      return result;
-    }
-    portalChain.push(...(await fetchPortalChain(rootId)));
-  } catch (_) {}
+  ];
+
 
   const hasVat = Boolean(shop.isVatRegistered || parseFloat(doc.taxAmount || "0") > 0);
 
@@ -278,7 +201,7 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
               </div>
               
               <div className="divide-y divide-zinc-200 bg-white">
-                {doc.items.map((item) => {
+                {(doc.items || []).map((item: any) => {
                   const qty = parseFloat(item.quantity) || 1;
                   const unitPrice = parseFloat(item.unitPrice) || 0;
                   const netTotal = qty * unitPrice;
@@ -290,6 +213,7 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
                     <div key={item.id} className="grid grid-cols-12 p-3 items-center font-sans text-xs">
                       <div className="col-span-6 font-bold text-black uppercase tracking-tight">
                         <div>{item.description}</div>
+
                         {item.notes && (
                           <div className="text-[10px] text-zinc-500 italic mt-0.5 font-mono lowercase">
                             ({item.notes})
@@ -375,21 +299,23 @@ export default async function PublicInvoicePortalPage({ params }: PortalPageProp
                 Official Remittance &amp; Payment Pathways
               </span>
               <div className="space-y-3">
-                {activeSettlements.map((pay) => {
-                  const parts = pay.details.includes("|")
-                    ? pay.details.split("|").map((p) => p.trim())
-                    : [pay.details];
+                {activeSettlements.map((pay: any) => {
+                  const detailsStr: string = pay.details || "";
+                  const parts: string[] = detailsStr.includes("|")
+                    ? detailsStr.split("|").map((p: string) => p.trim())
+                    : [detailsStr];
                   return (
                     <div key={pay.id} className="space-y-1.5 border-b border-zinc-200/50 pb-2 last:border-0 last:pb-0">
                       <p className="font-bold text-black uppercase text-[10px] tracking-tight">{pay.name}</p>
                       <div className="pl-2.5 space-y-1 border-l-2 border-zinc-200">
-                        {parts.map((part, idx) => {
+                        {parts.map((part: string, idx: number) => {
                           const colonIndex = part.indexOf(":");
                           if (colonIndex > -1) {
                             const key = part.slice(0, colonIndex).trim();
                             const val = part.slice(colonIndex + 1).trim();
                             return (
                               <div key={idx} className="flex text-[11px] font-sans">
+
                                 <span className="text-zinc-400 font-semibold w-24 shrink-0 uppercase text-[9px] mt-[1.5px]">{key}:</span>
                                 <span className="text-zinc-700 font-medium">{val}</span>
                               </div>

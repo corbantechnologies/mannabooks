@@ -10,12 +10,18 @@ import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { Resend } from "resend";
 import { createJournalEntry } from "@/lib/actions/gl";
+import { apiClient } from "@/lib/api/client";
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_mock_key");
 
 export async function getEmployees(shopId: string) {
     const session = await verifyAndGetSession();
     if (!session) return [];
+
+    const apiRes = await apiClient.get<{ employees: any[] }>(`/v1/employees?shop_id=${shopId}`);
+    if (apiRes.data?.employees) {
+        return apiRes.data.employees;
+    }
 
     return await db.query.employees.findMany({
         where: eq(employees.shopId, shopId),
@@ -43,6 +49,27 @@ export async function registerNewEmployee(formData: {
     if (!session) return { success: false, error: "Unauthorized operation context." };
 
     try {
+        const apiRes = await apiClient.post(`/v1/employees`, {
+            shop_id: formData.shopId,
+            full_name: formData.fullName,
+            email: formData.email,
+            national_id: formData.nationalId,
+            kra_pin: formData.kraPin,
+            base_salary: formData.baseSalary,
+            commission_rate: formData.commissionRate,
+            department: formData.department,
+            designation: formData.designation,
+            employment_type: formData.employmentType || "FULL_TIME",
+            bank_name: formData.bankName,
+            bank_account_number: formData.bankAccountNumber,
+            bank_branch: formData.bankBranch,
+            mpesa_phone: formData.mpesaPhone,
+        });
+
+        if (apiRes.data) {
+            return apiRes.data;
+        }
+
         const trimmedId = formData.nationalId?.trim();
         const trimmedPin = formData.kraPin?.trim().toUpperCase();
 
@@ -161,6 +188,11 @@ export async function deleteEmployee(employeeId: string, shopId: string) {
     if (!session) return { success: false, error: "Unauthorized operation context." };
 
     try {
+        const apiRes = await apiClient.delete(`/v1/employees/${employeeId}?shop_id=${shopId}`);
+        if (apiRes.data) {
+            return apiRes.data;
+        }
+
         await db.delete(employees)
             .where(and(eq(employees.id, employeeId), eq(employees.shopId, shopId)));
 
@@ -178,6 +210,14 @@ export async function deleteEmployee(employeeId: string, shopId: string) {
 export async function getEmployeeById(employeeId: string, shopId: string) {
     const session = await verifyAndGetSession();
     if (!session) return null;
+
+    const apiRes = await apiClient.get<{ employee: any; payrollHistory: any[] }>(`/v1/employees/${employeeId}?shop_id=${shopId}`);
+    if (apiRes.data?.employee) {
+        return {
+            ...apiRes.data.employee,
+            payrollHistory: apiRes.data.payrollHistory || [],
+        };
+    }
 
     const employee = await db.query.employees.findFirst({
         where: and(eq(employees.id, employeeId), eq(employees.shopId, shopId)),
@@ -234,6 +274,24 @@ export async function commitPayrollVoucherRun(input: {
     if (!session) return { success: false, error: "Unauthorized session authority." };
 
     try {
+        const apiRes = await apiClient.post(`/v1/payroll/commit`, {
+            shop_id: input.shopId,
+            payroll_period_code: input.payrollPeriodCode,
+            mode: input.mode || "KENYA_STATUTORY",
+            status: input.status || "DRAFT",
+            issue_date: input.issueDate ? input.issueDate.toISOString() : undefined,
+            lines: input.lines.map((l) => ({
+                employee_id: l.employeeId,
+                employee_name: l.employeeName,
+                base_salary: l.baseSalary,
+                allowances: l.allowances,
+                commissions: l.commissions,
+                custom_deductions: l.customDeductions || 0,
+            })),
+        });
+        if (apiRes.data) {
+            return apiRes.data;
+        }
         return await db.transaction(async (tx) => {
             let globalSubTotal = 0;
             let globalTaxPool = 0;

@@ -1,51 +1,68 @@
-// src/app/portal/proposal/[token]/page.tsx
-import { db } from "@/db";
-import { proposalTokens, proposals, proposalItems } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { ProposalPortalActions } from "./ProposalPortalActions";
 import { markProposalViewedAction } from "@/lib/actions/proposals";
+import { apiClient } from "@/lib/api/client";
 
 interface ProposalPortalPageProps {
   params: Promise<{ token: string }>;
 }
 
+interface ProposalItemData {
+  id: string;
+  packageLabel?: string | null;
+  description: string;
+  notes?: string | null;
+  quantity: string | number;
+  unitPrice: string | number;
+  itemTotal: string | number;
+}
+
+interface ProposalData {
+  id: string;
+  title: string;
+  proposalNumber: string;
+  status: string;
+  currency: string;
+  subtotal: string;
+  notes?: string | null;
+  executiveSummary?: string | null;
+  scopeOfWork?: string | null;
+  amendmentNotes?: string | null;
+  signerName?: string | null;
+  termsAndConditions?: string | null;
+  expiresAt?: string | null;
+  shop?: any;
+  client?: any;
+  deal?: any;
+  items: ProposalItemData[];
+}
+
+
 export default async function PublicProposalPortalPage({ params }: ProposalPortalPageProps) {
   const { token } = await params;
 
-  // Resolve token → proposal
-  const tokenRec = await db.query.proposalTokens.findFirst({
-    where: eq(proposalTokens.token, token),
-    with: {
-      proposal: {
-        with: {
-          shop: { with: { owner: true } },
-          client: true,
-          deal: true,
-          items: { orderBy: [proposalItems.displayOrder] },
-        },
-      },
-    },
-  });
-
-  if (!tokenRec?.proposal) notFound();
-  const proposal = tokenRec.proposal;
+  // Resolve token → proposal via decoupled FastAPI public endpoint
+  const res = await apiClient<{ success: boolean; proposal: ProposalData }>(`/v1/crm/proposals/public/${token}`);
+  if (!res.data?.success || !res.data.proposal) notFound();
+  const proposal = res.data.proposal;
+  const items: ProposalItemData[] = proposal.items || [];
 
   // Silently bump view count (fire-and-forget, does not block SSR)
   markProposalViewedAction(token).catch(() => {});
 
   const isExpired = proposal.expiresAt ? new Date(proposal.expiresAt) < new Date() : false;
   const isTerminal = ["ACCEPTED", "DECLINED"].includes(proposal.status);
-  const subtotal = proposal.items.reduce((s, it) => s + parseFloat(String(it.itemTotal)), 0);
+  const subtotal = items.reduce((s: number, it: ProposalItemData) => s + parseFloat(String(it.itemTotal)), 0);
 
   const shopBrandColor = "#059669"; // default — shop branding can be extended later
 
   // Group items by packageLabel (multi-tier proposals)
-  const hasTiers = proposal.items.some(it => it.packageLabel);
-  const tiers = hasTiers
-    ? Array.from(new Set(proposal.items.map(it => it.packageLabel || "Standard")))
+  const hasTiers = items.some((it: ProposalItemData) => Boolean(it.packageLabel));
+  const tiers: string[] = hasTiers
+    ? Array.from(new Set(items.map((it: ProposalItemData) => it.packageLabel || "Standard")))
     : ["Standard"];
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white">
@@ -125,7 +142,7 @@ export default async function PublicProposalPortalPage({ params }: ProposalPorta
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {proposal.items.map((item) => (
+                  {items.map((item: ProposalItemData) => (
                     <tr key={item.id} className="py-3">
                       <td className="py-3 pr-4">
                         <p className="text-white font-medium">{item.description}</p>
@@ -159,13 +176,14 @@ export default async function PublicProposalPortalPage({ params }: ProposalPorta
           <section className="space-y-4">
             <h2 className="text-xs uppercase tracking-widest text-gray-500 font-medium">Pricing Packages</h2>
             <div className={`grid gap-4 ${tiers.length === 2 ? "md:grid-cols-2" : tiers.length >= 3 ? "md:grid-cols-3" : "grid-cols-1"}`}>
-              {tiers.map((tier) => {
-                const tierItems = proposal.items.filter(it => (it.packageLabel || "Standard") === tier);
-                const tierTotal = tierItems.reduce((s, it) => s + parseFloat(String(it.itemTotal)), 0);
+              {tiers.map((tier: string) => {
+                const tierItems = items.filter((it: ProposalItemData) => (it.packageLabel || "Standard") === tier);
+                const tierTotal = tierItems.reduce((s: number, it: ProposalItemData) => s + parseFloat(String(it.itemTotal)), 0);
                 return (
                   <div key={tier} className="rounded-2xl border border-white/10 bg-white/4 p-6 flex flex-col gap-4">
                     <div>
                       <p className="text-xs uppercase tracking-widest text-gray-500 font-medium">{tier}</p>
+
                       <p className="text-2xl font-bold text-white mt-1">{formatCurrency(tierTotal, proposal.currency)}</p>
                     </div>
                     <ul className="space-y-2">

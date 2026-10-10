@@ -233,115 +233,78 @@ export interface ShopPlanDetails {
     canAccessPayroll: boolean;
 }
 
+import { apiClient } from "@/lib/api/client";
+
 /**
  * Resolves full plan limits, active subscription status, and usage statistics for a shop tenant.
  */
 export async function getShopPlanDetails(shopId: string): Promise<ShopPlanDetails | null> {
-    const shop = await db.query.shops.findFirst({
-        where: eq(shops.id, shopId),
-        with: {
-            owner: true,
-        },
-    });
+    const freeSpec = PLAN_SPECS.FREE;
+    try {
+        const apiRes = await apiClient<{ success: boolean; planDetails: any }>(`/v1/workspaces/${shopId}/plan-details`);
+        if (apiRes.data?.success && apiRes.data.planDetails) {
+            const pd = apiRes.data.planDetails;
+            const spec: PlanDefinition = pd.planSpec || freeSpec;
+            const memCnt = Number(pd.usage?.membersCount ?? 1);
+            const locCnt = Number(pd.usage?.locationsCount ?? 1);
 
-    if (!shop) return null;
-
-    const dynamicSpecs = await getDynamicPlanSpecs();
-
-    // In User-Centric Billing: the plan tier and expiration are governed by the Owner User Account (with shop fallback)
-    const isLifetimePro = Boolean(
-        shop.owner?.isLifetimePro ||
-        shop.owner?.isSuperAdmin ||
-        shop.isLifetimePro
-    );
-
-    const userPlan = (shop.owner?.plan || "").toUpperCase();
-    const shopPlan = (shop.plan || "").toUpperCase();
-    const rawPlan = isLifetimePro
-        ? "PRO"
-        : (userPlan && userPlan !== "FREE" ? userPlan : (shopPlan && shopPlan !== "FREE" ? shopPlan : "FREE"));
-
-    const effectivePlanKey = (rawPlan in dynamicSpecs || rawPlan in PLAN_SPECS) ? rawPlan : "FREE";
-    const baseSpec = dynamicSpecs[effectivePlanKey] || PLAN_SPECS[effectivePlanKey] || PLAN_SPECS.FREE;
-
-    const rawExpiry = shop.owner?.subscriptionExpiresAt || shop.subscriptionExpiresAt;
-    const rawGraceExpiry = shop.owner?.gracePeriodEndsAt || shop.gracePeriodEndsAt;
-    const expiresAt = rawExpiry ? new Date(rawExpiry) : null;
-    const nowMs = Date.now();
-
-    // Check expiration and grace period (5 days grace window)
-    let inGracePeriod = false;
-    let isExpired = false;
-    let graceDaysRemaining: number | null = null;
-    let effectiveGraceEndsAt: Date | null = null;
-
-    if (!isLifetimePro && expiresAt !== null && nowMs > expiresAt.getTime()) {
-        const graceEndMs = rawGraceExpiry
-            ? new Date(rawGraceExpiry).getTime()
-            : expiresAt.getTime() + (5 * 24 * 60 * 60 * 1000);
-        
-        effectiveGraceEndsAt = new Date(graceEndMs);
-
-        if (nowMs < graceEndMs) {
-            inGracePeriod = true;
-            graceDaysRemaining = Math.max(0, Math.ceil((graceEndMs - nowMs) / (1000 * 60 * 60 * 24)));
-        } else {
-            isExpired = true;
+            return {
+                shopId: pd.shopId || shopId,
+                shopName: pd.shopName || "Workspace",
+                slug: pd.slug || "",
+                plan: (pd.plan || "FREE") as any,
+                planSpec: spec,
+                isLifetimePro: Boolean(pd.isLifetimePro),
+                isSuspended: Boolean(pd.isSuspended),
+                subscriptionStatus: pd.subscriptionStatus || "ACTIVE",
+                isExpired: Boolean(pd.isExpired),
+                inGracePeriod: Boolean(pd.inGracePeriod),
+                graceDaysRemaining: pd.graceDaysRemaining ?? null,
+                gracePeriodEndsAt: pd.graceEndsAt ? new Date(pd.graceEndsAt) : null,
+                isSoftLocked: Boolean(pd.isExpired),
+                daysRemaining: pd.daysRemaining ?? null,
+                expiresAt: pd.expiresAt ? new Date(pd.expiresAt) : null,
+                currentMembersCount: memCnt,
+                currentLocationsCount: locCnt,
+                canAddMember: memCnt < spec.maxMembers,
+                canAddLocation: locCnt < spec.maxLocations,
+                canTransferStock: spec.canTransferStock,
+                canAccessGL: spec.hasGeneralLedger,
+                canAccessReconciliation: spec.hasReconciliation,
+                canAccessPayroll: spec.hasStatutoryPayroll,
+            };
         }
+    } catch (e) {
+        console.warn("[getShopPlanDetails] API fetch failed, falling back", e);
     }
 
-    const daysRemaining = (expiresAt && !isExpired && !inGracePeriod)
-        ? Math.max(0, Math.ceil((expiresAt.getTime() - nowMs) / (1000 * 60 * 60 * 24)))
-        : null;
-
-    // Count active members and locations (strictly active records only)
-    const [memberCountRes, locationCountRes] = await Promise.all([
-        db.select({ value: count() }).from(shopMembers).where(and(eq(shopMembers.shopId, shopId), eq(shopMembers.isActive, true))),
-        db.select({ value: count() }).from(stockLocations).where(and(eq(stockLocations.shopId, shopId), eq(stockLocations.isActive, true))),
-    ]);
-
-    const currentMembersCount = Number(memberCountRes[0]?.value ?? 0);
-    const currentLocationsCount = Number(locationCountRes[0]?.value ?? 0);
-
-    const enterpriseSpec = dynamicSpecs.ENTERPRISE || PLAN_SPECS.ENTERPRISE;
-    const freeSpec = dynamicSpecs.FREE || PLAN_SPECS.FREE;
-    
-    // During grace period, full plan features remain unlocked! Only when isExpired (soft-locked) do limits revert to free.
-    const planSpec = isLifetimePro ? enterpriseSpec : (isExpired ? freeSpec : baseSpec);
-    const subscriptionStatus = isLifetimePro
-        ? "LIFETIME_FREE"
-        : inGracePeriod
-        ? "GRACE_PERIOD"
-        : isExpired
-        ? "EXPIRED"
-        : (shop.subscriptionStatus || "ACTIVE");
-
     return {
-        shopId: shop.id,
-        shopName: shop.name,
-        slug: shop.slug,
-        plan: isLifetimePro ? "PRO" : (effectivePlanKey as any),
-        planSpec,
-        isLifetimePro,
-        isSuspended: shop.isSuspended,
-        subscriptionStatus,
-        isExpired,
-        inGracePeriod,
-        graceDaysRemaining,
-        gracePeriodEndsAt: effectiveGraceEndsAt,
-        isSoftLocked: isExpired,
-        daysRemaining,
-        expiresAt,
-        currentMembersCount,
-        currentLocationsCount,
-        canAddMember: currentMembersCount < planSpec.maxMembers,
-        canAddLocation: currentLocationsCount < planSpec.maxLocations,
-        canTransferStock: planSpec.canTransferStock,
-        canAccessGL: planSpec.hasGeneralLedger,
-        canAccessReconciliation: planSpec.hasReconciliation,
-        canAccessPayroll: planSpec.hasStatutoryPayroll,
+        shopId,
+        shopName: "Workspace",
+        slug: "",
+        plan: "FREE",
+        planSpec: freeSpec,
+        isLifetimePro: false,
+        isSuspended: false,
+        subscriptionStatus: "ACTIVE",
+        isExpired: false,
+        inGracePeriod: false,
+        graceDaysRemaining: null,
+        gracePeriodEndsAt: null,
+        isSoftLocked: false,
+        daysRemaining: null,
+        expiresAt: null,
+        currentMembersCount: 1,
+        currentLocationsCount: 1,
+        canAddMember: false,
+        canAddLocation: false,
+        canTransferStock: freeSpec.canTransferStock,
+        canAccessGL: freeSpec.hasGeneralLedger,
+        canAccessReconciliation: freeSpec.hasReconciliation,
+        canAccessPayroll: freeSpec.hasStatutoryPayroll,
     };
 }
+
 
 /**
  * Asserts that the shop tenant can invite or add another team member.

@@ -30,6 +30,8 @@ function toLocalDateStr(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+import { apiClient } from "@/lib/api/client";
+
 /**
  * Gets the active contextual fiscal year for a given shop.
  * Priority:
@@ -39,23 +41,21 @@ function toLocalDateStr(date: Date): string {
  * 4. Latest declared fiscal year
  */
 export async function getActiveFiscalYearContext(shopId: string): Promise<ActiveFiscalYearResult> {
-  const allFys = await db.query.fiscalYears.findMany({
-    where: eq(fiscalYears.shopId, shopId),
-    orderBy: [desc(fiscalYears.startDate)],
-  });
+  let formattedFys: FiscalYearOption[] = [];
 
-  const formattedFys: FiscalYearOption[] = allFys.map((fy) => ({
-    id: fy.id,
-    label: fy.label,
-    startDate: fy.startDate,
-    endDate: fy.endDate,
-    isClosed: fy.isClosed,
-    isCurrent: fy.isCurrent,
-  }));
+  try {
+    const res = await apiClient<{ success: boolean; fiscalYears: FiscalYearOption[] }>(`/v1/accounts/fiscal-years?shop_id=${shopId}`);
+    if (res.data?.success && Array.isArray(res.data.fiscalYears)) {
+      formattedFys = res.data.fiscalYears;
+    }
+  } catch (err) {
+    console.warn("[getActiveFiscalYearContext] API error, falling back", err);
+  }
 
   if (formattedFys.length === 0) {
     return { activeFiscalYear: null, allFiscalYears: [] };
   }
+
 
   // Check cookie
   const cookieStore = await cookies();

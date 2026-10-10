@@ -7,6 +7,7 @@ import { eq, and } from "drizzle-orm";
 import { verifyAndGetSession } from "@/lib/actions/auth";
 import { enforcePermission } from "@/lib/actions/rbac";
 import { revalidatePath } from "next/cache";
+import { apiClient } from "@/lib/api/client";
 
 export type EmploymentType = "FULL_TIME" | "PART_TIME" | "CONTRACT" | "INTERN";
 
@@ -37,6 +38,27 @@ export async function updateEmployeeExtended(
 ) {
     try {
         await enforcePermission(shopId, "manage_payroll");
+
+        const apiRes = await apiClient.patch(`/v1/employees/${employeeId}?shop_id=${shopId}`, {
+            full_name: data.fullName,
+            email: data.email,
+            department: data.department,
+            designation: data.designation,
+            employment_type: data.employmentType,
+            national_id: data.nationalId,
+            kra_pin: data.kraPin,
+            bank_name: data.bankName,
+            bank_account_number: data.bankAccountNumber,
+            bank_branch: data.bankBranch,
+            mpesa_phone: data.mpesaPhone,
+            base_salary: data.baseSalary,
+            commission_rate: data.commissionRate,
+            is_active: data.isActive,
+        });
+
+        if (apiRes.data) {
+            return apiRes.data;
+        }
 
         const updatePayload: Record<string, any> = {};
 
@@ -110,6 +132,13 @@ export async function linkEmployeeToUser(
     try {
         await enforcePermission(shopId, "manage_team");
 
+        const apiRes = await apiClient.post(`/v1/employees/${employeeId}/link-user?shop_id=${shopId}`, {
+            user_id: userId,
+        });
+        if (apiRes.data) {
+            return apiRes.data;
+        }
+
         // Verify that target user belongs to this shop
         const membership = await db.query.shopMembers.findFirst({
             where: and(
@@ -123,7 +152,6 @@ export async function linkEmployeeToUser(
             return { success: false, error: "The selected user does not belong to this workspace." };
         }
 
-        // Check if user is already linked to another employee in this shop
         const existingEmployee = await db.query.employees.findFirst({
             where: and(
                 eq(employees.shopId, shopId),
@@ -155,12 +183,14 @@ export async function linkEmployeeToUser(
     }
 }
 
-/**
- * Unlink an employee profile from their user account
- */
 export async function unlinkEmployeeFromUser(shopId: string, employeeId: string) {
     try {
         await enforcePermission(shopId, "manage_team");
+
+        const apiRes = await apiClient.post(`/v1/employees/${employeeId}/unlink-user?shop_id=${shopId}`, {});
+        if (apiRes.data) {
+            return apiRes.data;
+        }
 
         await db.update(employees)
             .set({ userId: null })
@@ -179,12 +209,14 @@ export async function unlinkEmployeeFromUser(shopId: string, employeeId: string)
     }
 }
 
-/**
- * Fetch linkable workspace users for this shop
- */
 export async function getLinkableWorkspaceUsers(shopId: string) {
     const session = await verifyAndGetSession();
     if (!session) return [];
+
+    const apiRes = await apiClient.get<{ users: any[] }>(`/v1/employees/linkable-users/${shopId}`);
+    if (apiRes.data?.users) {
+        return apiRes.data.users;
+    }
 
     const members = await db.query.shopMembers.findMany({
         where: and(

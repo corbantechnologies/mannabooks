@@ -32,8 +32,8 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
     notFound();
   }
 
-  const totalLifetimeEarnings = employeeData.payrollHistory.reduce(
-    (acc, item) => acc + parseFloat(item.netPay),
+  const totalLifetimeEarnings = (employeeData.payrollHistory || []).reduce(
+    (acc: number, item: any) => acc + parseFloat(item.netPay || 0),
     0
   );
 
@@ -186,7 +186,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
               </tr>
             </thead>
             <tbody className="bg-white">
-              {employeeData.payrollHistory.map((item, idx) => (
+              {(employeeData.payrollHistory || []).map((item: any, idx: number) => (
                 <tr key={idx} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
                   <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider">
                     <Link

@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { employees, expenseClaims, documents, shops } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { verifyAndGetSession } from "@/lib/actions/auth";
+import { apiClient } from "@/lib/api/client";
 
 export interface ParsedPayslip {
     voucherId: string;
@@ -64,6 +65,11 @@ function parsePayslipDescription(desc: string) {
 export async function getCurrentEmployeeProfile(shopId: string) {
     const session = await verifyAndGetSession();
     if (!session) return { isLinked: false, employee: null };
+
+    const apiRes = await apiClient.get<{ isLinked: boolean; employee: any; userId?: string }>(`/v1/ess/profile?shop_id=${shopId}`);
+    if (apiRes.data) {
+        return apiRes.data;
+    }
 
     const employee = await db.query.employees.findFirst({
         where: and(

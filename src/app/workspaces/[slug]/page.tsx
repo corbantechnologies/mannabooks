@@ -1,7 +1,4 @@
 // src/app/workspaces/[slug]/page.tsx
-import { db } from "@/db";
-import { shops, documents, clients, products, paymentMethods, expenses } from "@/db/schema";
-import { eq, count, and, desc, gte } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { formatCurrency } from "@/lib/utils";
@@ -9,9 +6,9 @@ import Link from "next/link";
 import { OnboardingTracker } from "./OnboardingTracker";
 import { DashboardRevenueChart, type WeekRevenueBucket } from "./DashboardRevenueChart";
 import { LowStockAlertBanner } from "@/components/LowStockAlertBanner";
-import { getRecurringInvoices } from "@/lib/actions/recurring";
 import { RecurringInvoicesWidget } from "./RecurringInvoicesWidget";
 import { QuickCreatePopover } from "./QuickCreatePopover";
+import { apiClient } from "@/lib/api/client";
 import {
   TrendingUp, Clock, Star, Activity, ChevronRight,
   FileText, Receipt, FileCheck, AlertCircle, Plus
@@ -31,47 +28,36 @@ export default async function WorkspaceOverviewPage({ params }: WorkspaceOvervie
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // 2. Parallel data fetching
-  const [
-    recentDocs,
-    clientCountRes,
-    productCountRes,
-    allDocs,
-    paymentCountRes,
-    allProducts,
-    allClients,
-    recentExpenses,
-    recurringInvoices,
-  ] = await Promise.all([
-    db.query.documents.findMany({
-      where: eq(documents.shopId, shop.id),
-      with: {
-        client: true,
-        supplier: true,
-      },
-      orderBy: [desc(documents.issueDate)],
-      limit: 10,
-    }),
-    db.select({ value: count() }).from(clients).where(eq(clients.shopId, shop.id)),
-    db.select({ value: count() }).from(products).where(eq(products.shopId, shop.id)),
-    db.query.documents.findMany({
-      where: eq(documents.shopId, shop.id),
-      with: { client: true },
-    }),
-    db.select({ value: count() }).from(paymentMethods).where(eq(paymentMethods.shopId, shop.id)),
-    db.query.products.findMany({
-      where: eq(products.shopId, shop.id),
-    }),
-    db.query.clients.findMany({
-      where: eq(clients.shopId, shop.id),
-    }),
-    db.query.expenses.findMany({
-      where: eq(expenses.shopId, shop.id),
-      orderBy: [desc(expenses.expenseDate)],
-      limit: 4,
-    }),
-    getRecurringInvoices(shop.id),
-  ]);
+  // 2. Fetch all dashboard analytics & collections via decoupled FastAPI endpoint
+  const summaryRes = await apiClient<{
+    success: boolean;
+    recentDocs: any[];
+    clientCount: number;
+    productCount: number;
+    allDocs: any[];
+    paymentCount: number;
+    allProducts: any[];
+    allClients: any[];
+    recentExpenses: any[];
+    recurringInvoices: any[];
+  }>(`/v1/workspaces/${shop.id}/dashboard-summary`);
+
+  const dashboard = summaryRes.data;
+  const recentDocs = dashboard?.recentDocs || [];
+  const allDocs = dashboard?.allDocs || [];
+  const allProducts = dashboard?.allProducts || [];
+  const allClients = dashboard?.allClients || [];
+  const recentExpenses = dashboard?.recentExpenses || [];
+  const recurringInvoices = (dashboard?.recurringInvoices || []).map((r: any) => ({
+    ...r,
+    nextRecurringDate: r.nextRecurringDate ? new Date(r.nextRecurringDate) : null,
+    createdAt: r.createdAt ? new Date(r.createdAt) : new Date(),
+  }));
+
+  const clientCountRes = [{ value: dashboard?.clientCount ?? 0 }];
+  const productCountRes = [{ value: dashboard?.productCount ?? 0 }];
+  const paymentCountRes = [{ value: dashboard?.paymentCount ?? 1 }];
+
 
   // 3. Compute 30-day weekly buckets
   const weeks: WeekRevenueBucket[] = [];

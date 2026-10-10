@@ -22,41 +22,28 @@ export interface RecurringInvoiceItem {
   createdAt: Date;
 }
 
+import { apiClient } from "@/lib/api/client";
+
 /**
  * Fetch all recurring invoices for a workspace.
  */
 export async function getRecurringInvoices(shopId: string): Promise<RecurringInvoiceItem[]> {
   try {
-    const recDocs = await db.query.documents.findMany({
-      where: and(
-        eq(documents.shopId, shopId),
-        eq(documents.type, "INVOICE"),
-        eq(documents.isRecurring, true)
-      ),
-      with: {
-        client: true,
-      },
-      orderBy: [asc(documents.nextRecurringDate)],
-    });
-
-    return recDocs.map((d) => ({
-      id: d.id,
-      docNumber: d.docNumber,
-      clientName: d.client?.name || "Walk-In Customer",
-      clientEmail: d.client?.email || "—",
-      clientId: d.clientId,
-      currency: d.currency || "KES",
-      grandTotal: d.grandTotal,
-      isRecurring: d.isRecurring,
-      recurringInterval: d.recurringInterval,
-      nextRecurringDate: d.nextRecurringDate,
-      createdAt: d.createdAt,
-    }));
+    const res = await apiClient<{ success: boolean; recurringInvoices: RecurringInvoiceItem[] }>(`/v1/workspaces/${shopId}/recurring-invoices`);
+    if (res.data?.success && Array.isArray(res.data.recurringInvoices)) {
+      return res.data.recurringInvoices.map((d: any) => ({
+        ...d,
+        nextRecurringDate: d.nextRecurringDate ? new Date(d.nextRecurringDate) : null,
+        createdAt: d.createdAt ? new Date(d.createdAt) : new Date(),
+      }));
+    }
+    return [];
   } catch (error) {
     console.error("Failed to load recurring invoices:", error);
     return [];
   }
 }
+
 
 /**
  * Action: Toggle recurring status or modify recurring interval of an invoice.

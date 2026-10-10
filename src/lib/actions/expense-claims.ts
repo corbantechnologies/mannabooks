@@ -9,6 +9,7 @@ import { enforcePermission } from "@/lib/actions/rbac";
 import { revalidatePath } from "next/cache";
 import { createJournalEntry } from "./gl";
 import { EXPENSE_CATEGORY_ACCOUNT_MAP } from "../gl-constants";
+import { apiClient } from "@/lib/api/client";
 
 export type ExpenseCategory = 'RENT' | 'UTILITIES' | 'FUEL' | 'MARKETING' | 'SALARIES' | 'OFFICE_SUPPLIES' | 'OTHER';
 export type ExpenseClaimStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'DISBURSED';
@@ -44,9 +45,27 @@ export async function createExpenseClaim(data: CreateExpenseClaimData) {
     if (!session) return { success: false, error: "Unauthorized. Please log in." };
 
     try {
-        const claimNumber = generateClaimNumber();
         const dateObj = typeof data.claimDate === "string" ? new Date(data.claimDate) : data.claimDate;
         const formattedDate = dateObj.toISOString().split("T")[0];
+
+        const apiRes = await apiClient.post(`/v1/expense-claims`, {
+            shop_id: data.shopId,
+            employee_id: data.employeeId,
+            title: data.title,
+            description: data.description,
+            amount: data.amount,
+            claim_date: formattedDate,
+            category: data.category,
+            cost_center_id: data.costCenterId,
+            receipt_url: data.receiptUrl,
+            submit_now: data.submitNow || false,
+        });
+
+        if (apiRes.data) {
+            return apiRes.data;
+        }
+
+        const claimNumber = generateClaimNumber();
 
         const [newClaim] = await db.insert(expenseClaims).values({
             shopId: data.shopId,
@@ -141,6 +160,11 @@ export async function submitExpenseClaim(shopId: string, claimId: string) {
     if (!session) return { success: false, error: "Unauthorized." };
 
     try {
+        const apiRes = await apiClient.post(`/v1/expense-claims/${claimId}/submit?shop_id=${shopId}`, {});
+        if (apiRes.data) {
+            return apiRes.data;
+        }
+
         await db.update(expenseClaims)
             .set({ status: "SUBMITTED" })
             .where(and(eq(expenseClaims.id, claimId), eq(expenseClaims.shopId, shopId)));
@@ -157,9 +181,6 @@ export async function submitExpenseClaim(shopId: string, claimId: string) {
     }
 }
 
-/**
- * Manager approval or rejection of a submitted expense claim
- */
 export async function reviewExpenseClaim(
     shopId: string,
     claimId: string,
@@ -167,6 +188,16 @@ export async function reviewExpenseClaim(
     notes?: string
 ) {
     try {
+        await enforcePermission(shopId, "manage_expenses");
+
+        const apiRes = await apiClient.post(`/v1/expense-claims/${claimId}/review?shop_id=${shopId}`, {
+            decision,
+            notes,
+        });
+        if (apiRes.data) {
+            return apiRes.data;
+        }
+
         const { userId } = await enforcePermission(shopId, "manage_expenses");
 
         const claim = await db.query.expenseClaims.findFirst({
@@ -206,9 +237,6 @@ export async function reviewExpenseClaim(
     }
 }
 
-/**
- * Disburse an approved claim: records an expense and creates GL journal entry
- */
 export async function disburseExpenseClaim(
     shopId: string,
     claimId: string,
@@ -220,6 +248,19 @@ export async function disburseExpenseClaim(
 ) {
     try {
         await enforcePermission(shopId, "manage_expenses");
+
+        const pDate = disbursementData.paymentDate
+            ? (typeof disbursementData.paymentDate === "string" ? disbursementData.paymentDate : disbursementData.paymentDate.toISOString())
+            : undefined;
+
+        const apiRes = await apiClient.post(`/v1/expense-claims/${claimId}/disburse?shop_id=${shopId}`, {
+            payment_channel: disbursementData.paymentChannel,
+            payment_reference: disbursementData.paymentReference,
+            payment_date: pDate,
+        });
+        if (apiRes.data) {
+            return apiRes.data;
+        }
 
         const claim = await db.query.expenseClaims.findFirst({
             where: and(
@@ -293,12 +334,14 @@ export async function disburseExpenseClaim(
     }
 }
 
-/**
- * Fetch all workspace expense claims with relational data
- */
 export async function getWorkspaceExpenseClaims(shopId: string, filterStatus?: string) {
     try {
         await enforcePermission(shopId, "manage_expenses");
+
+        const apiRes = await apiClient.get<{ claims: any[] }>(`/v1/expense-claims?shop_id=${shopId}${filterStatus ? `&filter_status=${filterStatus}` : ''}`);
+        if (apiRes.data?.claims) {
+            return { success: true, claims: apiRes.data.claims };
+        }
 
         const whereCondition = filterStatus && filterStatus !== "ALL"
             ? and(eq(expenseClaims.shopId, shopId), eq(expenseClaims.status, filterStatus as any))

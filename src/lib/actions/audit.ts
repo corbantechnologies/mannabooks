@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { db } from "@/db";
 import { auditLogs } from "@/db/schema";
@@ -42,16 +42,16 @@ export interface AuditInput {
  */
 export async function logAudit(input: AuditInput): Promise<void> {
     try {
-        await db.insert(auditLogs).values({
-            shopId: input.shopId,
-            userId: input.userId ?? null,
+        const { apiClient } = await import("@/lib/api/client");
+        await apiClient.post("/v1/governance/audit-logs", {
+            shop_id: input.shopId,
             action: input.action,
-            tableName: input.tableName,
-            recordId: input.recordId ?? null,
-            recordLabel: input.recordLabel ?? null,
-            before: input.before ?? null,
-            after: input.after ?? null,
-            ipAddress: input.ipAddress ?? null,
+            table_name: input.tableName,
+            record_id: input.recordId,
+            record_label: input.recordLabel,
+            before_state: input.before,
+            after_state: input.after,
+            ip_address: input.ipAddress,
         });
     } catch (err) {
         // Silently swallow — audit log failures must never surface to the user

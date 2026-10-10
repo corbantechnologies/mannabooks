@@ -5,6 +5,7 @@ import { notifications, documents, products, shops } from "@/db/schema";
 import { eq, and, desc, or, isNull, sql } from "drizzle-orm";
 import { verifyAndGetSession } from "./auth";
 import { revalidatePath } from "next/cache";
+import { apiClient } from "@/lib/api/client";
 
 export type NotificationType =
   | "INVOICE_OVERDUE"
@@ -29,6 +30,18 @@ export interface CreateNotificationInput {
  */
 export async function createNotificationAction(input: CreateNotificationInput) {
   try {
+    const apiRes = await apiClient.post("/v1/governance/notifications", {
+      user_id: input.userId,
+      shop_id: input.shopId || null,
+      title: input.title,
+      message: input.message,
+      type: input.type || "SYSTEM",
+      link: input.link || null,
+    });
+    if (apiRes.data) {
+      return apiRes.data;
+    }
+
     const [record] = await db
       .insert(notifications)
       .values({
@@ -57,6 +70,15 @@ export async function getNotificationsAction(shopId?: string) {
   if (!session) return { success: false, notifications: [], unreadCount: 0 };
 
   try {
+    const apiRes = await apiClient.get<{ notifications: any[] }>(`/v1/governance/notifications${shopId ? `?shop_id=${shopId}` : ''}`);
+    if (apiRes.data?.notifications) {
+      const notifs = apiRes.data.notifications;
+      return {
+        success: true,
+        notifications: notifs,
+        unreadCount: notifs.filter((n: any) => !n.is_read && !n.isRead).length,
+      };
+    }
     const whereCondition = shopId
       ? and(
           eq(notifications.userId, session.userId),
@@ -91,6 +113,14 @@ export async function markNotificationReadAction(notificationId: string, shopSlu
   if (!session) return { success: false, error: "Unauthorized." };
 
   try {
+    const apiRes = await apiClient.patch(`/v1/governance/notifications/${notificationId}/read`);
+    if (apiRes.data) {
+      if (shopSlug) {
+        revalidatePath(`/workspaces/${shopSlug}`);
+      }
+      return apiRes.data;
+    }
+
     await db
       .update(notifications)
       .set({ isRead: true })

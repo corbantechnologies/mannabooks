@@ -3,9 +3,7 @@ import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { logoutAction } from "@/lib/actions/logout";
 import { getShopPlanDetails } from "@/lib/paywall";
 import Link from "next/link";
-import { db } from "@/db";
-import { fiscalYears } from "@/db/schema";
-import { eq } from "drizzle-orm";
+
 
 import { GracePeriodBanner } from "@/components/GracePeriodBanner";
 import { FiscalYearNoticeBanner } from "@/components/FiscalYearNoticeBanner";

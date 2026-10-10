@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { logAudit } from "./audit";
 import crypto from "crypto";
 import { Resend } from "resend";
+import { apiClient } from "@/lib/api/client";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -30,6 +31,20 @@ export async function inviteTeamMember(
         await assertCanAddMember(shopId);
 
         const normalizedEmail = email.toLowerCase().trim();
+
+        // Delegate to FastAPI
+        const apiRes = await apiClient.post(`/v1/workspaces/${shopId}/invitations`, {
+            email: normalizedEmail,
+            role,
+            custom_permissions: customPermissions,
+            assigned_location_ids: options?.assignedLocationIds || [],
+            hide_cost_prices: options?.hideCostPrices || false,
+            direct_approval_limit: options?.directApprovalLimit || 0,
+        });
+        if (apiRes.data) {
+            revalidatePath(`/workspaces/${shopId}/team`);
+            return apiRes.data;
+        }
 
         // 1. Check if the user exists in the system
         const targetUser = await db.query.users.findFirst({
@@ -140,6 +155,12 @@ export async function removeTeamMember(shopId: string, memberId: string) {
     try {
         await enforcePermission(shopId, "manage_team");
 
+        const apiRes = await apiClient.delete(`/v1/workspaces/${shopId}/members/${memberId}`);
+        if (apiRes.data) {
+            revalidatePath(`/workspaces/${shopId}/team`);
+            return apiRes.data;
+        }
+
         // Prevent removing the owner
         const membership = await db.query.shopMembers.findFirst({
             where: and(
@@ -159,18 +180,6 @@ export async function removeTeamMember(shopId: string, memberId: string) {
         await db.delete(shopMembers).where(eq(shopMembers.id, memberId));
 
         revalidatePath(`/workspaces/${shopId}/team`);
-
-        // AUDIT
-        logAudit({
-            shopId,
-            userId: undefined,
-            action: "MEMBER_REMOVED",
-            tableName: "shop_members",
-            recordId: memberId,
-            recordLabel: `User ${membership.userId} removed (was ${membership.role})`,
-            before: { role: membership.role, userId: membership.userId },
-        });
-
         return { success: true };
     } catch (error: any) {
         console.error("Failed to remove team member:", error);
@@ -181,6 +190,12 @@ export async function removeTeamMember(shopId: string, memberId: string) {
 export async function revokeInvitation(shopId: string, inviteId: string) {
     try {
         await enforcePermission(shopId, "manage_team");
+
+        const apiRes = await apiClient.delete(`/v1/workspaces/${shopId}/invitations/${inviteId}`);
+        if (apiRes.data) {
+            revalidatePath(`/workspaces/${shopId}/team`);
+            return apiRes.data;
+        }
 
         const invite = await db.query.shopInvitations.findFirst({
             where: and(
@@ -217,6 +232,18 @@ export async function updateTeamMemberRoleAndPermissions(
     try {
         await enforcePermission(shopId, "manage_team");
 
+        const apiRes = await apiClient.patch(`/v1/workspaces/${shopId}/members/${memberId}`, {
+            role,
+            custom_permissions: customPermissions,
+            assigned_location_ids: options?.assignedLocationIds,
+            hide_cost_prices: options?.hideCostPrices,
+            direct_approval_limit: options?.directApprovalLimit,
+        });
+        if (apiRes.data) {
+            revalidatePath(`/workspaces/${shopId}/team`);
+            return apiRes.data;
+        }
+
         const membership = await db.query.shopMembers.findFirst({
             where: and(
                 eq(shopMembers.id, memberId),
@@ -244,19 +271,6 @@ export async function updateTeamMemberRoleAndPermissions(
             .where(eq(shopMembers.id, memberId));
 
         revalidatePath(`/workspaces/${shopId}/team`);
-
-        // AUDIT: Role/permission change
-        logAudit({
-            shopId,
-            userId: undefined,
-            action: "ROLE_CHANGE",
-            tableName: "shop_members",
-            recordId: memberId,
-            recordLabel: `User ${membership.userId}`,
-            before: { role: membership.role },
-            after: { role },
-        });
-
         return { success: true };
     } catch (error: any) {
         console.error("Failed to update team member:", error);

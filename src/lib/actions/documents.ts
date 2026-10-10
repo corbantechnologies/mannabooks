@@ -123,6 +123,40 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
             return { success: false, error: "A document must contain at least one line item entry." };
         }
 
+        // Strangler Pattern: Delegate to FastAPI if enabled
+        const { isApiModuleEnabled } = await import("@/lib/api/flags");
+        if (isApiModuleEnabled("documents")) {
+            const { apiCall } = await import("@/lib/api/client");
+            const apiRes = await apiCall<{ id: string; doc_number: string }>(`/v1/documents?shop_id=${input.shopId}`, {
+                method: "POST",
+                body: JSON.stringify({
+                    client_id: input.clientId || null,
+                    supplier_id: input.supplierId || null,
+                    type: input.type === "QUOTATION" ? "QUOTE" : input.type,
+                    status: determineDefaultStatus(input.type, input.sourceDocType),
+                    requires_etims: input.requiresEtims || false,
+                    notes: input.notes || null,
+                    terms_and_conditions: input.termsAndConditions || null,
+                    currency: input.currency || "KES",
+                    location_id: input.locationId || null,
+                    payment_channel: input.paymentChannel || null,
+                    payment_reference: input.paymentReference || null,
+                    items: input.items.map((it) => ({
+                        product_id: it.productId || null,
+                        description: it.description,
+                        notes: it.notes || null,
+                        quantity: it.quantity,
+                        unit_price: it.unitPrice,
+                        tax_type: it.taxType,
+                    })),
+                }),
+            });
+            if (!apiRes.error && apiRes.data) {
+                revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+                return { success: true, documentId: apiRes.data.id, serial: apiRes.data.doc_number };
+            }
+        }
+
         return await db.transaction(async (tx) => {
 
             // 1. Fetch current shop compliance criteria to determine active tax processing
@@ -531,6 +565,42 @@ export async function createBillingDocument(input: CreateDocumentInput): Promise
                 }
             }
 
+            // ASYNC eTIMS FISCALIZATION TRIGGER:
+            if (isFiscalDocType(newDoc.type) && (newDoc.status === "ISSUED" || newDoc.status === "PAID")) {
+                (async () => {
+                    try {
+                        const { isApiModuleEnabled } = await import("@/lib/api/flags");
+                        if (isApiModuleEnabled("etims")) {
+                            const { apiClient } = await import("@/lib/api/client");
+                            await apiClient("/v1/etims/transmit", {
+                                method: "POST",
+                                body: JSON.stringify({
+                                    shop_id: input.shopId,
+                                    document_id: newDoc.id,
+                                    customer_name: "Customer",
+                                    sales_type_code: newDoc.type === "CREDIT_NOTE" ? "C" : "N",
+                                    receipt_type_code: newDoc.type === "RECEIPT" ? "S" : "S",
+                                    items: input.items.map((it, idx) => ({
+                                        itemSeq: idx + 1,
+                                        itemCd: it.productId || `ITEM-${idx + 1}`,
+                                        itemNm: it.description,
+                                        qty: it.quantity,
+                                        prc: it.unitPrice,
+                                        splyAmt: it.quantity * it.unitPrice,
+                                        taxTyCd: it.taxType === "V_16" ? "A" : (it.taxType === "V_0" ? "B" : "C"),
+                                        taxblAmt: it.quantity * it.unitPrice,
+                                        taxAmt: it.taxType === "V_16" ? it.quantity * it.unitPrice * 0.16 : 0,
+                                        totAmt: it.quantity * it.unitPrice * (it.taxType === "V_16" ? 1.16 : 1),
+                                    })),
+                                }),
+                            });
+                        }
+                    } catch (eTIMSErr) {
+                        console.warn("[eTIMS Dispatch Warning]", eTIMSErr);
+                    }
+                })();
+            }
+
             return { success: true, documentId: newDoc.id, serial: formattedSerial };
         });
     } catch (error) {
@@ -777,6 +847,8 @@ export async function updateDocumentStatus(input: UpdateDocumentStatusInput): Pr
  */
 export async function deleteDocument(documentId: string, shopId: string, shopSlug: string) {
     try {
+        await enforcePermission(shopId, "manage_documents");
+
         const existing = await db.query.documents.findFirst({
             where: and(eq(documents.id, documentId), eq(documents.shopId, shopId)),
         });
@@ -1018,6 +1090,8 @@ export async function updateDocumentKraCuNumberAction(
     kraCuInvoiceNumber: string
 ) {
     try {
+        await enforcePermission(shopId, "manage_documents");
+
         await db.update(documents)
             .set({ kraCuInvoiceNumber: kraCuInvoiceNumber.trim() })
             .where(and(eq(documents.id, documentId), eq(documents.shopId, shopId)));
@@ -1043,6 +1117,8 @@ export async function updateDocumentPaymentDetailsAction(
     paymentReference?: string
 ) {
     try {
+        await enforcePermission(shopId, "manage_documents");
+
         await db.update(documents)
             .set({
                 paymentChannel: paymentChannel?.trim() || null,
@@ -1727,6 +1803,57 @@ export async function recordDocumentPaymentAction(input: {
             return { success: false, error: "Payment amount must be greater than zero." };
         }
 
+        const { isApiModuleEnabled } = await import("@/lib/api/flags");
+        if (isApiModuleEnabled("payments")) {
+            const { apiClient } = await import("@/lib/api/client");
+            const res = await apiClient.post<any>(
+                `/v1/payments/record?shop_id=${input.shopId}&user_id=${session.userId}`,
+                {
+                    document_id: input.documentId,
+                    amount: input.amount,
+                    payment_channel: input.paymentChannel,
+                    payment_reference: input.paymentReference?.trim() || null,
+                    payment_date: input.paymentDate ? input.paymentDate.toISOString() : null,
+                    notes: input.notes?.trim() || null,
+                }
+            );
+
+            if (!res.error && res.data) {
+                try {
+                    revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.documentId}`);
+                    revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+                    revalidatePath(`/workspaces/${input.shopSlug}`);
+                } catch (e) {
+                    // skip outside Next.js
+                }
+
+                logAudit({
+                    shopId: input.shopId,
+                    userId: session.userId,
+                    action: "PAYMENT_RECORDED",
+                    tableName: "document_payments",
+                    recordId: input.documentId,
+                    recordLabel: `${res.data.doc_number || "Document"} Payment`,
+                    after: {
+                        amount: input.amount,
+                        paymentChannel: input.paymentChannel,
+                        paymentReference: input.paymentReference ?? null,
+                        newStatus: res.data.status,
+                        remainingBalance: Number(res.data.remaining_balance),
+                    },
+                });
+
+                return {
+                    success: true,
+                    status: res.data.status,
+                    remainingBalance: Number(res.data.remaining_balance),
+                };
+            }
+            if (res.error) {
+                console.error("FastAPI payments strangler error, falling back to local DB:", res.error);
+            }
+        }
+
         const doc = await db.query.documents.findFirst({
             where: and(eq(documents.id, input.documentId), eq(documents.shopId, input.shopId)),
             with: { payments: true },
@@ -1809,6 +1936,39 @@ export async function deleteDocumentPaymentAction(input: {
 }): Promise<{ success: boolean; error?: string }> {
     try {
         await enforcePermission(input.shopId, "manage_documents");
+
+        const { isApiModuleEnabled } = await import("@/lib/api/flags");
+        if (isApiModuleEnabled("payments")) {
+            const { apiClient } = await import("@/lib/api/client");
+            const res = await apiClient.delete<any>(
+                `/v1/payments/${input.paymentId}?shop_id=${input.shopId}`
+            );
+
+            if (!res.error && res.data) {
+                try {
+                    revalidatePath(`/workspaces/${input.shopSlug}/documents/${input.documentId}`);
+                    revalidatePath(`/workspaces/${input.shopSlug}/documents`);
+                    revalidatePath(`/workspaces/${input.shopSlug}`);
+                } catch (e) {
+                    // skip outside Next.js
+                }
+
+                const auditSession = await verifyAndGetSession();
+                logAudit({
+                    shopId: input.shopId,
+                    userId: auditSession?.userId,
+                    action: "PAYMENT_DELETED",
+                    tableName: "document_payments",
+                    recordId: input.paymentId,
+                    recordLabel: `Payment on document ${input.documentId}`,
+                });
+
+                return { success: true };
+            }
+            if (res.error) {
+                console.error("FastAPI payments delete error, falling back to local DB:", res.error);
+            }
+        }
 
         await db.delete(documentPayments).where(
             and(eq(documentPayments.id, input.paymentId), eq(documentPayments.documentId, input.documentId))

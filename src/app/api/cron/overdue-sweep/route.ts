@@ -22,9 +22,24 @@ async function handleCron(req: NextRequest) {
     const cronSecret = process.env.CRON_SECRET;
     const urlSecret = req.nextUrl.searchParams.get("secret");
 
-    // Allow execution if CRON_SECRET matches, or in development mode
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}` && urlSecret !== cronSecret) {
+    // Fail closed if not dev environment
+    const isDev = process.env.NODE_ENV === "development";
+    const isAuthorized = cronSecret && (authHeader === `Bearer ${cronSecret}` || urlSecret === cronSecret);
+
+    if (!isDev && !isAuthorized) {
         return NextResponse.json({ success: false, error: "Unauthorized cron execution." }, { status: 401 });
+    }
+
+    const { isApiModuleEnabled } = await import("@/lib/api/flags");
+    if (isApiModuleEnabled("crons")) {
+        const { apiClient } = await import("@/lib/api/client");
+        const res = await apiClient.post<any>("/v1/crons/overdue-sweep");
+        if (!res.error && res.data) {
+            return NextResponse.json({ success: true, ...res.data });
+        }
+        if (res.error) {
+            console.error("FastAPI overdue-sweep cron error, falling back to local DB:", res.error);
+        }
     }
 
     const now = new Date();

@@ -84,6 +84,8 @@ export async function getActiveFiscalYearContext(shopId: string): Promise<Active
   return { activeFiscalYear: formattedFys[0], allFiscalYears: formattedFys };
 }
 
+import { enforcePermission } from "./rbac";
+
 /**
  * Switches the active fiscal year context for a shop.
  * Stores in an HTTP cookie and updates database isCurrent flag.
@@ -94,6 +96,8 @@ export async function switchFiscalYearContextAction(
   fiscalYearId: string
 ) {
   try {
+    await enforcePermission(shopId, "view_finance");
+
     const fy = await db.query.fiscalYears.findFirst({
       where: and(eq(fiscalYears.id, fiscalYearId), eq(fiscalYears.shopId, shopId)),
     });
@@ -161,6 +165,8 @@ export async function declareNewFiscalYearAction(
   }
 ) {
   try {
+    await enforcePermission(shopId, "manage_settings");
+
     const label = data.label.trim();
     if (!label || !data.startDate || !data.endDate) {
       return { success: false, error: "Label, start date, and end date are required." };

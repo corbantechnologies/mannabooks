@@ -6,6 +6,10 @@ import { suppliers } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+import { enforcePermission } from "./rbac";
+import { isApiModuleEnabled } from "@/lib/api/flags";
+import { apiCall } from "@/lib/api/client";
+
 export interface CreateSupplierInput {
   shopId: string;
   shopSlug: string;
@@ -24,9 +28,31 @@ export interface CreateSupplierInput {
  */
 export async function createSupplierProfile(input: CreateSupplierInput) {
   try {
+    await enforcePermission(input.shopId, "manage_documents");
+
     const cleanEmail = input.email ? input.email.toLowerCase().trim() : "";
     const cleanName = input.name.trim();
     const cleanPin = input.taxPin?.toUpperCase().trim() || null;
+
+    // Strangler Pattern: Delegate to FastAPI if enabled
+    if (isApiModuleEnabled("suppliers") || isApiModuleEnabled("master")) {
+      const apiRes = await apiCall<{ id: string }>(`/v1/suppliers?shop_id=${input.shopId}`, {
+        method: "POST",
+        body: JSON.stringify({
+          name: cleanName,
+          email: cleanEmail,
+          phone: input.phone?.trim() || null,
+          supplier_type: input.supplierType,
+          tax_pin: cleanPin,
+          requires_etims: input.requiresEtims || false,
+          payment_terms: input.paymentTerms?.trim() || "NET_30",
+        }),
+      });
+      if (!apiRes.error && apiRes.data) {
+        revalidatePath(`/workspaces/${input.shopSlug}/suppliers`);
+        return { success: true, supplierId: apiRes.data.id };
+      }
+    }
 
     const [newSupplier] = await db
       .insert(suppliers)
@@ -62,6 +88,8 @@ export interface UpdateSupplierInput extends Partial<CreateSupplierInput> {
  */
 export async function updateSupplierProfile({ id, shopId, shopSlug, ...updates }: UpdateSupplierInput) {
   try {
+    await enforcePermission(shopId, "manage_documents");
+
     const existing = await db.query.suppliers.findFirst({
       where: and(eq(suppliers.id, id), eq(suppliers.shopId, shopId)),
     });
@@ -100,6 +128,8 @@ export async function updateSupplierProfile({ id, shopId, shopSlug, ...updates }
  */
 export async function deleteSupplierProfile(id: string, shopId: string, shopSlug: string) {
   try {
+    await enforcePermission(shopId, "manage_documents");
+
     await db.delete(suppliers).where(and(eq(suppliers.id, id), eq(suppliers.shopId, shopId)));
 
     revalidatePath(`/workspaces/${shopSlug}/suppliers`);

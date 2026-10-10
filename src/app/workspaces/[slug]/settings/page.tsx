@@ -50,6 +50,12 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
           >
             💱 Multi-Currency
           </Link>
+          <Link
+            href={`/workspaces/${slug}/settings/etims`}
+            className="px-3.5 py-1.5 border border-zinc-300 hover:border-black rounded transition-colors text-zinc-700 hover:text-black font-semibold"
+          >
+            🇰🇪 KRA eTIMS
+          </Link>
         </div>
       </div>
 

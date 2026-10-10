@@ -1,8 +1,5 @@
-// src/app/portal/pdf/[token]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import { documentTokens, documents, paymentMethods } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { apiClient } from "@/lib/api/client";
 import ReactPDF from "@react-pdf/renderer";
 import { formatCurrency } from "@/lib/utils";
 import { registerPdfFonts } from "@/lib/pdf-fonts";
@@ -487,20 +484,18 @@ const StandardPdfDocumentStructure = ({ doc, shop, client, settlements, qrCodeDa
     );
 };
 
-export async function generateDocumentPdfBuffer(targetDocumentId: string): Promise<{ buffer: Buffer; filename: string } | null> {
+export async function generateDocumentPdfBuffer(targetDocumentIdOrToken: string): Promise<{ buffer: Buffer; filename: string } | null> {
     registerPdfFonts();
 
-    const doc = await db.query.documents.findFirst({
-        where: eq(documents.id, targetDocumentId),
-        with: {
-            client: true,
-            supplier: true,
-            shop: true,
-            items: true,
-        },
-    });
+    const res = await apiClient<{ success: boolean; document: any; shop: any; paymentMethods: any[] }>(
+        `/v1/documents/public/${targetDocumentIdOrToken}`
+    );
 
-    if (!doc) return null;
+    if (!res.data?.success || !res.data.document) return null;
+
+    const doc = res.data.document;
+    const shop = res.data.shop || {};
+    const settlements = res.data.paymentMethods || [];
 
     const isPayroll = doc.type === "PAYROLL_VOUCHER";
 
@@ -513,19 +508,12 @@ export async function generateDocumentPdfBuffer(targetDocumentId: string): Promi
         taxPin: null,
     };
 
-    const settlements = await db.query.paymentMethods.findMany({ where: eq(paymentMethods.shopId, doc.shop.id) });
-
-    const tokenByDoc = await db.query.documentTokens.findFirst({
-        where: eq(documentTokens.documentId, targetDocumentId),
-    });
-    const actualToken = tokenByDoc?.token || "";
-    
     let qrCodeDataUrl = "";
     try {
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://mannabooks.co.ke";
         const qrText = doc.kraCuInvoiceNumber
             ? `https://itax.kra.go.ke/KRA-Portal/invoiceVerification.htm?invoiceNo=${encodeURIComponent(doc.kraCuInvoiceNumber)}`
-            : `${appUrl}/portal/invoice/${actualToken}`;
+            : `${appUrl}/portal/invoice/${targetDocumentIdOrToken}`;
         qrCodeDataUrl = await QRCode.toDataURL(qrText, { errorCorrectionLevel: 'H', margin: 1 });
     } catch (err) {
         console.error("Failed to generate QR Code", err);
@@ -533,8 +521,8 @@ export async function generateDocumentPdfBuffer(targetDocumentId: string): Promi
 
     // Select PDF layout structure: Landscape Payroll Vector vs Standard Vector Document
     const PDFElement = isPayroll
-        ? React.createElement(PayrollPdfDocumentStructure, { doc, shop: doc.shop, qrCodeDataUrl })
-        : React.createElement(StandardPdfDocumentStructure, { doc, shop: doc.shop, client: party, settlements, qrCodeDataUrl });
+        ? React.createElement(PayrollPdfDocumentStructure, { doc, shop, qrCodeDataUrl })
+        : React.createElement(StandardPdfDocumentStructure, { doc, shop, client: party, settlements, qrCodeDataUrl });
 
     const streamStream = await ReactPDF.renderToStream(PDFElement);
 
@@ -556,37 +544,7 @@ export async function GET(
         registerPdfFonts();
         const { token } = await params;
 
-        let targetDocumentId: string | null = null;
-        const tokenRecord = await db.query.documentTokens.findFirst({
-            where: eq(documentTokens.token, token),
-        });
-        if (tokenRecord) {
-            targetDocumentId = tokenRecord.documentId;
-        }
-
-        if (!targetDocumentId) {
-            const tokenByDoc = await db.query.documentTokens.findFirst({
-                where: eq(documentTokens.documentId, token),
-            });
-            if (tokenByDoc) {
-                targetDocumentId = tokenByDoc.documentId;
-            }
-        }
-
-        if (!targetDocumentId) {
-            const directDoc = await db.query.documents.findFirst({
-                where: eq(documents.id, token),
-            });
-            if (directDoc) {
-                targetDocumentId = directDoc.id;
-            }
-        }
-
-        if (!targetDocumentId) {
-            return new NextResponse("Document not found.", { status: 404 });
-        }
-
-        const pdfResult = await generateDocumentPdfBuffer(targetDocumentId);
+        const pdfResult = await generateDocumentPdfBuffer(token);
         if (!pdfResult) {
             return new NextResponse("Document not found.", { status: 404 });
         }

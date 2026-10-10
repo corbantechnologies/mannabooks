@@ -1,21 +1,14 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { apiClient } from "@/lib/api/client";
 import { redirect } from "next/navigation";
-import { enforcePermission } from "@/lib/actions/rbac";
 import TeamManagementClient from "./TeamManagementClient";
 
 export default async function TeamPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
     const { shop, role } = await getActiveWorkspaceContext(slug);
 
-    // Verify they have permission to view/manage team
-    if (role !== "OWNER" && role !== "ADMIN") {
-        try {
-            await enforcePermission(shop.id, "manage_team");
-        } catch (error) {
-            console.error("Permission check failed:", error);
-            redirect(`/workspaces/${slug}`);
-        }
+    if (role && role !== "OWNER" && role !== "ADMIN") {
+        redirect(`/workspaces/${slug}`);
     }
 
     const [membersRes, invitesRes] = await Promise.all([

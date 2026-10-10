@@ -1,9 +1,7 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { clients, documents, shops, suppliers } from "@/db/schema";
-import { eq, and, desc, or } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
+import { apiClient } from "@/lib/api/client";
 import { ClientActionsPopover } from "./ClientActionsPopover";
 import { ClientDocumentsSubLedger } from "./ClientDocumentsSubLedger";
 import { getLoyaltyProgram, getClientLoyaltyAccount } from "@/lib/actions/loyalty";
@@ -29,32 +27,41 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
   const clientLoyaltyRes = await getClientLoyaltyAccount(shop.id, id);
   const loyaltyAccount = clientLoyaltyRes.success ? clientLoyaltyRes.data : null;
 
-  // 3. Fetch the targeted client profile alongside all their historical document records
-  const clientRecord = await db.query.clients.findFirst({
-    where: and(
-      eq(clients.id, id),
-      eq(clients.shopId, shop.id)
-    ),
-    with: {
-      documents: {
-        orderBy: [desc(documents.issueDate)],
-      },
-    },
-  });
+  // 3. Fetch client profile & documents from FastAPI
+  const clientRes = await apiClient.get<any>(`/v1/clients/${id}?shop_id=${shop.id}`);
+  const clientData = clientRes.data;
 
-  if (!clientRecord) {
+  if (!clientData) {
     notFound();
   }
 
+  const docsRes = await apiClient.get<any[]>(`/v1/documents?shop_id=${shop.id}&client_id=${id}&limit=500`);
+  const docs = (docsRes.data || []).map((d: any) => ({
+    id: d.id,
+    docNumber: d.doc_number || d.docNumber,
+    type: d.type,
+    status: d.status,
+    grandTotal: String(d.grand_total || d.grandTotal || "0"),
+    issueDate: d.issue_date || d.issueDate,
+    dueDate: d.due_date || d.dueDate,
+    requiresEtims: d.requires_etims ?? d.requiresEtims,
+    kraCuInvoiceNumber: d.kra_cu_invoice_number || d.kraCuInvoiceNumber,
+  }));
+
+  const clientRecord = {
+    ...clientData,
+    taxPin: clientData.tax_pin || clientData.taxPin,
+    documents: docs,
+  };
+
   // 3.5 Check if a corresponding supplier profile already exists
-  const matchedSupplier = await db.query.suppliers.findFirst({
-    where: and(
-      eq(suppliers.shopId, shop.id),
-      clientRecord.taxPin
-        ? or(eq(suppliers.taxPin, clientRecord.taxPin), eq(suppliers.email, clientRecord.email))
-        : eq(suppliers.email, clientRecord.email)
-    ),
-  });
+  const suppliersRes = await apiClient.get<any[]>(`/v1/suppliers?shop_id=${shop.id}`);
+  const matchedSupplier = (suppliersRes.data || []).find((s: any) => {
+    const sPin = s.tax_pin || s.taxPin;
+    const cPin = clientRecord.taxPin;
+    if (cPin && sPin) return sPin === cPin || s.email === clientRecord.email;
+    return s.email && s.email === clientRecord.email;
+  }) || null;
 
   // 3. Compute structural customer performance aggregations with absolute precision.
   //
@@ -64,7 +71,7 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
   // Counting both would double the LTV — so we ONLY count RECEIPTs for settled
   // revenue and only count UNPAID invoices for outstanding A/R.
   const performanceMetrics = clientRecord.documents.reduce(
-    (acc, doc) => {
+    (acc: { lifetimeValue: number; outstandingLiability: number; overdueLiability: number; }, doc: { grandTotal: string; type: string; status: string; }) => {
       const value = parseFloat(doc.grandTotal);
       if (doc.type === "RECEIPT") {
         // All cash received — standalone receipts AND invoice-derived receipts.
@@ -318,7 +325,7 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
         <h3 className="font-semibold uppercase tracking-tight text-sm font-sans text-black">Documents &amp; Transactions</h3>
         
         <ClientDocumentsSubLedger
-          documents={clientRecord.documents.map((d) => ({
+          documents={clientRecord.documents.map((d: { id: any; docNumber: any; type: any; issueDate: any; grandTotal: any; status: any; notes: any; }) => ({
             id: d.id,
             docNumber: d.docNumber,
             type: d.type,

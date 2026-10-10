@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { documents } from "@/db/schema";
-import { eq, lte, and } from "drizzle-orm";
-import { duplicateDocument, updateDocumentStatus } from "@/lib/actions/documents";
-import { dispatchDocumentEmail } from "@/lib/actions/email";
-import { processAutoContractInvoicesAction, sendContractExpiryAlertsAction } from "@/lib/actions/contracts";
+import { apiClient } from "@/lib/api/client";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-    // 1. Verify Vercel Cron Authentication
     const authHeader = request.headers.get("Authorization");
     const cronSecret = process.env.CRON_SECRET;
     const isDev = process.env.NODE_ENV === "development";
@@ -18,131 +12,14 @@ export async function GET(request: Request) {
         return new Response("Unauthorized CRON request", { status: 401 });
     }
 
-    const { isApiModuleEnabled } = await import("@/lib/api/flags");
-    if (isApiModuleEnabled("crons")) {
-        const { apiClient } = await import("@/lib/api/client");
-        const res = await apiClient.post<any>("/v1/crons/process-recurring");
-        if (!res.error && res.data) {
-            return NextResponse.json({ success: true, ...res.data });
-        }
-        if (res.error) {
-            console.error("FastAPI process-recurring cron error, falling back to local DB:", res.error);
-        }
+    const res = await apiClient.post<any>("/v1/crons/process-recurring");
+    if (res.data) {
+        return NextResponse.json({ success: true, ...res.data });
     }
 
-    try {
-        const now = new Date();
-        
-        // Resolve current date in Africa/Nairobi (UTC+3)
-        const nairobiDateStr = new Intl.DateTimeFormat("en-CA", {
-            timeZone: "Africa/Nairobi",
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-        }).format(now); // e.g., "2026-10-01"
+    return NextResponse.json({ success: false, error: res.error || "Execution failed" }, { status: res.status || 500 });
+}
 
-        // Any recurring series due on or before the end of the current Nairobi day is eligible
-        const endOfTodayNairobi = new Date(`${nairobiDateStr}T23:59:59.999+03:00`);
-        
-        // 2. Fetch all recurring documents due for generation
-        const pendingRecurring = await db.query.documents.findMany({
-            where: and(
-                eq(documents.isRecurring, true),
-                lte(documents.nextRecurringDate, endOfTodayNairobi)
-            ),
-            with: {
-                client: true,
-                supplier: true,
-            }
-        });
-
-        const results = [];
-
-        // 3. Process each document
-        for (const doc of pendingRecurring) {
-            // Clone the original document securely
-            const duplicateRes = await duplicateDocument(doc.id, doc.shopId, doc.shopId); // using shopId for slug as placeholder, it only affects revalidatePath which is harmless
-            
-            if (duplicateRes.success && duplicateRes.documentId) {
-                // Determine target status
-                const defaultStatus = doc.type === "RECEIPT" || doc.type === "PAYMENT_VOUCHER" || doc.type === "PAYROLL_VOUCHER" ? "PAID" : "ISSUED";
-
-                // Escalate document to ISSUED/PAID state
-                await updateDocumentStatus({
-                    documentId: duplicateRes.documentId,
-                    shopId: doc.shopId,
-                    shopSlug: "cron-engine", 
-                    status: defaultStatus
-                });
-
-                // Auto-Dispatch via Email
-                const recipient = doc.client || doc.supplier;
-                const emailAddress = recipient ? recipient.email : null;
-                let emailSent = false;
-                
-                if (emailAddress) {
-                    const emailRes = await dispatchDocumentEmail({ documentId: duplicateRes.documentId });
-                    emailSent = emailRes.success;
-                }
-
-                // 4. Advance Next Recurring Date
-                const nextDate = new Date(doc.nextRecurringDate || now);
-                switch(doc.recurringInterval) {
-                    case "WEEKLY": 
-                        nextDate.setDate(nextDate.getDate() + 7); 
-                        break;
-                    case "MONTHLY": 
-                        nextDate.setMonth(nextDate.getMonth() + 1); 
-                        break;
-                    case "QUARTERLY": 
-                        nextDate.setMonth(nextDate.getMonth() + 3); 
-                        break;
-                    case "YEARLY": 
-                        nextDate.setFullYear(nextDate.getFullYear() + 1); 
-                        break;
-                    default:
-                        nextDate.setMonth(nextDate.getMonth() + 1);
-                }
-                // Normalize time of next run to start of day in Nairobi
-                nextDate.setHours(0, 0, 0, 0);
-
-                await db.update(documents)
-                    .set({ nextRecurringDate: nextDate })
-                    .where(eq(documents.id, doc.id));
-
-                results.push({ 
-                    originalDocId: doc.id, 
-                    newDocId: duplicateRes.documentId, 
-                    emailSent,
-                    advancedDate: nextDate 
-                });
-            } else {
-                results.push({ 
-                    originalDocId: doc.id, 
-                    error: duplicateRes.error 
-                });
-            }
-        }
-
-        // 5. Process Contract Retainers & SLA Auto-Invoicing
-        const contractInvoices = await processAutoContractInvoicesAction();
-
-        // 6. Dispatch Contract Expiry Alerts (30d and 60d thresholds)
-        const expiryAlerts = await sendContractExpiryAlertsAction();
-
-        return NextResponse.json({ 
-            success: true, 
-            processedCount: results.length, 
-            engineLogs: results,
-            contracts: {
-                invoicesCreated: contractInvoices.processed,
-                contractErrors: contractInvoices.errors,
-                expiryAlertsSent: expiryAlerts.sent,
-            }
-        });
-
-    } catch (error: any) {
-        console.error("Cron Engine Failure:", error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
+export async function POST(request: Request) {
+    return GET(request);
 }

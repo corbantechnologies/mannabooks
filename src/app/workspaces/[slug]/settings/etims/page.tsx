@@ -1,5 +1,5 @@
 // src/app/workspaces/[slug]/settings/etims/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { EtimsSettingsClient } from "./EtimsSettingsClient";
 import Link from "next/link";
 

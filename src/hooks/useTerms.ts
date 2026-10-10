@@ -1,11 +1,36 @@
 // src/hooks/useTerms.ts
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createShopTerm, updateShopTerm, deleteShopTerm, seedDefaultShopTerms } from "@/lib/actions/terms";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axiosClient from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 
-export function useCreateShopTerm(shopId: string, shopSlug: string) {
+export interface ShopTermItem {
+  id: string;
+  shopId: string;
+  title: string;
+  content: string;
+  displayOrder?: number;
+  isDefaultInvoice: boolean;
+  isDefaultQuote: boolean;
+  isDefaultReceipt: boolean;
+  isDefaultDelivery: boolean;
+  isDefaultCatalog: boolean;
+  createdAt?: string | null;
+}
+
+export function useShopTerms(shopId: string) {
+  return useQuery({
+    queryKey: ["shop-terms", shopId],
+    queryFn: async () => {
+      const res: any = await axiosClient.get(`/workspaces/${shopId}/terms`);
+      return (res.terms || []) as ShopTermItem[];
+    },
+    enabled: Boolean(shopId),
+  });
+}
+
+export function useCreateShopTerm(shopId: string, _shopSlug?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -14,12 +39,21 @@ export function useCreateShopTerm(shopId: string, shopSlug: string) {
       content: string;
       isDefaultInvoice?: boolean;
       isDefaultCatalog?: boolean;
+      isDefaultQuote?: boolean;
+      isDefaultReceipt?: boolean;
+      isDefaultDelivery?: boolean;
     }) => {
-      const res = await createShopTerm({ shopId, shopSlug, ...data });
-      if (!res.success) throw new Error(res.error || "Failed to create term.");
-      return res;
+      return await axiosClient.post(`/workspaces/${shopId}/terms`, {
+        title: data.title,
+        content: data.content,
+        is_default_invoice: Boolean(data.isDefaultInvoice),
+        is_default_catalog: Boolean(data.isDefaultCatalog),
+        is_default_quote: Boolean(data.isDefaultQuote),
+        is_default_receipt: Boolean(data.isDefaultReceipt),
+        is_default_delivery: Boolean(data.isDefaultDelivery),
+      });
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (data: any, variables) => {
       queryClient.invalidateQueries({ queryKey: ["shop-terms", shopId] });
       toast.success(`Term "${variables.title}" saved to library!`);
     },
@@ -29,20 +63,29 @@ export function useCreateShopTerm(shopId: string, shopSlug: string) {
   });
 }
 
-export function useUpdateShopTerm(shopId: string, shopSlug: string) {
+export function useUpdateShopTerm(shopId: string, _shopSlug?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: {
       id: string;
-      title: string;
-      content: string;
+      title?: string;
+      content?: string;
       isDefaultInvoice?: boolean;
       isDefaultCatalog?: boolean;
+      isDefaultQuote?: boolean;
+      isDefaultReceipt?: boolean;
+      isDefaultDelivery?: boolean;
     }) => {
-      const res = await updateShopTerm({ shopId, shopSlug, ...data });
-      if (!res.success) throw new Error(res.error || "Failed to update term.");
-      return res;
+      return await axiosClient.patch(`/workspaces/${shopId}/terms/${data.id}`, {
+        title: data.title,
+        content: data.content,
+        is_default_invoice: data.isDefaultInvoice,
+        is_default_catalog: data.isDefaultCatalog,
+        is_default_quote: data.isDefaultQuote,
+        is_default_receipt: data.isDefaultReceipt,
+        is_default_delivery: data.isDefaultDelivery,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shop-terms", shopId] });
@@ -54,18 +97,16 @@ export function useUpdateShopTerm(shopId: string, shopSlug: string) {
   });
 }
 
-export function useDeleteShopTerm(shopId: string, shopSlug: string) {
+export function useDeleteShopTerm(shopId: string, _shopSlug?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await deleteShopTerm({ id, shopId, shopSlug });
-      if (!res.success) throw new Error(res.error || "Failed to delete term.");
-      return res;
+    mutationFn: async (termId: string) => {
+      return await axiosClient.delete(`/workspaces/${shopId}/terms/${termId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shop-terms", shopId] });
-      toast.success("Term removed from library!");
+      toast.success("Term deleted from library!");
     },
     onError: (err: Error) => {
       toast.error(err.message);
@@ -73,18 +114,16 @@ export function useDeleteShopTerm(shopId: string, shopSlug: string) {
   });
 }
 
-export function useSeedDefaultTerms(shopId: string, shopSlug: string) {
+export function useSeedDefaultTerms(shopId: string, _shopSlug?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      const res = await seedDefaultShopTerms(shopId, shopSlug);
-      if (!res.success) throw new Error(res.error || "Failed to load preset terms.");
-      return res;
+      return await axiosClient.post(`/workspaces/${shopId}/terms/seed`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shop-terms", shopId] });
-      toast.success("Standard Kenyan SME terms loaded into your library!");
+      toast.success("Default commercial terms seeded!");
     },
     onError: (err: Error) => {
       toast.error(err.message);

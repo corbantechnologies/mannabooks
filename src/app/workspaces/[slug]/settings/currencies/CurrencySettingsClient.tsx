@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSaveCurrency, useDeleteCurrency, type ShopCurrencyRecord } from "@/hooks/useCurrencies";
-import { syncShopCurrenciesWithLiveRatesAction } from "@/lib/actions/currencies";
+import { useSaveCurrency, useDeleteCurrency, useSyncLiveRates, type ShopCurrencyRecord } from "@/hooks/useCurrencies";
 import { formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
@@ -43,10 +42,9 @@ export function CurrencySettingsClient({
   const [symbol, setSymbol] = useState("$");
   const [exchangeRate, setExchangeRate] = useState("129.50");
   const [isFetchingGuidance, setIsFetchingGuidance] = useState(false);
-  const [isSyncingAll, setIsSyncingAll] = useState(false);
-
   const saveCurrencyMutation = useSaveCurrency(shopId);
   const deleteCurrencyMutation = useDeleteCurrency(shopId);
+  const syncLiveRatesMutation = useSyncLiveRates(shopId, baseCurrency);
 
   function handlePresetSelect(presetCode: string) {
     const preset = COMMON_PRESETS.find(p => p.code === presetCode);
@@ -141,25 +139,8 @@ export function CurrencySettingsClient({
     });
   }
 
-  async function handleSyncAllWithLiveRates() {
-    setIsSyncingAll(true);
-    const toastId = toast.loading("Syncing all currencies with live market rates...");
-    try {
-      const res = await syncShopCurrenciesWithLiveRatesAction({
-        shopId,
-        shopSlug,
-        baseCurrency,
-      });
-      if (res.success) {
-        toast.success(`Synced ${res.updatedCount} currencies with live market rates!`, { id: toastId });
-      } else {
-        toast.error(res.error || "Failed to sync rates.", { id: toastId });
-      }
-    } catch {
-      toast.error("Network error syncing rates.", { id: toastId });
-    } finally {
-      setIsSyncingAll(false);
-    }
+  function handleSyncAllWithLiveRates() {
+    syncLiveRatesMutation.mutate(currencies);
   }
 
   return (
@@ -188,11 +169,11 @@ export function CurrencySettingsClient({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              disabled={isSyncingAll || currencies.length === 0}
+              disabled={syncLiveRatesMutation.isPending || currencies.length === 0}
               onClick={handleSyncAllWithLiveRates}
-              className="px-3.5 py-2 border border-zinc-300 bg-white hover:bg-zinc-50 rounded-lg text-xs font-bold uppercase transition-colors flex items-center gap-1.5 disabled:opacity-50"
+              className="px-3.5 py-2 border border-zinc-300 bg-white hover:bg-zinc-50 rounded-lg text-xs font-bold uppercase transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
             >
-              {isSyncingAll ? (
+              {syncLiveRatesMutation.isPending ? (
                 <>
                   <Spinner size={12} />
                   <span>Syncing...</span>

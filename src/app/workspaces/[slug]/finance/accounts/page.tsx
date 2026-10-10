@@ -1,11 +1,7 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { shops, journalEntries } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
+import { apiClient } from "@/lib/api/client";
 import { redirect } from "next/navigation";
-import { enforcePermission } from "@/lib/actions/rbac";
-import { getChartOfAccounts } from "@/lib/actions/gl";
-import ChartOfAccountsClient from "./ChartOfAccountsClient";
+import ChartOfAccountsClient, { DetailedAccount, Summary } from "./ChartOfAccountsClient";
 
 export default async function ChartOfAccountsPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
@@ -13,61 +9,40 @@ export default async function ChartOfAccountsPage({ params }: { params: Promise<
     const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
-    try {
-        await enforcePermission(shop.id, "manage_expenses");
-    } catch {
-        redirect(`/workspaces/${slug}`);
+    let accounts: any[] = [];
+    let trialBalance: any = null;
+
+    if (shop.isGlEnabled) {
+        const [accRes, tbRes] = await Promise.all([
+            apiClient.get<any[]>(`/v1/accounts?shop_id=${shop.id}`),
+            apiClient.get<any>(`/v1/reports/trial-balance?shop_id=${shop.id}`),
+        ]);
+        accounts = accRes.data || [];
+        trialBalance = tbRes.data || null;
     }
 
-    const accounts = shop.isGlEnabled ? await getChartOfAccounts(shop.id) : [];
+    const tbMap = new Map<string, any>(
+        (trialBalance?.rows || []).map((r: any) => [r.account_id, r])
+    );
 
-    // Fetch journal entries to calculate real-time account balances
-    const entries = shop.isGlEnabled
-        ? await db.query.journalEntries.findMany({
-            where: eq(journalEntries.shopId, shop.id),
-            columns: {
-                debitAccountId: true,
-                creditAccountId: true,
-                amount: true,
-            },
-        })
-        : [];
-
-    const balanceMap: Record<string, { debits: number; credits: number; count: number }> = {};
-    for (const a of accounts) {
-        balanceMap[a.id] = { debits: 0, credits: 0, count: 0 };
-    }
-
-    for (const e of entries) {
-        const amt = parseFloat(e.amount || "0");
-        if (balanceMap[e.debitAccountId]) {
-            balanceMap[e.debitAccountId].debits += amt;
-            balanceMap[e.debitAccountId].count += 1;
-        }
-        if (balanceMap[e.creditAccountId]) {
-            balanceMap[e.creditAccountId].credits += amt;
-            balanceMap[e.creditAccountId].count += 1;
-        }
-    }
-
-    const detailedAccounts = accounts.map(a => {
-        const stats = balanceMap[a.id] || { debits: 0, credits: 0, count: 0 };
-        const debits = stats.debits;
-        const credits = stats.credits;
-        const isDebitNormal = a.accountType === "ASSET" || a.accountType === "EXPENSE";
+    const detailedAccounts: DetailedAccount[] = accounts.map((a: any) => {
+        const row = tbMap.get(a.id);
+        const debits = row ? Number(row.total_debits) : 0;
+        const credits = row ? Number(row.total_credits) : 0;
+        const isDebitNormal = a.account_type === "ASSET" || a.account_type === "EXPENSE";
         const netBalance = isDebitNormal ? debits - credits : credits - debits;
 
         return {
             id: a.id,
             code: a.code,
             name: a.name,
-            accountType: a.accountType as "ASSET" | "LIABILITY" | "EQUITY" | "REVENUE" | "EXPENSE",
-            isSystem: a.isSystem,
-            parentCode: a.parentCode,
+            accountType: (a.account_type || a.accountType) as "ASSET" | "LIABILITY" | "EQUITY" | "REVENUE" | "EXPENSE",
+            isSystem: Boolean(a.is_system ?? a.isSystem),
+            parentCode: a.parent_code ?? a.parentCode ?? null,
             debits,
             credits,
             netBalance,
-            entriesCount: stats.count,
+            entriesCount: 0,
         };
     });
 
@@ -76,12 +51,8 @@ export default async function ChartOfAccountsPage({ params }: { params: Promise<
     let totalEquity = 0;
     let totalRevenue = 0;
     let totalExpenses = 0;
-    let totalDebitsAll = 0;
-    let totalCreditsAll = 0;
 
     for (const a of detailedAccounts) {
-        totalDebitsAll += a.debits;
-        totalCreditsAll += a.credits;
         if (a.accountType === "ASSET") totalAssets += a.netBalance;
         else if (a.accountType === "LIABILITY") totalLiabilities += a.netBalance;
         else if (a.accountType === "EQUITY") totalEquity += a.netBalance;
@@ -89,15 +60,15 @@ export default async function ChartOfAccountsPage({ params }: { params: Promise<
         else if (a.accountType === "EXPENSE") totalExpenses += a.netBalance;
     }
 
-    const summary = {
+    const summary: Summary = {
         totalAssets,
         totalLiabilities,
         totalEquity,
         totalRevenue,
         totalExpenses,
-        totalDebits: totalDebitsAll,
-        totalCredits: totalCreditsAll,
-        isBalanced: Math.abs(totalDebitsAll - totalCreditsAll) < 0.01,
+        totalDebits: trialBalance ? Number(trialBalance.total_debits) : 0,
+        totalCredits: trialBalance ? Number(trialBalance.total_credits) : 0,
+        isBalanced: trialBalance ? Boolean(trialBalance.is_balanced) : true,
     };
 
     return (

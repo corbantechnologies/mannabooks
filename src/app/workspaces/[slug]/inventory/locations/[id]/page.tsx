@@ -1,5 +1,5 @@
 // src/app/workspaces/[slug]/inventory/locations/[id]/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
 import { getStockLocationDetail } from "@/lib/actions/inventory";
 import { getStorageBins } from "@/lib/actions/wms";

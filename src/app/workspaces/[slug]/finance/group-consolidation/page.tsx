@@ -1,10 +1,6 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { shops, groupEntities, groupMemberships } from "@/db/schema";
-import { eq, asc, desc } from "drizzle-orm";
-import { notFound, redirect } from "next/navigation";
-import { verifyAndGetSession } from "@/lib/actions/auth";
-import { getUserGroups, getConsolidatedPnL, getConsolidatedBalanceSheet, getGroupById } from "@/lib/actions/group-consolidation";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
+import { apiClient } from "@/lib/api/client";
+import { notFound } from "next/navigation";
 import { GroupConsolidationClient } from "./GroupConsolidationClient";
 
 interface GroupConsolidationPageProps {
@@ -19,32 +15,26 @@ export default async function GroupConsolidationPage({
   const { slug } = await params;
   const { groupId: queryGroupId } = await searchParams;
 
-  const session = await verifyAndGetSession();
-  if (!session) {
-    redirect("/login");
-  }
-
   const { shop } = await getActiveWorkspaceContext(slug);
 
   if (!shop) {
     notFound();
   }
 
-  // Fetch all user's holding groups
-  const groups = await getUserGroups(slug);
+  // Fetch all user's holding groups and owned workspaces
+  const [groupsRes, workspacesRes] = await Promise.all([
+    apiClient.get<any>("/v1/group-consolidation/groups"),
+    apiClient.get<any>("/v1/workspaces/my-workspaces"),
+  ]);
 
-  // Fetch all user's owned workspaces for subsidiary enrollment
-  const userShops = await db.query.shops.findMany({
-    where: eq(shops.ownerId, session.user.id),
-    orderBy: [asc(shops.name)],
-    columns: {
-      id: true,
-      name: true,
-      slug: true,
-      code: true,
-      currency: true,
-    },
-  });
+  const groups: any[] = groupsRes.data?.groups || [];
+  const userShops: any[] = (workspacesRes.data?.workspaces || []).map((w: any) => ({
+    id: w.id,
+    name: w.name,
+    slug: w.slug,
+    code: w.code || w.slug?.substring(0, 4).toUpperCase(),
+    currency: w.currency || "KES",
+  }));
 
   // Determine active group (from URL or first available)
   const activeGroupId = queryGroupId || groups[0]?.id || null;
@@ -54,15 +44,15 @@ export default async function GroupConsolidationPage({
   let activeGroupDetails = null;
 
   if (activeGroupId) {
-    const [pnlRes, bsRes, grpDetails] = await Promise.all([
-      getConsolidatedPnL(activeGroupId, "THIS_MONTH"),
-      getConsolidatedBalanceSheet(activeGroupId),
-      getGroupById(activeGroupId),
+    const [pnlRes, bsRes, grpRes] = await Promise.all([
+      apiClient.get<any>(`/v1/group-consolidation/pnl?group_id=${activeGroupId}&period=THIS_MONTH`),
+      apiClient.get<any>(`/v1/group-consolidation/balance-sheet?group_id=${activeGroupId}`),
+      apiClient.get<any>(`/v1/group-consolidation/groups/${activeGroupId}`),
     ]);
 
-    if (pnlRes.success) initialPnL = pnlRes.data;
-    if (bsRes.success) initialBalanceSheet = bsRes.data;
-    activeGroupDetails = grpDetails;
+    if (pnlRes.data?.success) initialPnL = pnlRes.data;
+    if (bsRes.data?.success) initialBalanceSheet = bsRes.data;
+    if (grpRes.data?.success) activeGroupDetails = grpRes.data.group;
   }
 
   return (
@@ -102,28 +92,28 @@ export default async function GroupConsolidationPage({
                 code: activeGroupDetails.code,
                 reportingCurrency: activeGroupDetails.reportingCurrency,
                 description: activeGroupDetails.description,
-                members: activeGroupDetails.memberships.map((m) => ({
+                members: (activeGroupDetails.memberships || []).map((m: any) => ({
                   id: m.id,
-                  shopId: m.shop.id,
-                  shopName: m.shop.name,
-                  shopSlug: m.shop.slug,
-                  shopCode: m.shop.code,
+                  shopId: m.shop?.id || m.shopId,
+                  shopName: m.shop?.name || "",
+                  shopSlug: m.shop?.slug || "",
+                  shopCode: m.shop?.code || "",
                   entityType: m.entityType,
                   ownershipPercentage: parseFloat(m.ownershipPercentage || "100"),
-                  joinedAt: m.joinedAt.toISOString(),
+                  joinedAt: typeof m.joinedAt === "string" ? m.joinedAt : (m.joinedAt?.toISOString?.() || ""),
                 })),
-                transactions: activeGroupDetails.interCompanyTransactions.map((tx) => ({
+                transactions: (activeGroupDetails.interCompanyTransactions || []).map((tx: any) => ({
                   id: tx.id,
                   sourceShopId: tx.sourceShopId,
-                  sourceShopName: tx.sourceShop.name,
+                  sourceShopName: tx.sourceShop?.name || "",
                   targetShopId: tx.targetShopId,
-                  targetShopName: tx.targetShop.name,
-                  amount: parseFloat(tx.amount),
+                  targetShopName: tx.targetShop?.name || "",
+                  amount: parseFloat(tx.amount || "0"),
                   currency: tx.currency,
                   transactionType: tx.transactionType,
                   isEliminated: tx.isEliminated,
                   notes: tx.notes,
-                  createdAt: tx.createdAt.toISOString(),
+                  createdAt: typeof tx.createdAt === "string" ? tx.createdAt : (tx.createdAt?.toISOString?.() || ""),
                 })),
               }
             : null

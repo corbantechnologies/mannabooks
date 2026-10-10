@@ -201,6 +201,7 @@ export interface StkQueryResult {
     resultDesc?: string;
     isPending?: boolean;
     error?: string;
+    receiptNumber?: string;
 }
 
 /**

@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { inviteTeamMember, removeTeamMember, revokeInvitation, updateTeamMemberRoleAndPermissions } from "@/lib/actions/team";
+import {
+  useInviteMember,
+  useUpdateMember,
+  useRemoveMember,
+  useRevokeInvite,
+} from "@/hooks/useTeam";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -54,27 +59,39 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
     const [editRole, setEditRole] = useState<"ADMIN" | "MANAGER" | "ACCOUNTANT" | "EMPLOYEE" | "VIEWER">("VIEWER");
     const [editPermissions, setEditPermissions] = useState<Record<string, boolean>>({});
     const [isSavingEdit, setIsSavingEdit] = useState(false);
-
     const [status, setStatus] = useState<"IDLE" | "LOADING" | "SUCCESS" | "ERROR">("IDLE");
     const [errorMsg, setErrorMsg] = useState("");
+
+    const inviteMutation = useInviteMember(shopId);
+    const updateMutation = useUpdateMember(shopId);
+    const removeMutation = useRemoveMember(shopId);
+    const revokeMutation = useRevokeInvite(shopId);
 
     async function handleInvite(e: React.FormEvent) {
         e.preventDefault();
         setStatus("LOADING");
         setErrorMsg("");
 
-        const res = await inviteTeamMember(shopId, email, role, role === "EMPLOYEE" ? permissions : {});
-
-        if (res.success) {
-            setStatus("SUCCESS");
-            setEmail("");
-            setRole("VIEWER");
-            setTimeout(() => { setIsInviting(false); setStatus("IDLE"); }, 2000);
-            router.refresh();
-        } else {
-            setStatus("ERROR");
-            setErrorMsg(res.error || "Failed to invite user.");
-        }
+        inviteMutation.mutate(
+            {
+                email,
+                role,
+                customPermissions: role === "EMPLOYEE" ? permissions : {},
+            },
+            {
+                onSuccess: () => {
+                    setStatus("SUCCESS");
+                    setEmail("");
+                    setRole("VIEWER");
+                    setTimeout(() => { setIsInviting(false); setStatus("IDLE"); }, 2000);
+                    router.refresh();
+                },
+                onError: (err: any) => {
+                    setStatus("ERROR");
+                    setErrorMsg(err.message || "Failed to invite user.");
+                },
+            }
+        );
     }
 
     function openEditModal(member: Member) {
@@ -88,28 +105,23 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
         if (!editingMember) return;
 
         setIsSavingEdit(true);
-        const toastId = toast.loading("Updating staff permissions...");
-
-        try {
-            const res = await updateTeamMemberRoleAndPermissions(
-                shopId,
-                editingMember.id,
-                editRole,
-                editRole === "EMPLOYEE" ? editPermissions : {}
-            );
-
-            if (res.success) {
-                toast.success("Staff role & permissions updated successfully.", { id: toastId });
-                setEditingMember(null);
-                router.refresh();
-            } else {
-                toast.error(res.error || "Failed to update member.", { id: toastId });
+        updateMutation.mutate(
+            {
+                memberId: editingMember.id,
+                role: editRole,
+                customPermissions: editRole === "EMPLOYEE" ? editPermissions : {},
+            },
+            {
+                onSuccess: () => {
+                    setIsSavingEdit(false);
+                    setEditingMember(null);
+                    router.refresh();
+                },
+                onError: () => {
+                    setIsSavingEdit(false);
+                },
             }
-        } catch (err: any) {
-            toast.error(err.message || "Failed to update member.", { id: toastId });
-        } finally {
-            setIsSavingEdit(false);
-        }
+        );
     }
 
     function handleRemove(memberId: string) {
@@ -119,16 +131,13 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
                 <div className="flex gap-2">
                     <button 
                         className="bg-black text-white px-3 py-1.5 rounded font-bold uppercase tracking-wider cursor-pointer"
-                        onClick={async () => {
+                        onClick={() => {
                             toast.dismiss(t.id);
-                            const toastId = toast.loading("Removing member...");
-                            const res = await removeTeamMember(shopId, memberId);
-                            if (!res.success) {
-                                toast.error(res.error || "Failed to remove member.", { id: toastId });
-                            } else {
-                                toast.success("Member removed successfully.", { id: toastId });
-                                router.refresh();
-                            }
+                            removeMutation.mutate(memberId, {
+                                onSuccess: () => {
+                                    router.refresh();
+                                },
+                            });
                         }}
                     >
                         Yes, Remove
@@ -145,14 +154,11 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
     }
 
     async function handleRevoke(inviteId: string) {
-        const toastId = toast.loading("Revoking invitation...");
-        const res = await revokeInvitation(shopId, inviteId);
-        if (!res.success) {
-            toast.error(res.error || "Failed to revoke invitation.", { id: toastId });
-        } else {
-            toast.success("Invitation revoked.", { id: toastId });
-            router.refresh();
-        }
+        revokeMutation.mutate(inviteId, {
+            onSuccess: () => {
+                router.refresh();
+            },
+        });
     }
 
     return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { restockProductAction } from "@/lib/actions/products";
+import axiosClient from "@/lib/api/axios";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 
@@ -51,23 +51,27 @@ export function QuickRestockModal({
     const toastId = toast.loading(`Restocking ${product.name}...`);
 
     try {
-      const res = await restockProductAction({
-        shopId,
-        shopSlug,
-        productId: product.id,
-        addQuantity: qtyNum,
-        unitCost: unitCost ? parseFloat(unitCost) : undefined,
-        locationId: locationId || undefined,
-        notes: notes.trim() || undefined,
-      });
+      const res: any = await axiosClient.post(
+        "/items/inventory/adjust",
+        {
+          product_id: product.id,
+          location_id: locationId || undefined,
+          movement_type: "ADJUSTMENT_IN",
+          quantity: qtyNum,
+          unit_cost: unitCost ? parseFloat(unitCost) : undefined,
+          notes: notes.trim() || undefined,
+        },
+        {
+          params: { shop_id: shopId },
+        }
+      );
 
-      if (res.success) {
-        toast.success(`Successfully added +${qtyNum} units to ${product.name}! (New total: ${res.newQuantity})`, { id: toastId });
-        setIsOpen(false);
-        setAddQty("");
-        setNotes("");
-      } else {
-        toast.error(res.error || "Failed to restock product.", { id: toastId });
+      toast.success(`Successfully added +${qtyNum} units to ${product.name}!`, { id: toastId });
+      setIsOpen(false);
+      setAddQty("");
+      setNotes("");
+      if (typeof window !== "undefined") {
+        window.location.reload();
       }
     } catch (err) {
       toast.error("Error updating inventory levels.", { id: toastId });

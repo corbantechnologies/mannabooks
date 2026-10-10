@@ -1,11 +1,9 @@
 // src/app/workspaces/[slug]/employees/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { shops, employees } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
+import { apiClient } from "@/lib/api/client";
 import { RegisterEmployeeModal } from "../payroll/RegisterEmployeeModal";
 import { EmployeeRowPopover } from "./EmployeeRowPopover";
 
@@ -24,17 +22,24 @@ export default async function WorkspaceEmployeesPage({ params }: WorkspaceEmploy
   }
 
   // 2. Fetch employee directory
-  const staffList = await db.query.employees.findMany({
-    where: eq(employees.shopId, shop.id),
-    orderBy: [desc(employees.createdAt)],
-  });
+  const empRes = await apiClient.get<any>(`/v1/employees?shop_id=${shop.id}`);
+  const staffList = (empRes.data?.employees || []).map((e: any) => ({
+    ...e,
+    fullName: e.full_name || e.fullName,
+    nationalId: e.national_id || e.nationalId,
+    kraPin: e.kra_pin || e.kraPin,
+    baseSalary: String(e.base_salary || e.baseSalary || "0"),
+    commissionRate: String(e.commission_rate || e.commissionRate || "0"),
+    isActive: e.is_active ?? e.isActive ?? true,
+    email: e.email,
+  }));
 
   // Compute KPI metrics
-  const activeStaffCount = staffList.filter((e) => e.isActive).length;
+  const activeStaffCount = staffList.filter((e: any) => e.isActive).length;
   const inactiveStaffCount = staffList.length - activeStaffCount;
   const monthlyBaseSalaryPool = staffList
-    .filter((e) => e.isActive)
-    .reduce((sum, e) => sum + parseFloat(e.baseSalary), 0);
+    .filter((e: any) => e.isActive)
+    .reduce((sum: number, e: any) => sum + parseFloat(e.baseSalary), 0);
 
   return (
     <div className="p-5 sm:p-7 space-y-6">
@@ -111,7 +116,7 @@ export default async function WorkspaceEmployeesPage({ params }: WorkspaceEmploy
               </tr>
             </thead>
             <tbody className="bg-white">
-              {staffList.map((emp) => (
+              {staffList.map((emp: any) => (
                 <tr key={emp.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
                   <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider font-sans text-sm">
                     <Link

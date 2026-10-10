@@ -1,4 +1,4 @@
-import { enforceSuperAdmin } from "@/lib/actions/admin";
+import { enforceSuperAdmin } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 

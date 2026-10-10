@@ -1,4 +1,4 @@
-import { getAdminWorkspacesList } from "@/lib/actions/admin";
+import { apiClient } from "@/lib/api/client";
 import { AdminWorkspacesClient } from "./AdminWorkspacesClient";
 
 export const dynamic = "force-dynamic";
@@ -17,12 +17,15 @@ export default async function AdminWorkspacesPage({ searchParams }: AdminWorkspa
   const planFilter = params.plan || "ALL";
   const page = parseInt(params.page || "1", 10);
 
-  const res = await getAdminWorkspacesList({
-    search,
-    planFilter,
-    page,
-    limit: 100,
+  const apiRes = await apiClient.get<any>("/v1/admin/workspaces", {
+    params: {
+      search,
+      plan_filter: planFilter,
+      page: String(page),
+      limit: "100",
+    },
   });
+  const res = apiRes.data || { success: false, error: apiRes.error };
 
   if (!res.success || !res.workspaces) {
     return (

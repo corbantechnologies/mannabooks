@@ -1,7 +1,5 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { shops, suppliers, documents, vendorBills } from "@/db/schema";
-import { eq, and, ne } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
+import { apiClient } from "@/lib/api/client";
 import { notFound } from "next/navigation";
 import { PayablesAgingClient, type SupplierAgingItem } from "./PayablesAgingClient";
 
@@ -18,128 +16,27 @@ export default async function PayablesAgingPage({ params }: PayablesAgingPagePro
     notFound();
   }
 
-  // Fetch all suppliers with their unpaid documents and unpaid vendor bills
-  const shopSuppliers = await db.query.suppliers.findMany({
-    where: eq(suppliers.shopId, shop.id),
-    with: {
-      documents: {
-        where: and(
-          ne(documents.status, "PAID"),
-          ne(documents.status, "CANCELLED")
-        ),
-      },
-      vendorBills: {
-        where: and(
-          ne(vendorBills.status, "PAID"),
-          ne(vendorBills.status, "CANCELLED")
-        ),
-      },
-    },
-    orderBy: (s, { asc }) => [asc(s.name)],
-  });
+  const res = await apiClient<{ success: boolean; agingData: SupplierAgingItem[] }>(
+    `/v1/reports/payables-aging?shop_id=${shop.id}`
+  );
 
-  const now = new Date();
-
-  // Process aging buckets per supplier
-  const agingData: SupplierAgingItem[] = [];
-
-  for (const supp of shopSuppliers) {
-    let current = 0;
-    let days31to60 = 0;
-    let days61to90 = 0;
-    let days90Plus = 0;
-    let total = 0;
-
-    const docItems = (supp.documents || []).map((doc) => {
-      const issueTime = new Date(doc.issueDate).getTime();
-      const diffMs = now.getTime() - issueTime;
-      const daysAge = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-      const amt = parseFloat(doc.grandTotal || "0");
-
-      if (daysAge <= 30) {
-        current += amt;
-      } else if (daysAge <= 60) {
-        days31to60 += amt;
-      } else if (daysAge <= 90) {
-        days61to90 += amt;
-      } else {
-        days90Plus += amt;
-      }
-
-      total += amt;
-
-      return {
-        id: doc.id,
-        docNumber: doc.docNumber,
-        type: doc.type,
-        issueDate: String(doc.issueDate),
-        dueDate: doc.dueDate ? String(doc.dueDate) : null,
-        grandTotal: doc.grandTotal,
-        status: doc.status,
-        daysOverdue: daysAge,
-      };
-    });
-
-    const billItems = ((supp as any).vendorBills || []).map((b: any) => {
-      const billTime = new Date(b.billDate).getTime();
-      const diffMs = now.getTime() - billTime;
-      const daysAge = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-      const balance = Math.max(0, parseFloat(b.netPayable || "0") - parseFloat(b.amountPaid || "0"));
-
-      if (daysAge <= 30) {
-        current += balance;
-      } else if (daysAge <= 60) {
-        days31to60 += balance;
-      } else if (daysAge <= 90) {
-        days61to90 += balance;
-      } else {
-        days90Plus += balance;
-      }
-
-      total += balance;
-
-      return {
-        id: b.id,
-        docNumber: b.billNumber,
-        type: "BILL",
-        issueDate: String(b.billDate),
-        dueDate: b.dueDate ? String(b.dueDate) : null,
-        grandTotal: balance.toFixed(2),
-        status: b.status,
-        daysOverdue: daysAge,
-      };
-    });
-
-    const allPayableItems = [...docItems, ...billItems];
-
-    if (allPayableItems.length > 0 || total > 0) {
-      agingData.push({
-        supplierId: supp.id,
-        supplierName: supp.name,
-        email: supp.email,
-        phone: supp.phone,
-        taxPin: supp.taxPin,
-        paymentTerms: supp.paymentTerms,
-        currentAmount: current,
-        days31to60: days31to60,
-        days61to90: days61to90,
-        days90Plus: days90Plus,
-        totalPayable: total,
-        documentsCount: allPayableItems.length,
-        documents: allPayableItems,
-      });
-    }
-  }
-
-  // Sort by highest total payable
-  agingData.sort((a, b) => b.totalPayable - a.totalPayable);
+  const agingData = res.data?.agingData || [];
 
   return (
     <div className="p-5 sm:p-7 space-y-6">
+      <div className="space-y-1">
+        <span className="text-xs text-zinc-400 font-mono uppercase tracking-wider">Financial Reports & Accounts Payable</span>
+        <h1 className="text-[22px] font-semibold text-zinc-900 leading-tight">Payables Aging Analysis</h1>
+        <p className="text-sm text-zinc-500">
+          Monitor outstanding liabilities to vendors, grouped across statutory aging buckets (0–30, 31–60, 61–90, 90+ days),
+          to prevent liquidity traps and optimize working capital outflows.
+        </p>
+      </div>
+
       <PayablesAgingClient
         shopSlug={slug}
         shopName={shop.name}
-        currency={shop.currency || "KES"}
+        currency={shop.currency}
         agingData={agingData}
       />
     </div>

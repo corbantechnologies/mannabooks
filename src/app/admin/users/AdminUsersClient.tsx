@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { toggleSuperAdminAction, toggleUserLifetimeProAction, updateUserSubscriptionAction, deleteUserAccountAction } from "@/lib/actions/admin";
+import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -60,20 +60,17 @@ export function AdminUsersClient({ initialUsers, availablePlans = [] }: AdminUse
     setIsDeletingUser(true);
     const toastId = toast.loading(`Purging user account ${deletingUser.email}...`);
 
-    const res = await deleteUserAccountAction({
-      userId: deletingUser.id,
-      confirmationInput: deleteUserConfirmation,
-    });
-
-    setIsDeletingUser(false);
-    if (!res.success) {
-      toast.error(res.error || "Failed to purge user.", { id: toastId });
-    } else {
-      toast.success(res.message || "User account permanently purged!", { id: toastId });
+    try {
+      const res: any = await axiosClient.delete(`/admin/users/${deletingUser.id}`);
+      setIsDeletingUser(false);
+      toast.success(res?.message || "User account permanently purged!", { id: toastId });
       setUsers((prev) => prev.filter((item) => item.id !== deletingUser.id));
       setDeletingUser(null);
       setDeleteUserConfirmation("");
       router.refresh();
+    } catch (err: any) {
+      setIsDeletingUser(false);
+      toast.error(err?.message || "Failed to purge user.", { id: toastId });
     }
   }
 
@@ -206,17 +203,15 @@ export function AdminUsersClient({ initialUsers, availablePlans = [] }: AdminUse
       expiryDate = d;
     }
 
-    const res = await updateUserSubscriptionAction({
-      userId: user.id,
-      plan: isLifetimeSelection ? "PRO" : selectedPlanId,
-      isLifetimePro: isLifetimeSelection,
-      subscriptionExpiresAt: expiryDate,
-    });
+    try {
+      const res: any = await axiosClient.patch(`/admin/users/${user.id}/subscription`, {
+        plan: isLifetimeSelection ? "PRO" : selectedPlanId,
+        is_lifetime_pro: isLifetimeSelection,
+        subscription_expires_at: expiryDate ? expiryDate.toISOString() : null,
+      });
 
-    setIsSavingSubscription(false);
-
-    if (res.success) {
-      toast.success(res.message || "User subscription updated!", { id: toastId });
+      setIsSavingSubscription(false);
+      toast.success(res?.message || "User subscription updated!", { id: toastId });
       setUsers((prev) =>
         prev.map((item) =>
           item.id === user.id
@@ -231,8 +226,9 @@ export function AdminUsersClient({ initialUsers, availablePlans = [] }: AdminUse
       );
       setPopoverUserId(null);
       router.refresh();
-    } else {
-      toast.error(res.error || "Failed to update subscription.", { id: toastId });
+    } catch (err: any) {
+      setIsSavingSubscription(false);
+      toast.error(err?.message || "Failed to update subscription.", { id: toastId });
     }
   }
 
@@ -244,19 +240,16 @@ export function AdminUsersClient({ initialUsers, availablePlans = [] }: AdminUse
 
     if (modalAction === "LIFETIME_PRO") {
       const nextState = !targetUser.isLifetimePro;
-      const res = await toggleUserLifetimeProAction({
-        userId: targetUser.id,
-        isLifetimePro: nextState,
-      });
+      try {
+        const res: any = await axiosClient.post(`/admin/users/${targetUser.id}/toggle-lifetime-pro`, {
+          is_lifetime_pro: nextState,
+        });
 
-      setIsProcessing(false);
-      setTargetUser(null);
-      setModalAction(null);
+        setIsProcessing(false);
+        setTargetUser(null);
+        setModalAction(null);
 
-      if (!res.success) {
-        toast.error(res.error || "Failed to update Lifetime PRO status.", { id: toastId });
-      } else {
-        toast.success(res.message || "Lifetime PRO updated!", { id: toastId });
+        toast.success(res?.message || "Lifetime PRO updated!", { id: toastId });
         setUsers((prev) =>
           prev.map((item) =>
             item.id === targetUser.id
@@ -265,28 +258,35 @@ export function AdminUsersClient({ initialUsers, availablePlans = [] }: AdminUse
           )
         );
         router.refresh();
+      } catch (err: any) {
+        setIsProcessing(false);
+        setTargetUser(null);
+        setModalAction(null);
+        toast.error(err?.message || "Failed to update Lifetime PRO status.", { id: toastId });
       }
     } else if (modalAction === "ADMIN") {
       const nextState = !targetUser.isSuperAdmin;
-      const res = await toggleSuperAdminAction({
-        userId: targetUser.id,
-        isSuperAdmin: nextState,
-      });
+      try {
+        const res: any = await axiosClient.post(`/admin/users/${targetUser.id}/toggle-super-admin`, {
+          is_super_admin: nextState,
+        });
 
-      setIsProcessing(false);
-      setTargetUser(null);
-      setModalAction(null);
+        setIsProcessing(false);
+        setTargetUser(null);
+        setModalAction(null);
 
-      if (!res.success) {
-        toast.error(res.error || "Failed to update admin role.", { id: toastId });
-      } else {
-        toast.success(res.message || "User role updated!", { id: toastId });
+        toast.success(res?.message || "User role updated!", { id: toastId });
         setUsers((prev) =>
           prev.map((item) =>
             item.id === targetUser.id ? { ...item, isSuperAdmin: nextState } : item
           )
         );
         router.refresh();
+      } catch (err: any) {
+        setIsProcessing(false);
+        setTargetUser(null);
+        setModalAction(null);
+        toast.error(err?.message || "Failed to update admin role.", { id: toastId });
       }
     }
   }

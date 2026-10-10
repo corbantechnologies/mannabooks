@@ -1,4 +1,4 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getStocktakeDetail } from "@/lib/actions/stocktake";
 import { StocktakeAuditClient } from "./StocktakeAuditClient";
 import { notFound } from "next/navigation";

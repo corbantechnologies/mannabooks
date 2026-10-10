@@ -2,7 +2,7 @@
 
 import { useState, useEffect, createContext, useContext } from "react";
 import Link from "next/link";
-import { logoutAction } from "@/lib/actions/logout";
+import { LogoutButton } from "@/components/LogoutButton";
 import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { FiscalYearSwitcher } from "@/components/FiscalYearSwitcher";
 
@@ -271,14 +271,7 @@ export function DesktopSidebarShell({
             style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
           >
             <span className="text-zinc-700 text-[10px] font-mono">v2026.4</span>
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                className="text-rose-500 hover:text-rose-400 text-[10px] font-semibold uppercase tracking-wide transition-colors cursor-pointer bg-transparent border-none"
-              >
-                Sign out
-              </button>
-            </form>
+            <LogoutButton />
           </div>
         </div>
       </aside>

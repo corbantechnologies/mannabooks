@@ -1,5 +1,5 @@
 // src/app/workspaces/[slug]/products/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { apiClient } from "@/lib/api/client";
 import { formatCurrency } from "@/lib/utils";
 import { ProductFormClientSide } from "./ProductFormClientSide";

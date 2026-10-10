@@ -1,24 +1,22 @@
-import { verifyAndGetSession } from "@/lib/actions/auth";
-import { logoutAction } from "@/lib/actions/logout";
+import { LogoutButton } from "@/components/LogoutButton";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getOrganizationStaffRoster } from "@/lib/actions/team-directory";
 import { WorkspaceDirectoryClient } from "./WorkspaceDirectoryClient";
 import { apiClient } from "@/lib/api/client";
 
 export default async function WorkspacesDirectoryPage() {
-  const session = await verifyAndGetSession();
-  if (!session) {
-    redirect("/logout");
+  const meRes = await apiClient<{ success: boolean; user: any }>("/v1/auth/me");
+  if (!meRes.data?.success || !meRes.data.user) {
+    redirect("/login");
   }
 
-  // Fetch workspaces and user via decoupled FastAPI endpoints
-  const [workspacesRes, rosterRes] = await Promise.all([
-    apiClient<{ success: boolean; workspaces: Array<{ id: string; name: string; slug: string; role: string }> }>("/v1/workspaces/my-workspaces"),
-    getOrganizationStaffRoster().catch(() => ({ roster: [], ownedShops: [] })),
-  ]);
+  // Fetch workspaces via decoupled FastAPI endpoint
+  const workspacesRes = await apiClient<{ success: boolean; workspaces: Array<{ id: string; name: string; slug: string; role: string }> }>(
+    "/v1/workspaces/my-workspaces"
+  );
 
-  const currentUser = session.user;
+  const currentUser = meRes.data.user;
+  const session = { userId: currentUser.id, user: currentUser };
   const workspacesList = workspacesRes.data?.workspaces || [];
 
   const memberships = workspacesList.map((w) => ({
@@ -125,8 +123,8 @@ export default async function WorkspacesDirectoryPage() {
           rawPlan={rawPlan}
           isLifetime={isLifetime}
           memberships={memberships}
-          initialRoster={rosterRes.roster}
-          ownedShops={rosterRes.ownedShops}
+          initialRoster={[]}
+          ownedShops={ownedShops}
           fiscalYearsByShop={fiscalYearsByShop}
         />
       </main>
@@ -138,11 +136,9 @@ export default async function WorkspacesDirectoryPage() {
           <span className="mx-2 hidden sm:inline">•</span>
           <span className="block sm:inline mt-1 sm:mt-0">Account Tier: <strong className="text-black">{rawPlan}</strong></span>
         </div>
-        <form action={logoutAction} className="w-full sm:w-auto">
-          <button type="submit" className="text-black font-bold hover:underline uppercase cursor-pointer bg-transparent border-none p-0 font-mono text-[10px]">
-            De-authenticate Console
-          </button>
-        </form>
+        <div className="w-full sm:w-auto">
+          <LogoutButton className="text-black font-bold hover:underline uppercase cursor-pointer bg-transparent border-none p-0 font-mono text-[10px]" />
+        </div>
       </footer>
 
     </div>

@@ -1,5 +1,5 @@
 // src/app/workspaces/[slug]/inventory/transfers/[id]/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
 import { getStockTransfer } from "@/lib/actions/stock-transfers";
 import { TransferDetailClient } from "./TransferDetailClient";

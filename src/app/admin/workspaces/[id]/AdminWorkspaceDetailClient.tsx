@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
-import { updateWorkspacePlanAction, toggleWorkspaceSuspensionAction } from "@/lib/actions/admin";
+import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -25,19 +25,19 @@ export function AdminWorkspaceDetailClient({ shop, docStats, recentDocs }: Admin
     setIsUpdating(true);
     const toastId = toast.loading("Updating tenant subscription tier...");
 
-    const res = await updateWorkspacePlanAction({
-      shopId: shop.id,
-      plan: currentPlan,
-      isLifetimePro,
-      subscriptionStatus: isLifetimePro ? "LIFETIME_FREE" : "ACTIVE",
-    });
+    try {
+      const res: any = await axiosClient.patch(`/admin/workspaces/${shop.id}/plan`, {
+        plan: currentPlan,
+        is_lifetime_pro: isLifetimePro,
+        subscription_status: isLifetimePro ? "LIFETIME_FREE" : "ACTIVE",
+      });
 
-    setIsUpdating(false);
-    if (!res.success) {
-      toast.error(res.error || "Failed to update plan tier.", { id: toastId });
-    } else {
-      toast.success(res.message || "Plan updated!", { id: toastId });
+      setIsUpdating(false);
+      toast.success(res?.message || "Plan updated!", { id: toastId });
       router.refresh();
+    } catch (err: any) {
+      setIsUpdating(false);
+      toast.error(err?.message || "Failed to update plan tier.", { id: toastId });
     }
   }
 
@@ -46,19 +46,19 @@ export function AdminWorkspaceDetailClient({ shop, docStats, recentDocs }: Admin
     setIsUpdating(true);
     const toastId = toast.loading(nextState ? "Suspending workspace..." : "Restoring access...");
 
-    const res = await toggleWorkspaceSuspensionAction({
-      shopId: shop.id,
-      isSuspended: nextState,
-      reason: nextState ? suspendedReason : undefined,
-    });
+    try {
+      const res: any = await axiosClient.post(`/admin/workspaces/${shop.id}/toggle-suspension`, {
+        is_suspended: nextState,
+        reason: nextState ? suspendedReason : undefined,
+      });
 
-    setIsUpdating(false);
-    if (!res.success) {
-      toast.error(res.error || "Failed to update status.", { id: toastId });
-    } else {
+      setIsUpdating(false);
       setIsSuspended(nextState);
-      toast.success(res.message || "Status updated!", { id: toastId });
+      toast.success(res?.message || "Status updated!", { id: toastId });
       router.refresh();
+    } catch (err: any) {
+      setIsUpdating(false);
+      toast.error(err?.message || "Failed to update status.", { id: toastId });
     }
   }
 

@@ -3,9 +3,23 @@
 import { useState } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
-import { toggleRecurringInvoiceAction, generateNextRecurringInvoiceAction, type RecurringInvoiceItem } from "@/lib/actions/recurring";
+import { axiosClient } from "@/lib/api/axios";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
+
+export interface RecurringInvoiceItem {
+  id: string;
+  docNumber: string;
+  clientName: string;
+  clientEmail: string;
+  clientId: string | null;
+  currency: string;
+  grandTotal: string;
+  isRecurring: boolean;
+  recurringInterval: "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | null;
+  nextRecurringDate: string | Date | null;
+  createdAt: string | Date;
+}
 
 interface RecurringInvoicesClientProps {
   shopId: string;
@@ -27,21 +41,18 @@ export function RecurringInvoicesClient({
     const nextState = !inv.isRecurring;
     const toastId = toast.loading(`${nextState ? "Resuming" : "Pausing"} recurring schedule...`);
 
-    const res = await toggleRecurringInvoiceAction({
-      shopId,
-      shopSlug,
-      documentId: inv.id,
-      isRecurring: nextState,
-      recurringInterval: inv.recurringInterval || "MONTHLY",
-    });
+    try {
+      await axiosClient.patch(`/documents/${inv.id}?shop_id=${shopId}`, {
+        is_recurring: nextState,
+        recurring_interval: inv.recurringInterval || "MONTHLY",
+      });
 
-    if (res.success) {
       toast.success(`Recurring schedule ${nextState ? "resumed" : "paused"}!`, { id: toastId });
       setInvoices((prev) =>
         prev.map((item) => (item.id === inv.id ? { ...item, isRecurring: nextState } : item))
       );
-    } else {
-      toast.error(res.error || "Failed to update status.", { id: toastId });
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Failed to update status.", { id: toastId });
     }
   }
 
@@ -50,19 +61,14 @@ export function RecurringInvoicesClient({
     const toastId = toast.loading(`Issuing next recurring cycle invoice for ${inv.clientName}...`);
 
     try {
-      const res = await generateNextRecurringInvoiceAction({
-        shopId,
-        shopSlug,
-        sourceDocumentId: inv.id,
-      });
-
-      if (res.success && res.newDocId) {
-        toast.success("New recurring invoice cycle issued successfully!", { id: toastId });
+      const res = await axiosClient.post(`/documents/${inv.id}/recurring-cycle?shop_id=${shopId}`);
+      if (res.data?.success && res.data.newDocId) {
+        toast.success(`New recurring invoice cycle issued successfully (${res.data.doc_number || ""})!`, { id: toastId });
       } else {
-        toast.error(res.error || "Failed to generate invoice.", { id: toastId });
+        toast.error("Failed to generate recurring invoice cycle.", { id: toastId });
       }
-    } catch {
-      toast.error("Error issuing recurring cycle.", { id: toastId });
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Error issuing recurring cycle.", { id: toastId });
     } finally {
       setGeneratingId(null);
     }

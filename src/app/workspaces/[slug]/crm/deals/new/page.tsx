@@ -1,9 +1,7 @@
 // src/app/workspaces/[slug]/crm/deals/new/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { shops, clients } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
+import { apiClient } from "@/lib/api/client";
 import { NewDealForm } from "./NewDealForm";
 
 interface NewDealPageProps {
@@ -16,11 +14,8 @@ export default async function NewDealPage({ params }: NewDealPageProps) {
   const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
-  const clientList = await db.query.clients.findMany({
-    where: eq(clients.shopId, shop.id),
-    columns: { id: true, name: true, email: true },
-    orderBy: [clients.name],
-  });
+  const clientRes = await apiClient.get<any[]>(`/v1/clients?shop_id=${shop.id}`);
+  const clientList = (clientRes.data || []).map((c: any) => ({ id: c.id, name: c.name, email: c.email }));
 
   return (
     <div className="max-w-xl mx-auto p-4 md:p-6">

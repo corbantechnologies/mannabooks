@@ -1,4 +1,4 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
 import { getStockLocations } from "@/lib/actions/inventory";
 import { apiClient } from "@/lib/api/client";

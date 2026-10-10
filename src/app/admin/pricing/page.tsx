@@ -1,5 +1,5 @@
-import { enforceSuperAdmin } from "@/lib/actions/admin";
-import { getAdminPlatformPlans } from "@/lib/actions/admin-pricing";
+import { enforceSuperAdmin } from "@/lib/auth/session";
+import { PLAN_SPECS } from "@/lib/paywall";
 import { redirect } from "next/navigation";
 import { AdminPricingClient } from "./AdminPricingClient";
 
@@ -11,8 +11,7 @@ export default async function AdminPricingPage() {
         redirect("/dashboard");
     }
 
-    const res = await getAdminPlatformPlans();
-    const plans = res.success && res.plans ? res.plans : [];
+    const plans = Object.values(PLAN_SPECS);
 
     return (
         <div className="flex-1 space-y-6">

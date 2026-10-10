@@ -1,11 +1,12 @@
-import { getPlatformStats } from "@/lib/actions/admin";
+import { apiClient } from "@/lib/api/client";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-    const res = await getPlatformStats();
+    const apiRes = await apiClient.get<any>("/v1/admin/stats");
+    const res = apiRes.data || { success: false, error: apiRes.error };
 
     if (!res.success || !res.stats) {
         return (

@@ -1,8 +1,7 @@
-// src/app/workspaces/[slug]/documents/[id]/CreditNotePopover.tsx
 "use client";
 
 import { useState } from "react";
-import { raiseCreditNoteAction } from "@/lib/actions/documents";
+import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -52,24 +51,36 @@ export function CreditNotePopover({
     setLoading(true);
 
     try {
-      const res = await raiseCreditNoteAction({
-        invoiceId,
-        shopId,
-        shopSlug,
-        isPartial,
-        selectedItemIds: isPartial ? selectedItemIds : undefined,
-        creditNoteCuNumber: creditNoteCuNumber.trim() || undefined,
+      const selectedItems = isPartial
+        ? items
+            .filter((it) => selectedItemIds.includes(it.id))
+            .map((it) => ({
+              description: it.description,
+              quantity: parseFloat(it.quantity || "1"),
+              unit_price: parseFloat(it.unitPrice || "0"),
+              tax_type: "V_16",
+            }))
+        : undefined;
+
+      const res = await axiosClient.post<any>(`/documents/${invoiceId}/credit-note?shop_id=${shopId}`, {
+        reason_code: "01",
+        reason_notes: isPartial ? "Partial Line Item Credit Adjustment" : "Full Invoice Credit Cancellation",
+        restock_inventory: true,
+        items: selectedItems,
       });
 
-      if (res.success) {
-        toast.success(`Credit Note ${res.serial} successfully issued.`);
-        onClose();
-        router.push(`/workspaces/${shopSlug}/documents/${res.creditNoteId}`);
-      } else {
-        toast.error(res.error || "Failed to raise Credit Note.");
+      const cn = res.data;
+      if (creditNoteCuNumber.trim()) {
+        await axiosClient.patch(`/documents/${cn.id}?shop_id=${shopId}`, {
+          kra_cu_invoice_number: creditNoteCuNumber.trim(),
+        }).catch(() => null);
       }
-    } catch (err) {
-      toast.error("An unexpected error occurred while raising Credit Note.");
+
+      toast.success(`Credit Note ${cn.doc_number || "CN"} successfully issued.`);
+      onClose();
+      router.push(`/workspaces/${shopSlug}/documents/${cn.id}`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Failed to raise Credit Note.");
     } finally {
       setLoading(false);
     }

@@ -3,40 +3,72 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { useCreateSupplier } from "@/hooks/useSuppliers";
 
-export function SupplierFormClientSide({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
+const supplierSchema = z.object({
+  name: z.string().min(2, "Supplier name must be at least 2 characters."),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
+  phone: z.string().optional(),
+  supplierType: z.enum(["WALK_IN", "INDIVIDUAL", "CORPORATE"]),
+  taxPin: z.string().optional(),
+  requiresEtims: z.boolean(),
+  paymentTerms: z.string(),
+});
+
+type SupplierFormData = z.infer<typeof supplierSchema>;
+
+export function SupplierFormClientSide({
+  shopId,
+  shopSlug,
+}: {
+  shopId: string;
+  shopSlug: string;
+}) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [supplierType, setSupplierType] = useState<"WALK_IN" | "INDIVIDUAL" | "CORPORATE">("CORPORATE");
-  const [paymentTerms, setPaymentTerms] = useState("NET_30");
 
-  const createSupplierMutation = useCreateSupplier(shopId, shopSlug);
+  const createSupplierMutation = useCreateSupplier(shopId);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<SupplierFormData>({
+    resolver: zodResolver(supplierSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      supplierType: "CORPORATE",
+      taxPin: "",
+      requiresEtims: false,
+      paymentTerms: "NET_30",
+    },
+  });
 
-    const formData = new FormData(event.currentTarget);
-    const name = formData.get("name") as string;
-    const email = formData.get("email") as string;
-    const phone = formData.get("phone") as string;
-    const taxPin = formData.get("taxPin") as string;
-    const requiresEtims = formData.get("requiresEtims") === "on";
+  const supplierType = watch("supplierType");
 
+  function onSubmit(data: SupplierFormData) {
     createSupplierMutation.mutate(
       {
-        name,
-        email,
-        phone: phone || undefined,
-        supplierType,
-        taxPin: taxPin || undefined,
-        requiresEtims,
-        paymentTerms,
+        name: data.name,
+        email: data.email || undefined,
+        phone: data.phone || undefined,
+        supplierType: data.supplierType,
+        taxPin: data.taxPin || undefined,
+        requiresEtims: data.requiresEtims,
+        paymentTerms: data.paymentTerms,
       },
       {
         onSuccess: () => {
           setIsOpen(false);
-          setSupplierType("CORPORATE");
+          reset();
           router.refresh();
         },
       }
@@ -55,11 +87,14 @@ export function SupplierFormClientSide({ shopId, shopSlug }: { shopId: string; s
       {isOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-zinc-200/80 rounded-xl shadow-2xl w-[95%] sm:w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-6 animate-in zoom-in-95 duration-150 relative">
-            
             <div className="flex justify-between items-start border-b border-zinc-100 pb-4">
               <div>
-                <h3 className="font-semibold uppercase tracking-tight text-base font-sans text-black">Register Vendor / Supplier</h3>
-                <p className="text-[10px] text-zinc-400 uppercase font-semibold">Inbound Procurement Entity Entry</p>
+                <h3 className="font-semibold uppercase tracking-tight text-base font-sans text-black">
+                  Register Vendor / Supplier
+                </h3>
+                <p className="text-[10px] text-zinc-400 uppercase font-semibold">
+                  Inbound Procurement Entity Entry
+                </p>
               </div>
               <button
                 type="button"
@@ -70,21 +105,29 @@ export function SupplierFormClientSide({ shopId, shopSlug }: { shopId: string; s
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 font-sans text-xs">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 font-sans text-xs">
               {/* CLASSIFICATION TYPE SELECTOR */}
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Vendor Classification</label>
+                <label className="text-zinc-400 uppercase block text-[10px] font-semibold">
+                  Vendor Classification
+                </label>
                 <div className="grid grid-cols-3 border border-zinc-200 divide-x divide-zinc-200 bg-white rounded-md overflow-hidden">
                   {(["CORPORATE", "INDIVIDUAL", "WALK_IN"] as const).map((type) => (
                     <button
                       key={type}
                       type="button"
-                      onClick={() => setSupplierType(type)}
+                      onClick={() => setValue("supplierType", type)}
                       className={`py-2 text-[10px] font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
-                        supplierType === type ? "bg-emerald-900 text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"
+                        supplierType === type
+                          ? "bg-emerald-900 text-white"
+                          : "bg-white text-zinc-600 hover:bg-zinc-50"
                       }`}
                     >
-                      {type === "CORPORATE" ? "Corporate" : type === "INDIVIDUAL" ? "Sole Prop" : "Walk-in"}
+                      {type === "CORPORATE"
+                        ? "Corporate"
+                        : type === "INDIVIDUAL"
+                        ? "Sole Prop"
+                        : "Walk-in"}
                     </button>
                   ))}
                 </div>
@@ -92,47 +135,65 @@ export function SupplierFormClientSide({ shopId, shopSlug }: { shopId: string; s
 
               {/* NAME & CONTACT */}
               <div className="space-y-1">
-                <label className="text-black font-semibold uppercase block text-[10px]">Supplier / Company Name *</label>
+                <label className="text-black font-semibold uppercase block text-[10px]">
+                  Supplier / Company Name *
+                </label>
                 <input
                   type="text"
-                  name="name"
+                  {...register("name")}
                   placeholder="e.g. Metro Distributors LTD"
                   className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-md text-xs font-semibold"
-                  required
                 />
+                {errors.name && (
+                  <p className="text-[10px] text-rose-600 font-semibold">{errors.name.message}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Email Address <span className="text-[9px] text-zinc-400 font-normal">(Optional)</span></label>
+                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">
+                    Email Address{" "}
+                    <span className="text-[9px] text-zinc-400 font-normal">(Optional)</span>
+                  </label>
                   <input
                     type="email"
-                    name="email"
-                    placeholder="orders@vendor.com (optional)"
+                    {...register("email")}
+                    placeholder="orders@vendor.com"
                     className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-md text-xs"
                   />
+                  {errors.email && (
+                    <p className="text-[10px] text-rose-600 font-semibold">
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Phone Contact</label>
+                  <label className="text-zinc-400 uppercase block text-[10px] font-semibold">
+                    Phone Contact
+                  </label>
                   <input
                     type="text"
-                    name="phone"
+                    {...register("phone")}
                     placeholder="e.g. 0712345678"
                     className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-md text-xs font-mono"
                   />
                 </div>
               </div>
 
-              {/* FLEXIBLE TAX PIN (SOLE PROP A... OR CORP P...) */}
+              {/* FLEXIBLE TAX PIN */}
               <div className="space-y-1 pt-2 border-t border-dashed border-zinc-200">
                 <div className="flex justify-between items-center">
-                  <label className="text-black font-semibold uppercase block text-[10px]">KRA Tax PIN</label>
-                  <span className="text-[9px] text-zinc-400 italic font-mono">Sole Prop (A...) or Corp (P...)</span>
+                  <label className="text-black font-semibold uppercase block text-[10px]">
+                    KRA Tax PIN
+                  </label>
+                  <span className="text-[9px] text-zinc-400 italic font-mono">
+                    Sole Prop (A...) or Corp (P...)
+                  </span>
                 </div>
                 <input
                   type="text"
-                  name="taxPin"
-                  placeholder="e.g. A012345678B (Personal/Sole Prop) or P051234567A (Company)"
+                  {...register("taxPin")}
+                  placeholder="e.g. A012345678B or P051234567A"
                   className="w-full px-3 py-2 border border-zinc-300 bg-white font-mono text-xs uppercase focus:outline-none focus:ring-1 focus:ring-black placeholder:text-zinc-300 rounded-md"
                   maxLength={20}
                 />
@@ -140,10 +201,11 @@ export function SupplierFormClientSide({ shopId, shopSlug }: { shopId: string; s
 
               {/* PAYMENT TERMS SELECTOR */}
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase block text-[10px] font-semibold">Payment Terms</label>
+                <label className="text-zinc-400 uppercase block text-[10px] font-semibold">
+                  Payment Terms
+                </label>
                 <select
-                  value={paymentTerms}
-                  onChange={(e) => setPaymentTerms(e.target.value)}
+                  {...register("paymentTerms")}
                   className="w-full px-3 py-2 border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-black text-xs font-semibold uppercase rounded-md"
                 >
                   <option value="NET_30">Net 30 Days</option>
@@ -159,10 +221,13 @@ export function SupplierFormClientSide({ shopId, shopSlug }: { shopId: string; s
                 <input
                   type="checkbox"
                   id="supplierRequiresEtims"
-                  name="requiresEtims"
+                  {...register("requiresEtims")}
                   className="accent-black w-4 h-4 cursor-pointer rounded"
                 />
-                <label htmlFor="supplierRequiresEtims" className="font-semibold uppercase text-[10px] cursor-pointer select-none">
+                <label
+                  htmlFor="supplierRequiresEtims"
+                  className="font-semibold uppercase text-[10px] cursor-pointer select-none"
+                >
                   Requires KRA eTIMS / CU Fiscal Receipt
                 </label>
               </div>
@@ -185,7 +250,6 @@ export function SupplierFormClientSide({ shopId, shopSlug }: { shopId: string; s
                 </button>
               </div>
             </form>
-
           </div>
         </div>
       )}

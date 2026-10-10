@@ -1,7 +1,4 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { redirect } from "next/navigation";
 import { getChartOfAccounts } from "@/lib/actions/gl";
 import OpeningBalancesClient from "./OpeningBalancesClient";

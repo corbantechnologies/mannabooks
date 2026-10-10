@@ -1,14 +1,11 @@
-// src/app/workspaces/[slug]/layout.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { logoutAction } from "@/lib/actions/logout";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getShopPlanDetails } from "@/lib/paywall";
 import Link from "next/link";
-
 
 import { GracePeriodBanner } from "@/components/GracePeriodBanner";
 import { FiscalYearNoticeBanner } from "@/components/FiscalYearNoticeBanner";
 import { FiscalYearSwitcher } from "@/components/FiscalYearSwitcher";
-import { getActiveFiscalYearContext } from "@/lib/actions/fiscal-year-context";
+import { getActiveFiscalYearContext } from "@/lib/fiscal-year-context";
 import { MobileNavDrawer } from "./MobileNavDrawer";
 import { DesktopSideNav } from "./DesktopSideNav";
 import { DesktopSidebarShell } from "./DesktopSidebarShell";

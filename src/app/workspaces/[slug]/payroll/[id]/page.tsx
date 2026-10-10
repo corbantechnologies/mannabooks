@@ -1,11 +1,9 @@
 // src/app/workspaces/[slug]/payroll/[id]/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { documents, shops } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
+import { apiClient } from "@/lib/api/client";
 import { PrintPayrollVoucherButton } from "./PrintPayrollVoucherButton";
 import { FinalizePayrollRunButton } from "./FinalizePayrollRunButton";
 import { EmailPayslipsButton } from "./EmailPayslipsButton";
@@ -25,16 +23,26 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
   }
 
   // 2. Fetch targeted payroll voucher document record with items
-  const voucherRecord = await db.query.documents.findFirst({
-    where: and(eq(documents.id, id), eq(documents.shopId, shop.id), eq(documents.type, "PAYROLL_VOUCHER")),
-    with: {
-      items: true,
-    },
-  });
-
-  if (!voucherRecord) {
+  const res = await apiClient.get<any>(`/v1/documents/${id}?shop_id=${shop.id}&full=true`);
+  const doc = res.data?.document;
+  if (!doc) {
     notFound();
   }
+
+  const voucherRecord = {
+    id: doc.id,
+    docNumber: doc.docNumber || doc.doc_number,
+    status: doc.status,
+    issueDate: doc.issueDate || doc.issue_date,
+    subTotal: String(doc.subTotal || doc.sub_total || "0"),
+    taxAmount: String(doc.taxAmount || doc.tax_amount || "0"),
+    grandTotal: String(doc.grandTotal || doc.grand_total || "0"),
+    items: (doc.items || []).map((item: any) => ({
+      id: item.id,
+      description: item.description,
+      unitPrice: String(item.unitPrice || item.unit_price || "0"),
+    })),
+  };
 
   const isDraft = voucherRecord.status === "DRAFT";
 
@@ -124,7 +132,7 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
               </tr>
             </thead>
             <tbody className="bg-white">
-              {voucherRecord.items.map((item, idx) => (
+              {voucherRecord.items.map((item: any, idx: number) => (
                 <tr key={item.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
                   <td className="p-4 border-r border-zinc-100 font-semibold text-zinc-400">
                     #{idx + 1}

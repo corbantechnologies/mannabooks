@@ -1,5 +1,5 @@
 // src/app/workspaces/[slug]/pos/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { apiClient } from "@/lib/api/client";
 import { WalkInSalesTerminal } from "./WalkInSalesTerminal";
 import Link from "next/link";

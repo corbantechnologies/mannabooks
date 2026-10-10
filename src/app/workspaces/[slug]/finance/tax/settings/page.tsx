@@ -1,10 +1,8 @@
 export const dynamic = 'force-dynamic';
 
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { shops, fiscalYears } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { redirect } from "next/navigation";
+import { apiClient } from "@/lib/api/client";
 import TaxSettingsClient from "./TaxSettingsClient";
 
 export default async function TaxSettingsPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -12,10 +10,14 @@ export default async function TaxSettingsPage({ params }: { params: Promise<{ sl
     const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
-    const years = await db.query.fiscalYears.findMany({
-        where: eq(fiscalYears.shopId, shop.id),
-        orderBy: (f, { desc }) => [desc(f.startDate)],
-    });
+    const res = await apiClient<{ success: boolean; fiscalYears: any[] }>(`/v1/accounts/fiscal-years?shop_id=${shop.id}`);
+    const years = (res.data?.fiscalYears || []).map((y: any) => ({
+        id: y.id,
+        label: y.label,
+        startDate: y.startDate,
+        endDate: y.endDate,
+        isClosed: y.isClosed,
+    }));
 
     return (
         <div className="p-5 sm:p-7 space-y-6">

@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { formatCurrency } from "@/lib/utils";
-import { updateWorkspacePlanAction, toggleWorkspaceSuspensionAction } from "@/lib/actions/admin";
-import { deleteWorkspaceAction } from "@/lib/actions/workspace";
+import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/Spinner";
@@ -70,20 +68,23 @@ export function AdminWorkspacesClient({ initialWorkspaces, totalCount }: AdminWo
     setIsDeleting(true);
     const toastId = toast.loading(`Purging tenant ${deletingShop.name}...`);
 
-    const res = await deleteWorkspaceAction({
-      shopId: deletingShop.id,
-      confirmationInput: deleteConfirmation,
-    });
-
-    setIsDeleting(false);
-    if (!res.success) {
-      toast.error(res.error || "Failed to purge workspace.", { id: toastId });
-    } else {
-      toast.success(`Workspace "${deletingShop.name}" permanently deleted!`, { id: toastId });
-      setWorkspaces((prev) => prev.filter((item) => item.id !== deletingShop.id));
-      setDeletingShop(null);
-      setDeleteConfirmation("");
-      router.refresh();
+    try {
+      const res: any = await axiosClient.delete(
+        `/workspaces/${deletingShop.id}?confirmation=${encodeURIComponent(deleteConfirmation)}`
+      );
+      setIsDeleting(false);
+      if (res && res.success === false) {
+        toast.error(res.error || "Failed to purge workspace.", { id: toastId });
+      } else {
+        toast.success(`Workspace "${deletingShop.name}" permanently deleted!`, { id: toastId });
+        setWorkspaces((prev) => prev.filter((item) => item.id !== deletingShop.id));
+        setDeletingShop(null);
+        setDeleteConfirmation("");
+        router.refresh();
+      }
+    } catch (err: any) {
+      setIsDeleting(false);
+      toast.error(err.response?.data?.detail || err.message || "Failed to purge workspace.", { id: toastId });
     }
   }
 

@@ -1,27 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { apiClient } from "@/lib/api/client";
 import JSZip from "jszip";
 import { generateDocumentPdfBuffer } from "@/app/portal/pdf/[token]/route";
-import { verifyAndGetSession } from "@/lib/actions/auth";
 
 export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ slug: string }> }
 ) {
     try {
-        const session = await verifyAndGetSession();
-        if (!session) {
-            return new NextResponse("Unauthorized", { status: 401 });
-        }
-
         const { slug } = await params;
-        const shop = await db.query.shops.findFirst({
-            where: eq(shops.slug, slug),
-        });
+        const ctxRes = await apiClient<{ success: boolean; shop: any }>(
+            `/v1/workspaces/by-slug/${slug}/context`
+        );
 
-        if (!shop) {
+        if (!ctxRes.data?.success || !ctxRes.data.shop) {
             return new NextResponse("Workspace not found", { status: 404 });
         }
 
@@ -58,17 +50,16 @@ export async function POST(
             compressionOptions: { level: 6 },
         });
 
-        const timestamp = new Date().toISOString().split("T")[0];
-        const archiveName = `MannaBooks_${shop.slug}_Documents_${timestamp}.zip`;
+        const zipFilename = `${slug}_documents_${Date.now()}.zip`;
 
-        return new NextResponse(zipBuffer as unknown as BodyInit, {
+        return new NextResponse(new Uint8Array(zipBuffer), {
             headers: {
                 "Content-Type": "application/zip",
-                "Content-Disposition": `attachment; filename="${archiveName}"`,
+                "Content-Disposition": `attachment; filename="${zipFilename}"`,
             },
         });
     } catch (error: any) {
-        console.error("Bulk PDF export error:", error);
-        return new NextResponse(`Bulk export failed: ${error?.message || "Internal error"}`, { status: 500 });
+        console.error("Bulk PDF export failure:", error);
+        return new NextResponse(`Export failed: ${error?.message || "Internal error"}`, { status: 500 });
     }
 }

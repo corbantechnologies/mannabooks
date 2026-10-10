@@ -1,11 +1,9 @@
 // src/app/workspaces/[slug]/payroll/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { shops, employees, documents } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
+import { apiClient } from "@/lib/api/client";
 import { RegisterEmployeeModal } from "./RegisterEmployeeModal";
 import { DeleteEmployeeButton } from "../employees/DeleteEmployeeButton";
 
@@ -24,20 +22,32 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
   }
 
   // 2. Fetch employee directory
-  const staffList = await db.query.employees.findMany({
-    where: eq(employees.shopId, shop.id),
-    orderBy: [desc(employees.createdAt)],
-  });
+  const empRes = await apiClient.get<any>(`/v1/employees?shop_id=${shop.id}`);
+  const staffList = (empRes.data?.employees || []).map((e: any) => ({
+    ...e,
+    fullName: e.full_name || e.fullName,
+    nationalId: e.national_id || e.nationalId,
+    kraPin: e.kra_pin || e.kraPin,
+    baseSalary: String(e.base_salary || e.baseSalary || "0"),
+    commissionRate: String(e.commission_rate || e.commissionRate || "0"),
+    isActive: e.is_active ?? e.isActive ?? true,
+    email: e.email,
+  }));
 
   // 3. Fetch historical payroll vouchers
-  const payrollVouchers = await db.query.documents.findMany({
-    where: and(eq(documents.shopId, shop.id), eq(documents.type, "PAYROLL_VOUCHER")),
-    orderBy: [desc(documents.issueDate)],
-  });
+  const docRes = await apiClient.get<any[]>(`/v1/documents?shop_id=${shop.id}&doc_type=PAYROLL_VOUCHER&limit=100`);
+  const payrollVouchers = (docRes.data || []).map((v: any) => ({
+    ...v,
+    id: v.id,
+    docNumber: v.doc_number || v.docNumber,
+    issueDate: v.issue_date || v.issueDate,
+    grandTotal: String(v.grand_total || v.grandTotal || "0"),
+    status: v.status,
+  }));
 
   // Compute KPI metrics
-  const activeStaffCount = staffList.filter((e) => e.isActive).length;
-  const totalYtdNetOutflow = payrollVouchers.reduce((acc, v) => acc + parseFloat(v.grandTotal), 0);
+  const activeStaffCount = staffList.filter((e: any) => e.isActive).length;
+  const totalYtdNetOutflow = payrollVouchers.reduce((acc: number, v: any) => acc + parseFloat(v.grandTotal), 0);
   const lastProcessedVoucher = payrollVouchers[0];
 
   return (
@@ -193,7 +203,7 @@ export default async function WorkspacePayrollPage({ params }: WorkspacePayrollP
               </tr>
             </thead>
             <tbody className="bg-white">
-              {staffList.map((emp) => (
+              {staffList.map((emp: any) => (
                 <tr key={emp.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
                   <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider font-sans text-sm">
                     <Link

@@ -1,14 +1,9 @@
-// src/app/workspaces/[slug]/clients/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { clients, shops } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
+import { apiClient } from "@/lib/api/client";
 import { notFound } from "next/navigation";
 import { ClientFormClientSide } from "./ClientFormClientSide";
 import { ClientRowPopover } from "./ClientRowPopover";
 import Link from "next/link";
-
-import { and } from "drizzle-orm";
 import { ClientFilterBar } from "./ClientFilterBar";
 
 interface ClientsPageProps {
@@ -31,16 +26,24 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
     notFound();
   }
 
-  // 3. Query conditions
-  const conditions = [eq(clients.shopId, shop.id)];
-  if (clientType && clientType !== "ALL") {
-    conditions.push(eq(clients.clientType, clientType as any));
-  }
+  // 3. Query clients via FastAPI
+  const res = await apiClient.get<any[]>(`/v1/clients?shop_id=${shop.id}`);
+  const rawList = Array.isArray(res.data) ? res.data : [];
 
-  let clientList = await db.query.clients.findMany({
-    where: and(...conditions),
-    orderBy: [desc(clients.createdAt)],
-  });
+  let clientList = rawList.map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    email: c.email,
+    phone: c.phone,
+    clientType: c.clientType || c.client_type,
+    taxPin: c.taxPin || c.tax_pin,
+    requiresEtims: Boolean(c.requiresEtims ?? c.requires_etims),
+    createdAt: c.createdAt || c.created_at,
+  }));
+
+  if (clientType && clientType !== "ALL") {
+    clientList = clientList.filter((c) => c.clientType === clientType);
+  }
 
   // Client-side text search filter
   if (search && search.trim() !== "") {

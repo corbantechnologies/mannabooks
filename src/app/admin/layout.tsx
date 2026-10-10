@@ -1,7 +1,7 @@
-import { enforceSuperAdmin } from "@/lib/actions/admin";
+import { enforceSuperAdmin } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { logoutAction } from "@/lib/actions/logout";
+import { LogoutButton } from "@/components/LogoutButton";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
     // 1. Enforce strict Super Admin privileges at the layout boundary
@@ -35,11 +35,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                             <span className="font-mono text-zinc-300">ROOT: {adminUser.email}</span>
                         </div>
                         
-                        <form action={logoutAction}>
-                            <button className="text-xs font-semibold text-zinc-300 hover:text-white uppercase tracking-wider transition-colors border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 rounded cursor-pointer">
-                                Terminate Session
-                            </button>
-                        </form>
+                        <LogoutButton className="text-xs font-semibold text-zinc-300 hover:text-white uppercase tracking-wider transition-colors border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 rounded cursor-pointer" />
                     </div>
                 </div>
             </header>

@@ -1,9 +1,7 @@
 // src/app/workspaces/[slug]/projects/new/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { shops, clients, deals, contracts } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
+import { apiClient } from "@/lib/api/client";
 import { NewProjectForm } from "./NewProjectForm";
 
 interface NewProjectPageProps {
@@ -18,21 +16,18 @@ export default async function NewProjectPage({ params, searchParams }: NewProjec
   const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
-  const [clientList, dealList, contractList] = await Promise.all([
-    db.query.clients.findMany({
-      where: eq(clients.shopId, shop.id),
-      columns: { id: true, name: true },
-      orderBy: [clients.name],
-    }),
-    db.query.deals.findMany({
-      where: eq(deals.shopId, shop.id),
-      columns: { id: true, title: true },
-    }),
-    db.query.contracts.findMany({
-      where: eq(contracts.shopId, shop.id),
-      columns: { id: true, contractNumber: true, title: true },
-    }),
+  const [clientRes, dealRes, contractRes] = await Promise.all([
+    apiClient.get<any[]>(`/v1/clients?shop_id=${shop.id}`),
+    apiClient.get<any>(`/v1/crm/deals?shop_id=${shop.id}`),
+    apiClient.get<any>(`/v1/crm/contracts?shop_id=${shop.id}`),
   ]);
+  const clientList = (clientRes.data || []).map((c: any) => ({ id: c.id, name: c.name }));
+  const dealList = (dealRes.data?.deals || dealRes.data || []).map((d: any) => ({ id: d.id, title: d.title }));
+  const contractList = (contractRes.data?.contracts || contractRes.data || []).map((c: any) => ({
+    id: c.id,
+    contractNumber: c.contract_number || c.contractNumber,
+    title: c.title,
+  }));
 
   return (
     <div className="max-w-2xl mx-auto p-4 md:p-6">

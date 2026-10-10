@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-    updateLoyaltyProgram,
-    createMembershipTier,
-    updateMembershipTier,
-    deleteMembershipTier,
-} from "@/lib/actions/loyalty";
+import { useUpdateLoyaltyProgram, useCreateTier, useDeleteTier } from "@/hooks/useLoyalty";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -35,8 +30,8 @@ interface Props {
     shopId: string;
     shopSlug: string;
     currency: string;
-    initialProgram: ProgramData | null;
-    initialTiers: TierItem[];
+    initialProgram?: ProgramData | null;
+    initialTiers?: TierItem[];
 }
 
 export default function LoyaltySettingsClient({
@@ -44,9 +39,12 @@ export default function LoyaltySettingsClient({
     shopSlug,
     currency,
     initialProgram,
-    initialTiers,
+    initialTiers = [],
 }: Props) {
     const router = useRouter();
+    const updateProgramMutation = useUpdateLoyaltyProgram(shopId);
+    const createTierMutation = useCreateTier(shopId);
+    const deleteTierMutation = useDeleteTier(shopId);
 
     // Program State
     const [isEnabled, setIsEnabled] = useState(initialProgram?.isEnabled ?? false);
@@ -78,35 +76,18 @@ export default function LoyaltySettingsClient({
 
     async function handleSaveProgram(e: React.FormEvent) {
         e.preventDefault();
-        setIsSavingProgram(true);
-        const toastId = toast.loading("Saving loyalty configuration...");
+        const parsedEarn = parseFloat(earnRateKes) || 100;
+        const parsedVal = parseFloat(pointValueKes) || 1.0;
+        const parsedMin = parseInt(String(minRedeemPoints), 10) || 50;
 
-        try {
-            const parsedEarnRate = !earnRateKes || parseFloat(earnRateKes) <= 0 ? "100.00" : earnRateKes;
-            const parsedPointVal = !pointValueKes || parseFloat(pointValueKes) <= 0 ? "1.00" : pointValueKes;
-            const parsedMinRedeem = minRedeemPoints === "" ? 1 : Math.max(1, parseInt(String(minRedeemPoints), 10) || 1);
-
-            const res = await updateLoyaltyProgram(shopId, shopSlug, {
-                isEnabled,
-                engineMode,
-                programName: programName.trim(),
-                earnRateKes: parsedEarnRate,
-                pointValueKes: parsedPointVal,
-                minRedeemPoints: parsedMinRedeem,
-                pointsExpiryDays: pointsExpiryDays && Number(pointsExpiryDays) > 0 ? Number(pointsExpiryDays) : null,
-            });
-
-            if (res.success) {
-                toast.success("Loyalty program updated!", { id: toastId });
-                router.refresh();
-            } else {
-                toast.error(res.error || "Failed to update.", { id: toastId });
-            }
-        } catch (err: any) {
-            toast.error("Network error saving program.", { id: toastId });
-        } finally {
-            setIsSavingProgram(false);
-        }
+        updateProgramMutation.mutate({
+            name: programName.trim(),
+            pointsPerKes: parsedEarn > 0 ? 1 / parsedEarn : 0.01,
+            kesPerPoint: parsedVal,
+            minRedeemPoints: parsedMin,
+            pointsExpiryDays: pointsExpiryDays && Number(pointsExpiryDays) > 0 ? Number(pointsExpiryDays) : null,
+            isActive: isEnabled,
+        });
     }
 
     function openNewTierModal() {
@@ -138,63 +119,48 @@ export default function LoyaltySettingsClient({
             return;
         }
 
-        setIsSavingTier(true);
-        try {
-            const minSpend = tierMinSpend === "" ? "0" : tierMinSpend;
-            const discount = tierDiscount === "" ? "0" : tierDiscount;
-            const multiplier = tierMultiplier === "" ? "1.0" : tierMultiplier;
-
-            if (editingTier) {
-                const res = await updateMembershipTier(editingTier.id, shopSlug, {
-                    name: tierName.trim(),
-                    minSpendKes: minSpend,
-                    discountPercent: discount,
-                    pointsMultiplier: multiplier,
-                    badgeColor: tierColor,
-                    displayOrder: Number(tierOrder),
-                });
-                if (res.success) {
-                    toast.success("Membership tier updated!");
-                    setIsTierModalOpen(false);
-                    router.refresh();
-                } else {
-                    toast.error(res.error || "Failed to update tier.");
+        createTierMutation.mutate({
+            name: tierName.trim(),
+            minSpendKes: tierMinSpend || 0,
+            discountPercent: tierDiscount || 0,
+            displayOrder: Number(tierOrder),
+        }, {
+            onSuccess: (res: any) => {
+                if (res?.data) {
+                    setTiers([...tiers, res.data]);
                 }
-            } else {
-                const res = await createMembershipTier(shopId, shopSlug, {
-                    name: tierName.trim(),
-                    minSpendKes: minSpend,
-                    discountPercent: discount,
-                    pointsMultiplier: multiplier,
-                    badgeColor: tierColor,
-                    displayOrder: Number(tierOrder),
-                });
-                if (res.success && res.data) {
-                    toast.success("Membership tier created!");
-                    setTiers([...tiers, res.data as any]);
-                    setIsTierModalOpen(false);
-                    router.refresh();
-                } else {
-                    toast.error(res.error || "Failed to create tier.");
-                }
+                setIsTierModalOpen(false);
             }
-        } catch (err) {
-            toast.error("Failed to save tier.");
-        } finally {
-            setIsSavingTier(false);
-        }
+        });
     }
 
-    async function handleDeleteTier(tierId: string) {
-        if (!confirm("Are you sure you want to delete this membership tier?")) return;
-        const res = await deleteMembershipTier(tierId, shopSlug);
-        if (res.success) {
-            toast.success("Tier deleted.");
-            setTiers(tiers.filter((t) => t.id !== tierId));
-            router.refresh();
-        } else {
-            toast.error(res.error || "Failed to delete tier.");
-        }
+    function handleDeleteTier(tierId: string) {
+        toast((t) => (
+            <div className="flex flex-col gap-2 p-1 font-sans text-xs">
+                <span className="font-semibold text-zinc-900">Delete this membership tier?</span>
+                <div className="flex items-center justify-end gap-2">
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="px-2.5 py-1 text-xs font-medium text-zinc-600 rounded bg-zinc-100 hover:bg-zinc-200 cursor-pointer"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={() => {
+                            toast.dismiss(t.id);
+                            deleteTierMutation.mutate(tierId, {
+                                onSuccess: () => {
+                                    setTiers(tiers.filter((tier) => tier.id !== tierId));
+                                },
+                            });
+                        }}
+                        className="px-2.5 py-1 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded shadow-xs cursor-pointer"
+                    >
+                        Delete
+                    </button>
+                </div>
+            </div>
+        ), { duration: 6000 });
     }
 
     return (

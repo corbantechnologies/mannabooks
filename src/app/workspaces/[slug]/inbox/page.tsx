@@ -1,9 +1,6 @@
 // src/app/workspaces/[slug]/inbox/page.tsx
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getB2BInboxDocuments } from "@/lib/actions/b2b";
 import { B2BInboxClient } from "./B2BInboxClient";
 

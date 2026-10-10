@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import { createBulkProducts } from "@/lib/actions/products";
+import axiosClient from "@/lib/api/axios";
 
 interface BulkProductFormProps {
   shopId: string;
@@ -75,30 +75,32 @@ export function BulkProductForm({ shopId, shopSlug }: BulkProductFormProps) {
     }
 
     try {
-      const res = await createBulkProducts({
-        shopId,
-        shopSlug,
-        items: validItems.map((item) => ({
-          name: item.name,
-          sku: item.sku,
-          itemType: item.itemType,
-          unitPrice: Number(item.unitPrice) || 0,
-          costPrice: Number(item.costPrice) || 0,
-          defaultTaxType: item.defaultTaxType,
-          trackStock: item.itemType === "PRODUCT" ? item.trackStock : false,
-          stockQuantity: Number(item.stockQuantity) || 0,
-        })),
-      });
+      await Promise.all(
+        validItems.map((item) =>
+          axiosClient.post(
+            "/items",
+            {
+              name: item.name.trim(),
+              sku: item.sku?.trim() || null,
+              item_type: item.itemType,
+              unit_price: Number(item.unitPrice) || 0,
+              cost_price: Number(item.costPrice) || 0,
+              default_tax_type: item.defaultTaxType,
+              track_stock: item.itemType === "PRODUCT" ? item.trackStock : false,
+              stock_quantity: Number(item.stockQuantity) || 0,
+            },
+            {
+              params: { shop_id: shopId },
+            }
+          )
+        )
+      );
 
-      if (res.success) {
-        toast.success(`Successfully imported ${'count' in res ? res.count : 0} items.`, { id: toastId });
-        router.refresh();
-        router.push(`/workspaces/${shopSlug}/products`);
-      } else {
-        toast.error(('error' in res ? res.error : undefined) || "Failed to process bulk import.", { id: toastId });
-      }
-    } catch (err) {
-      toast.error("A critical error occurred.", { id: toastId });
+      toast.success(`Successfully imported ${validItems.length} items.`, { id: toastId });
+      router.refresh();
+      router.push(`/workspaces/${shopSlug}/products`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to process bulk import.", { id: toastId });
     } finally {
       setIsSubmitting(false);
     }

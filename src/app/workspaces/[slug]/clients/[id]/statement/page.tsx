@@ -1,8 +1,6 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { shops, clients } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound, redirect } from "next/navigation";
+import { apiClient } from "@/lib/api/client";
 import { getClientStatement } from "@/lib/actions/reports";
 import ClientStatementView from "./ClientStatementView";
 
@@ -19,9 +17,8 @@ export default async function ClientStatementPage({
     const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
-    const client = await db.query.clients.findFirst({
-        where: and(eq(clients.id, id), eq(clients.shopId, shop.id)),
-    });
+    const clientRes = await apiClient.get<any>(`/v1/clients/${id}?shop_id=${shop.id}`);
+    const client = clientRes.data;
     if (!client) notFound();
 
     const startDate = start ? new Date(start + "T00:00:00") : undefined;

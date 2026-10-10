@@ -4,9 +4,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { updateShopSettings, deleteWorkspaceAction } from "@/lib/actions/workspace";
+import { useUpdateWorkspaceSettings, useDeleteWorkspace } from "@/hooks/useWorkspaces";
 import { useAddPaymentMethod, useDeletePaymentMethod, useSetDefaultPaymentMethod, useUpdatePaymentMethod } from "@/hooks/usePayments";
-import { ShopTermItem } from "@/lib/actions/terms";
+import { type ShopTermItem } from "@/hooks/useTerms";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 
@@ -73,6 +73,8 @@ export function SettingsForm({
   initialLoyaltyEngineMode = "OFF",
 }: SettingsFormProps) {
   const router = useRouter();
+  const updateSettingsMutation = useUpdateWorkspaceSettings(shopId);
+  const deleteWorkspaceMutation = useDeleteWorkspace(shopId);
 
   // Profile form state
   const [businessName, setBusinessName] = useState(initialName);
@@ -136,28 +138,20 @@ export function SettingsForm({
       return;
     }
     setIsDeletingWorkspace(true);
-    const toastId = toast.loading("Purging workspace and all related records...");
-    try {
-      const res = await deleteWorkspaceAction({
-        shopId,
-        confirmationInput: deleteConfirmation,
-      });
-      if (res.success) {
-        toast.success("Workspace deleted permanently.", { id: toastId });
+    deleteWorkspaceMutation.mutate(deleteConfirmation, {
+      onSuccess: (res) => {
+        setIsDeletingWorkspace(false);
         setShowDeleteModal(false);
         if (res.nextSlug) {
           router.push(`/workspaces/${res.nextSlug}`);
         } else {
           router.push("/workspaces/new");
         }
-      } else {
-        toast.error(res.error || "Failed to delete workspace.", { id: toastId });
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete workspace.", { id: toastId });
-    } finally {
-      setIsDeletingWorkspace(false);
-    }
+      },
+      onError: () => {
+        setIsDeletingWorkspace(false);
+      },
+    });
   }
 
   async function handleProfileSubmit(e: React.FormEvent) {
@@ -182,35 +176,42 @@ export function SettingsForm({
       return;
     }
 
-    const res = await updateShopSettings({
-      shopId,
-      name: businessName,
-      shortName,
-      phone,
-      website,
-      primaryColor,
-      logoUrl,
-      taxPin,
-      email,
-      isVatRegistered,
-      vatNumber: vatNumber.trim() || undefined,
-      currency,
-      fiscalYearStartMonth,
-      autoStockDeductionEnabled,
-      businessMode,
-      loyaltyEngineMode,
-    });
-    setSaving(false);
-    if (res.success) {
-      const text = "Configuration committed successfully.";
-      setProfileMsg({ type: "success", text });
-      toast.success(text, { id: toastId });
-      router.refresh();
-    } else {
-      const text = res.error || "Execution failed.";
-      setProfileMsg({ type: "error", text });
-      toast.error(text, { id: toastId });
+    let pColor = primaryColor?.trim() || "#000000";
+    if (pColor && !pColor.startsWith("#")) {
+      pColor = `#${pColor}`;
     }
+
+    const payload = {
+      name: businessName.trim(),
+      short_name: shortName?.trim() || null,
+      phone: phone?.trim() || null,
+      website: website?.trim() || null,
+      logo_url: logoUrl?.trim() || null,
+      primary_color: pColor,
+      tax_pin: taxPin?.trim() || null,
+      email: email?.trim() || null,
+      is_vat_registered: isVatRegistered,
+      vat_number: isVatRegistered ? (vatNumber?.trim() || null) : null,
+      currency: currency.toUpperCase().trim(),
+      fiscal_year_start_month: fiscalYearStartMonth,
+      auto_stock_deduction_enabled: autoStockDeductionEnabled,
+      business_mode: businessMode,
+      loyalty_engine_mode: loyaltyEngineMode,
+    };
+
+    updateSettingsMutation.mutate(payload, {
+      onSuccess: () => {
+        setSaving(false);
+        const text = "Configuration committed successfully.";
+        setProfileMsg({ type: "success", text });
+        router.refresh();
+      },
+      onError: (err) => {
+        setSaving(false);
+        const text = err.message || "Execution failed.";
+        setProfileMsg({ type: "error", text });
+      },
+    });
   }
 
   async function handleAddPaymentMethod(e: React.FormEvent) {

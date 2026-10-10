@@ -1,6 +1,5 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import Link from "next/link";
-import { getLoyaltyProgram, getMembershipTiers } from "@/lib/actions/loyalty";
 import LoyaltySettingsClient from "./LoyaltySettingsClient";
 
 interface LoyaltySettingsPageProps {
@@ -10,14 +9,6 @@ interface LoyaltySettingsPageProps {
 export default async function LoyaltySettingsPage({ params }: LoyaltySettingsPageProps) {
     const { slug } = await params;
     const { shop } = await getActiveWorkspaceContext(slug);
-
-    const [programRes, tiersRes] = await Promise.all([
-        getLoyaltyProgram(shop.id),
-        getMembershipTiers(shop.id),
-    ]);
-
-    const program = (programRes.success && programRes.data ? programRes.data : null);
-    const tiers = (tiersRes.success && tiersRes.data ? tiersRes.data : []);
 
     return (
         <div className="p-4 sm:p-8 max-w-5xl space-y-8 font-sans">
@@ -48,8 +39,6 @@ export default async function LoyaltySettingsPage({ params }: LoyaltySettingsPag
                 shopId={shop.id}
                 shopSlug={slug}
                 currency={shop.currency || "KES"}
-                initialProgram={program}
-                initialTiers={tiers}
             />
         </div>
     );

@@ -1,27 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  getNotificationsAction,
-  markNotificationReadAction,
-  markAllNotificationsReadAction,
-  type NotificationType,
-} from "@/lib/actions/notifications";
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+} from "@/hooks/useNotifications";
 import toast from "react-hot-toast";
-
-interface NotificationItem {
-  id: string;
-  userId: string;
-  shopId: string | null;
-  title: string;
-  message: string;
-  type: string;
-  link: string | null;
-  isRead: boolean;
-  createdAt: Date | string;
-}
 
 interface NotificationBellProps {
   shopId: string;
@@ -42,29 +29,14 @@ export function NotificationBell({ shopId, shopSlug }: NotificationBellProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState<"ALL" | "UNREAD">("ALL");
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  async function loadNotifications() {
-    try {
-      const res = await getNotificationsAction(shopId);
-      if (res.success) {
-        setNotifications((res.notifications as any) || []);
-        setUnreadCount(res.unreadCount || 0);
-      }
-    } catch (err) {
-      console.error("Failed to load notifications:", err);
-    }
-  }
+  const { data, refetch } = useNotifications(shopId);
+  const markReadMutation = useMarkNotificationRead(shopId);
+  const markAllReadMutation = useMarkAllNotificationsRead(shopId);
 
-  useEffect(() => {
-    loadNotifications();
-    // Periodic refresh every 60 seconds
-    const interval = setInterval(loadNotifications, 60000);
-    return () => clearInterval(interval);
-  }, [shopId]);
+  const notifications = data?.notifications || [];
+  const unreadCount = data?.unreadCount || 0;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -79,14 +51,7 @@ export function NotificationBell({ shopId, shopSlug }: NotificationBellProps) {
   }, [isOpen]);
 
   async function handleMarkRead(id: string, link?: string | null) {
-    // Optimistic update
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
-    setUnreadCount((prev) => Math.max(0, prev - 1));
-
-    await markNotificationReadAction(id, shopSlug);
-
+    markReadMutation.mutate(id);
     if (link) {
       setIsOpen(false);
       router.push(link);
@@ -94,18 +59,17 @@ export function NotificationBell({ shopId, shopSlug }: NotificationBellProps) {
   }
 
   async function handleMarkAllRead() {
-    setLoading(true);
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    setUnreadCount(0);
-
-    const res = await markAllNotificationsReadAction(shopId, shopSlug);
-    setLoading(false);
-    if (res.success) {
-      toast.success("All notifications marked as read.");
-    }
+    markAllReadMutation.mutate(undefined, {
+      onSuccess: () => {
+        toast.success("All notifications marked as read.");
+      },
+    });
   }
 
-  const displayedList = filter === "UNREAD" ? notifications.filter((n) => !n.isRead) : notifications;
+  const displayedList =
+    filter === "UNREAD"
+      ? notifications.filter((n) => !n.is_read && !n.isRead)
+      : notifications;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -114,7 +78,7 @@ export function NotificationBell({ shopId, shopSlug }: NotificationBellProps) {
         type="button"
         onClick={() => {
           setIsOpen(!isOpen);
-          if (!isOpen) loadNotifications();
+          if (!isOpen) refetch();
         }}
         title="Activity & Notifications"
         className="relative p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-md transition-colors flex items-center justify-center cursor-pointer border border-zinc-200 bg-white"
@@ -128,56 +92,56 @@ export function NotificationBell({ shopId, shopSlug }: NotificationBellProps) {
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeWidth={2}
+            strokeWidth="2"
             d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
           />
         </svg>
 
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-4 h-4 bg-rose-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 animate-in zoom-in-50">
+          <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-mono text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white shadow-xs">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
-      {/* DROPDOWN POPOVER */}
+      {/* DROPDOWN PANEL */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-zinc-200/90 rounded-lg shadow-xl z-50 overflow-hidden font-sans text-xs animate-in fade-in slide-in-from-top-2 duration-150">
-          
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-zinc-200/80 rounded-xl shadow-2xl z-50 overflow-hidden font-mono text-xs animate-in zoom-in-95 duration-100 origin-top-right">
           {/* HEADER */}
-          <div className="p-3.5 bg-zinc-50 border-b border-zinc-200 flex items-center justify-between">
+          <div className="p-3.5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
             <div className="flex items-center gap-2">
-              <span className="font-bold uppercase tracking-tight text-black text-xs">
-                Activity &amp; Notifications
+              <span className="font-sans font-bold uppercase tracking-wider text-xs text-black">
+                Notifications
               </span>
               {unreadCount > 0 && (
-                <span className="bg-rose-100 text-rose-800 text-[10px] font-bold px-1.5 py-0.5 rounded border border-rose-200">
-                  {unreadCount} new
+                <span className="bg-rose-100 text-rose-800 text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                  {unreadCount} unread
                 </span>
               )}
             </div>
-
-            {unreadCount > 0 && (
-              <button
-                type="button"
-                onClick={handleMarkAllRead}
-                disabled={loading}
-                className="text-[10px] text-zinc-500 hover:text-black font-semibold uppercase underline hover:no-underline cursor-pointer"
-              >
-                Mark all read
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleMarkAllRead}
+                  disabled={markAllReadMutation.isPending}
+                  className="text-[10px] text-zinc-500 hover:text-black hover:underline uppercase transition-colors"
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
           </div>
 
           {/* FILTER TABS */}
-          <div className="flex border-b border-zinc-100 bg-white px-3 pt-2 text-[11px] gap-3">
+          <div className="flex border-b border-zinc-100 bg-white text-[10px] font-semibold uppercase">
             <button
               type="button"
               onClick={() => setFilter("ALL")}
-              className={`pb-2 font-semibold border-b-2 transition-colors ${
+              className={`flex-1 py-1.5 text-center transition-colors border-b-2 ${
                 filter === "ALL"
                   ? "border-black text-black"
-                  : "border-transparent text-zinc-400 hover:text-zinc-600"
+                  : "border-transparent text-zinc-400 hover:text-zinc-700"
               }`}
             >
               All ({notifications.length})
@@ -185,85 +149,69 @@ export function NotificationBell({ shopId, shopSlug }: NotificationBellProps) {
             <button
               type="button"
               onClick={() => setFilter("UNREAD")}
-              className={`pb-2 font-semibold border-b-2 transition-colors ${
+              className={`flex-1 py-1.5 text-center transition-colors border-b-2 ${
                 filter === "UNREAD"
                   ? "border-black text-black"
-                  : "border-transparent text-zinc-400 hover:text-zinc-600"
+                  : "border-transparent text-zinc-400 hover:text-zinc-700"
               }`}
             >
               Unread ({unreadCount})
             </button>
           </div>
 
-          {/* NOTIFICATION LIST */}
+          {/* LIST CONTAINER */}
           <div className="max-h-80 overflow-y-auto divide-y divide-zinc-100">
-            {displayedList.map((item) => {
-              const conf = TYPE_CONFIG[item.type] || TYPE_CONFIG.SYSTEM;
-              return (
-                <div
-                  key={item.id}
-                  className={`p-3 transition-colors flex items-start gap-3 relative group ${
-                    item.isRead ? "bg-white hover:bg-zinc-50/80" : "bg-blue-50/30 hover:bg-blue-50/60"
-                  }`}
-                >
-                  <span className="text-base shrink-0 mt-0.5">{conf.icon}</span>
-
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className={`text-[9px] font-bold uppercase px-1.5 py-0.2 rounded border ${conf.bg}`}>
-                        {conf.badge}
-                      </span>
-                      <span className="text-[10px] text-zinc-400 font-mono">
-                        {new Date(item.createdAt).toLocaleDateString("en-KE", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                    </div>
-
-                    <p className={`text-xs font-semibold text-black leading-snug ${item.isRead ? "text-zinc-700" : "text-black"}`}>
-                      {item.title}
-                    </p>
-
-                    <p className="text-[11px] text-zinc-500 line-clamp-2 leading-relaxed">
-                      {item.message}
-                    </p>
-
-                    {item.link && (
-                      <button
-                        type="button"
-                        onClick={() => handleMarkRead(item.id, item.link)}
-                        className="text-[11px] font-semibold text-blue-600 hover:underline pt-0.5 inline-block text-left"
-                      >
-                        View Details →
-                      </button>
-                    )}
-                  </div>
-
-                  {!item.isRead && (
-                    <button
-                      type="button"
-                      onClick={() => handleMarkRead(item.id)}
-                      title="Mark as read"
-                      className="text-zinc-300 hover:text-black p-1 rounded transition-colors shrink-0"
-                    >
-                      ✓
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-
-            {displayedList.length === 0 && (
-              <div className="py-10 text-center text-zinc-400 space-y-1">
-                <p className="text-xl">✨</p>
-                <p className="font-semibold text-xs text-zinc-600">
-                  {filter === "UNREAD" ? "No unread notifications" : "No activity notifications"}
-                </p>
-                <p className="text-[10px] text-zinc-400">
-                  System alerts, quotation decisions, and overdue updates will show up here.
+            {displayedList.length === 0 ? (
+              <div className="p-8 text-center text-zinc-400">
+                <p className="text-xl mb-1">🎉</p>
+                <p className="font-sans text-xs">
+                  {filter === "UNREAD" ? "No unread notifications" : "No notifications yet"}
                 </p>
               </div>
+            ) : (
+              displayedList.map((notif) => {
+                const isRead = Boolean(notif.is_read || notif.isRead);
+                const config = TYPE_CONFIG[notif.type] || TYPE_CONFIG.SYSTEM;
+                const dateStr = notif.created_at || notif.createdAt;
+                return (
+                  <div
+                    key={notif.id}
+                    onClick={() => handleMarkRead(notif.id, notif.link)}
+                    className={`p-3.5 transition-colors cursor-pointer flex items-start gap-3 ${
+                      isRead ? "bg-white hover:bg-zinc-50" : "bg-emerald-50/20 hover:bg-emerald-50/40"
+                    }`}
+                  >
+                    <span className="text-base flex-shrink-0 mt-0.5">{config.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <span
+                          className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border ${config.bg}`}
+                        >
+                          {config.badge}
+                        </span>
+                        {dateStr && (
+                          <span className="text-[9px] text-zinc-400">
+                            {new Date(dateStr).toLocaleDateString("en-KE", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                        )}
+                      </div>
+                      <p
+                        className={`text-xs font-sans truncate ${
+                          isRead ? "text-zinc-700 font-normal" : "text-black font-semibold"
+                        }`}
+                      >
+                        {notif.title}
+                      </p>
+                      <p className="text-[11px] text-zinc-500 font-sans line-clamp-2 mt-0.5">
+                        {notif.message}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

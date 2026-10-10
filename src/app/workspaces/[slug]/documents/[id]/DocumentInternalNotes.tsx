@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { addDocumentNoteAction, deleteDocumentNoteAction } from "@/lib/actions/documents";
+import { useRouter } from "next/navigation";
+import axiosClient from "@/lib/api/axios";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 
@@ -25,6 +26,7 @@ export function DocumentInternalNotes({
   shopSlug,
   notes = [],
 }: DocumentInternalNotesProps) {
+  const router = useRouter();
   const [noteText, setNoteText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -37,21 +39,20 @@ export function DocumentInternalNotes({
     const toastId = toast.loading("Saving internal note...");
 
     try {
-      const res = await addDocumentNoteAction({
-        documentId,
-        shopId,
-        shopSlug,
-        note: noteText.trim(),
-      });
+      const res = await axiosClient.post(
+        `/documents/${documentId}/notes?shop_id=${shopId}`,
+        { note: noteText.trim() }
+      );
 
-      if (res.success) {
+      if (res.data?.success) {
         toast.success("Internal note added.", { id: toastId });
         setNoteText("");
+        router.refresh();
       } else {
-        toast.error(res.error || "Failed to save note.", { id: toastId });
+        toast.error(res.data?.error || "Failed to save note.", { id: toastId });
       }
-    } catch (err) {
-      toast.error("Error saving internal note.", { id: toastId });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Error saving internal note.", { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
@@ -60,20 +61,18 @@ export function DocumentInternalNotes({
   async function handleDeleteNote(noteId: string) {
     setDeletingId(noteId);
     try {
-      const res = await deleteDocumentNoteAction({
-        noteId,
-        documentId,
-        shopId,
-        shopSlug,
-      });
+      const res = await axiosClient.delete(
+        `/documents/${documentId}/notes/${noteId}?shop_id=${shopId}`
+      );
 
-      if (res.success) {
+      if (res.data?.success) {
         toast.success("Note removed.");
+        router.refresh();
       } else {
-        toast.error(res.error || "Failed to delete note.");
+        toast.error(res.data?.error || "Failed to delete note.");
       }
-    } catch (err) {
-      toast.error("Error removing note.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Error removing note.");
     } finally {
       setDeletingId(null);
     }

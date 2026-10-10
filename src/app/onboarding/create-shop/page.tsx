@@ -3,10 +3,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { verifyAndGetSession } from "@/lib/actions/auth";
 import Link from "next/link";
-
-import { createAdditionalShop } from "@/lib/actions/workspace";
+import { axiosClient } from "@/lib/api/axios";
 
 export default function CreateShopPage() {
   const router = useRouter();
@@ -27,23 +25,18 @@ export default function CreateShopPage() {
     setLoading(true);
 
     try {
-      const session = await verifyAndGetSession();
-      if (!session) {
-        router.push("/login");
-        return;
-      }
-
-      const res = await createAdditionalShop({
-        userId: session.userId,
-        businessName,
+      const res: any = await axiosClient.post("/workspaces/create", {
+        business_name: businessName,
         currency,
       });
 
-      if (res.success) {
-        router.push(`/workspaces/${res.shopSlug}`);
+      if (res?.success && res.shop?.slug) {
+        router.push(`/workspaces/${res.shop.slug}`);
+      } else {
+        setError(res?.error || "Failed to create shop. Please try again.");
       }
-    } catch {
-      setError("Failed to create shop. Please try again.");
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || err?.message || "Failed to create shop. Please try again.");
     } finally {
       setLoading(false);
     }

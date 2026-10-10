@@ -1,5 +1,4 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { getShopBillingData } from "@/lib/actions/billing";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { BillingSettingsClient } from "./BillingSettingsClient";
 
 export const dynamic = "force-dynamic";
@@ -12,25 +11,10 @@ export default async function BillingSettingsPage({ params }: BillingSettingsPag
   const { slug } = await params;
   const { shop } = await getActiveWorkspaceContext(slug);
 
-  const billingDataRes = await getShopBillingData(shop.id);
-
-  if (!billingDataRes.success || !billingDataRes.planDetails) {
-    return (
-      <div className="p-8 max-w-4xl mx-auto font-mono text-xs text-rose-900 bg-rose-50 border border-rose-200 rounded-xl">
-        <h2 className="font-bold text-sm mb-1">⚠️ Error Loading Billing Information</h2>
-        <p>{billingDataRes.error || "Failed to load workspace billing details."}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="p-5 sm:p-7 space-y-6">
-      <BillingSettingsClient
-        shop={shop}
-        planDetails={billingDataRes.planDetails}
-        availablePlans={billingDataRes.availablePlans || []}
-        transactions={billingDataRes.transactions || []}
-      />
+      <BillingSettingsClient shop={shop} />
     </div>
   );
 }
+

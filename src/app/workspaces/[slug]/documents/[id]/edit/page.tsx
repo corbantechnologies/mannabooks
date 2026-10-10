@@ -1,12 +1,9 @@
 import { notFound } from "next/navigation";
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { DocumentBuilderClientForm } from "../../new/DocumentBuilderClientForm";
 import Link from "next/link";
 import { Suspense } from "react";
 import { apiClient } from "@/lib/api/client";
-import { getShopCurrencies } from "@/lib/actions/currencies";
-import { getShopTerms } from "@/lib/actions/terms";
-import { getLoyaltyProgram, getMembershipTiers } from "@/lib/actions/loyalty";
 
 interface EditDocumentPageProps {
   params: Promise<{ slug: string; id: string }>;
@@ -33,14 +30,20 @@ export default async function EditDocumentPage({ params }: EditDocumentPageProps
   }
 
   // 4. Fetch active registries to feed lookup menus
-  const [clientsRes, suppliersRes, itemsRes, locationsRes, termsRegistry, currenciesRegistry] = await Promise.all([
+  const [clientsRes, suppliersRes, itemsRes, locationsRes, termsRes, currenciesRes, loyaltyRes] = await Promise.all([
     apiClient.get<any[]>(`/v1/clients?shop_id=${shop.id}&limit=200`),
     apiClient.get<any[]>(`/v1/suppliers?shop_id=${shop.id}&limit=200`),
     apiClient.get<any[]>(`/v1/items?shop_id=${shop.id}&limit=300`),
     apiClient.get<any[]>(`/v1/items/locations?shop_id=${shop.id}`),
-    getShopTerms(shop.id),
-    getShopCurrencies(shop.id, shop.currency || "KES"),
+    apiClient.get<any>(`/v1/workspaces/${shop.id}/terms`),
+    apiClient.get<any>(`/v1/workspaces/${shop.id}/currencies`),
+    apiClient.get<any>(`/v1/operations/loyalty/program?shop_id=${shop.id}`),
   ]);
+
+  const termsRegistry = termsRes.data?.terms || [];
+  const currenciesRegistry = currenciesRes.data?.currencies || [];
+  const loyaltyProgram = loyaltyRes.data?.program || null;
+  const membershipTiers = loyaltyRes.data?.tiers || [];
 
   const clientRegistry = (clientsRes.data || []).map((c: any) => ({
     id: String(c.id),
@@ -83,19 +86,6 @@ export default async function EditDocumentPage({ params }: EditDocumentPageProps
     isDefault: Boolean(l.isDefault ?? l.is_default),
     isActive: Boolean(l.isActive ?? l.is_active ?? true),
   }));
-
-  let loyaltyProgram: any = null;
-  let membershipTiers: any[] = [];
-  try {
-    const [loyaltyProgramRes, membershipTiersRes] = await Promise.all([
-      getLoyaltyProgram(shop.id),
-      getMembershipTiers(shop.id),
-    ]);
-    if (loyaltyProgramRes?.success) loyaltyProgram = loyaltyProgramRes.data;
-    if (membershipTiersRes?.success && Array.isArray(membershipTiersRes.data)) membershipTiers = membershipTiersRes.data;
-  } catch (err) {
-    console.warn("[EditDocumentPage] Loyalty module bypass:", err);
-  }
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white font-mono text-xs">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { reconcileInventoryAndLocationsAction } from "@/lib/actions/inventory";
+import axiosClient from "@/lib/api/axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -24,7 +24,13 @@ export function ReconcileInventoryButton({
     const toastId = toast.loading("Scanning products and reconciling location stock balances...");
 
     try {
-      const res = await reconcileInventoryAndLocationsAction(shopId, shopSlug);
+      const res: any = await axiosClient.post(
+        "/items/inventory/reconcile",
+        {},
+        {
+          params: { shop_id: shopId },
+        }
+      );
 
       if (res.success) {
         if (res.reconciledCount && res.reconciledCount > 0) {
@@ -34,7 +40,7 @@ export function ReconcileInventoryButton({
           );
         } else {
           toast.success(
-            `All ${res.totalTracked || 0} tracked products are already in perfect 1:1 sync with locations!`,
+            `All ${res.totalTracked || 0} tracked products are in sync with locations!`,
             { id: toastId, duration: 4000 }
           );
         }
@@ -58,8 +64,8 @@ export function ReconcileInventoryButton({
         title="Sync and fix location stock discrepancies with current catalog quantities"
         className="btn-secondary-modern px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider flex items-center gap-1 disabled:opacity-50"
       >
-        <span className={loading ? "animate-spin" : ""}>⚡</span>
-        <span>{loading ? "Syncing..." : "Sync Locations"}</span>
+        <span>🔄</span>
+        <span>{loading ? "Reconciling..." : "Reconcile Stock"}</span>
       </button>
     );
   }
@@ -69,11 +75,10 @@ export function ReconcileInventoryButton({
       type="button"
       onClick={handleReconcile}
       disabled={loading}
-      title="Scan all products and synchronize location stock with catalog quantities"
-      className="btn-secondary-modern px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider flex items-center gap-1.5 disabled:opacity-50"
+      className="btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 disabled:opacity-50"
     >
-      <span className={loading ? "animate-spin" : ""}>⚡</span>
-      <span>{loading ? "Syncing..." : "Sync & Reconcile Stock"}</span>
+      <span>🔄</span>
+      <span>{loading ? "Reconciling..." : "Reconcile Location Stock"}</span>
     </button>
   );
 }

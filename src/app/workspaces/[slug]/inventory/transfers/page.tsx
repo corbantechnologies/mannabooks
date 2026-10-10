@@ -1,4 +1,4 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
 import { getStockTransfers } from "@/lib/actions/stock-transfers";
 import Link from "next/link";

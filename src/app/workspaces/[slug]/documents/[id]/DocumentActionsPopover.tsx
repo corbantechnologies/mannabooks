@@ -2,7 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { convertDocumentAction, cancelQuotationAction, cancelInvoiceAction, DocumentType } from "@/lib/actions/documents";
+import { axiosClient } from "@/lib/api/axios";
+import type { DocumentType } from "@/types/models";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { CreditNotePopover } from "./CreditNotePopover";
@@ -43,17 +44,13 @@ export function DocumentActionsPopover({
   async function handleCancelQuotation() {
     setLoading(true);
     setConfirmCancel(false);
-    setIsOpen(false); // Close popover before action so router.refresh() works cleanly
+    setIsOpen(false);
     try {
-      const res = await cancelQuotationAction(shopId, documentId, shopSlug);
-      if (res.success) {
-        toast.success("Quotation cancelled successfully.");
-        router.refresh();
-      } else {
-        toast.error(res.error || "Failed to cancel quotation.");
-      }
-    } catch (err) {
-      toast.error("An unexpected error occurred during cancellation.");
+      await axiosClient.patch(`/documents/${documentId}?shop_id=${shopId}`, { status: "CANCELLED" });
+      toast.success("Quotation cancelled successfully.");
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Failed to cancel quotation.");
     } finally {
       setLoading(false);
     }
@@ -63,15 +60,11 @@ export function DocumentActionsPopover({
     setLoading(true);
     setConfirmCancel(false);
     try {
-      const res = await cancelInvoiceAction(shopId, documentId, shopSlug);
-      if (res.success) {
-        toast.success("Invoice successfully cancelled & reversed in GL.");
-        router.refresh();
-      } else {
-        toast.error(res.error || "Failed to cancel invoice.");
-      }
-    } catch (err) {
-      toast.error("An unexpected error occurred during cancellation.");
+      await axiosClient.patch(`/documents/${documentId}?shop_id=${shopId}`, { status: "CANCELLED" });
+      toast.success("Invoice successfully cancelled.");
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Failed to cancel invoice.");
     } finally {
       setLoading(false);
     }
@@ -81,23 +74,21 @@ export function DocumentActionsPopover({
     setLoading(true);
     setIsOpen(false);
     try {
-      const res = await convertDocumentAction(documentId, targetType, shopId, shopSlug);
-      if (res.success) {
-        // Context-aware success message
-        if (targetType === "INVOICE" && docType === "QUOTATION") {
-          toast.success(`✓ Quotation confirmed! Invoice (${res.serial}) created.`);
-        } else if (targetType === "RECEIPT" && docType === "INVOICE") {
-          toast.success(`✓ Receipt (${res.serial}) issued. Invoice marked as PAID.`);
-        } else {
-          toast.success(`✓ ${targetType} (${res.serial}) generated successfully.`);
-        }
-        const params = new URLSearchParams({ converted: docType, from: res.serial || "" });
-        router.push(`/workspaces/${shopSlug}/documents/${res.newDocumentId}?${params.toString()}`);
+      const res = await axiosClient.post<any>(`/documents/${documentId}/convert?shop_id=${shopId}`, {
+        target_type: targetType,
+      });
+      const data = res.data;
+      if (targetType === "INVOICE" && docType === "QUOTATION") {
+        toast.success(`✓ Quotation confirmed! Invoice (${data.serial || data.doc_number}) created.`);
+      } else if (targetType === "RECEIPT" && docType === "INVOICE") {
+        toast.success(`✓ Receipt (${data.serial || data.doc_number}) issued. Invoice marked as PAID.`);
       } else {
-        toast.error(res.error || "Failed to execute conversion.");
+        toast.success(`✓ ${targetType} (${data.serial || data.doc_number}) generated successfully.`);
       }
-    } catch (err) {
-      toast.error("An unexpected error occurred during document conversion.");
+      const params = new URLSearchParams({ converted: docType, from: data.serial || data.doc_number || "" });
+      router.push(`/workspaces/${shopSlug}/documents/${data.new_document_id}?${params.toString()}`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Failed to execute conversion.");
     } finally {
       setLoading(false);
     }

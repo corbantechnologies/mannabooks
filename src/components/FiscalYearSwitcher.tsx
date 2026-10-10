@@ -1,8 +1,16 @@
 "use client";
 
-import { useState, useTransition, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { switchFiscalYearContextAction, type FiscalYearOption } from "@/lib/actions/fiscal-year-context";
+
+export interface FiscalYearOption {
+  id: string;
+  label: string;
+  startDate: string;
+  endDate: string;
+  isClosed: boolean;
+  isCurrent: boolean;
+}
 import { Calendar, ChevronDown, Check, Plus, ExternalLink, ShieldAlert } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
@@ -23,7 +31,7 @@ export function FiscalYearSwitcher({
   variant = "sidebar",
 }: FiscalYearSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -43,17 +51,12 @@ export function FiscalYearSwitcher({
       return;
     }
 
-    startTransition(async () => {
-      const res = await switchFiscalYearContextAction(shopId, shopSlug, year.id);
-      if (res.success) {
-        toast.success(`Platform context switched to ${year.label}`);
-        setIsOpen(false);
-        router.refresh();
-        window.location.reload();
-      } else {
-        toast.error(res.error || "Failed to switch fiscal year");
-      }
-    });
+    if (typeof document !== "undefined") {
+      document.cookie = `mannabooks_fy_${shopId}=${year.id}; path=/; max-age=31536000; SameSite=Lax`;
+    }
+    toast.success(`Platform context switched to ${year.label}`);
+    setIsOpen(false);
+    window.location.reload();
   };
 
   const label = activeFiscalYear ? activeFiscalYear.label : "Declare Fiscal Year";

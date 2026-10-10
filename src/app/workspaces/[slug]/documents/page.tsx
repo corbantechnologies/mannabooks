@@ -1,12 +1,9 @@
 // src/app/workspaces/[slug]/documents/page.tsx
-import { db } from "@/db";
-import { documents, shops } from "@/db/schema";
-import { eq, desc, and } from "drizzle-orm";
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { apiClient } from "@/lib/api/client";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 
-import { clients } from "@/db/schema";
 import { LedgerFilterBar } from "./LedgerFilterBar";
 import { PipelineView } from "@/components/PipelineView";
 import { DocumentExportActions } from "./DocumentExportActions";
@@ -44,10 +41,8 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
   // 2. Fetch active multi-tenant shop criteria
   const { shop } = await getActiveWorkspaceContext(slug);
 
-  const shopClients = await db.query.clients.findMany({
-    where: eq(clients.shopId, shop.id),
-    orderBy: [desc(clients.name)],
-  });
+  const clientsRes = await apiClient.get<any[]>(`/v1/clients?shop_id=${shop.id}`);
+  const shopClients = (clientsRes.data || []).sort((a: any, b: any) => (b.name || "").localeCompare(a.name || ""));
 
   // 3. Compute runtime filters based on query params
   const activeType = type || "ALL";
@@ -55,39 +50,44 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
   const activeClientId = clientId || "ALL";
   const isPipelineView = view === "pipeline";
 
-  const conditions = [eq(documents.shopId, shop.id)];
+  let docUrl = `/v1/documents?shop_id=${shop.id}&limit=500`;
+  if (activeType !== "ALL") docUrl += `&doc_type=${activeType}`;
+  if (activeStatus !== "ALL") docUrl += `&doc_status=${activeStatus}`;
+  if (activeClientId !== "ALL") docUrl += `&client_id=${activeClientId}`;
 
-  if (activeType !== "ALL") {
-    conditions.push(eq(documents.type, activeType as any));
-  }
-
-  if (activeStatus !== "ALL") {
-    conditions.push(eq(documents.status, activeStatus as any));
-  }
-
-  if (activeClientId !== "ALL") {
-    conditions.push(eq(documents.clientId, activeClientId));
-  }
-
-  // 4. Extract stream records
-  let streamLedger = await db.query.documents.findMany({
-    where: and(...conditions),
-    orderBy: [desc(documents.issueDate)],
-    with: {
-      client: true,
-      supplier: true,
-      parentDocument: {
-        columns: {
-          id: true,
-          docNumber: true,
-          type: true,
-          status: true,
-          grandTotal: true,
-          issueDate: true,
-        },
-      },
-    },
-  });
+  const docsRes = await apiClient.get<any[]>(docUrl);
+  let streamLedger = (docsRes.data || []).map((doc: any) => ({
+    id: doc.id,
+    docNumber: doc.doc_number || doc.docNumber,
+    type: doc.type,
+    status: doc.status,
+    grandTotal: String(doc.grand_total || doc.grandTotal || "0"),
+    subTotal: String(doc.sub_total || doc.subTotal || "0"),
+    taxAmount: String(doc.tax_amount || doc.taxTotal || doc.taxAmount || "0"),
+    issueDate: doc.issue_date || doc.issueDate,
+    dueDate: doc.due_date || doc.dueDate,
+    parentDocumentId: doc.parent_document_id || doc.parentDocumentId || null,
+    parentDocument: doc.parentDocument || null,
+    requiresEtims: doc.requires_etims ?? doc.requiresEtims,
+    kraCuInvoiceNumber: doc.kra_cu_invoice_number || doc.kraCuInvoiceNumber,
+    attachmentUrl: doc.attachment_url || doc.attachmentUrl,
+    attachmentName: doc.attachment_name || doc.attachmentName,
+    attachmentSize: doc.attachment_size || doc.attachmentSize,
+    client: doc.client ? {
+      id: doc.client.id,
+      name: doc.client.name,
+      email: doc.client.email,
+      phone: doc.client.phone,
+      taxPin: doc.client.tax_pin || doc.client.taxPin,
+    } : null,
+    supplier: doc.supplier ? {
+      id: doc.supplier.id,
+      name: doc.supplier.name,
+      email: doc.supplier.email,
+      phone: doc.supplier.phone,
+      taxPin: doc.supplier.tax_pin || doc.supplier.taxPin,
+    } : null,
+  }));
 
   // Client/Supplier-side text search filtering (Serial Number or Party Name)
   if (search && search.trim() !== "") {
@@ -114,33 +114,32 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
     );
   }
 
-  // 5. Compute dashboard stats from current filtered result
+  // 5. Compute dashboard stats from FastAPI documents stream
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const statsAll = await db.query.documents.findMany({
-    where: eq(documents.shopId, shop.id),
-    with: { client: true },
-  });
+  const allDocsRes = await apiClient.get<any[]>(`/v1/documents?shop_id=${shop.id}&limit=500`);
+  const statsAll = allDocsRes.data || [];
 
   const outstanding = statsAll
-    .filter((d) => (d.status === "ISSUED" || d.status === "PARTIALLY_PAID") && (d.type === "INVOICE" || d.type === "RECEIPT"))
-    .reduce((acc, d) => acc + parseFloat(d.grandTotal || "0"), 0);
+    .filter((d: any) => (d.status === "ISSUED" || d.status === "PARTIALLY_PAID") && (d.type === "INVOICE" || d.type === "RECEIPT"))
+    .reduce((acc: number, d: any) => acc + parseFloat(d.grand_total || d.grandTotal || "0"), 0);
 
   const overdueCount = statsAll.filter(
-    (d) => d.type === "INVOICE" && d.status === "ISSUED" && d.dueDate && new Date(d.dueDate) < now
+    (d: any) => d.type === "INVOICE" && d.status === "ISSUED" && (d.due_date || d.dueDate) && new Date(d.due_date || d.dueDate) < now
   ).length;
 
   const paidThisMonth = statsAll
-    .filter((d) => {
+    .filter((d: any) => {
       const isSales = d.type === "INVOICE" || d.type === "RECEIPT";
-      const isReceiptFromInvoice = d.type === "RECEIPT" && Boolean(d.parentDocumentId);
-      return isSales && !isReceiptFromInvoice && d.status === "PAID" && new Date(d.issueDate) >= startOfMonth;
+      const isReceiptFromInvoice = d.type === "RECEIPT" && Boolean(d.parent_document_id || d.parentDocumentId);
+      const issueDate = d.issue_date || d.issueDate;
+      return isSales && !isReceiptFromInvoice && d.status === "PAID" && issueDate && new Date(issueDate) >= startOfMonth;
     })
-    .reduce((acc, d) => acc + parseFloat(d.grandTotal || "0"), 0);
+    .reduce((acc: number, d: any) => acc + parseFloat(d.grand_total || d.grandTotal || "0"), 0);
 
   const openQuotes = statsAll.filter(
-    (d) => d.type === "QUOTATION" && d.status !== "CANCELLED"
+    (d: any) => d.type === "QUOTATION" && d.status !== "CANCELLED"
   ).length;
 
   return (
@@ -255,6 +254,7 @@ export default async function WorkspaceLedgerPage({ params, searchParams }: Ledg
         /* TABLE VIEW WITH BULK ACTIONS */
         <DocumentsTableClient
           slug={slug}
+          shopId={shop.id}
           currency={shop.currency}
           activeType={activeType}
           docTypeTabs={DOC_TYPE_TABS}

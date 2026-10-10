@@ -1,4 +1,4 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";

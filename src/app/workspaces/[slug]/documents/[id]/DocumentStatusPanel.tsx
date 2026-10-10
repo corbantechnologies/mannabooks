@@ -4,12 +4,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUpdateDocumentStatus, useDuplicateDocument, useDeleteDocument } from "@/hooks/useDocuments";
-import { dispatchDocumentEmail } from "@/lib/actions/email";
+import axiosClient from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 
 import { DocumentActionsPopover } from "./DocumentActionsPopover";
-import { updateDocumentKraCuNumberAction, updateDocumentReceiptAndSettlementAction, updateDocumentAttachmentAction, DocumentType } from "@/lib/actions/documents";
+import type { DocumentType } from "@/types/models";
 import { isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 import { ThermalReceiptModal, type ThermalReceiptData } from "@/components/ThermalReceiptModal";
@@ -177,15 +177,17 @@ export function DocumentStatusPanel({
   async function handleSaveCuNumber() {
     setSavingCu(true);
     try {
-      const res = await updateDocumentKraCuNumberAction(documentId, shopId, shopSlug, cuNumber);
-      if (res.success) {
+      const res = await axiosClient.patch(`/documents/${documentId}?shop_id=${shopId}`, {
+        kra_cu_invoice_number: cuNumber || null,
+      });
+      if (res.data?.id) {
         toast.success("KRA eTIMS CU Serial Number saved.");
         router.refresh();
       } else {
-        toast.error(res.error || "Failed to update eTIMS CU Number.");
+        toast.error("Failed to update eTIMS CU Number.");
       }
-    } catch (err) {
-      toast.error("Failed to update eTIMS CU Number.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Failed to update eTIMS CU Number.");
     } finally {
       setSavingCu(false);
     }
@@ -194,15 +196,15 @@ export function DocumentStatusPanel({
   async function handleSaveSettlement() {
     setSavingSettlement(true);
     try {
-      const res = await updateDocumentReceiptAndSettlementAction(documentId, shopId, shopSlug, {
-        kraCuInvoiceNumber: cuNumber,
-        paymentChannel,
-        paymentReference,
-        attachmentUrl,
-        attachmentName,
-        attachmentSize,
+      const res = await axiosClient.patch(`/documents/${documentId}?shop_id=${shopId}`, {
+        kra_cu_invoice_number: cuNumber || null,
+        payment_channel: paymentChannel || null,
+        payment_reference: paymentReference || null,
+        attachment_url: attachmentUrl || null,
+        attachment_name: attachmentName || null,
+        attachment_size: attachmentSize || null,
       });
-      if (res.success) {
+      if (res.data?.id) {
         toast.success(
           docType === "PAYMENT_VOUCHER"
             ? "Supplier receipt & disbursement details recorded!"
@@ -210,10 +212,10 @@ export function DocumentStatusPanel({
         );
         router.refresh();
       } else {
-        toast.error(res.error || "Failed to save settlement details.");
+        toast.error("Failed to save settlement details.");
       }
-    } catch {
-      toast.error("An unexpected error occurred while saving settlement.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "An unexpected error occurred while saving settlement.");
     } finally {
       setSavingSettlement(false);
     }
@@ -240,22 +242,27 @@ export function DocumentStatusPanel({
         : `Dispatching email to ${targetEmail}...`
     );
 
-    const res = await dispatchDocumentEmail({
-      documentId,
-      isReminder,
-      recipientEmail: targetEmail,
-    });
-    setSending(false);
+    try {
+      const res = await axiosClient.post("/api/documents/email", {
+        documentId,
+        recipientEmail: targetEmail,
+        isReminder,
+      });
+      setSending(false);
 
-    if (res.success) {
-      toast.success(
-        isReminder
-          ? `Aging reminder sent to ${targetEmail}!`
-          : `Document successfully emailed to ${targetEmail}!`,
-        { id: toastId }
-      );
-    } else {
-      toast.error(res.error || "Failed to send email.", { id: toastId });
+      if (res.data?.success) {
+        toast.success(
+          isReminder
+            ? `Aging reminder sent to ${targetEmail}!`
+            : `Document successfully emailed to ${targetEmail}!`,
+          { id: toastId }
+        );
+      } else {
+        toast.error(res.data?.error || "Failed to send email.", { id: toastId });
+      }
+    } catch (err: any) {
+      setSending(false);
+      toast.error(err?.response?.data?.error || "Error dispatching email.", { id: toastId });
     }
   }
 
@@ -793,10 +800,10 @@ export function DocumentStatusPanel({
                 setAttachmentUrl(data.url);
                 setAttachmentName(data.name);
                 setAttachmentSize(data.size);
-                await updateDocumentReceiptAndSettlementAction(documentId, shopId, shopSlug, {
-                  attachmentUrl: data.url,
-                  attachmentName: data.name,
-                  attachmentSize: data.size,
+                await axiosClient.patch(`/documents/${documentId}?shop_id=${shopId}`, {
+                  attachment_url: data.url,
+                  attachment_name: data.name,
+                  attachment_size: data.size,
                 });
                 router.refresh();
               }}
@@ -804,10 +811,10 @@ export function DocumentStatusPanel({
                 setAttachmentUrl("");
                 setAttachmentName("");
                 setAttachmentSize(undefined);
-                await updateDocumentReceiptAndSettlementAction(documentId, shopId, shopSlug, {
-                  attachmentUrl: null,
-                  attachmentName: null,
-                  attachmentSize: null,
+                await axiosClient.patch(`/documents/${documentId}?shop_id=${shopId}`, {
+                  attachment_url: null,
+                  attachment_name: null,
+                  attachment_size: null,
                 });
                 router.refresh();
               }}
@@ -866,10 +873,10 @@ export function DocumentStatusPanel({
               setAttachmentUrl(data.url);
               setAttachmentName(data.name);
               setAttachmentSize(data.size);
-              await updateDocumentAttachmentAction(documentId, shopId, shopSlug, {
-                attachmentUrl: data.url,
-                attachmentName: data.name,
-                attachmentSize: data.size,
+              await axiosClient.patch(`/documents/${documentId}?shop_id=${shopId}`, {
+                attachment_url: data.url,
+                attachment_name: data.name,
+                attachment_size: data.size,
               });
               router.refresh();
             }}
@@ -877,10 +884,10 @@ export function DocumentStatusPanel({
               setAttachmentUrl("");
               setAttachmentName("");
               setAttachmentSize(undefined);
-              await updateDocumentAttachmentAction(documentId, shopId, shopSlug, {
-                attachmentUrl: null,
-                attachmentName: null,
-                attachmentSize: null,
+              await axiosClient.patch(`/documents/${documentId}?shop_id=${shopId}`, {
+                attachment_url: null,
+                attachment_name: null,
+                attachment_size: null,
               });
               router.refresh();
             }}

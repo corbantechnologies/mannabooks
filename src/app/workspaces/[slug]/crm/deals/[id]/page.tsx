@@ -1,8 +1,5 @@
 // src/app/workspaces/[slug]/crm/deals/[id]/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
 import { getDealByIdAction } from "@/lib/actions/crm";
 import { formatCurrency } from "@/lib/utils";

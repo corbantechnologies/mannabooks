@@ -1,4 +1,4 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getStockLocations } from "@/lib/actions/inventory";
 import { getBillOfMaterials, getProductionOrders, getWorkspaceProducts } from "@/lib/actions/production";
 import { BomClient } from "./BomClient";

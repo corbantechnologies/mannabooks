@@ -5,8 +5,8 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { calculateLineItem, calculateDocumentTotals, formatCurrency, isFiscalDocType, isProcurementDocType } from "@/lib/utils";
-import { createBillingDocument, updateBillingDocument, DocumentType } from "@/lib/actions/documents";
-import { getClientLoyaltyAccount, findOrCreateLoyaltyAccountByPhone } from "@/lib/actions/loyalty";
+import { type DocumentType } from "@/types/models";
+import axiosClient from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 import { CatalogProductPicker, CatalogProductItem } from "@/components/CatalogProductPicker";
@@ -286,9 +286,10 @@ export function DocumentBuilderClientForm({
   useEffect(() => {
     if (partyType === "CLIENT" && targetId && loyaltyProgram?.isEnabled && loyaltyProgram?.engineMode !== "OFF") {
       setIsLoadingLoyalty(true);
-      getClientLoyaltyAccount(shop.id, targetId)
-        .then((res) => {
-          if (res.success && res.data) {
+      axiosClient
+        .get(`/operations/loyalty/account`, { params: { shop_id: shop.id, client_id: targetId } })
+        .then((res: any) => {
+          if (res?.success && res.data) {
             setLoyaltyAccount(res.data);
           } else {
             setLoyaltyAccount(null);
@@ -311,8 +312,11 @@ export function DocumentBuilderClientForm({
     }
     setIsSearchingPhone(true);
     try {
-      const res = await findOrCreateLoyaltyAccountByPhone(shop.id, clean);
-      if (res.success && res.data) {
+      const res: any = await axiosClient.post("/operations/loyalty/account/by-phone", {
+        shop_id: shop.id,
+        phone: clean,
+      });
+      if (res?.success && res.data) {
         const client = res.data.client;
         const account = res.data.loyaltyAccount;
         setClientRegistry((prev) => {
@@ -469,54 +473,64 @@ export function DocumentBuilderClientForm({
     }
     const finalTermsSerialized = combinedTerms.length > 0 ? JSON.stringify(combinedTerms) : undefined;
 
-    const res = initialDocument
-      ? await updateBillingDocument({
-          documentId: initialDocument.id,
-          shopId: shop.id,
-          shopSlug,
-          clientId: partyType === "CLIENT" ? targetId : undefined,
-          supplierId: partyType === "SUPPLIER" ? targetId : undefined,
-          type: docType,
-          dueDate: dueDate ? new Date(dueDate) : undefined,
-          kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
-          paymentChannel: paymentChannel.trim() || undefined,
-          paymentReference: paymentReference.trim() || undefined,
-          attachmentUrl: attachmentUrl.trim() || undefined,
-          attachmentName: attachmentName.trim() || undefined,
-          attachmentSize,
-          requiresEtims: isFiscalDocType(docType) ? requiresEtims : false,
-          currency,
-          exchangeRate: parseFloat(exchangeRate) || 1.0,
-          locationId: locationId || undefined,
-          loyaltyPointsRedeemed: loyaltyPointsToRedeem > 0 ? loyaltyPointsToRedeem : undefined,
-          loyaltyDiscountAmount: loyaltyDiscountAmount > 0 ? loyaltyDiscountAmount : undefined,
-          termsAndConditions: finalTermsSerialized,
-          items: itemsPayload,
-        })
-      : await createBillingDocument({
-          shopId: shop.id,
-          shopSlug,
-          clientId: partyType === "CLIENT" ? targetId : undefined,
-          supplierId: partyType === "SUPPLIER" ? targetId : undefined,
-          type: docType,
-          dueDate: dueDate ? new Date(dueDate) : undefined,
-          kraCuInvoiceNumber: kraCuInvoiceNumber.trim() || undefined,
-          paymentChannel: paymentChannel.trim() || undefined,
-          paymentReference: paymentReference.trim() || undefined,
-          attachmentUrl: attachmentUrl.trim() || undefined,
-          attachmentName: attachmentName.trim() || undefined,
-          attachmentSize,
-          requiresEtims: isFiscalDocType(docType) ? requiresEtims : false,
-          currency,
-          exchangeRate: parseFloat(exchangeRate) || 1.0,
-          isRecurring,
-          recurringInterval: isRecurring ? recurringInterval : undefined,
-          locationId: locationId || undefined,
-          loyaltyPointsRedeemed: loyaltyPointsToRedeem > 0 ? loyaltyPointsToRedeem : undefined,
-          loyaltyDiscountAmount: loyaltyDiscountAmount > 0 ? loyaltyDiscountAmount : undefined,
-          termsAndConditions: finalTermsSerialized,
-          items: itemsPayload,
-        });
+    let res: { success: boolean; documentId?: string; error?: string };
+    try {
+      if (initialDocument) {
+        const updated: any = await axiosClient.put(
+          `/documents/${initialDocument.id}`,
+          {
+            client_id: partyType === "CLIENT" ? targetId : undefined,
+            supplier_id: partyType === "SUPPLIER" ? targetId : undefined,
+            type: docType === "QUOTATION" ? "QUOTE" : docType,
+            due_date: dueDate ? new Date(dueDate).toISOString() : undefined,
+            requires_etims: isFiscalDocType(docType) ? requiresEtims : false,
+            currency,
+            location_id: locationId || undefined,
+            payment_channel: paymentChannel.trim() || undefined,
+            payment_reference: paymentReference.trim() || undefined,
+            terms_and_conditions: finalTermsSerialized,
+            items: itemsPayload.map((it) => ({
+              product_id: it.productId || null,
+              description: it.description,
+              notes: it.notes || null,
+              quantity: it.quantity,
+              unit_price: it.unitPrice,
+              tax_type: it.taxType,
+            })),
+          },
+          { params: { shop_id: shop.id } }
+        );
+        res = { success: true, documentId: updated?.id || initialDocument.id };
+      } else {
+        const created: any = await axiosClient.post(
+          "/documents",
+          {
+            client_id: partyType === "CLIENT" ? targetId : undefined,
+            supplier_id: partyType === "SUPPLIER" ? targetId : undefined,
+            type: docType === "QUOTATION" ? "QUOTE" : docType,
+            due_date: dueDate ? new Date(dueDate).toISOString() : undefined,
+            requires_etims: isFiscalDocType(docType) ? requiresEtims : false,
+            currency,
+            location_id: locationId || undefined,
+            payment_channel: paymentChannel.trim() || undefined,
+            payment_reference: paymentReference.trim() || undefined,
+            terms_and_conditions: finalTermsSerialized,
+            items: itemsPayload.map((it) => ({
+              product_id: it.productId || null,
+              description: it.description,
+              notes: it.notes || null,
+              quantity: it.quantity,
+              unit_price: it.unitPrice,
+              tax_type: it.taxType,
+            })),
+          },
+          { params: { shop_id: shop.id } }
+        );
+        res = { success: true, documentId: created?.id };
+      }
+    } catch (err: any) {
+      res = { success: false, error: err.message || "Failed to commit billing transaction." };
+    }
 
     setLoading(false);
     if (!res.success) {

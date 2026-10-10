@@ -4,15 +4,16 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { type ShopPlanDetails, type PlanDefinition } from "@/lib/paywall";
-import { initiateSubscriptionPaymentAction, checkPaymentStatusAction } from "@/lib/actions/billing";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { useBillingOverview } from "@/hooks/useBilling";
+import { Spinner } from "@/components/Spinner";
 
 interface BillingSettingsClientProps {
   shop: any;
-  planDetails: ShopPlanDetails;
-  availablePlans: PlanDefinition[];
-  transactions: any[];
+  planDetails?: ShopPlanDetails;
+  availablePlans?: PlanDefinition[];
+  transactions?: any[];
 }
 
 const PLAN_RANK_MAP: Record<string, number> = {
@@ -24,11 +25,16 @@ const PLAN_RANK_MAP: Record<string, number> = {
 
 export function BillingSettingsClient({
   shop,
-  planDetails,
-  availablePlans,
-  transactions,
+  planDetails: initialPlanDetails,
+  availablePlans: initialAvailablePlans = [],
+  transactions: initialTransactions = [],
 }: BillingSettingsClientProps) {
   const router = useRouter();
+  const { data: liveData, isLoading } = useBillingOverview(shop.id);
+
+  const planDetails = liveData?.planDetails || initialPlanDetails;
+  const availablePlans = liveData?.availablePlans || initialAvailablePlans;
+  const transactions = liveData?.transactions || initialTransactions;
   const [selectedDuration, setSelectedDuration] = useState<number>(1); // 1, 3, 12 months
 
   // M-Pesa STK Modal State
@@ -50,15 +56,19 @@ export function BillingSettingsClient({
 
     if (activeTxId && isPolling) {
       interval = setInterval(async () => {
-        const res = await checkPaymentStatusAction(activeTxId);
-        if (res.success && res.status === "COMPLETED") {
-          setIsPolling(false);
-          setPaymentSuccessReceipt(res.mpesaReceipt || "SUCCESS");
-          toast.success("🎉 Payment verified! Workspace upgraded!");
-          router.refresh();
-        } else if (res.status === "FAILED") {
-          setIsPolling(false);
-          toast.error("M-Pesa transaction failed or was cancelled.");
+        try {
+          const res = await fetch(`/api/billing/status?transactionId=${activeTxId}`).then((r) => r.json());
+          if (res.success && res.status === "COMPLETED") {
+            setIsPolling(false);
+            setPaymentSuccessReceipt(res.mpesaReceipt || "SUCCESS");
+            toast.success("🎉 Payment verified! Workspace upgraded!");
+            router.refresh();
+          } else if (res.status === "FAILED") {
+            setIsPolling(false);
+            toast.error("M-Pesa transaction failed or was cancelled.");
+          }
+        } catch {
+          // ignore transient poll error
         }
       }, 2500);
 
@@ -91,12 +101,22 @@ export function BillingSettingsClient({
     setIsSubmittingStk(true);
     const toastId = toast.loading("Sending M-Pesa STK Push to your phone...");
 
-    const res = await initiateSubscriptionPaymentAction({
-      shopId: shop.id,
-      plan: targetPlan.id as any,
-      months: selectedDuration,
-      phoneNumber: phoneNumber.trim(),
-    });
+    let res: any = null;
+    try {
+      const response = await fetch("/api/billing/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shopId: shop.id,
+          plan: targetPlan.id,
+          months: selectedDuration,
+          phoneNumber: phoneNumber.trim(),
+        }),
+      });
+      res = await response.json();
+    } catch (err: any) {
+      res = { success: false, error: err.message };
+    }
 
     setIsSubmittingStk(false);
 
@@ -115,6 +135,15 @@ export function BillingSettingsClient({
     setActiveTxId(null);
     setIsPolling(false);
     setPaymentSuccessReceipt(null);
+  }
+
+  if (!planDetails) {
+    return (
+      <div className="p-12 text-center font-mono text-xs text-zinc-500 bg-white border border-zinc-200 rounded-xl space-y-3">
+        <Spinner size={24} className="mx-auto text-black" />
+        <p>Loading subscription details & quotas from billing hub...</p>
+      </div>
+    );
   }
 
   return (
@@ -349,7 +378,7 @@ export function BillingSettingsClient({
 
                   {/* FEATURES CHECKLIST */}
                   <div className="space-y-2 font-mono text-xs text-zinc-700 pt-1">
-                    {plan.features.map((f, idx) => (
+                    {plan.features.map((f: string, idx: number) => (
                       <div key={idx} className="flex items-start gap-2">
                         <span className="text-emerald-600 font-bold">✓</span>
                         <span className="leading-snug">{f}</span>

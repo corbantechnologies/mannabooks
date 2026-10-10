@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { disableOnboardingGuideAction } from "@/lib/actions/workspace";
+import axiosClient from "@/lib/api/axios";
 import { Spinner } from "@/components/Spinner";
 import { toast } from "react-hot-toast";
 
@@ -27,7 +27,7 @@ export function OnboardingTracker({
   shopId,
   hideOnboarding,
 }: OnboardingTrackerProps) {
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const [localHide, setLocalHide] = useState(hideOnboarding);
 
   // If already hidden in database, or hidden in local component state, return null
@@ -80,16 +80,17 @@ export function OnboardingTracker({
               Workspace Setup Guide
             </h2>
             <button
-              onClick={() => {
-                startTransition(async () => {
-                  const res = await disableOnboardingGuideAction(shopId, shopSlug);
-                  if (res.success) {
-                    setLocalHide(true);
-                    toast.success("Setup guide disabled permanently.");
-                  } else {
-                    toast.error(res.error || "Failed to disable guide.");
-                  }
-                });
+              onClick={async () => {
+                try {
+                  setIsPending(true);
+                  await axiosClient.patch(`/workspaces/${shopId}/settings`, { hide_onboarding: true });
+                  setLocalHide(true);
+                  toast.success("Setup guide disabled permanently.");
+                } catch (err: any) {
+                  toast.error(err.message || "Failed to disable guide.");
+                } finally {
+                  setIsPending(false);
+                }
               }}
               disabled={isPending}
               className="text-[10px] text-amber-600 hover:text-amber-800 underline font-semibold uppercase tracking-wider flex items-center gap-1 cursor-pointer bg-transparent border-none p-0 w-fit"

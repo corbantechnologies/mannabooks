@@ -1,4 +1,4 @@
-import { getAdminWorkspaceDetails } from "@/lib/actions/admin";
+import { apiClient } from "@/lib/api/client";
 import { AdminWorkspaceDetailClient } from "./AdminWorkspaceDetailClient";
 import { notFound } from "next/navigation";
 
@@ -11,7 +11,8 @@ interface AdminWorkspaceDetailPageProps {
 export default async function AdminWorkspaceDetailPage({ params }: AdminWorkspaceDetailPageProps) {
   const { id } = await params;
 
-  const res = await getAdminWorkspaceDetails(id);
+  const apiRes = await apiClient.get<any>(`/v1/admin/workspaces/${id}`);
+  const res = apiRes.data;
 
   if (!res.success || !res.shop) {
     notFound();

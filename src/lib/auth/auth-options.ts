@@ -20,11 +20,11 @@ export const authOptions: NextAuthOptions = {
           const res = await fetch(`${API_BASE_URL}/v1/auth/token`, {
             method: "POST",
             headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
+              "Content-Type": "application/json",
               "X-Internal-Key": process.env.INTERNAL_API_KEY || "",
             },
-            body: new URLSearchParams({
-              username: credentials.email.toLowerCase().trim(),
+            body: JSON.stringify({
+              email: credentials.email.toLowerCase().trim(),
               password: credentials.password,
             }),
           });
@@ -35,16 +35,7 @@ export const authOptions: NextAuthOptions = {
             throw new Error(data.detail || data.error || "Invalid credentials.");
           }
 
-          // Fetch user profile using the token
-          const userRes = await fetch(`${API_BASE_URL}/v1/auth/me`, {
-            headers: {
-              Authorization: `Bearer ${data.access_token}`,
-              "X-Internal-Key": process.env.INTERNAL_API_KEY || "",
-            },
-          });
-
-          const userData = await userRes.json();
-          const user = userData.user || userData;
+          const user = data.user || {};
 
           return {
             id: user.id || "user",

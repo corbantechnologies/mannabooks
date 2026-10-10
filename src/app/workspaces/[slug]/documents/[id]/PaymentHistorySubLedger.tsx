@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
-import { recordDocumentPaymentAction, deleteDocumentPaymentAction } from "@/lib/actions/documents";
+import { axiosClient } from "@/lib/api/axios";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 
@@ -35,6 +36,7 @@ export function PaymentHistorySubLedger({
   payments = [],
   docStatus,
 }: PaymentHistorySubLedgerProps) {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [channel, setChannel] = useState("MPESA");
@@ -43,6 +45,7 @@ export function PaymentHistorySubLedger({
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const totalBilled = typeof grandTotal === "string" ? parseFloat(grandTotal || "0") : grandTotal;
   const totalPaid = payments.reduce((acc, p) => acc + parseFloat(p.amount || "0"), 0);
@@ -60,56 +63,44 @@ export function PaymentHistorySubLedger({
     const toastId = toast.loading("Recording settlement installment...");
 
     try {
-      const res = await recordDocumentPaymentAction({
-        documentId,
-        shopId,
-        shopSlug,
+      await axiosClient.post(`/payments/record?shop_id=${shopId}`, {
+        document_id: documentId,
         amount: num,
-        paymentChannel: channel,
-        paymentReference: reference.trim() || undefined,
-        paymentDate: new Date(paymentDate),
+        payment_channel: channel,
+        payment_reference: reference.trim() || undefined,
+        payment_date: new Date(paymentDate).toISOString(),
         notes: notes.trim() || undefined,
       });
 
-      if (res.success) {
-        toast.success(`Payment of ${formatCurrency(num, currency)} recorded successfully!`, { id: toastId });
-        setIsModalOpen(false);
-        setAmount("");
-        setReference("");
-        setNotes("");
-      } else {
-        toast.error(res.error || "Failed to record payment.", { id: toastId });
-      }
-    } catch (err) {
-      toast.error("An unexpected error occurred while saving payment.", { id: toastId });
+      toast.success(`Payment of ${formatCurrency(num, currency)} recorded successfully!`, { id: toastId });
+      setIsModalOpen(false);
+      setAmount("");
+      setReference("");
+      setNotes("");
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Failed to record payment.", { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
   }
 
   async function handleDeletePayment(paymentId: string) {
-    if (!confirm("Are you sure you want to remove this payment entry? The document status will be recalculated.")) {
+    if (confirmingId !== paymentId) {
+      setConfirmingId(paymentId);
       return;
     }
 
+    setConfirmingId(null);
     setDeletingId(paymentId);
     const toastId = toast.loading("Deleting payment entry...");
 
     try {
-      const res = await deleteDocumentPaymentAction({
-        paymentId,
-        documentId,
-        shopId,
-        shopSlug,
-      });
-
-      if (res.success) {
-        toast.success("Payment entry deleted.", { id: toastId });
-      } else {
-        toast.error(res.error || "Failed to delete payment.", { id: toastId });
-      }
-    } catch (err) {
-      toast.error("Error deleting payment entry.", { id: toastId });
+      await axiosClient.delete(`/payments/${paymentId}?shop_id=${shopId}`);
+      toast.success("Payment entry deleted.", { id: toastId });
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Error deleting payment entry.", { id: toastId });
     } finally {
       setDeletingId(null);
     }
@@ -184,9 +175,11 @@ export function PaymentHistorySubLedger({
                     type="button"
                     disabled={deletingId === p.id}
                     onClick={() => handleDeletePayment(p.id)}
-                    className="text-rose-600 hover:text-rose-800 font-bold uppercase text-[10px] hover:underline"
+                    className={`font-bold uppercase text-[10px] hover:underline cursor-pointer ${
+                      confirmingId === p.id ? "text-amber-600 animate-pulse font-black" : "text-rose-600 hover:text-rose-800"
+                    }`}
                   >
-                    {deletingId === p.id ? "Deleting..." : "Remove"}
+                    {deletingId === p.id ? "Deleting..." : confirmingId === p.id ? "Confirm?" : "Remove"}
                   </button>
                 </td>
               </tr>

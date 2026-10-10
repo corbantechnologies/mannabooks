@@ -1,11 +1,10 @@
 "use client";
-
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import toast from "react-hot-toast";
-import { bulkDispatchDocumentEmails } from "@/lib/actions/email";
-import { bulkUpdateDocumentStatusAction } from "@/lib/actions/documents";
+import axiosClient from "@/lib/api/axios";
 
 export interface ParentDocSummary {
   id: string;
@@ -36,6 +35,7 @@ export interface StreamDocument {
 
 interface DocumentsTableClientProps {
   slug: string;
+  shopId?: string;
   currency: string;
   activeType: string;
   documents: StreamDocument[];
@@ -44,11 +44,13 @@ interface DocumentsTableClientProps {
 
 export function DocumentsTableClient({
   slug,
+  shopId,
   currency,
   activeType,
   documents,
   docTypeTabs,
 }: DocumentsTableClientProps) {
+  const router = useRouter();
   // Default to GROUPED when viewing ALL documents, or FLAT when on specific type tabs
   const [viewMode, setViewMode] = useState<"GROUPED" | "FLAT">(
     activeType === "ALL" ? "GROUPED" : "FLAT"
@@ -58,6 +60,7 @@ export function DocumentsTableClient({
   const [isBulkEmailing, setIsBulkEmailing] = useState(false);
   const [isBulkZipping, setIsBulkZipping] = useState(false);
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+  const [confirmStatus, setConfirmStatus] = useState<"PAID" | "CANCELLED" | null>(null);
 
   // Fast lookup by ID
   const docMap = useMemo(() => {
@@ -191,17 +194,20 @@ export function DocumentsTableClient({
     const toastId = toast.loading(`Dispatching emails for ${selectedIds.size} documents...`);
 
     try {
-      const res = await bulkDispatchDocumentEmails(Array.from(selectedIds));
-      if (res.sent > 0) {
+      const res = await axiosClient.post("/api/documents/email", {
+        documentIds: Array.from(selectedIds),
+      });
+      const data = res.data;
+      if (data?.sent > 0) {
         toast.success(
-          `Successfully sent ${res.sent} document emails!${res.failed > 0 ? ` (${res.failed} skipped/no email)` : ""}`,
+          `Successfully sent ${data.sent} document emails!${data.failed > 0 ? ` (${data.failed} skipped/no email)` : ""}`,
           { id: toastId }
         );
       } else {
-        toast.error(`Email delivery failed: ${res.errors[0] || "No valid recipient email"}`, { id: toastId });
+        toast.error(`Email delivery failed: ${data?.errors?.[0] || "No valid recipient email"}`, { id: toastId });
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to dispatch bulk emails", { id: toastId });
+      toast.error(err?.response?.data?.error || err.message || "Failed to dispatch bulk emails", { id: toastId });
     } finally {
       setIsBulkEmailing(false);
     }
@@ -301,29 +307,38 @@ export function DocumentsTableClient({
     toast.success(`Generated batch payment manifest for ${selectedDocs.length} payees!`);
   }
 
-  // Action 4: Bulk Status Update
-  async function handleBulkStatus(newStatus: "DRAFT" | "ISSUED" | "PAID" | "CANCELLED") {
+  // Action 4: Bulk Status Update (Zero native confirm; two-step confirmation)
+  async function handleBulkStatus(newStatus: "PAID" | "CANCELLED") {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Mark ${selectedIds.size} selected documents as ${newStatus}?`)) return;
 
+    if (confirmStatus !== newStatus) {
+      setConfirmStatus(newStatus);
+      toast(`Click "${newStatus === "PAID" ? "Confirm Paid" : "Confirm Void"}" again to apply to ${selectedIds.size} documents.`, {
+        icon: "⚠️",
+      });
+      setTimeout(() => setConfirmStatus(null), 4000);
+      return;
+    }
+
+    setConfirmStatus(null);
     setIsBulkUpdating(true);
     const toastId = toast.loading(`Updating ${selectedIds.size} documents...`);
 
     try {
-      const res = await bulkUpdateDocumentStatusAction({
-        documentIds: Array.from(selectedIds),
-        newStatus,
-        shopSlug: slug,
+      const res = await axiosClient.post(`/documents/bulk/status?shop_id=${shopId || ""}`, {
+        document_ids: Array.from(selectedIds),
+        new_status: newStatus,
       });
 
-      if (!res.success) {
-        toast.error(res.error || "Bulk update failed", { id: toastId });
-      } else {
-        toast.success(`Updated ${res.updatedCount} documents to ${newStatus}!`, { id: toastId });
+      if (res.data?.success) {
+        toast.success(`Updated ${res.data.updatedCount ?? selectedIds.size} documents to ${newStatus}!`, { id: toastId });
         setSelectedIds(new Set());
+        router.refresh();
+      } else {
+        toast.error(res.data?.error || "Bulk update failed", { id: toastId });
       }
     } catch (err: any) {
-      toast.error(err.message || "Bulk update failed", { id: toastId });
+      toast.error(err?.response?.data?.detail || err.message || "Bulk update failed", { id: toastId });
     } finally {
       setIsBulkUpdating(false);
     }
@@ -381,14 +396,14 @@ export function DocumentsTableClient({
                 disabled={isBulkUpdating}
                 className="px-2.5 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 text-emerald-300 font-semibold transition-colors disabled:opacity-50"
               >
-                Mark Paid
+                {confirmStatus === "PAID" ? "Confirm Paid?" : "Mark Paid"}
               </button>
               <button
                 onClick={() => handleBulkStatus("CANCELLED")}
                 disabled={isBulkUpdating}
                 className="px-2.5 py-1.5 rounded-lg bg-rose-950 hover:bg-rose-900 text-rose-300 font-semibold transition-colors disabled:opacity-50"
               >
-                Void
+                {confirmStatus === "CANCELLED" ? "Confirm Void?" : "Void"}
               </button>
             </div>
 

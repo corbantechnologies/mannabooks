@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency, calculateDocumentTotals } from "@/lib/utils";
-import { createBillingDocument } from "@/lib/actions/documents";
-import { createClientProfile } from "@/lib/actions/clients";
+import { useCreateDocument } from "@/hooks/useDocuments";
+import { useCreateClient } from "@/hooks/useClients";
 import { toast } from "react-hot-toast";
 import { ThermalReceiptModal, type ThermalReceiptData } from "@/components/ThermalReceiptModal";
 
@@ -27,6 +27,8 @@ interface PosBasketItem {
 
 export function WalkInSalesTerminal({ shop, shopSlug, products, clients = [] }: WalkInSalesTerminalProps) {
   const router = useRouter();
+  const createDocumentMutation = useCreateDocument(shop.id);
+  const createClientMutation = useCreateClient(shop.id);
   const [search, setSearch] = useState("");
   const [paymentChannel, setPaymentChannel] = useState<"CASH" | "MPESA" | "BANK" | "OTHER">("MPESA");
   const [paymentReference, setPaymentReference] = useState("");
@@ -178,41 +180,42 @@ export function WalkInSalesTerminal({ shop, shopSlug, products, clients = [] }: 
     // If user wants to save a new customer, create them first
     let resolvedClientId = selectedClientId || undefined;
     if (!selectedClientId && saveCustomer && customerName.trim()) {
-      const clientRes = await createClientProfile({
-        shopId: shop.id,
-        shopSlug,
-        name: customerName.trim(),
-        clientType: "INDIVIDUAL",
-        email: customerEmail.trim() || undefined,
-        phone: customerPhone.trim() || undefined,
-        taxPin: customerTaxPin.trim() || undefined,
-      });
-      if (clientRes.success && clientRes.clientId) {
-        resolvedClientId = clientRes.clientId;
+      try {
+        const clientRes: any = await createClientMutation.mutateAsync({
+          name: customerName.trim(),
+          clientType: "INDIVIDUAL",
+          email: customerEmail.trim() || undefined,
+          phone: customerPhone.trim() || undefined,
+          taxPin: customerTaxPin.trim() || undefined,
+        });
+        if (clientRes?.id || clientRes?.clientId) {
+          resolvedClientId = clientRes.id || clientRes.clientId;
+        }
+      } catch (err: any) {
+        console.warn("Could not save customer profile:", err);
       }
     }
 
-    const res = await createBillingDocument({
-      shopId: shop.id,
-      shopSlug,
-      type: "RECEIPT",
-      clientId: resolvedClientId,
-      customerEmail: customerEmail.trim() || undefined,
-      notes: customerNote.trim() || undefined,
-      items: basket.map((item) => ({
-        productId: item.productId,
-        description: item.description,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        taxType: item.taxType,
-      })),
-    });
+    try {
+      const docRes: any = await createDocumentMutation.mutateAsync({
+        type: "RECEIPT",
+        status: "PAID",
+        clientId: resolvedClientId,
+        currency: shop.currency || "KES",
+        notes: customerNote.trim() || undefined,
+        paymentChannel: paymentChannel,
+        paymentReference: paymentReference.trim() || undefined,
+        items: basket.map((item) => ({
+          productId: item.productId,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          taxType: item.taxType,
+        })),
+      });
 
-    setLoading(false);
-    if (!res.success) {
-      toast.error(res.error || "Failed to complete walk-in sale.", { id: toastId });
-    } else {
-      toast.success(`⚡ Walk-in Sale Completed! (${res.serial})`, { id: toastId });
+      const serial = docRes?.doc_number || docRes?.docNumber || docRes?.serial || "RCT-001";
+      toast.success(`⚡ Walk-in Sale Completed! (${serial})`, { id: toastId });
       const displayName = customerName.trim() || customerEmail.trim() || "Walk-in Customer";
       setCompletedReceipt({
         shopName: shop.name,
@@ -223,7 +226,7 @@ export function WalkInSalesTerminal({ shop, shopSlug, products, clients = [] }: 
         shopTaxPin: shop.taxPin,
         shopVatNumber: shop.vatNumber,
         currency: shop.currency || "KES",
-        docNumber: res.serial || "RCT-001",
+        docNumber: serial,
         docType: "RECEIPT",
         issueDate: new Date(),
         customerName: displayName,
@@ -259,6 +262,10 @@ export function WalkInSalesTerminal({ shop, shopSlug, products, clients = [] }: 
       setClientQuery("");
       setSelectedClientId(null);
       setSaveCustomer(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to complete walk-in sale.", { id: toastId });
+    } finally {
+      setLoading(false);
     }
   }
 

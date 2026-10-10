@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
-import type { RecurringInvoiceItem } from "@/lib/actions/recurring";
+import type { RecurringInvoiceItem } from "@/types/models";
 
 interface RecurringInvoicesWidgetProps {
   slug: string;

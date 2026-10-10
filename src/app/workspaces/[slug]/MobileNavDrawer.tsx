@@ -4,7 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { logoutAction } from "@/lib/actions/logout";
+import { LogoutButton } from "@/components/LogoutButton";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Menu, X, ChevronDown, ChevronRight } from "lucide-react";
 import { FiscalYearSwitcher } from "@/components/FiscalYearSwitcher";
@@ -435,14 +435,7 @@ export function MobileNavDrawer({
                 </div>
               </div>
 
-              <form action={logoutAction}>
-                <button
-                  type="submit"
-                  className="text-rose-500 hover:text-rose-400 text-[11px] font-semibold uppercase tracking-wide transition-colors cursor-pointer bg-transparent border-none px-2"
-                >
-                  Sign out
-                </button>
-              </form>
+              <LogoutButton className="text-rose-500 hover:text-rose-400 text-[11px] font-semibold uppercase tracking-wide transition-colors cursor-pointer bg-transparent border-none px-2" />
             </div>
           </div>
         </div>

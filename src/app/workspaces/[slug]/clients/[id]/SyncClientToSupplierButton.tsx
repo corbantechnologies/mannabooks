@@ -1,9 +1,10 @@
 "use client";
 
-import { useTransition } from "react";
-import { syncClientToSupplierAction } from "@/lib/actions/crm-sync";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/Spinner";
 import { toast } from "react-hot-toast";
+import axiosClient from "@/lib/api/axios";
 
 interface SyncClientToSupplierButtonProps {
   clientId: string;
@@ -20,17 +21,46 @@ export function SyncClientToSupplierButton({
   className,
   renderAsMenuItem = false,
 }: SyncClientToSupplierButtonProps) {
-  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
 
-  const handleSync = () => {
-    startTransition(async () => {
-      const res = await syncClientToSupplierAction(clientId, shopId, shopSlug);
-      if (res.success) {
-        toast.success("Supplier profile created and linked successfully!");
-      } else {
-        toast.error(res.error || "Failed to clone profile.");
+  const handleSync = async () => {
+    setIsPending(true);
+    const toastId = toast.loading("Syncing client to supplier...");
+    try {
+      // 1. Fetch current client data
+      const client: any = await axiosClient.get(`/clients/${clientId}`, {
+        params: { shop_id: shopId },
+      });
+
+      if (!client) {
+        throw new Error("Client profile not found.");
       }
-    });
+
+      // 2. Create supplier profile
+      await axiosClient.post(
+        "/suppliers",
+        {
+          name: client.name,
+          email: client.email || null,
+          phone: client.phone || null,
+          supplier_type: client.client_type || client.clientType || "CORPORATE",
+          tax_pin: client.tax_pin || client.taxPin || null,
+          requires_etims: Boolean(client.requires_etims ?? client.requiresEtims),
+          payment_terms: "NET_30",
+        },
+        {
+          params: { shop_id: shopId },
+        }
+      );
+
+      toast.success("Supplier profile created and linked successfully!", { id: toastId });
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to clone client as supplier.", { id: toastId });
+    } finally {
+      setIsPending(false);
+    }
   };
 
   if (renderAsMenuItem) {
@@ -38,7 +68,10 @@ export function SyncClientToSupplierButton({
       <button
         onClick={handleSync}
         disabled={isPending}
-        className={className || "w-full text-left px-3.5 py-2 hover:bg-zinc-100 font-medium text-xs text-zinc-700 hover:text-black transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"}
+        className={
+          className ||
+          "w-full text-left px-3.5 py-2 hover:bg-zinc-100 font-medium text-xs text-zinc-700 hover:text-black transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+        }
       >
         {isPending ? (
           <>
@@ -59,16 +92,12 @@ export function SyncClientToSupplierButton({
     <button
       onClick={handleSync}
       disabled={isPending}
-      className={className || "btn-secondary-modern px-3 py-1 font-semibold uppercase tracking-wider text-[11px] flex items-center justify-center gap-1.5"}
+      className={
+        className ||
+        "btn-secondary-modern px-3 py-1.5 text-xs font-semibold uppercase disabled:opacity-50"
+      }
     >
-      {isPending ? (
-        <>
-          <Spinner size={10} color="black" />
-          <span>Syncing...</span>
-        </>
-      ) : (
-        "➔ Sync as Supplier"
-      )}
+      {isPending ? "Syncing..." : "Sync as Vendor / Supplier"}
     </button>
   );
 }

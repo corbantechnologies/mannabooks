@@ -1,5 +1,5 @@
 // src/app/workspaces/[slug]/suppliers/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { apiClient } from "@/lib/api/client";
 import Link from "next/link";
 import { SupplierFormClientSide } from "./SupplierFormClientSide";

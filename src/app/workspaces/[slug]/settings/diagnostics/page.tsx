@@ -1,5 +1,5 @@
 // src/app/workspaces/[slug]/settings/diagnostics/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getLedgerSnapshotsAction } from "@/lib/actions/documents";
 import { DiagnosticsClient } from "./DiagnosticsClient";
 

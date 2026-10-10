@@ -1,4 +1,4 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getShopCurrencies } from "@/lib/actions/currencies";
 import { CurrencySettingsClient } from "./CurrencySettingsClient";
 

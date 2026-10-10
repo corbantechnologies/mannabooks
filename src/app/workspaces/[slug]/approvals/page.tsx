@@ -1,4 +1,4 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getApprovalRequests, getApprovalPolicies } from "@/lib/actions/approvals";
 import { ApprovalsClient } from "./ApprovalsClient";
 import { Metadata } from "next";

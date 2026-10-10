@@ -1,7 +1,4 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
 import { getCostCenters } from "@/lib/actions/cost-centers";
 import { CostCentersClient } from "./CostCentersClient";

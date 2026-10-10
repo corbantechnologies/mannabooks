@@ -1,6 +1,6 @@
 // src/app/workspaces/[slug]/page.tsx
 import { notFound } from "next/navigation";
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { OnboardingTracker } from "./OnboardingTracker";

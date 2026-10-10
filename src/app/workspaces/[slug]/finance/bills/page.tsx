@@ -1,9 +1,6 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
-import { db } from "@/db";
-import { shops, suppliers, chartOfAccounts } from "@/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
+import { apiClient } from "@/lib/api/client";
 import { notFound } from "next/navigation";
-import { getVendorBills, getApprovedPosAndGrns } from "@/lib/actions/bills";
 import { VendorBillsClient } from "./VendorBillsClient";
 
 interface VendorBillsPageProps {
@@ -19,18 +16,18 @@ export default async function VendorBillsPage({ params }: VendorBillsPageProps) 
     notFound();
   }
 
-  const [bills, shopSuppliers, accounts, { pos, grns }] = await Promise.all([
-    getVendorBills(slug),
-    db.query.suppliers.findMany({
-      where: eq(suppliers.shopId, shop.id),
-      orderBy: [asc(suppliers.name)],
-    }),
-    db.query.chartOfAccounts.findMany({
-      where: eq(chartOfAccounts.shopId, shop.id),
-      orderBy: [asc(chartOfAccounts.code)],
-    }),
-    getApprovedPosAndGrns(slug),
+  const [billsRes, suppRes, accRes, matchRes] = await Promise.all([
+    apiClient.get<any>(`/v1/bills?shop_id=${shop.id}`),
+    apiClient.get<any[]>(`/v1/suppliers?shop_id=${shop.id}`),
+    apiClient.get<any[]>(`/v1/accounts?shop_id=${shop.id}`),
+    apiClient.get<any>(`/v1/bills/approved-pos-grns?shop_id=${shop.id}`),
   ]);
+
+  const bills: any[] = billsRes.data?.bills || [];
+  const shopSuppliers: any[] = suppRes.data || [];
+  const accounts: any[] = accRes.data || [];
+  const pos: any[] = matchRes.data?.pos || [];
+  const grns: any[] = matchRes.data?.grns || [];
 
   return (
     <div className="p-5 sm:p-7 space-y-6">
@@ -48,12 +45,12 @@ export default async function VendorBillsPage({ params }: VendorBillsPageProps) 
         shopName={shop.name}
         currency={shop.currency}
         isGlEnabled={shop.isGlEnabled}
-        initialBills={bills.map((b) => ({
+        initialBills={bills.map((b: any) => ({
           id: b.id,
           billNumber: b.billNumber,
           reference: b.reference,
-          billDate: b.billDate.toISOString(),
-          dueDate: b.dueDate ? b.dueDate.toISOString() : null,
+          billDate: b.billDate ? (typeof b.billDate === "string" ? b.billDate : b.billDate.toISOString()) : new Date().toISOString(),
+          dueDate: b.dueDate ? (typeof b.dueDate === "string" ? b.dueDate : b.dueDate.toISOString()) : null,
           subTotal: b.subTotal,
           taxAmount: b.taxAmount,
           whtRate: b.whtRate,
@@ -77,22 +74,22 @@ export default async function VendorBillsPage({ params }: VendorBillsPageProps) 
           sourcePo: b.sourcePo ? {
             id: b.sourcePo.id,
             docNumber: b.sourcePo.docNumber,
-            issueDate: b.sourcePo.issueDate.toISOString(),
+            issueDate: typeof b.sourcePo.issueDate === "string" ? b.sourcePo.issueDate : b.sourcePo.issueDate.toISOString(),
             grandTotal: b.sourcePo.grandTotal,
           } : null,
           sourceGrn: b.sourceGrn ? {
             id: b.sourceGrn.id,
             docNumber: b.sourceGrn.docNumber,
-            issueDate: b.sourceGrn.issueDate.toISOString(),
+            issueDate: typeof b.sourceGrn.issueDate === "string" ? b.sourceGrn.issueDate : b.sourceGrn.issueDate.toISOString(),
           } : null,
-          supplier: {
+          supplier: b.supplier ? {
             id: b.supplier.id,
             name: b.supplier.name,
             email: b.supplier.email,
             phone: b.supplier.phone,
             taxPin: b.supplier.taxPin,
-          },
-          items: b.items.map((it) => ({
+          } : { id: "", name: "Unknown", email: null, phone: null, taxPin: null },
+          items: (b.items || []).map((it: any) => ({
             id: it.id,
             description: it.description,
             quantity: it.quantity,
@@ -109,27 +106,27 @@ export default async function VendorBillsPage({ params }: VendorBillsPageProps) 
             } : null,
           })),
         }))}
-        suppliers={shopSuppliers.map((s) => ({
+        suppliers={shopSuppliers.map((s: any) => ({
           id: s.id,
           name: s.name,
           email: s.email,
-          taxPin: s.taxPin,
-          paymentTerms: s.paymentTerms,
+          taxPin: s.taxPin ?? s.tax_pin,
+          paymentTerms: s.paymentTerms ?? s.payment_terms,
         }))}
-        accounts={accounts.map((a) => ({
+        accounts={accounts.map((a: any) => ({
           id: a.id,
           code: a.code,
           name: a.name,
-          accountType: a.accountType,
+          accountType: a.accountType ?? a.account_type,
         }))}
-        availablePos={pos.map((p) => ({
+        availablePos={pos.map((p: any) => ({
           id: p.id,
           docNumber: p.docNumber,
           type: p.type,
-          supplierId: p.supplierId,
-          issueDate: p.issueDate.toISOString(),
+          supplierId: p.supplierId ?? p.supplier_id,
+          issueDate: typeof p.issueDate === "string" ? p.issueDate : (p.issueDate?.toISOString?.() || ""),
           grandTotal: p.grandTotal,
-          items: p.items.map((it) => ({
+          items: (p.items || []).map((it: any) => ({
             id: it.id,
             description: it.description,
             quantity: it.quantity,
@@ -137,13 +134,13 @@ export default async function VendorBillsPage({ params }: VendorBillsPageProps) 
             taxType: it.taxType,
           })),
         }))}
-        availableGrns={grns.map((g) => ({
+        availableGrns={grns.map((g: any) => ({
           id: g.id,
           docNumber: g.docNumber,
           type: g.type,
-          supplierId: g.supplierId,
-          issueDate: g.issueDate.toISOString(),
-          items: g.items.map((it) => ({
+          supplierId: g.supplierId ?? g.supplier_id,
+          issueDate: typeof g.issueDate === "string" ? g.issueDate : (g.issueDate?.toISOString?.() || ""),
+          items: (g.items || []).map((it: any) => ({
             id: it.id,
             description: it.description,
             quantity: it.quantity,

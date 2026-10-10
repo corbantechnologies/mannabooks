@@ -1,9 +1,7 @@
 // src/app/workspaces/[slug]/documents/[id]/page.tsx
-import { db } from "@/db";
-import { documents, documentTokens, shops } from "@/db/schema";
-import { eq, and, or } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { apiClient } from "@/lib/api/client";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 import { DocumentStatusPanel } from "./DocumentStatusPanel";
@@ -24,25 +22,10 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
   // 1. Resolve shop safely via FastAPI context
   const { shop } = await getActiveWorkspaceContext(slug);
 
-  // 2. Fetch document with all related data & parent lineage
-  const doc = await db.query.documents.findFirst({
-    where: and(eq(documents.id, id), eq(documents.shopId, shop.id)),
-    with: {
-      client: true,
-      supplier: true,
-      location: true,
-      items: true,
-      payments: {
-        orderBy: (p, { desc }) => [desc(p.paymentDate)],
-        with: { recordedBy: true },
-      },
-      notesList: {
-        orderBy: (n, { desc }) => [desc(n.createdAt)],
-        with: { user: true },
-      },
-    },
-  });
-  if (!doc) notFound();
+  // 2. Fetch document with all related data & parent lineage via FastAPI
+  const docRes = await apiClient.get<any>(`/v1/documents/${id}?shop_id=${shop.id}&full=true`);
+  if (docRes.error || !docRes.data) notFound();
+  const doc = docRes.data;
 
   const party = doc.client || doc.supplier || {
     name: doc.type === "PAYROLL_VOUCHER"
@@ -53,80 +36,42 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
     taxPin: null,
   };
 
-  // Fetch parent document if parentDocumentId exists
-  let parentDoc = null;
-  if (doc.parentDocumentId) {
-    parentDoc = await db.query.documents.findFirst({
-      where: eq(documents.id, doc.parentDocumentId),
+  const parentDoc = doc.parentDocument || null;
+  const childDocs = doc.childDocuments || [];
+
+  // Build document chain
+  const chain: ChainNode[] = [];
+  if (parentDoc) {
+    chain.push({
+      id: parentDoc.id,
+      docNumber: parentDoc.docNumber,
+      type: parentDoc.type,
+      status: "ISSUED",
+      issueDate: doc.issueDate,
     });
   }
-
-  // Fetch downstream child documents created from this document
-  const childDocs = await db.query.documents.findMany({
-    where: and(eq(documents.parentDocumentId, doc.id), eq(documents.shopId, shop.id)),
-    columns: { id: true, docNumber: true, type: true, status: true },
-    orderBy: (d, { asc }) => [asc(d.createdAt)],
+  chain.push({
+    id: doc.id,
+    docNumber: doc.docNumber,
+    type: doc.type,
+    status: doc.status,
+    issueDate: doc.issueDate,
   });
-
-  // Pre-capture shopId for use inside closures (TypeScript narrows undefined away)
-  const shopId = shop.id;
-
-  // Build full document chain (walk up to root, then fetch all descendants)
-  const chain: ChainNode[] = [];
-  try {
-    // Walk upward to find root
-    let rootId = doc.id;
-    let cursor: typeof doc | null = doc as any;
-    const visited = new Set<string>();
-    while (cursor?.parentDocumentId && !visited.has(cursor.parentDocumentId)) {
-      visited.add(cursor.parentDocumentId);
-      const parent = await db.query.documents.findFirst({
-        where: eq(documents.id, cursor.parentDocumentId),
+  if (childDocs.length > 0) {
+    for (const c of childDocs) {
+      chain.push({
+        id: c.id,
+        docNumber: c.docNumber,
+        type: c.type,
+        status: c.status,
+        issueDate: doc.issueDate,
       });
-      if (parent) {
-        rootId = parent.id;
-        cursor = parent as any;
-      } else break;
     }
-
-    // Recursively fetch descendants from root
-    async function fetchDescendants(docId: string, depth = 0): Promise<ChainNode[]> {
-      if (depth > 6) return [];
-      const node = await db.query.documents.findFirst({
-        where: and(eq(documents.id, docId), eq(documents.shopId, shopId)),
-      });
-      if (!node) return [];
-      const result: ChainNode[] = [{
-        id: node.id,
-        docNumber: node.docNumber,
-        type: node.type,
-        status: node.status,
-        issueDate: node.issueDate,
-      }];
-      const children = await db.query.documents.findMany({
-        where: and(eq(documents.parentDocumentId, node.id), eq(documents.shopId, shopId)),
-        orderBy: (d, { asc }) => [asc(d.createdAt)],
-      });
-      for (const child of children) {
-        const subtree = await fetchDescendants(child.id, depth + 1);
-        result.push(...subtree);
-      }
-      return result;
-    }
-
-    const fullChain = await fetchDescendants(rootId);
-    chain.push(...fullChain);
-  } catch (_) {
-    // Silently fail — chain is decorative
   }
 
-  // 3. Fetch the public portal token
-  const tokenRecord = await db.query.documentTokens.findFirst({
-    where: eq(documentTokens.documentId, id),
-  });
-
+  // 3. Public portal token
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
-  const portalLink = tokenRecord ? `${appUrl}/portal/invoice/${tokenRecord.token}` : null;
+  const portalLink = doc.portalToken ? `${appUrl}/portal/invoice/${doc.portalToken}` : null;
 
   return (
     <div className="p-5 sm:p-7 space-y-6">
@@ -326,7 +271,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
               </tr>
             </thead>
             <tbody className="bg-white">
-              {doc.items.map((item) => (
+              {doc.items.map((item: any) => (
                 <tr key={item.id} className="hover:bg-zinc-50/70 transition-colors">
                   <td className="p-3.5 border-r border-zinc-100 font-sans text-sm">
                     <div className="font-semibold text-black">{item.description}</div>
@@ -394,7 +339,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
           shopSlug={slug}
           currency={shop.currency || "KES"}
           grandTotal={doc.grandTotal}
-          payments={doc.payments.map((p) => ({
+          payments={doc.payments.map((p: any) => ({
             id: p.id,
             amount: p.amount,
             paymentDate: p.paymentDate,
@@ -414,7 +359,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         shopSlug={slug}
         currentStatus={doc.status}
         docType={doc.type as any}
-        items={doc.items.map((i) => ({
+        items={doc.items.map((i: any) => ({
           id: i.id,
           description: i.description,
           quantity: i.quantity,
@@ -455,7 +400,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         documentId={doc.id}
         shopId={shop.id}
         shopSlug={slug}
-        notes={doc.notesList.map((n) => ({
+        notes={doc.notesList.map((n: any) => ({
           id: n.id,
           note: n.note,
           createdAt: n.createdAt,

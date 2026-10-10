@@ -1,28 +1,31 @@
 // src/app/logout/route.ts
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { db } from "@/db";
-import { sessions } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { apiClient } from "@/lib/api/client";
 
 const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "kenya-nzuri-kabisa";
 
 /**
  * GET /logout
- * Route Handler that explicitly sends HTTP Set-Cookie headers to destroy
- * all session cookies on the root path and redirects to /login.
+ * Route Handler that explicitly calls backend logout, destroys session cookies,
+ * and redirects to /login.
  */
 export async function GET(request: Request) {
     try {
         const cookieStore = await cookies();
-        const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+        const token =
+            cookieStore.get(SESSION_COOKIE_NAME)?.value ||
+            cookieStore.get("manna_session_token")?.value ||
+            cookieStore.get("kenya-nzuri-kabisa")?.value;
 
-        // 1. Purge from database if token exists
+        // 1. Notify FastAPI backend to revoke session
         if (token) {
             try {
-                await db.delete(sessions).where(eq(sessions.id, token));
+                await apiClient.post("/v1/auth/logout", {}, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
             } catch (err) {
-                console.error("Failed to delete session row during /logout:", err);
+                console.error("Backend logout call failed:", err);
             }
         }
 

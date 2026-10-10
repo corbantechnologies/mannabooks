@@ -83,3 +83,41 @@ export function useDeleteCurrency(shopId: string) {
     },
   });
 }
+
+/**
+ * Sync all currencies with live market exchange rates.
+ */
+export function useSyncLiveRates(shopId: string, baseCurrency = "KES") {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (currencies: ShopCurrencyRecord[]) => {
+      let updatedCount = 0;
+      const base = baseCurrency.toUpperCase();
+      for (const curr of currencies) {
+        try {
+          const res = await fetch(`/api/exchange-rate?from=${curr.code}&to=${base}`);
+          const data = await res.json();
+          if (data.success && typeof data.rate === "number") {
+            await axiosClient.post(`/workspaces/${shopId}/currencies`, {
+              code: curr.code,
+              name: curr.name,
+              symbol: curr.symbol,
+              exchange_rate: data.rate,
+              is_enabled: curr.isEnabled,
+            });
+            updatedCount++;
+          }
+        } catch {}
+      }
+      return updatedCount;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["currencies", shopId] });
+      toast.success(`Synced ${count} currencies with live market rates!`);
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to sync exchange rates.");
+    },
+  });
+}

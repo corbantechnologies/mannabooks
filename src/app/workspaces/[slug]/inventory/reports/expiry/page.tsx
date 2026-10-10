@@ -1,4 +1,4 @@
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getExpiryRiskReport, getStorageBins } from "@/lib/actions/wms";
 import { getStockLocations } from "@/lib/actions/inventory";
 import { getWorkspaceProducts } from "@/lib/actions/production";

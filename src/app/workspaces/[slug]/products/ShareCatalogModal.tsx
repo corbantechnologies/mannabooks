@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { toast } from "react-hot-toast";
-import { encodeCatalogToken, sendCatalogEmailAction } from "@/lib/actions/catalog";
+import { encodeCatalogToken } from "@/lib/catalog-token";
 
 interface ShareCatalogModalProps {
   shopSlug: string;
@@ -80,23 +80,32 @@ export function ShareCatalogModal({
     }
 
     startEmailTransition(async () => {
-      const res = await sendCatalogEmailAction({
-        shopSlug,
-        recipientEmail,
-        recipientName: recipientName.trim() || undefined,
-        customMessage: customMessage.trim() || undefined,
-        productIds: selectedProductIds,
-        token: token || undefined,
-      });
+      try {
+        const response = await fetch("/api/catalog/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            shopSlug,
+            recipientEmail,
+            recipientName: recipientName.trim() || undefined,
+            customMessage: customMessage.trim() || undefined,
+            productIds: selectedProductIds,
+            token: token || undefined,
+          }),
+        });
+        const res = await response.json();
 
-      if (res.success) {
-        toast.success(res.message || "Catalog email dispatched successfully!");
-        setRecipientEmail("");
-        setRecipientName("");
-        setCustomMessage("");
-        setShowEmailForm(false);
-      } else {
-        toast.error(res.error || "Failed to dispatch email.");
+        if (res.success) {
+          toast.success(res.message || "Catalog email dispatched successfully!");
+          setRecipientEmail("");
+          setRecipientName("");
+          setCustomMessage("");
+          setShowEmailForm(false);
+        } else {
+          toast.error(res.error || "Failed to dispatch email.");
+        }
+      } catch (err: any) {
+        toast.error("Failed to dispatch email.", err);
       }
     });
   }

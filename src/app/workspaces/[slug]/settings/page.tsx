@@ -1,5 +1,5 @@
 // src/app/workspaces/[slug]/settings/page.tsx
-import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { getShopPaymentMethods } from "@/lib/actions/payments";
 import { getShopTerms } from "@/lib/actions/terms";
 import { SettingsForm } from "./SettingsForm";
@@ -76,7 +76,7 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
         initialCurrency={shop.currency}
         initialFiscalYearStartMonth={shop.fiscalYearStartMonth}
         paymentMethods={paymentMethods}
-        initialTerms={shopTerms}
+        initialTerms={shopTerms as any}
         initialAutoStockDeductionEnabled={(shop as any).autoStockDeductionEnabled ?? true}
         initialBusinessMode={((shop as any).businessMode || "HYBRID") as "SERVICES" | "RETAIL" | "HYBRID"}
         initialLoyaltyEngineMode={(shop as any).loyaltyEngineMode || "OFF"}

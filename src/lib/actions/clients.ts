@@ -31,43 +31,25 @@ export async function createClientProfile(input: CreateClientInput) {
         const cleanName = input.name.trim();
         const cleanPin = input.taxPin?.toUpperCase().trim() || null;
 
-        // Strangler Pattern: Delegate to FastAPI if enabled
-        if (isApiModuleEnabled("clients") || isApiModuleEnabled("master")) {
-            const apiRes = await apiCall<{ id: string }>(`/v1/clients?shop_id=${input.shopId}`, {
-                method: "POST",
-                body: JSON.stringify({
-                    name: cleanName,
-                    email: cleanEmail,
-                    phone: input.phone?.trim() || null,
-                    client_type: input.clientType,
-                    tax_pin: cleanPin,
-                    requires_etims: input.requiresEtims || false,
-                }),
-            });
-            if (!apiRes.error && apiRes.data) {
-                revalidatePath(`/workspaces/${input.shopSlug}/clients`);
-                return { success: true, clientId: apiRes.data.id };
-            }
+        const apiRes = await apiCall<{ id: string }>(`/v1/clients?shop_id=${input.shopId}`, {
+            method: "POST",
+            body: JSON.stringify({
+                name: cleanName,
+                email: cleanEmail || null,
+                phone: input.phone?.trim() || null,
+                client_type: input.clientType,
+                tax_pin: cleanPin,
+                requires_etims: input.requiresEtims || false,
+            }),
+        });
+        if (apiRes.error) {
+            return { success: false, error: apiRes.error };
         }
-
-        // 3. Fallback write data safely to the PostgreSQL repository
-        const [newClient] = await db.insert(clients).values({
-            shopId: input.shopId,
-            name: cleanName,
-            email: cleanEmail,
-            phone: input.phone?.trim() || null,
-            clientType: input.clientType,
-            taxPin: cleanPin,
-            requiresEtims: input.requiresEtims || false,
-        }).returning();
-
-        // 4. Force Next.js to purge cached lists so the client directory updates instantly
         revalidatePath(`/workspaces/${input.shopSlug}/clients`);
-
-        return { success: true, clientId: newClient.id };
-    } catch (error) {
+        return { success: true, clientId: apiRes.data?.id };
+    } catch (error: any) {
         console.error("Failed to commit new client profile record:", error);
-        return { success: false, error: "An unexpected database error occurred. Please try again." };
+        return { success: false, error: error.message || "An unexpected database error occurred. Please try again." };
     }
 }
 
@@ -83,6 +65,27 @@ interface UpdateClientInput extends Partial<CreateClientInput> {
 export async function updateClientProfile({ id, shopId, shopSlug, ...updates }: UpdateClientInput) {
     try {
         await enforcePermission(shopId, "manage_clients");
+
+        if (isApiModuleEnabled("clients")) {
+            const cleanPin = updates.taxPin?.toUpperCase().trim() || null;
+            const apiRes = await apiCall(`/v1/clients/${id}?shop_id=${shopId}`, {
+                method: "PATCH",
+                body: JSON.stringify({
+                    name: updates.name?.trim(),
+                    email: updates.email?.toLowerCase().trim() || null,
+                    phone: updates.phone?.trim() || null,
+                    client_type: updates.clientType,
+                    tax_pin: cleanPin,
+                    requires_etims: updates.requiresEtims,
+                }),
+            });
+            if (apiRes.error) {
+                return { success: false, error: apiRes.error };
+            }
+            revalidatePath(`/workspaces/${shopSlug}/clients`);
+            revalidatePath(`/workspaces/${shopSlug}/clients/${id}`);
+            return { success: true };
+        }
 
         // Verify target profile is owned by the requesting shop entity
         const existing = await db.query.clients.findFirst({
@@ -122,6 +125,17 @@ export async function updateClientProfile({ id, shopId, shopSlug, ...updates }: 
 export async function deleteClientProfile(id: string, shopId: string, shopSlug: string) {
     try {
         await enforcePermission(shopId, "manage_clients");
+
+        if (isApiModuleEnabled("clients") || !process.env.DATABASE_URL) {
+            const apiRes = await apiCall(`/v1/clients/${id}?shop_id=${shopId}`, {
+                method: "DELETE",
+            });
+            if (apiRes.error) {
+                return { success: false, error: apiRes.error };
+            }
+            revalidatePath(`/workspaces/${shopSlug}/clients`);
+            return { success: true };
+        }
 
         await db.delete(clients)
             .where(and(eq(clients.id, id), eq(clients.shopId, shopId)));

@@ -259,38 +259,28 @@ export async function checkPaymentStatusAction(transactionId: string) {
  */
 export async function getShopBillingData(shopId: string) {
     try {
-        const res = await apiClient<{
-            success: boolean;
-            planDetails: any;
-            availablePlans: any[];
-            transactions: any[];
-            error?: string;
-        }>(`/v1/workspaces/${shopId}/billing/overview`);
+        const [planDetails, overviewRes] = await Promise.all([
+            getShopPlanDetails(shopId),
+            apiClient<{
+                success: boolean;
+                planDetails?: any;
+                availablePlans?: any[];
+                transactions?: any[];
+                error?: string;
+            }>(`/v1/workspaces/${shopId}/billing/overview`).catch(() => ({ data: null })),
+        ]);
 
-        if (res.data?.success && res.data.planDetails) {
-            return {
-                success: true,
-                planDetails: res.data.planDetails,
-                availablePlans: res.data.availablePlans || [],
-                transactions: res.data.transactions || [],
-            };
+        if (!planDetails) {
+            return { success: false, error: "Failed to load workspace billing details." };
         }
 
-        // Fallback to plan-details endpoint if overview is partial
-        const detailsRes = await apiClient<any>(`/v1/workspaces/${shopId}/plan-details`);
         const dynamicSpecs = await getDynamicPlanSpecs();
 
         return {
             success: true,
-            planDetails: detailsRes.data || {
-                plan: "FREE",
-                subscriptionStatus: "ACTIVE",
-                effectivePlan: "FREE",
-                isLifetimePro: false,
-                spec: PLAN_SPECS.FREE,
-            },
-            availablePlans: Object.values(dynamicSpecs),
-            transactions: [],
+            planDetails,
+            availablePlans: overviewRes.data?.availablePlans || Object.values(dynamicSpecs),
+            transactions: overviewRes.data?.transactions || [],
         };
     } catch (error: any) {
         console.error("Failed to fetch billing data via FastAPI:", error);

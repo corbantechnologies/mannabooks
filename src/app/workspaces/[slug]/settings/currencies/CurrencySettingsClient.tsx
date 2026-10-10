@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { saveShopCurrencyAction, deleteShopCurrencyAction, syncShopCurrenciesWithLiveRatesAction, type ShopCurrencyRecord } from "@/lib/actions/currencies";
+import { useSaveCurrency, useDeleteCurrency, type ShopCurrencyRecord } from "@/hooks/useCurrencies";
+import { syncShopCurrenciesWithLiveRatesAction } from "@/lib/actions/currencies";
 import { formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
@@ -43,7 +44,9 @@ export function CurrencySettingsClient({
   const [exchangeRate, setExchangeRate] = useState("129.50");
   const [isFetchingGuidance, setIsFetchingGuidance] = useState(false);
   const [isSyncingAll, setIsSyncingAll] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const saveCurrencyMutation = useSaveCurrency(shopId);
+  const deleteCurrencyMutation = useDeleteCurrency(shopId);
 
   function handlePresetSelect(presetCode: string) {
     const preset = COMMON_PRESETS.find(p => p.code === presetCode);
@@ -79,65 +82,63 @@ export function CurrencySettingsClient({
       return;
     }
 
-    setIsSubmitting(true);
-    const toastId = toast.loading("Saving currency rate...");
-
-    try {
-      const res = await saveShopCurrencyAction({
-        shopId,
-        shopSlug,
+    saveCurrencyMutation.mutate(
+      {
         code,
         name,
         symbol,
         exchangeRate: rateNum,
         isEnabled: true,
-      });
-
-      if (res.success) {
-        toast.success(`Saved ${code} exchange rate successfully!`, { id: toastId });
-        setIsAdding(false);
-        setEditingId(null);
-      } else {
-        toast.error(res.error || "Failed to save currency.", { id: toastId });
+      },
+      {
+        onSuccess: () => {
+          setIsAdding(false);
+          setEditingId(null);
+        },
       }
-    } catch {
-      toast.error("Error saving currency settings.", { id: toastId });
-    } finally {
-      setIsSubmitting(false);
-    }
+    );
   }
 
-  async function handleToggle(curr: ShopCurrencyRecord) {
-    const toastId = toast.loading(`${curr.isEnabled ? "Disabling" : "Enabling"} ${curr.code}...`);
-    const res = await saveShopCurrencyAction({
-      shopId,
-      shopSlug,
+  function handleToggle(curr: ShopCurrencyRecord) {
+    saveCurrencyMutation.mutate({
       code: curr.code,
       name: curr.name,
       symbol: curr.symbol,
       exchangeRate: parseFloat(curr.exchangeRate),
       isEnabled: !curr.isEnabled,
     });
-    if (res.success) {
-      toast.success(`${curr.code} ${!curr.isEnabled ? "enabled" : "disabled"} for billing!`, { id: toastId });
-    } else {
-      toast.error("Failed to update status.", { id: toastId });
-    }
   }
 
-  async function handleDelete(curr: ShopCurrencyRecord) {
-    if (!confirm(`Are you sure you want to remove ${curr.code} from your currency portfolio?`)) return;
-    const toastId = toast.loading(`Deleting ${curr.code}...`);
-    const res = await deleteShopCurrencyAction({
-      shopId,
-      shopSlug,
-      currencyId: curr.id,
+  function handleDelete(curr: ShopCurrencyRecord) {
+    toast((t) => (
+      <div className="flex flex-col gap-2.5 p-1 font-sans text-xs">
+        <div className="font-medium text-zinc-900">
+          Are you sure you want to remove <span className="font-mono font-bold text-rose-600">{curr.code}</span> ({curr.name}) from your portfolio?
+        </div>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => toast.dismiss(t.id)}
+            className="px-2.5 py-1 text-xs font-medium text-zinc-600 hover:text-black rounded bg-zinc-100 hover:bg-zinc-200 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              toast.dismiss(t.id);
+              deleteCurrencyMutation.mutate(curr.id);
+            }}
+            className="px-2.5 py-1 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded transition-colors shadow-xs"
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 8000,
+      position: "top-center",
     });
-    if (res.success) {
-      toast.success(`Removed ${curr.code} from portfolio.`, { id: toastId });
-    } else {
-      toast.error("Failed to delete currency.", { id: toastId });
-    }
   }
 
   async function handleSyncAllWithLiveRates() {
@@ -351,10 +352,10 @@ export function CurrencySettingsClient({
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || !code || !exchangeRate}
+                disabled={saveCurrencyMutation.isPending || !code || !exchangeRate}
                 className="btn-primary-modern px-3.5 py-2 text-xs font-semibold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1.5"
               >
-                {isSubmitting ? (
+                {saveCurrencyMutation.isPending ? (
                   <>
                     <Spinner size={10} color="white" />
                     <span>Saving...</span>

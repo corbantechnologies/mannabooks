@@ -86,6 +86,7 @@ export const metadata: Metadata = {
 };
 
 import { QueryProvider } from "@/providers/QueryProvider";
+import { AuthProvider } from "@/providers/AuthProvider";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 export default function RootLayout({
@@ -96,10 +97,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${googleSans.variable}`}>
       <body className="font-sans min-h-screen flex flex-col bg-white text-black">
-        <QueryProvider>
-          {children}
-          <PWAInstallPrompt />
-        </QueryProvider>
+        <AuthProvider>
+          <QueryProvider>
+            {children}
+            <PWAInstallPrompt />
+          </QueryProvider>
+        </AuthProvider>
         <Analytics />
         <Toaster
           position="bottom-right"

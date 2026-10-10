@@ -136,76 +136,13 @@ export const PLAN_SPECS: Record<string, PlanDefinition> = {
  */
 export async function getDynamicPlanSpecs(): Promise<Record<string, PlanDefinition>> {
     try {
-        const rows = await db.query.platformPlans.findMany({
-            orderBy: [asc(platformPlans.displayOrder)],
-        });
-
-        if (rows.length === 0) {
-            // Auto-seed default plans into database
-            await Promise.all(
-                Object.values(PLAN_SPECS).map((p, idx) =>
-                    db.insert(platformPlans).values({
-                        id: p.id,
-                        name: p.name,
-                        tagline: p.tagline,
-                        priceKesMonthly: p.priceKesMonthly,
-                        priceKesAnnually: p.priceKesAnnually,
-                        annualDiscountPercent: p.annualDiscountPercent,
-                        maxMembers: p.maxMembers === Infinity ? -1 : p.maxMembers,
-                        maxLocations: p.maxLocations === Infinity ? -1 : p.maxLocations,
-                        canTransferStock: p.canTransferStock,
-                        hasGeneralLedger: p.hasGeneralLedger,
-                        hasReconciliation: p.hasReconciliation,
-                        hasStatutoryPayroll: p.hasStatutoryPayroll,
-                        hasApiAccess: p.hasApiAccess,
-                        badge: p.badge,
-                        isHighlighted: p.isHighlighted || false,
-                        featuresJson: JSON.stringify(p.features),
-                        isActive: true,
-                        displayOrder: idx,
-                    }).onConflictDoNothing()
-                )
-            );
-            return PLAN_SPECS;
-        }
-
-        const map: Record<string, PlanDefinition> = {};
-        for (const row of rows) {
-            let features: string[] = [];
-            try {
-                features = JSON.parse(row.featuresJson);
-            } catch {
-                features = [];
-            }
-
-            map[row.id] = {
-                id: row.id as any,
-                name: row.name,
-                tagline: row.tagline,
-                priceKesMonthly: row.priceKesMonthly,
-                priceKesAnnually: row.priceKesAnnually,
-                annualDiscountPercent: row.annualDiscountPercent,
-                discountedPriceMonthly: row.discountedPriceMonthly ?? null,
-                discountedPriceAnnually: row.discountedPriceAnnually ?? null,
-                maxMembers: row.maxMembers === -1 ? Infinity : Math.max(1, Number(row.maxMembers ?? 1)),
-                maxLocations: row.maxLocations === -1 ? Infinity : Math.max(1, Number(row.maxLocations ?? 1)),
-                canTransferStock: row.canTransferStock,
-                hasGeneralLedger: row.hasGeneralLedger,
-                hasReconciliation: row.hasReconciliation,
-                hasStatutoryPayroll: row.hasStatutoryPayroll,
-                hasApiAccess: row.hasApiAccess,
-                badge: row.badge,
-                isHighlighted: row.isHighlighted,
-                features,
-            };
-        }
-
-        return map;
-    } catch (error) {
-        console.error("Error fetching dynamic plan specs, falling back to static specs:", error);
+        return PLAN_SPECS;
+    } catch {
         return PLAN_SPECS;
     }
 }
+
+
 
 export interface ShopPlanDetails {
     shopId: string;

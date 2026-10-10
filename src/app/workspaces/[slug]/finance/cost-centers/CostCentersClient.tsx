@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { toast } from "react-hot-toast";
 import {
   createCostCenter,
   updateCostCenter,
@@ -139,27 +140,54 @@ export function CostCentersClient({
       const nextActive = !c.isActive;
       const res = await updateCostCenter(c.id, shopSlug, { isActive: nextActive });
       if (!res.success) {
-        alert(res.error || "Failed to toggle status");
+        toast.error(res.error || "Failed to toggle status");
         return;
       }
+      toast.success(`Cost center ${nextActive ? "activated" : "deactivated"}`);
       setCenters(centers.map((item) => (item.id === c.id ? { ...item, isActive: nextActive } : item)));
     } catch (err: any) {
-      alert(err.message || "Failed to toggle status");
+      toast.error(err.message || "Failed to toggle status");
     }
   }
 
-  async function handleDelete(c: SerializedCostCenter) {
-    if (!confirm(`Permanently remove Cost Center ${c.code} (${c.name})?`)) return;
-    try {
-      const res = await deleteCostCenter(c.id, shopSlug);
-      if (!res.success) {
-        alert(res.error || "Delete failed");
-        return;
-      }
-      setCenters(centers.filter((item) => item.id !== c.id));
-    } catch (err: any) {
-      alert(err.message || "Delete failed");
-    }
+  function handleDelete(c: SerializedCostCenter) {
+    toast((t) => (
+      <div className="flex flex-col gap-2 p-1 font-sans text-xs">
+        <p className="font-semibold text-zinc-900">
+          Permanently remove Cost Center <span className="font-mono text-rose-600">{c.code}</span> ({c.name})?
+        </p>
+        <div className="flex items-center justify-end gap-2 mt-1">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-2 py-1 text-xs text-zinc-600 hover:text-black rounded bg-zinc-100 hover:bg-zinc-200 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                const res = await deleteCostCenter(c.id, shopSlug);
+                if (!res.success) {
+                  toast.error(res.error || "Delete failed");
+                  return;
+                }
+                toast.success(`Removed Cost Center ${c.code}`);
+                setCenters(centers.filter((item) => item.id !== c.id));
+              } catch (err: any) {
+                toast.error(err.message || "Delete failed");
+              }
+            }}
+            className="px-2.5 py-1 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded transition-colors shadow-xs"
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 8000,
+      position: "top-center",
+    });
   }
 
   return (

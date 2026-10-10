@@ -637,7 +637,7 @@ export function DocumentStatusPanel({
                   onClick={() => {
                     setIsShareOpen(false);
                     duplicateDocMutation.mutate(documentId, {
-                      onSuccess: (data) => {
+                      onSuccess: (data: any) => {
                         if (data.documentId) {
                           router.push(`/workspaces/${shopSlug}/documents/${data.documentId}`);
                         }

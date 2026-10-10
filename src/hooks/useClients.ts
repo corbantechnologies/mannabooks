@@ -1,63 +1,127 @@
 // src/hooks/useClients.ts
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createClientProfile, updateClientProfile, deleteClientProfile } from "@/lib/actions/clients";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 
-export function useCreateClient(shopId: string, shopSlug: string) {
+export interface ClientRecord {
+  id: string;
+  shopId: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  clientType: "WALK_IN" | "INDIVIDUAL" | "CORPORATE";
+  taxPin: string | null;
+  requiresEtims: boolean;
+  createdAt: string;
+}
+
+export interface ClientInput {
+  name: string;
+  email?: string;
+  phone?: string;
+  clientType: "WALK_IN" | "INDIVIDUAL" | "CORPORATE";
+  taxPin?: string;
+  requiresEtims?: boolean;
+}
+
+/**
+ * Fetch all clients for a workspace using pure Axios + TanStack Query.
+ */
+export function useClients(shopId: string, search?: string) {
+  return useQuery<ClientRecord[]>({
+    queryKey: ["clients", shopId, search],
+    queryFn: async () => {
+      const data = await axiosClient.get("/clients", {
+        params: { shop_id: shopId, search: search || undefined },
+      });
+      return Array.isArray(data) ? data : (data as any)?.clients || [];
+    },
+    enabled: Boolean(shopId),
+  });
+}
+
+/**
+ * Register a new partner/client using pure Axios mutation.
+ */
+export function useCreateClient(shopId: string, _shopSlug?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { name: string; email: string; phone?: string; clientType: "WALK_IN" | "INDIVIDUAL" | "CORPORATE"; taxPin?: string; requiresEtims?: boolean }) => {
-      const res = await createClientProfile({ shopId, shopSlug, ...data });
-      if (!res.success) throw new Error(res.error || "Failed to create client.");
-      return res;
+    mutationFn: async (input: ClientInput) => {
+      return await axiosClient.post(
+        "/clients",
+        {
+          name: input.name.trim(),
+          email: input.email ? input.email.toLowerCase().trim() : "",
+          phone: input.phone?.trim() || null,
+          client_type: input.clientType,
+          tax_pin: input.taxPin?.toUpperCase().trim() || null,
+          requires_etims: Boolean(input.requiresEtims),
+        },
+        { params: { shop_id: shopId } }
+      );
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (data: any, variables) => {
       queryClient.invalidateQueries({ queryKey: ["clients", shopId] });
-      toast.success(`Client "${variables.name}" registered!`);
+      toast.success(`Partner "${variables.name}" registered successfully!`);
     },
     onError: (err: Error) => {
-      toast.error(err.message);
+      toast.error(err.message || "Failed to create partner profile.");
     },
   });
 }
 
-export function useUpdateClient(shopId: string, shopSlug: string) {
+/**
+ * Modify an existing client profile using pure Axios mutation.
+ */
+export function useUpdateClient(shopId: string, _shopSlug?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { id: string; name?: string; email?: string; phone?: string; clientType?: "WALK_IN" | "INDIVIDUAL" | "CORPORATE"; taxPin?: string; requiresEtims?: boolean }) => {
-      const res = await updateClientProfile({ shopId, shopSlug, ...data });
-      if (!res.success) throw new Error(res.error || "Failed to update client.");
-      return res;
+    mutationFn: async ({ id, ...updates }: Partial<ClientInput> & { id: string }) => {
+      return await axiosClient.patch(
+        `/clients/${id}`,
+        {
+          name: updates.name?.trim(),
+          email: updates.email ? updates.email.toLowerCase().trim() : undefined,
+          phone: updates.phone?.trim() || null,
+          client_type: updates.clientType,
+          tax_pin: updates.taxPin?.toUpperCase().trim() || null,
+          requires_etims: updates.requiresEtims,
+        },
+        { params: { shop_id: shopId } }
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients", shopId] });
-      toast.success("Client profile updated!");
+      toast.success("Partner profile updated!");
     },
     onError: (err: Error) => {
-      toast.error(err.message);
+      toast.error(err.message || "Failed to update partner profile.");
     },
   });
 }
 
-export function useDeleteClient(shopId: string, shopSlug: string) {
+/**
+ * Remove a client profile using pure Axios mutation.
+ */
+export function useDeleteClient(shopId: string, _shopSlug?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (clientId: string) => {
-      const res = await deleteClientProfile(clientId, shopId, shopSlug);
-      if (!res.success) throw new Error(res.error || "Failed to delete client.");
-      return res;
+      return await axiosClient.delete(`/clients/${clientId}`, {
+        params: { shop_id: shopId },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients", shopId] });
-      toast.success("Client profile deleted!");
+      toast.success("Partner removed from directory.");
     },
     onError: (err: Error) => {
-      toast.error(err.message);
+      toast.error(err.message || "Failed to delete partner.");
     },
   });
 }

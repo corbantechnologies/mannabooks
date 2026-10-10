@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 const API_BASE_URL = (process.env.API_BASE_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || "";
-const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "kenya-nzuri-kabisa";
+const SESSION_COOKIE_NAME = process.env.COOKIE_NAME;
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
@@ -23,7 +23,8 @@ export async function apiClient<T = any>(
     let sessionToken: string | undefined;
     try {
       const cookieStore = await cookies();
-      sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+      const cookieKey = SESSION_COOKIE_NAME || "kenya-nzuri-kabisa";
+      sessionToken = cookieStore.get(cookieKey)?.value;
     } catch {
       // In static or build environments cookies() might fail
     }

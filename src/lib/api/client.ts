@@ -24,7 +24,10 @@ export async function apiClient<T = any>(
     try {
       const cookieStore = await cookies();
       const cookieKey = SESSION_COOKIE_NAME || "kenya-nzuri-kabisa";
-      sessionToken = cookieStore.get(cookieKey)?.value;
+      sessionToken =
+        cookieStore.get(cookieKey)?.value ||
+        cookieStore.get("kenya-nzuri-kabisa")?.value ||
+        cookieStore.get("manna_session_token")?.value;
     } catch {
       // In static or build environments cookies() might fail
     }

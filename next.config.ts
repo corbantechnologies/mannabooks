@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 // Ensure Node runtime defaults to East Africa Time (EAT)
-process.env.TZ = "Africa/Nairobi";
+process.env.TMEZONE = "Africa/Nairobi";
 
 const nextConfig: NextConfig = {
   images: {

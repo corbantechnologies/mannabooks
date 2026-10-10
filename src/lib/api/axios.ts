@@ -1,8 +1,5 @@
 import axios, { AxiosError } from "axios";
 
-/**
- * Reads a cookie value by name from document.cookie in browser context.
- */
 function getClientCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
   const match = document.cookie.match(new RegExp("(^|;\\s*)(" + name + ")=([^;]*)"));
@@ -19,13 +16,15 @@ export const axiosClient = axios.create({
   timeout: 30000,
 });
 
-// Request interceptor: attach session token from cookie/storage
+// Request interceptor – attach JWT
 axiosClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token =
+      localStorage.getItem("manna_access_token") ||
+      localStorage.getItem("manna_auth_token") ||
+      getClientCookie("manna_access_token") ||
       getClientCookie("kenya-nzuri-kabisa") ||
-      getClientCookie("manna_session_token") ||
-      localStorage.getItem("manna_auth_token");
+      getClientCookie("manna_session_token");
 
     if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -34,15 +33,13 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor: extract clean error messages and handle 401
+// Response interceptor
 axiosClient.interceptors.response.use(
-  (response) => {
-    return response.data;
-  },
+  (response) => response.data,
   (error: AxiosError<{ detail?: string; error?: string; message?: string }>) => {
     if (error.response?.status === 401) {
       if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-        // Clear any local tokens
+        localStorage.removeItem("manna_access_token");
         localStorage.removeItem("manna_auth_token");
       }
     }

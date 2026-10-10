@@ -1,11 +1,12 @@
 "use server";
 
-import { db } from "@/db";
-import { sessions, users, shops, shopMembers, shopInvitations } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { sessions, users, shops, shopMembers, shopInvitations } from "@/db/schema";
 import { generateUniqueShopCode } from "./shopCode";
 import { isApiModuleEnabled } from "@/lib/api/flags";
 import { apiClient } from "@/lib/api/client";
@@ -41,56 +42,44 @@ export async function createSession(userId: string): Promise<string> {
     return token;
 }
 
-import { cache } from "react";
-
 /**
- * Validates the session token from cookies against the database.
+ * Validates the session token from cookies against FastAPI (JWT) or the local database.
  * Auto-cleans expired or orphan tokens to prevent redirect loops.
  */
 export const verifyAndGetSession = cache(async function verifyAndGetSession() {
     let token: string | undefined;
     try {
         const store = await cookies();
-        token = store.get(SESSION_COOKIE_NAME)?.value || store.get("kenya-nzuri-kabisa")?.value || store.get("manna_session_token")?.value;
+        token =
+            store.get(SESSION_COOKIE_NAME)?.value ||
+            store.get("kenya-nzuri-kabisa")?.value ||
+            store.get("manna_session_token")?.value;
     } catch {
         return null;
     }
 
     if (!token) return null;
 
-    // FASTAPI STRANGLER ROUTING:
+    // FASTAPI STRANGLER ROUTING (JWT Verification):
     if (isApiModuleEnabled("auth")) {
-        const res = await apiClient<{ success: boolean; user: any }>("/v1/auth/me", {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        if (res.data?.success && res.data.user) {
-            return {
-                id: token,
-                userId: res.data.user.id,
-                expiresAt: new Date(Date.now() + SESSION_DURATION_DAYS * 86400000),
-                user: {
-                    id: res.data.user.id,
-                    name: res.data.user.name,
-                    email: res.data.user.email,
-                    passwordHash: "",
-                    isSuperAdmin: Boolean(res.data.user.isSuperAdmin),
-                    plan: res.data.user.plan || "FREE",
-                    subscriptionStatus: res.data.user.subscriptionStatus || "ACTIVE",
-                    subscriptionExpiresAt: null,
-                    gracePeriodEndsAt: null,
-                    autoRenewEnabled: true,
-                    autoRenewPhone: null,
-                    lastRenewalPromptAt: null,
-                    isLifetimePro: false,
-                    createdAt: new Date(),
-                },
-            };
+        try {
+            const res = await apiClient<{ success: boolean; user?: any }>("/v1/auth/me");
+            if (res.data?.success && res.data.user) {
+                return {
+                    id: token,
+                    userId: res.data.user.id,
+                    user: res.data.user,
+                    expiresAt: new Date(Date.now() + SESSION_DURATION_DAYS * 86400 * 1000),
+                };
+            }
+            return null;
+        } catch (err) {
+            console.error("FastAPI JWT verification failed:", err);
+            return null;
         }
-        return null;
     }
 
+    // Legacy Postgres session fallback:
     try {
         // Fetch the session alongside user profile contexts
         const sessionRecord = await db.query.sessions.findFirst({
@@ -105,9 +94,10 @@ export const verifyAndGetSession = cache(async function verifyAndGetSession() {
         }
 
         // Check if session has expired
-        const expiryTime = sessionRecord.expiresAt instanceof Date
-            ? sessionRecord.expiresAt.getTime()
-            : new Date(sessionRecord.expiresAt).getTime();
+        const expiryTime =
+            sessionRecord.expiresAt instanceof Date
+                ? sessionRecord.expiresAt.getTime()
+                : new Date(sessionRecord.expiresAt).getTime();
 
         if (isNaN(expiryTime) || Date.now() >= expiryTime) {
             // Session stale; purge from DB
@@ -125,7 +115,7 @@ export const verifyAndGetSession = cache(async function verifyAndGetSession() {
 });
 
 /**
- * Revokes the active session row and clears the client browser cookie.
+ * Revokes the active session row and clears the client browser cookies.
  */
 export async function invalidateSession() {
     try {
@@ -136,14 +126,24 @@ export async function invalidateSession() {
                 await db.delete(sessions).where(eq(sessions.id, token));
             } catch (err) {}
         }
-        cookieStore.delete(SESSION_COOKIE_NAME);
-        cookieStore.set(SESSION_COOKIE_NAME, "", {
-            path: "/",
-            maxAge: 0,
-            expires: new Date(0),
-            httpOnly: true,
-            sameSite: "lax",
-        });
+
+        const cookieNames = [
+            SESSION_COOKIE_NAME,
+            "kenya-nzuri-kabisa",
+            "manna_session_token",
+            "manna_access_token",
+        ];
+
+        for (const name of cookieNames) {
+            cookieStore.delete(name);
+            cookieStore.set(name, "", {
+                path: "/",
+                maxAge: 0,
+                expires: new Date(0),
+                httpOnly: true,
+                sameSite: "lax",
+            });
+        }
     } catch (e) {
         console.error("Error during invalidateSession:", e);
     }
@@ -198,12 +198,12 @@ export async function registerOwnerAccount(input: RegisterOwnerInput) {
             return {
                 success: true as const,
                 shopSlug: res.data.shop_slug || "",
+                token: res.data.token,
             };
         }
 
         // Run all DB writes inside a transaction for atomicity
         const result = await db.transaction(async (tx) => {
-
             // 1. Enforce unique emails at the application level
             const existingUser = await tx.query.users.findFirst({
                 where: eq(users.email, input.email.toLowerCase().trim()),
@@ -262,23 +262,23 @@ export async function registerOwnerAccount(input: RegisterOwnerInput) {
 
             // 6.5 Auto-accept pending invitations
             let pendingInvites = await tx.query.shopInvitations.findMany({
-                where: eq(shopInvitations.email, input.email.toLowerCase().trim())
+                where: eq(shopInvitations.email, input.email.toLowerCase().trim()),
             });
 
             // If an invite token was explicitly provided, also look for that specific invite
             if (input.inviteToken) {
                 const tokenInvite = await tx.query.shopInvitations.findFirst({
-                    where: eq(shopInvitations.token, input.inviteToken)
+                    where: eq(shopInvitations.token, input.inviteToken),
                 });
-                
+
                 // If found and not already in the array, add it
-                if (tokenInvite && !pendingInvites.some(inv => inv.id === tokenInvite.id)) {
+                if (tokenInvite && !pendingInvites.some((inv) => inv.id === tokenInvite.id)) {
                     pendingInvites.push(tokenInvite);
                 }
             }
 
-            const validInvites = pendingInvites.filter(inv => 
-                inv.status === 'PENDING' && new Date(inv.expiresAt) > new Date()
+            const validInvites = pendingInvites.filter(
+                (inv) => inv.status === "PENDING" && new Date(inv.expiresAt) > new Date()
             );
 
             for (const invite of validInvites) {
@@ -293,7 +293,7 @@ export async function registerOwnerAccount(input: RegisterOwnerInput) {
 
                 // Update invite status
                 await tx.update(shopInvitations)
-                    .set({ status: 'ACCEPTED' })
+                    .set({ status: "ACCEPTED" })
                     .where(eq(shopInvitations.id, invite.id));
             }
 
@@ -323,4 +323,4 @@ export async function registerOwnerAccount(input: RegisterOwnerInput) {
 export async function clearStaleSessionAction() {
     await invalidateSession();
     return { success: true };
-}
+}

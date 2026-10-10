@@ -1,1 +1,1 @@
-Manna Books
+Manna Books Platform

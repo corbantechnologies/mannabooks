@@ -3,6 +3,8 @@ import { shopMembers, shops } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { verifyAndGetSession } from "@/lib/actions/auth";
+import { isApiModuleEnabled } from "@/lib/api/flags";
+import { apiClient } from "@/lib/api/client";
 
 export default async function DashboardProxyPage() {
   const session = await verifyAndGetSession();
@@ -14,6 +16,21 @@ export default async function DashboardProxyPage() {
   // 1. If the logged in account is a Super Admin (ROOT), land directly on the platform terminal
   if (session.user?.isSuperAdmin) {
     redirect("/admin");
+  }
+
+  // FASTAPI STRANGLER ROUTING:
+  if (isApiModuleEnabled("workspaces") || isApiModuleEnabled("auth")) {
+    const res = await apiClient<{ success: boolean; workspaces: Array<{ id: string; name: string; slug: string; role: string }> }>("/v1/workspaces/my-workspaces");
+    if (res.data?.success && Array.isArray(res.data.workspaces)) {
+      const list = res.data.workspaces;
+      if (list.length === 0) {
+        redirect("/onboarding/create-shop");
+      }
+      if (list.length === 1 && list[0].slug) {
+        redirect(`/workspaces/${list[0].slug}`);
+      }
+      redirect("/workspaces");
+    }
   }
 
   // Fetch all active memberships for this user

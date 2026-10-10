@@ -10,7 +10,7 @@ import { generateUniqueShopCode } from "./shopCode";
 import { isApiModuleEnabled } from "@/lib/api/flags";
 import { apiClient } from "@/lib/api/client";
 
-const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "manna_session_token";
+const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "kenya-nzuri-kabisa";
 const SESSION_DURATION_DAYS = Number(process.env.COOKIE_DURATION_DAYS) || 30;
 
 /**
@@ -50,12 +50,46 @@ import { cache } from "react";
 export const verifyAndGetSession = cache(async function verifyAndGetSession() {
     let token: string | undefined;
     try {
-        token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+        const store = await cookies();
+        token = store.get(SESSION_COOKIE_NAME)?.value || store.get("kenya-nzuri-kabisa")?.value || store.get("manna_session_token")?.value;
     } catch {
         return null;
     }
 
     if (!token) return null;
+
+    // FASTAPI STRANGLER ROUTING:
+    if (isApiModuleEnabled("auth")) {
+        const res = await apiClient<{ success: boolean; user: any }>("/v1/auth/me", {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        if (res.data?.success && res.data.user) {
+            return {
+                id: token,
+                userId: res.data.user.id,
+                expiresAt: new Date(Date.now() + SESSION_DURATION_DAYS * 86400000),
+                user: {
+                    id: res.data.user.id,
+                    name: res.data.user.name,
+                    email: res.data.user.email,
+                    passwordHash: "",
+                    isSuperAdmin: Boolean(res.data.user.isSuperAdmin),
+                    plan: res.data.user.plan || "FREE",
+                    subscriptionStatus: res.data.user.subscriptionStatus || "ACTIVE",
+                    subscriptionExpiresAt: null,
+                    gracePeriodEndsAt: null,
+                    autoRenewEnabled: true,
+                    autoRenewPhone: null,
+                    lastRenewalPromptAt: null,
+                    isLifetimePro: false,
+                    createdAt: new Date(),
+                },
+            };
+        }
+        return null;
+    }
 
     try {
         // Fetch the session alongside user profile contexts

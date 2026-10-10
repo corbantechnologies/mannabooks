@@ -2,13 +2,15 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "manna_session_token";
+const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "kenya-nzuri-kabisa";
 
 export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // 1. Grab the session cookie matching process.env.COOKIE_NAME
-    const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    // 1. Grab the session cookie matching process.env.COOKIE_NAME with backwards-compatible fallback
+    const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value ||
+        request.cookies.get("kenya-nzuri-kabisa")?.value ||
+        request.cookies.get("manna_session_token")?.value;
 
     // 2. Route Protection Guardrail
     // If the user is trying to access internal workspaces or the dashboard proxy without a session,

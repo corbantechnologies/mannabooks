@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { sessions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "manna_session_token";
+const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "kenya-nzuri-kabisa";
 
 /**
  * GET /logout

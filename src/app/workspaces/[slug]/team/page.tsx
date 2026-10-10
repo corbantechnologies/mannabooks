@@ -21,8 +21,12 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
         apiClient.get<any[]>(`/v1/workspaces/${shop.id}/invitations`),
     ]);
 
-    const membersRaw = membersRes.data || [];
-    const allInvites = invitesRes.data || [];
+    const membersRaw: any[] = Array.isArray(membersRes.data)
+        ? membersRes.data
+        : (membersRes.data as any)?.members || [];
+    const allInvites: any[] = Array.isArray(invitesRes.data)
+        ? invitesRes.data
+        : (membersRes.data as any)?.invitations || (invitesRes.data as any)?.invitations || [];
 
     const members = membersRaw.map((m: any) => {
         let permissions = {};

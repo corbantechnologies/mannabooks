@@ -1,7 +1,4 @@
-// src/app/workspaces/[slug]/inventory/reports/abc/page.tsx
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { notFound } from "next/navigation";
 import { getAbcAnalysis } from "@/lib/actions/inventory";
 import { formatCurrency } from "@/lib/utils";
@@ -16,7 +13,7 @@ const TIER_STYLES = {
 
 export default async function AbcAnalysisPage({ params }: Props) {
   const { slug } = await params;
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+  const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
   const products = await getAbcAnalysis(shop.id);

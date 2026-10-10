@@ -1,7 +1,4 @@
-// src/app/workspaces/[slug]/analytics/page.tsx
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { notFound } from "next/navigation";
 import { getWorkspaceAnalyticsData } from "@/lib/actions/analytics";
 import { AnalyticsClientView } from "./AnalyticsClientView";
@@ -14,9 +11,7 @@ export default async function WorkspaceAnalyticsPage({ params }: AnalyticsPagePr
   const { slug } = await params;
 
   // 1. Resolve multi-tenant shop criteria
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
+  const { shop } = await getActiveWorkspaceContext(slug);
 
   if (!shop) {
     notFound();

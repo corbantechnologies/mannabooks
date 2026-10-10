@@ -1,7 +1,4 @@
-// src/app/workspaces/[slug]/guide/page.tsx
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -48,10 +45,7 @@ const GUIDE_MODULES = [
 export default async function WorkspaceGuidePage({ params }: WorkspaceGuidePageProps) {
   const { slug } = await params;
 
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
-
+  const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
   const businessModeLabel =

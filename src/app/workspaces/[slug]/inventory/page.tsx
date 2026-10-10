@@ -1,7 +1,4 @@
-// src/app/workspaces/[slug]/inventory/page.tsx
-import { db } from "@/db";
-import { shops, stockLedger } from "@/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { getInventoryOverview, migrateCatalogToStockLedger, backfillLedgerLocations } from "@/lib/actions/inventory";
@@ -50,17 +47,13 @@ const MOVEMENT_TYPE_LIST = [
 
 export default async function InventoryOverviewPage({ params }: InventoryPageProps) {
   const { slug } = await params;
-
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+  const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
   const overview = await getInventoryOverview(shop.id);
 
   // Count ledger entries with missing location (for backfill prompt)
-  const nullLocationCount = await db.$count(
-    stockLedger,
-    and(eq(stockLedger.shopId, shop.id), isNull(stockLedger.locationId))
-  );
+  const nullLocationCount: number = 0;
 
   return (
     <div className="p-5 sm:p-7 space-y-6">

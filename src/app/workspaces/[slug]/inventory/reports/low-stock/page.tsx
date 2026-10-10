@@ -1,7 +1,4 @@
-// src/app/workspaces/[slug]/inventory/reports/low-stock/page.tsx
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { notFound } from "next/navigation";
 import { getLowStockProducts } from "@/lib/actions/inventory";
 import { formatCurrency } from "@/lib/utils";
@@ -11,7 +8,7 @@ interface Props { params: Promise<{ slug: string }> }
 
 export default async function LowStockPage({ params }: Props) {
   const { slug } = await params;
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+  const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
   const lowStockProducts = await getLowStockProducts(shop.id);

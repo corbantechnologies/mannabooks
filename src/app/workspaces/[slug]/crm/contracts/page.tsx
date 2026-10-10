@@ -1,4 +1,5 @@
 // src/app/workspaces/[slug]/crm/contracts/page.tsx
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -22,7 +23,7 @@ const STATUS_STYLE: Record<string, string> = {
 export default async function ContractsListPage({ params }: ContractsPageProps) {
   const { slug } = await params;
 
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+  const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
   const result = await getContractsByShopAction(shop.id);

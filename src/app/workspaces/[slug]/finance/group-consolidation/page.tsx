@@ -1,3 +1,4 @@
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops, groupEntities, groupMemberships } from "@/db/schema";
 import { eq, asc, desc } from "drizzle-orm";
@@ -23,9 +24,7 @@ export default async function GroupConsolidationPage({
     redirect("/login");
   }
 
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
+  const { shop } = await getActiveWorkspaceContext(slug);
 
   if (!shop) {
     notFound();

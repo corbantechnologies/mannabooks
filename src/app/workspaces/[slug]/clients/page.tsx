@@ -1,4 +1,5 @@
 // src/app/workspaces/[slug]/clients/page.tsx
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { clients, shops } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -24,9 +25,7 @@ export default async function WorkspaceClientsPage({ params, searchParams }: Cli
   const { search, clientType } = await searchParams;
 
   // 2. Resolve shop context on the server
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
+  const { shop } = await getActiveWorkspaceContext(slug);
 
   if (!shop) {
     notFound();

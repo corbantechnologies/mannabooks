@@ -1,68 +1,60 @@
-import { db } from "@/db";
-import { shopMembers, shops, shopInvitations } from "@/db/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { apiClient } from "@/lib/api/client";
 import { redirect } from "next/navigation";
 import { enforcePermission } from "@/lib/actions/rbac";
 import TeamManagementClient from "./TeamManagementClient";
 
 export default async function TeamPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-
-    const shop = await db.query.shops.findFirst({
-        where: eq(shops.slug, slug)
-    });
-
-    if (!shop) {
-        redirect("/dashboard");
-    }
+    const { shop } = await getActiveWorkspaceContext(slug);
 
     // Verify they have permission to view/manage team
-    let canManageTeam = false;
     try {
         await enforcePermission(shop.id, "manage_team");
-        canManageTeam = true;
     } catch (error) {
         console.error("Permission check failed:", error);
         redirect(`/workspaces/${slug}`);
     }
 
-    const membersRaw = await db.query.shopMembers.findMany({
-        where: eq(shopMembers.shopId, shop.id),
-        with: {
-            user: true
-        },
-        orderBy: [desc(shopMembers.createdAt)]
+    const [membersRes, invitesRes] = await Promise.all([
+        apiClient.get<any[]>(`/v1/workspaces/${shop.id}/members`),
+        apiClient.get<any[]>(`/v1/workspaces/${shop.id}/invitations`),
+    ]);
+
+    const membersRaw = membersRes.data || [];
+    const allInvites = invitesRes.data || [];
+
+    const members = membersRaw.map((m: any) => {
+        let permissions = {};
+        try {
+            permissions = typeof m.customPermissions === "string" ? JSON.parse(m.customPermissions || "{}") : (m.customPermissions || {});
+        } catch {}
+
+        return {
+            id: m.id,
+            userId: m.userId,
+            name: m.user?.name || "Staff Member",
+            email: m.user?.email || "—",
+            role: m.role,
+            isActive: Boolean(m.isActive),
+            createdAt: m.createdAt || new Date().toISOString(),
+            customPermissions: permissions,
+        };
     });
 
-    const allInvites = await db.query.shopInvitations.findMany({
-        where: eq(shopInvitations.shopId, shop.id),
-        orderBy: [desc(shopInvitations.createdAt)]
-    });
-
-    const members = membersRaw.map(m => ({
-        id: m.id,
-        userId: m.userId,
-        name: m.user.name,
-        email: m.user.email,
-        role: m.role,
-        isActive: m.isActive,
-        createdAt: m.createdAt.toISOString(),
-        customPermissions: JSON.parse(m.customPermissions || "{}")
-    }));
-
-    const safeInvites = allInvites.map(inv => ({
+    const safeInvites = allInvites.map((inv: any) => ({
         id: inv.id,
         email: inv.email,
         role: inv.role,
         status: inv.status,
-        createdAt: inv.createdAt.toISOString(),
+        createdAt: inv.createdAt || new Date().toISOString(),
     }));
 
     return (
         <div className="p-5 sm:p-7 space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <span className="text-xs text-zinc-400 font-medium">Access Control & Team</span>
+                    <span className="text-xs text-zinc-400 font-medium">Access Control &amp; Team</span>
                     <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Team Management</h1>
                 </div>
             </div>

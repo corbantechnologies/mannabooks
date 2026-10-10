@@ -1,4 +1,5 @@
 // src/app/workspaces/[slug]/crm/deals/[id]/page.tsx
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -29,7 +30,7 @@ const STAGE_COLORS: Record<string, string> = {
 export default async function DealDetailPage({ params }: DealDetailPageProps) {
   const { slug, id } = await params;
 
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+  const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
   const { deal } = await getDealByIdAction(id, shop.id);

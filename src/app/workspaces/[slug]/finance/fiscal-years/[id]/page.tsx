@@ -1,3 +1,4 @@
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -11,7 +12,7 @@ export default async function FiscalYearDetailPage({
     params: Promise<{ slug: string; id: string }>;
 }) {
     const { slug, id } = await params;
-    const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+    const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
     const result = await getFiscalYearDetails(shop.id, id);

@@ -1,20 +1,12 @@
-import { db } from "@/db";
-import { shops, incomes } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
-import { redirect } from "next/navigation";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { enforcePermission } from "@/lib/actions/rbac";
+import { getIncomes } from "@/lib/actions/incomes";
+import { redirect } from "next/navigation";
 import IncomeTrackerClient from "./IncomeTrackerClient";
 
 export default async function IncomesPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-
-    const shop = await db.query.shops.findFirst({
-        where: eq(shops.slug, slug)
-    });
-
-    if (!shop) {
-        redirect("/dashboard");
-    }
+    const { shop } = await getActiveWorkspaceContext(slug);
 
     try {
         await enforcePermission(shop.id, "manage_expenses");
@@ -23,18 +15,14 @@ export default async function IncomesPage({ params }: { params: Promise<{ slug: 
         redirect(`/workspaces/${slug}`);
     }
 
-    const incomesRaw = await db.query.incomes.findMany({
-        where: eq(incomes.shopId, shop.id),
-        orderBy: [desc(incomes.incomeDate), desc(incomes.createdAt)]
-    });
-
-    const incomesList = incomesRaw.map(i => ({
+    const incomesRes = await getIncomes(shop.id);
+    const incomesList = (incomesRes.incomes || []).map((i: any) => ({
         id: i.id,
         description: i.description,
         amount: i.amount,
-        currency: i.currency,
+        currency: i.currency || shop.currency || "KES",
         category: i.category,
-        incomeDate: i.incomeDate.toISOString(),
+        incomeDate: typeof i.incomeDate === "string" ? i.incomeDate : (i.incomeDate?.toISOString?.() || new Date().toISOString()),
         attachmentUrl: i.attachmentUrl,
         paymentChannel: i.paymentChannel,
         paymentReference: i.paymentReference

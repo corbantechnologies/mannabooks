@@ -1,3 +1,4 @@
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops, clients } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -15,7 +16,7 @@ export default async function ClientStatementPage({
     const { slug, id } = await params;
     const { start, end } = await searchParams;
 
-    const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+    const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
     const client = await db.query.clients.findFirst({

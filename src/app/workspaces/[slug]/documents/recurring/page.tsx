@@ -1,3 +1,4 @@
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -12,9 +13,7 @@ interface RecurringInvoicesPageProps {
 export default async function RecurringInvoicesPage({ params }: RecurringInvoicesPageProps) {
   const { slug } = await params;
 
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
+  const { shop } = await getActiveWorkspaceContext(slug);
 
   if (!shop) {
     notFound();

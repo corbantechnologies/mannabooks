@@ -1,7 +1,5 @@
 // src/app/workspaces/[slug]/inventory/locations/[id]/page.tsx
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { notFound } from "next/navigation";
 import { getStockLocationDetail } from "@/lib/actions/inventory";
 import { getStorageBins } from "@/lib/actions/wms";
@@ -14,7 +12,7 @@ interface LocationDetailPageProps {
 export default async function LocationDetailPage({ params }: LocationDetailPageProps) {
   const { slug, id } = await params;
 
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+  const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
   const [detail, bins] = await Promise.all([

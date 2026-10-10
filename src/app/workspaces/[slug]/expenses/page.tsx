@@ -1,46 +1,32 @@
-import { db } from "@/db";
-import { shops, expenses } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
-import { redirect } from "next/navigation";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { enforcePermission } from "@/lib/actions/rbac";
+import { getExpenses } from "@/lib/actions/expenses";
+import { redirect } from "next/navigation";
 import ExpenseTrackerClient from "./ExpenseTrackerClient";
 
 export default async function ExpensesPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
+    const { shop } = await getActiveWorkspaceContext(slug);
 
-    const shop = await db.query.shops.findFirst({
-        where: eq(shops.slug, slug)
-    });
-
-    if (!shop) {
-        redirect("/dashboard");
-    }
-
-    let canManageExpenses = false;
     try {
         await enforcePermission(shop.id, "manage_expenses");
-        canManageExpenses = true;
     } catch (error) {
         console.error("Permission check failed:", error);
         redirect(`/workspaces/${slug}`);
     }
 
-    const expensesRaw = await db.query.expenses.findMany({
-        where: eq(expenses.shopId, shop.id),
-        orderBy: [desc(expenses.expenseDate), desc(expenses.createdAt)]
-    });
-
-    const expensesList = expensesRaw.map(e => ({
+    const expensesRes = await getExpenses(shop.id);
+    const expensesList = (expensesRes.expenses || []).map((e: any) => ({
         id: e.id,
         description: e.description,
         amount: e.amount,
-        currency: e.currency,
+        currency: e.currency || shop.currency || "KES",
         category: e.category,
-        expenseDate: e.expenseDate.toISOString(),
+        expenseDate: typeof e.expenseDate === "string" ? e.expenseDate : (e.expenseDate?.toISOString?.() || new Date().toISOString()),
         receiptUrl: e.receiptUrl,
         paymentChannel: e.paymentChannel,
         paymentReference: e.paymentReference,
-        isNonDeductible: e.isNonDeductible,
+        isNonDeductible: Boolean(e.isNonDeductible),
     }));
 
     return (
@@ -52,7 +38,7 @@ export default async function ExpensesPage({ params }: { params: Promise<{ slug:
                 </div>
             </div>
 
-            <ExpenseTrackerClient shopId={shop.id} shopCurrency={shop.currency} initialExpenses={expensesList} />
+            <ExpenseTrackerClient shopId={shop.id} shopCurrency={shop.currency || "KES"} initialExpenses={expensesList} />
         </div>
     );
 }

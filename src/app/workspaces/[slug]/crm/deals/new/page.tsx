@@ -1,4 +1,5 @@
 // src/app/workspaces/[slug]/crm/deals/new/page.tsx
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops, clients } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -12,7 +13,7 @@ interface NewDealPageProps {
 export default async function NewDealPage({ params }: NewDealPageProps) {
   const { slug } = await params;
 
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+  const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
   const clientList = await db.query.clients.findMany({

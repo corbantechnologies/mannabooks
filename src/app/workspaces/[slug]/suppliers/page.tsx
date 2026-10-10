@@ -1,8 +1,6 @@
 // src/app/workspaces/[slug]/suppliers/page.tsx
-import { db } from "@/db";
-import { suppliers, shops } from "@/db/schema";
-import { eq, and, ilike, or, desc } from "drizzle-orm";
-import { notFound } from "next/navigation";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { apiClient } from "@/lib/api/client";
 import Link from "next/link";
 import { SupplierFormClientSide } from "./SupplierFormClientSide";
 import { SupplierFilterBar } from "./SupplierFilterBar";
@@ -20,39 +18,28 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
   const { slug } = await params;
   const filters = await searchParams;
 
-  const search = filters.search?.trim() || "";
+  const search = filters.search?.trim().toLowerCase() || "";
   const classification = filters.classification || "ALL";
 
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
+  const { shop } = await getActiveWorkspaceContext(slug);
 
-  if (!shop) {
-    notFound();
-  }
-
-  // Build dynamic search criteria
-  const conditions = [eq(suppliers.shopId, shop.id)];
+  const res = await apiClient.get<any[]>(`/v1/suppliers?shop_id=${shop.id}&limit=200`);
+  let supplierList = res.data || [];
 
   if (search) {
-    conditions.push(
-      or(
-        ilike(suppliers.name, `%${search}%`),
-        ilike(suppliers.email, `%${search}%`),
-        ilike(suppliers.phone, `%${search}%`),
-        ilike(suppliers.taxPin, `%${search}%`)
-      )!
+    supplierList = supplierList.filter((s: any) =>
+      (s.name || "").toLowerCase().includes(search) ||
+      (s.email || "").toLowerCase().includes(search) ||
+      (s.phone || "").toLowerCase().includes(search) ||
+      (s.tax_pin || s.taxPin || "").toLowerCase().includes(search)
     );
   }
 
   if (classification && classification !== "ALL") {
-    conditions.push(eq(suppliers.supplierType, classification as any));
+    supplierList = supplierList.filter((s: any) =>
+      (s.supplier_type || s.supplierType || "BUSINESS").toUpperCase() === classification.toUpperCase()
+    );
   }
-
-  const supplierList = await db.query.suppliers.findMany({
-    where: and(...conditions),
-    orderBy: [desc(suppliers.createdAt)],
-  });
 
   return (
     <div className="p-5 sm:p-7 space-y-6">
@@ -69,73 +56,87 @@ export default async function SuppliersPage({ params, searchParams }: SuppliersP
       {/* SEARCH AND FILTER BAR */}
       <SupplierFilterBar />
 
-      {/* SUPPLIER REGISTRY TABLE */}
-      <div className="surface overflow-x-auto">
-        <table className="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
-              <th className="px-4 py-3 border-r border-zinc-100">Supplier / Vendor Name</th>
-              <th className="px-4 py-3 border-r border-zinc-100">Email Contact</th>
-              <th className="px-4 py-3 border-r border-zinc-100">Telephone</th>
-              <th className="px-4 py-3 border-r border-zinc-100">Type</th>
-              <th className="px-4 py-3 border-r border-zinc-100">KRA Tax PIN</th>
-              <th className="px-4 py-3 border-r border-zinc-100 text-center">Terms</th>
-              <th className="px-4 py-3 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white">
-            {supplierList.map((sup) => (
-              <tr key={sup.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
-                <td className="p-4 border-r border-zinc-100 font-semibold uppercase">
-                  <Link
-                    href={`/workspaces/${slug}/suppliers/${sup.id}`}
-                    className="hover:underline text-black font-sans text-sm tracking-tight"
-                  >
-                    {sup.name}
-                  </Link>
-                </td>
-                <td className="p-4 border-r border-zinc-100 text-zinc-600 font-sans">
-                  {sup.email}
-                </td>
-                <td className="p-4 border-r border-zinc-100 text-zinc-600 font-mono">
-                  {sup.phone || "—"}
-                </td>
-                <td className="p-4 border-r border-zinc-100">
-                  <span className={
-                    sup.supplierType === "CORPORATE" ? "badge-black" :
-                    sup.supplierType === "INDIVIDUAL" ? "badge-zinc" :
-                    "badge-zinc text-zinc-400"
-                  }>
-                    {sup.supplierType}
-                  </span>
-                </td>
-                <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-widest font-mono">
-                  {sup.taxPin || <span className="text-zinc-300 font-normal italic">None</span>}
-                  {sup.requiresEtims && (
-                    <span className="ml-2 badge-emerald text-[9px]">
-                      eTIMS
-                    </span>
-                  )}
-                </td>
-                <td className="p-4 border-r border-zinc-100 text-center font-semibold text-[10px] font-mono">
-                  {sup.paymentTerms || "NET_30"}
-                </td>
-                <td className="p-4 text-center font-mono">
-                  <SupplierRowPopover supplier={sup} shopId={shop.id} shopSlug={slug} />
-                </td>
-              </tr>
-            ))}
+      {/* SUPPLIERS DATA TABLE */}
+      {supplierList.length === 0 ? (
+        <div className="border border-dashed border-zinc-200 rounded-xl p-12 text-center bg-white">
+          <p className="text-sm font-medium text-zinc-900">No suppliers registered</p>
+          <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+            Add your vendor contacts, statutory Tax PINs, and credit terms to streamline procurement and vendor bills.
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white border border-zinc-200/80 rounded-xl shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-zinc-100 bg-zinc-50/60 text-zinc-400 font-medium">
+                  <th className="py-3 px-4 font-normal">Supplier Name</th>
+                  <th className="py-3 px-4 font-normal">Type</th>
+                  <th className="py-3 px-4 font-normal">Tax PIN</th>
+                  <th className="py-3 px-4 font-normal">Contact</th>
+                  <th className="py-3 px-4 font-normal">Payment Terms</th>
+                  <th className="py-3 px-4 font-normal text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {supplierList.map((sup: any) => {
+                  const sId = sup.id;
+                  const sName = sup.name;
+                  const sEmail = sup.email;
+                  const sPhone = sup.phone;
+                  const sPin = sup.tax_pin || sup.taxPin;
+                  const sType = sup.supplier_type || sup.supplierType || "BUSINESS";
+                  const sTerms = sup.payment_terms || sup.paymentTerms;
 
-            {supplierList.length === 0 && (
-              <tr>
-                <td colSpan={7} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
-                  No suppliers found matching your search.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  return (
+                    <tr key={sId} className="hover:bg-zinc-50/50 transition-colors">
+                      <td className="py-3.5 px-4 font-medium text-zinc-900">
+                        <Link
+                          href={`/workspaces/${slug}/suppliers/${sId}`}
+                          className="hover:underline text-zinc-900"
+                        >
+                          {sName}
+                        </Link>
+                      </td>
+                      <td className="py-3.5 px-4 text-zinc-500">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-zinc-100 text-zinc-700">
+                          {sType}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-zinc-600">
+                        {sPin || "—"}
+                      </td>
+                      <td className="py-3.5 px-4 text-zinc-500">
+                        <div>{sEmail || "—"}</div>
+                        {sPhone && <div className="text-[11px] text-zinc-400 font-mono mt-0.5">{sPhone}</div>}
+                      </td>
+                      <td className="py-3.5 px-4 text-zinc-500">
+                        {sTerms || "Immediate"}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <SupplierRowPopover
+                          supplier={{
+                            id: sId,
+                            name: sName,
+                            email: sEmail || null,
+                            phone: sPhone || null,
+                            taxPin: sPin || null,
+                            supplierType: sType,
+                            paymentTerms: sTerms || null,
+                            requiresEtims: Boolean(sup.requires_etims || sup.requiresEtims),
+                          }}
+                          shopId={shop.id}
+                          shopSlug={slug}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

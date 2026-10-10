@@ -1,9 +1,8 @@
 // src/app/workspaces/[slug]/inventory/adjustments/page.tsx
-import { db } from "@/db";
-import { shops, products } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { notFound } from "next/navigation";
 import { getStockLocations, getStockLedger } from "@/lib/actions/inventory";
+import { apiClient } from "@/lib/api/client";
 import { AdjustmentsClientView } from "./AdjustmentsClientView";
 
 interface AdjustmentsPageProps {
@@ -13,17 +12,16 @@ interface AdjustmentsPageProps {
 export default async function AdjustmentsPage({ params }: AdjustmentsPageProps) {
   const { slug } = await params;
 
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+  const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
-  const [locations, trackedProducts, recentAdjustments] = await Promise.all([
+  const [locations, itemsRes, recentAdjustments] = await Promise.all([
     getStockLocations(shop.id),
-    db.query.products.findMany({
-      where: and(eq(products.shopId, shop.id), eq(products.trackStock, true)),
-      orderBy: (p, { asc }) => [asc(p.name)],
-    }),
+    apiClient.get<any[]>(`/v1/items?shop_id=${shop.id}`),
     getStockLedger(shop.id, { limit: 50 }),
   ]);
+
+  const trackedProducts = (itemsRes.data || []).filter((p: any) => Boolean(p.track_stock ?? p.trackStock));
 
   // Filter to adjustment-type movements only for history
   const adjustmentHistory = recentAdjustments.filter(e =>

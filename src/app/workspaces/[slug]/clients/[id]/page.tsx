@@ -1,3 +1,4 @@
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { clients, documents, shops, suppliers } from "@/db/schema";
 import { eq, and, desc, or } from "drizzle-orm";
@@ -17,9 +18,7 @@ export default async function ClientProfileLedgerPage({ params }: ClientProfileP
   const { slug, id } = await params;
 
   // 2. Resolve multi-tenant shop criteria context
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
+  const { shop } = await getActiveWorkspaceContext(slug);
 
   if (!shop) {
     notFound();

@@ -1,8 +1,6 @@
 // src/app/workspaces/[slug]/products/page.tsx
-import { db } from "@/db";
-import { products, shops, stockLocations } from "@/db/schema";
-import { eq, desc, and } from "drizzle-orm";
-import { notFound } from "next/navigation";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
+import { apiClient } from "@/lib/api/client";
 import { formatCurrency } from "@/lib/utils";
 import { ProductFormClientSide } from "./ProductFormClientSide";
 import { CatalogActionsPopover } from "./CatalogActionsPopover";
@@ -24,39 +22,51 @@ export default async function WorkspaceProductsPage({ params, searchParams }: Pr
   const { slug } = await params;
   const { search, taxType } = await searchParams;
 
-  // 2. Resolve active tenant context on the server
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
+  // 2. Resolve active tenant context via FastAPI
+  const { shop } = await getActiveWorkspaceContext(slug);
 
-  if (!shop) {
-    notFound();
-  }
-
-  // 3. Query conditions
-  const conditions = [eq(products.shopId, shop.id)];
-  if (taxType && taxType !== "ALL") {
-    conditions.push(eq(products.defaultTaxType, taxType as any));
-  }
-
-  // 4. Fetch products and active stock locations in parallel
-  const [catalogList, locationList] = await Promise.all([
-    db.query.products.findMany({
-      where: and(...conditions),
-      orderBy: [desc(products.createdAt)],
-    }),
-    db.query.stockLocations.findMany({
-      where: and(eq(stockLocations.shopId, shop.id), eq(stockLocations.isActive, true)),
-      orderBy: [desc(stockLocations.isDefault), desc(stockLocations.createdAt)],
-    }),
+  // 3. Fetch products and active stock locations in parallel via FastAPI
+  const [itemsRes, locationsRes] = await Promise.all([
+    apiClient.get<any[]>(`/v1/items?shop_id=${shop.id}&limit=300`),
+    apiClient.get<any[]>(`/v1/items/locations?shop_id=${shop.id}`),
   ]);
 
-  // Client-side text search filter
-  let filteredList = catalogList;
+  const rawProducts = itemsRes.data || [];
+  const locationList = (locationsRes.data || []).map((l: any) => ({
+    id: String(l.id),
+    name: l.name,
+    code: l.code || null,
+    address: l.address || null,
+    isDefault: Boolean(l.isDefault ?? l.is_default),
+    isActive: Boolean(l.isActive ?? l.is_active ?? true),
+  }));
+
+  let filteredList = rawProducts.map((p: any) => ({
+    id: String(p.id),
+    shopId: String(p.shop_id || p.shopId || shop.id),
+    name: p.name,
+    sku: p.sku || null,
+    itemType: p.item_type || p.itemType || "PRODUCT",
+    unitPrice: String(p.unit_price ?? p.unitPrice ?? "0.00"),
+    costPrice: String(p.cost_price ?? p.costPrice ?? "0.00"),
+    defaultTaxType: p.default_tax_type ?? p.defaultTaxType ?? "V_16",
+    trackStock: Boolean(p.track_stock ?? p.trackStock),
+    stockQuantity: String(p.stock_quantity ?? p.stockQuantity ?? "0.00"),
+    reorderThreshold: String(p.reorder_threshold ?? p.reorderThreshold ?? "5.00"),
+    itemClsCd: p.item_cls_cd || p.itemClsCd || "24101601",
+    pkgUnitCd: p.pkg_unit_cd || p.pkgUnitCd || "PCE",
+    defaultLocationId: p.default_location_id || p.defaultLocationId || null,
+    createdAt: p.created_at || p.createdAt || new Date().toISOString(),
+  }));
+
+  if (taxType && taxType !== "ALL") {
+    filteredList = filteredList.filter((p: any) => p.defaultTaxType === taxType);
+  }
+
   if (search && search.trim() !== "") {
     const q = search.toLowerCase().trim();
-    filteredList = catalogList.filter(
-      (p) =>
+    filteredList = filteredList.filter(
+      (p: any) =>
         p.name.toLowerCase().includes(q) ||
         (p.sku && p.sku.toLowerCase().includes(q))
     );
@@ -68,46 +78,33 @@ export default async function WorkspaceProductsPage({ params, searchParams }: Pr
       {/* ACTION BLOCK TOP BAR */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="text-xs text-zinc-400 font-medium">Products &amp; Inventory</span>
-          <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Product Catalog</h1>
+          <span className="text-xs text-zinc-400 font-medium">Inventory &amp; Pricing</span>
+          <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Catalog Management</h1>
         </div>
-        <div className="flex items-center gap-2.5">
-          {/* Inject interactive creation portal block */}
-          <ProductFormClientSide shopId={shop.id} shopSlug={slug} locations={locationList} />
 
-          {/* Clean Catalog Options Popover */}
+        <div className="flex items-center gap-2.5">
           <CatalogActionsPopover shopSlug={slug} shopName={shop.name} search={search} />
+          <ProductFormClientSide
+            shopId={shop.id}
+            shopSlug={slug}
+            locations={locationList}
+          />
         </div>
       </div>
 
-      {/* LOW STOCK INVENTORY WARNING BANNER (DISMISSIBLE) */}
-      <LowStockAlertBanner
-        items={catalogList
-          .filter(
-            (p) => p.itemType === "PRODUCT" && p.trackStock && parseFloat(p.stockQuantity || "0") <= parseFloat(p.reorderThreshold || "5")
-          )
-          .map((p) => ({
-            name: p.name,
-            stockQuantity: p.stockQuantity,
-            reorderThreshold: p.reorderThreshold,
-          }))}
-        shopSlug={slug}
-        actionHref={`/workspaces/${slug}/inventory`}
-        actionLabel="Open Stock Ledger →"
-        storageKeyPrefix="manna_dismiss_stock_alert_products"
-      />
+      {/* LOW STOCK ALERT BANNER */}
+      <LowStockAlertBanner items={filteredList} shopSlug={slug} />
 
-      {/* FILTER & SEARCH CONTROL BAR */}
+      {/* FILTER CONTROLS */}
       <ProductFilterBar />
 
-      {/* INTERACTIVE DATA LEDGER GRID WITH SELECTION */}
+      {/* INTERACTIVE DATA TABLE */}
       <ProductsTableClient
         catalogList={filteredList}
         shop={shop}
         shopSlug={slug}
         locations={locationList}
       />
-
     </div>
   );
 }

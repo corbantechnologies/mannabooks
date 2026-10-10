@@ -1,3 +1,4 @@
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops, journalEntries, costCenters } from "@/db/schema";
 import { eq, desc, asc } from "drizzle-orm";
@@ -15,7 +16,7 @@ export default async function GeneralLedgerPage({
     const { slug } = await params;
     const resolvedSearchParams = searchParams ? await searchParams : undefined;
     const initialSearch = resolvedSearchParams?.search || "";
-    const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+    const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
     if (!shop.isGlEnabled) redirect(`/workspaces/${slug}/finance/accounts`);

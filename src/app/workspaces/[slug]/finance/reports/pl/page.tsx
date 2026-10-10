@@ -1,3 +1,4 @@
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -7,7 +8,7 @@ import PLStatementClient from "./PLStatementClient";
 
 export default async function PLStatementPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-    const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+    const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
     const result = await getPLStatement(shop.id, "THIS_MONTH");

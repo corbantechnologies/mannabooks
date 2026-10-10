@@ -1,4 +1,5 @@
 // src/app/workspaces/[slug]/projects/new/page.tsx
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops, clients, deals, contracts } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -14,7 +15,7 @@ export default async function NewProjectPage({ params, searchParams }: NewProjec
   const { slug } = await params;
   const { dealId, contractId, clientId } = await searchParams;
 
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+  const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
   const [clientList, dealList, contractList] = await Promise.all([

@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops, fiscalYears } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -8,7 +9,7 @@ import TaxSettingsClient from "./TaxSettingsClient";
 
 export default async function TaxSettingsPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-    const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+    const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
     const years = await db.query.fiscalYears.findMany({

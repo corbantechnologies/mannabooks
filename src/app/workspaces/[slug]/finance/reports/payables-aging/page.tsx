@@ -1,3 +1,4 @@
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops, suppliers, documents, vendorBills } from "@/db/schema";
 import { eq, and, ne } from "drizzle-orm";
@@ -11,9 +12,7 @@ interface PayablesAgingPageProps {
 export default async function PayablesAgingPage({ params }: PayablesAgingPageProps) {
   const { slug } = await params;
 
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
+  const { shop } = await getActiveWorkspaceContext(slug);
 
   if (!shop) {
     notFound();

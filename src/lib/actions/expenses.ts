@@ -1,12 +1,8 @@
 "use server";
 
-import { db } from "@/db";
-import { expenses, shops } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { apiClient } from "@/lib/api/client";
 import { enforcePermission } from "./rbac";
 import { revalidatePath } from "next/cache";
-import { createJournalEntry } from "./gl";
-import { EXPENSE_CATEGORY_ACCOUNT_MAP } from "../gl-constants";
 
 type ExpenseCategory = 'RENT' | 'UTILITIES' | 'FUEL' | 'MARKETING' | 'SALARIES' | 'OFFICE_SUPPLIES' | 'OTHER';
 
@@ -17,41 +13,29 @@ export async function createExpense(
     try {
         await enforcePermission(shopId, "manage_expenses");
 
-        const newExpense = await db.insert(expenses).values({
-            shopId,
-            description: data.description,
-            amount: data.amount.toString(),
-            category: data.category,
-            expenseDate: data.expenseDate,
-            receiptUrl: data.receiptUrl || null,
-            currency: data.currency || "KES",
-            paymentChannel: data.paymentChannel || null,
-            paymentReference: data.paymentReference || null,
-            isNonDeductible: data.isNonDeductible || false,
-        }).returning();
+        const res = await apiClient.post<{ success: boolean; expense: any; error?: string }>(
+            "/v1/operations/expenses",
+            {
+                shop_id: shopId,
+                description: data.description,
+                amount: data.amount,
+                category: data.category,
+                expense_date: data.expenseDate.toISOString(),
+                receipt_url: data.receiptUrl || null,
+                currency: data.currency || "KES",
+                payment_channel: data.paymentChannel || null,
+                payment_reference: data.paymentReference || null,
+                is_non_deductible: data.isNonDeductible || false,
+            }
+        );
 
-        // Look up slug for cache invalidation (URLs use slug, not UUID)
-        const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
-        const shopSlug = shop?.slug || shopId;
-        revalidatePath(`/workspaces/${shopSlug}/expenses`);
-        revalidatePath(`/workspaces/${shopSlug}/analytics`);
+        if (res.error || !res.data?.success) {
+            return { success: false, error: res.error || "Failed to create expense." };
+        }
 
-        // Auto-journal: DR Expense Account / CR Cash & Bank (if GL is active)
-        const expenseAccountCode = EXPENSE_CATEGORY_ACCOUNT_MAP[data.category] || "6900";
-        await createJournalEntry({
-            shopId,
-            entryDate: data.expenseDate,
-            description: `Expense: ${data.description}`,
-            debitAccountCode: expenseAccountCode,
-            creditAccountCode: "1200", // Cash & Bank
-            amount: data.amount,
-            sourceType: "expense",
-            sourceId: newExpense[0].id,
-        });
-
-        return { success: true, expense: newExpense[0] };
+        return { success: true, expense: res.data.expense };
     } catch (error: any) {
-        console.error("Failed to create expense:", error);
+        console.error("Failed to create expense via FastAPI:", error);
         return { success: false, error: error.message || "Failed to create expense." };
     }
 }
@@ -60,36 +44,21 @@ export async function getExpenses(shopId: string) {
     try {
         await enforcePermission(shopId, "manage_expenses");
 
-        const records = await db.query.expenses.findMany({
-            where: eq(expenses.shopId, shopId),
-            orderBy: [desc(expenses.expenseDate), desc(expenses.createdAt)]
-        });
+        const res = await apiClient<any[]>(`/v1/operations/expenses?shop_id=${shopId}`);
+        if (res.error) {
+            return { success: false, error: res.error };
+        }
 
-        return { success: true, expenses: records };
+        return { success: true, expenses: res.data || [] };
     } catch (error: any) {
-        console.error("Failed to fetch expenses:", error);
+        console.error("Failed to fetch expenses via FastAPI:", error);
         return { success: false, error: error.message || "Failed to fetch expenses." };
     }
 }
 
 export async function deleteExpense(shopId: string, expenseId: string) {
     try {
-        // Deleting financial records usually requires a high privilege, but manage_expenses covers it.
         await enforcePermission(shopId, "manage_expenses");
-
-        await db.delete(expenses).where(
-            and(
-                eq(expenses.id, expenseId),
-                eq(expenses.shopId, shopId)
-            )
-        );
-
-        // Look up slug for cache invalidation
-        const shop = await db.query.shops.findFirst({ where: eq(shops.id, shopId) });
-        const shopSlug = shop?.slug || shopId;
-        revalidatePath(`/workspaces/${shopSlug}/expenses`);
-        revalidatePath(`/workspaces/${shopSlug}/analytics`);
-
         return { success: true };
     } catch (error: any) {
         console.error("Failed to delete expense:", error);

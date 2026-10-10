@@ -1,4 +1,5 @@
 // src/app/workspaces/[slug]/crm/proposals/new/page.tsx
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops, clients, deals } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -14,7 +15,7 @@ export default async function NewProposalPage({ params, searchParams }: NewPropo
   const { slug } = await params;
   const { dealId, clientId } = await searchParams;
 
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+  const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
   const [clientList, dealList] = await Promise.all([

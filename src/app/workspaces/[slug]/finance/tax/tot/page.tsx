@@ -1,3 +1,4 @@
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { shops } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -7,7 +8,7 @@ import TurnoverTaxClient from "./TurnoverTaxClient";
 
 export default async function TurnoverTaxPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-    const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+    const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
     if (!shop.isTotActive) {

@@ -1,4 +1,5 @@
 // src/app/workspaces/[slug]/payroll/[id]/page.tsx
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { db } from "@/db";
 import { documents, shops } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -17,9 +18,7 @@ export default async function PayrollRunDetailPage({ params }: PayrollRunDetailP
   const { slug, id } = await params;
 
   // 1. Resolve multi-tenant shop criteria
-  const shop = await db.query.shops.findFirst({
-    where: eq(shops.slug, slug),
-  });
+  const { shop } = await getActiveWorkspaceContext(slug);
 
   if (!shop) {
     notFound();

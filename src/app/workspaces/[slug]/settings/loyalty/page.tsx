@@ -1,7 +1,4 @@
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { notFound, redirect } from "next/navigation";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import Link from "next/link";
 import { getLoyaltyProgram, getMembershipTiers } from "@/lib/actions/loyalty";
 import LoyaltySettingsClient from "./LoyaltySettingsClient";
@@ -12,12 +9,7 @@ interface LoyaltySettingsPageProps {
 
 export default async function LoyaltySettingsPage({ params }: LoyaltySettingsPageProps) {
     const { slug } = await params;
-
-    const shop = await db.query.shops.findFirst({
-        where: eq(shops.slug, slug),
-    });
-
-    if (!shop) notFound();
+    const { shop } = await getActiveWorkspaceContext(slug);
 
     const [programRes, tiersRes] = await Promise.all([
         getLoyaltyProgram(shop.id),
@@ -55,7 +47,7 @@ export default async function LoyaltySettingsPage({ params }: LoyaltySettingsPag
             <LoyaltySettingsClient
                 shopId={shop.id}
                 shopSlug={slug}
-                currency={shop.currency}
+                currency={shop.currency || "KES"}
                 initialProgram={program}
                 initialTiers={tiers}
             />

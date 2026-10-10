@@ -1,7 +1,4 @@
-// src/app/workspaces/[slug]/crm/page.tsx
-import { db } from "@/db";
-import { deals, shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
@@ -16,7 +13,7 @@ interface CRMPageProps {
 export default async function CRMPipelinePage({ params }: CRMPageProps) {
   const { slug } = await params;
 
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+  const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
   const [dealsResult, forecastResult] = await Promise.all([

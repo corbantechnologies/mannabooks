@@ -1,7 +1,5 @@
 // src/app/workspaces/[slug]/inventory/transfers/[id]/page.tsx
-import { db } from "@/db";
-import { shops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { getActiveWorkspaceContext } from "@/lib/actions/workspace";
 import { notFound } from "next/navigation";
 import { getStockTransfer } from "@/lib/actions/stock-transfers";
 import { TransferDetailClient } from "./TransferDetailClient";
@@ -13,7 +11,7 @@ interface TransferDetailPageProps {
 export default async function TransferDetailPage({ params }: TransferDetailPageProps) {
   const { slug, id } = await params;
 
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
+  const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
   const transfer = await getStockTransfer(id);

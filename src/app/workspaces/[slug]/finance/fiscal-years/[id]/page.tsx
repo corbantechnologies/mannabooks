@@ -1,6 +1,6 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { redirect } from "next/navigation";
-import { getFiscalYearDetails } from "@/lib/actions/fiscal-years";
+import { apiClient } from "@/lib/api/client";
 import FiscalYearDetailClient from "./FiscalYearDetailClient";
 
 export default async function FiscalYearDetailPage({
@@ -12,8 +12,11 @@ export default async function FiscalYearDetailPage({
     const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
-    const result = await getFiscalYearDetails(shop.id, id);
-    if (!result.success || !result.data) {
+    const result = await apiClient.get<any>(`/v1/accounts/fiscal-years/${id}`, {
+        params: { shop_id: shop.id },
+    });
+    const fyData = result.data?.data || (result.data?.fiscalYear ? result.data : null);
+    if (!fyData) {
         redirect(`/workspaces/${slug}/finance/tax/settings`);
     }
 
@@ -25,7 +28,7 @@ export default async function FiscalYearDetailPage({
                 currency={shop.currency || "KES"}
                 isGlEnabled={shop.isGlEnabled}
                 glOnboardingMode={shop.glOnboardingMode}
-                initialData={result.data}
+                initialData={fyData}
             />
         </div>
     );

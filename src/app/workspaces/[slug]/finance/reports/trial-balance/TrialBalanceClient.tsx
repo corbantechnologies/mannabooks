@@ -1,6 +1,6 @@
 "use client";
 
-import { type TrialBalanceRow } from "@/lib/actions/reports";
+import type { TrialBalanceRow } from "@/types/reports";
 
 interface Props {
     shopId: string;

@@ -1,7 +1,7 @@
 // src/app/workspaces/[slug]/crm/contracts/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
-import { getContractsByShopAction } from "@/lib/actions/contracts";
+import { apiClient } from "@/lib/api/client";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { Plus, Briefcase, ArrowRight, AlertTriangle } from "lucide-react";
@@ -23,8 +23,8 @@ export default async function ContractsListPage({ params }: ContractsPageProps) 
   const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
-  const result = await getContractsByShopAction(shop.id);
-  const allContracts = result.contracts || [];
+  const res = await apiClient.get<any>(`/v1/crm/contracts`, { params: { shop_id: shop.id } });
+  const allContracts = (res.data?.contracts || (Array.isArray(res.data) ? res.data : [])) as any[];
 
   const activeContracts = allContracts.filter(c => c.status === "ACTIVE");
   const monthlyRecurringRevenue = activeContracts.reduce((s, c) => s + parseFloat(String(c.monthlyFee)), 0);

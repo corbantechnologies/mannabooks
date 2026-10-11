@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { deleteEmployee } from "@/lib/actions/payroll";
+import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 
 interface DeleteEmployeeButtonProps {
@@ -31,10 +31,9 @@ export function DeleteEmployeeButton({
     setLoading(true);
     const toastId = toast.loading(`Deleting ${fullName}...`);
 
-    const res = await deleteEmployee(employeeId, shopId);
-    setLoading(false);
-
-    if (res.success) {
+    try {
+      await axiosClient.delete(`/employees/${employeeId}`, { params: { shop_id: shopId } });
+      setLoading(false);
       toast.success(`${fullName} removed from active directory.`, { id: toastId });
       setIsOpen(false);
       if (redirectToDirectory) {
@@ -42,8 +41,9 @@ export function DeleteEmployeeButton({
       } else {
         router.refresh();
       }
-    } else {
-      toast.error(res.error || "Failed to delete employee.", { id: toastId });
+    } catch (err: any) {
+      setLoading(false);
+      toast.error(err?.response?.data?.detail || err?.message || "Failed to delete employee.", { id: toastId });
     }
   }
 

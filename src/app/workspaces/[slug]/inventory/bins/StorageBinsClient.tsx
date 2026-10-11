@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createStorageBinAction, deleteStorageBinAction } from "@/lib/actions/wms";
+import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 import QRCode from "react-qr-code";
@@ -66,27 +66,31 @@ export function StorageBinsClient({
     }
 
     startTransition(async () => {
-      const res = await createStorageBinAction({
-        shopId,
-        locationId: formLocationId,
-        zone: zone.trim(),
-        rack: rack.trim() || undefined,
-        shelf: shelf.trim() || undefined,
-        binCode: binCode.trim(),
-        description: description.trim() || undefined,
-      });
+      try {
+        const res: any = await axiosClient.post("/inventory/bins", {
+          shop_id: shopId,
+          location_id: formLocationId,
+          zone: zone.trim(),
+          rack: rack.trim() || undefined,
+          shelf: shelf.trim() || undefined,
+          bin_code: binCode.trim(),
+          description: description.trim() || undefined,
+        });
 
-      if (res.success) {
-        toast.success(`Bin ${binCode.trim()} created!`);
-        setShowAddModal(false);
-        setZone("");
-        setRack("");
-        setShelf("");
-        setBinCode("");
-        setDescription("");
-        window.location.reload();
-      } else {
-        toast.error(res.error || "Failed to create bin.");
+        if (res?.success !== false) {
+          toast.success(`Bin ${binCode.trim()} created!`);
+          setShowAddModal(false);
+          setZone("");
+          setRack("");
+          setShelf("");
+          setBinCode("");
+          setDescription("");
+          window.location.reload();
+        } else {
+          toast.error(res.error || "Failed to create bin.");
+        }
+      } catch (err: any) {
+        toast.error(err?.message || "Failed to create bin.");
       }
     });
   };
@@ -95,12 +99,18 @@ export function StorageBinsClient({
     if (!confirm(`Are you sure you want to archive storage bin "${bin.binCode}"?`)) return;
 
     startTransition(async () => {
-      const res = await deleteStorageBinAction(shopId, bin.id);
-      if (res.success) {
-        toast.success("Storage bin archived.");
-        window.location.reload();
-      } else {
-        toast.error(res.error || "Failed to archive bin.");
+      try {
+        const res: any = await axiosClient.delete(`/inventory/bins/${bin.id}`, {
+          params: { shop_id: shopId },
+        });
+        if (res?.success !== false) {
+          toast.success("Storage bin archived.");
+          window.location.reload();
+        } else {
+          toast.error(res.error || "Failed to archive bin.");
+        }
+      } catch (err: any) {
+        toast.error(err?.message || "Failed to archive bin.");
       }
     });
   };

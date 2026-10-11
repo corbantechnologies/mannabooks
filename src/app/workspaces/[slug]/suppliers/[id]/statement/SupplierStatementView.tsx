@@ -2,8 +2,8 @@
 
 import { useState, useTransition, useRef, useEffect } from "react";
 import Link from "next/link";
-import { getSupplierStatement, type SupplierStatementData } from "@/lib/actions/reports";
-import { sendSupplierStatementEmailAction } from "@/lib/actions/statement-email";
+import type { SupplierStatementData } from "@/types/models";
+import { axiosClient } from "@/lib/api/axios";
 import toast from "react-hot-toast";
 
 interface Props {
@@ -61,22 +61,21 @@ export default function SupplierStatementView({
         setIsSendingEmail(true);
         const toastId = toast.loading("Dispatching statement to vendor...");
         try {
-            const res = await sendSupplierStatementEmailAction({
-                shopId,
-                supplierId,
-                startDate: new Date(startDate + "T00:00:00"),
-                endDate: new Date(endDate + "T23:59:59"),
-                recipientEmail: recipientEmail.trim() || undefined,
-                customNote: customNote.trim() || undefined,
+            const res: any = await axiosClient.post(`/reports/supplier-statement/${supplierId}/email`, {
+                shop_id: shopId,
+                start_date: startDate,
+                end_date: endDate,
+                recipient_email: recipientEmail.trim() || undefined,
+                custom_note: customNote.trim() || undefined,
             });
-            if (res.success) {
+            if (res?.success !== false) {
                 toast.success("Statement emailed to supplier successfully!", { id: toastId });
                 setIsEmailModalOpen(false);
             } else {
                 toast.error(res.error || "Failed to send email.", { id: toastId });
             }
         } catch (err: any) {
-            toast.error("Network error while dispatching statement.", { id: toastId });
+            toast.error(err?.message || "Network error while dispatching statement.", { id: toastId });
         } finally {
             setIsSendingEmail(false);
         }
@@ -86,11 +85,21 @@ export default function SupplierStatementView({
         setStartDate(startStr);
         setEndDate(endStr);
         startTransition(async () => {
-            const start = new Date(startStr + "T00:00:00");
-            const end = new Date(endStr + "T23:59:59");
-            const res = await getSupplierStatement(shopId, supplierId, start, end);
-            if (res.success) {
-                setData(res.data);
+            try {
+                const res: any = await axiosClient.get(`/reports/supplier-statement/${supplierId}`, {
+                    params: {
+                        shop_id: shopId,
+                        start_date: startStr,
+                        end_date: endStr,
+                    },
+                });
+                if (res?.data) {
+                    setData(res.data);
+                } else if (res && !res.error) {
+                    setData(res);
+                }
+            } catch (err) {
+                console.error("Failed to load supplier statement:", err);
             }
         });
     }

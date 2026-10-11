@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAndGetSession } from "@/lib/actions/auth";
+import { verifyAndGetSession } from "@/lib/auth/session";
 import { uploadToMinio, DEFAULT_BUCKET } from "@/lib/storage/minio";
 import crypto from "crypto";
 

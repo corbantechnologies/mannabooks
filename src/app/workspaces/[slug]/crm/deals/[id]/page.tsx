@@ -1,7 +1,7 @@
 // src/app/workspaces/[slug]/crm/deals/[id]/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
-import { getDealByIdAction } from "@/lib/actions/crm";
+import { apiClient } from "@/lib/api/client";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -30,7 +30,10 @@ export default async function DealDetailPage({ params }: DealDetailPageProps) {
   const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
-  const { deal } = await getDealByIdAction(id, shop.id);
+  const dealRes = await apiClient<{ success?: boolean; deal?: any; [key: string]: any }>(`/v1/crm/deals/${id}`, {
+    params: { shop_id: shop.id },
+  });
+  const deal = dealRes.data?.deal || (dealRes.data?.id ? dealRes.data : null);
   if (!deal) notFound();
 
   const stageColor = STAGE_COLORS[deal.stage] || "#94a3b8";

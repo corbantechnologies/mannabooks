@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { registerNewEmployee } from "@/lib/actions/payroll";
+import { axiosClient } from "@/lib/api/axios";
 
 interface RegisterEmployeeModalProps {
   shopId: string;
@@ -40,26 +40,25 @@ export function RegisterEmployeeModal({ shopId, shopSlug }: RegisterEmployeeModa
 
     setLoading(true);
 
-    const res = await registerNewEmployee({
-      shopId,
-      fullName,
-      email: email || undefined,
-      department: department || undefined,
-      designation: designation || undefined,
-      employmentType,
-      nationalId: nationalId || undefined,
-      kraPin: kraPin || undefined,
-      baseSalary: parseFloat(baseSalary) || 0,
-      commissionRate: parseFloat(commissionRate) || 0,
-      bankName: bankName || undefined,
-      bankAccountNumber: bankAccountNumber || undefined,
-      bankBranch: bankBranch || undefined,
-      mpesaPhone: mpesaPhone || undefined,
-    });
+    try {
+      await axiosClient.post("/employees", {
+        shop_id: shopId,
+        fullName,
+        email: email || undefined,
+        department: department || undefined,
+        designation: designation || undefined,
+        employmentType,
+        nationalId: nationalId || undefined,
+        kraPin: kraPin || undefined,
+        baseSalary: parseFloat(baseSalary) || 0,
+        commissionRate: parseFloat(commissionRate) || 0,
+        bankName: bankName || undefined,
+        bankAccountNumber: bankAccountNumber || undefined,
+        bankBranch: bankBranch || undefined,
+        mpesaPhone: mpesaPhone || undefined,
+      });
 
-    setLoading(false);
-
-    if (res.success) {
+      setLoading(false);
       setIsOpen(false);
       setFullName("");
       setEmail("");
@@ -75,8 +74,9 @@ export function RegisterEmployeeModal({ shopId, shopSlug }: RegisterEmployeeModa
       setBankBranch("");
       setMpesaPhone("");
       router.refresh();
-    } else {
-      setError(res.error || "Failed to register staff.");
+    } catch (err: any) {
+      setLoading(false);
+      setError(err?.response?.data?.detail || err?.message || "Failed to register staff.");
     }
   }
 

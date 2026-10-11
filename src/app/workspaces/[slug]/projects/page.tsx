@@ -1,7 +1,7 @@
 // src/app/workspaces/[slug]/projects/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
-import { getProjectsByShopAction } from "@/lib/actions/projects";
+import { apiClient } from "@/lib/api/client";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { Plus, Briefcase, ArrowRight, Users, Target } from "lucide-react";
@@ -32,8 +32,8 @@ export default async function ProjectsListPage({ params }: ProjectsPageProps) {
   const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
-  const result = await getProjectsByShopAction(shop.id);
-  const allProjects = result.projects || [];
+  const res = await apiClient.get<any>(`/v1/projects`, { params: { shop_id: shop.id } });
+  const allProjects = (res.data?.projects || (Array.isArray(res.data) ? res.data : [])) as any[];
 
   const activeCount = allProjects.filter(p => p.status === "ACTIVE").length;
   const totalBudget = allProjects

@@ -1,6 +1,6 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { redirect } from "next/navigation";
-import { getChartOfAccounts } from "@/lib/actions/gl";
+import { apiClient } from "@/lib/api/client";
 import OpeningBalancesClient from "./OpeningBalancesClient";
 
 export default async function OpeningBalancesPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -10,7 +10,8 @@ export default async function OpeningBalancesPage({ params }: { params: Promise<
 
     if (!shop.isGlEnabled) redirect(`/workspaces/${slug}/finance/accounts`);
 
-    const accounts = await getChartOfAccounts(shop.id);
+    const res = await apiClient.get<any>(`/v1/accounts/chart`, { params: { shop_id: shop.id } });
+    const accounts: any[] = res.data?.accounts || (Array.isArray(res.data) ? res.data : []);
 
     // Exclude the Opening Balances contra account itself from the list
     const filteredAccounts = accounts.filter(a => a.code !== "3200");

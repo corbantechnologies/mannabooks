@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { decideApprovalRequestAction, createApprovalRequestAction, upsertApprovalPolicyAction } from "@/lib/actions/approvals";
+import { useState, useTransition, useEffect } from "react";
+import { axiosClient } from "@/lib/api/axios";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
@@ -26,8 +26,8 @@ interface ApprovalsClientProps {
   currency: string;
   currentUser: any;
   userRole: string;
-  initialRequests: any[];
-  initialPolicies: any[];
+  initialRequests?: any[];
+  initialPolicies?: any[];
 }
 
 export function ApprovalsClient({
@@ -36,8 +36,8 @@ export function ApprovalsClient({
   currency,
   currentUser,
   userRole,
-  initialRequests,
-  initialPolicies,
+  initialRequests = [],
+  initialPolicies = [],
 }: ApprovalsClientProps) {
   const [activeTab, setActiveTab] = useState<"PENDING" | "MY_REQUESTS" | "ALL" | "POLICIES">("PENDING");
   const [requests, setRequests] = useState<any[]>(initialRequests);
@@ -47,6 +47,26 @@ export function ApprovalsClient({
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [reqs, pols] = await Promise.all([
+          axiosClient.get("/approvals/requests", { params: { shop_id: shopId } }).catch(() => []),
+          axiosClient.get("/approvals/policies", { params: { shop_id: shopId } }).catch(() => []),
+        ]);
+        if (Array.isArray(reqs)) setRequests(reqs);
+        else if ((reqs as any)?.data) setRequests((reqs as any).data);
+        if (Array.isArray(pols)) setPolicies(pols);
+        else if ((pols as any)?.data) setPolicies((pols as any).data);
+      } catch (e) {
+        console.error("Failed to load approvals", e);
+      }
+    }
+    if (!initialRequests || initialRequests.length === 0) {
+      loadData();
+    }
+  }, [shopId]);
 
   // Create Request form state
   const [newType, setNewType] = useState<any>("PURCHASE_REQUISITION");
@@ -70,21 +90,19 @@ export function ApprovalsClient({
     if (!selectedRequest) return;
 
     startTransition(async () => {
-      const res = await decideApprovalRequestAction({
-        shopId,
-        requestId: selectedRequest.id,
-        decision,
-        reason,
-      });
-
-      if (res.success) {
+      try {
+        await axiosClient.post(`/approvals/requests/${selectedRequest.id}/decision`, {
+          shop_id: shopId,
+          decision,
+          reason,
+        });
         toast.success(`Request ${selectedRequest.requestNumber} ${decision === "APPROVE" ? "Approved" : "Rejected"}.`);
         setShowRejectModal(false);
         setRejectionReason("");
         setSelectedRequest(null);
         window.location.reload();
-      } else {
-        toast.error(res.error || "Failed to process decision.");
+      } catch (err: any) {
+        toast.error(err?.response?.data?.detail || err?.message || "Failed to process decision.");
       }
     });
   };
@@ -97,27 +115,26 @@ export function ApprovalsClient({
     }
 
     startTransition(async () => {
-      const res = await createApprovalRequestAction({
-        shopId,
-        requestType: newType,
-        title: newTitle.trim(),
-        description: newDesc.trim() || undefined,
-        amount: parseFloat(newAmount) || 0,
-        currency,
-        priority: newPriority,
-        targetEntityType: "manual_request",
-        targetEntityId: "00000000-0000-0000-0000-000000000000",
-      });
-
-      if (res.success) {
-        toast.success(`Approval ticket ${res.requestNumber} submitted!`);
+      try {
+        const res: any = await axiosClient.post("/approvals/requests", {
+          shop_id: shopId,
+          request_type: newType,
+          title: newTitle.trim(),
+          description: newDesc.trim() || undefined,
+          amount: parseFloat(newAmount) || 0,
+          currency,
+          priority: newPriority,
+          target_entity_type: "manual_request",
+          target_entity_id: "00000000-0000-0000-0000-000000000000",
+        });
+        toast.success(`Approval ticket ${res?.requestNumber || res?.request_number || "submitted"}!`);
         setShowCreateModal(false);
         setNewTitle("");
         setNewDesc("");
         setNewAmount("");
         window.location.reload();
-      } else {
-        toast.error(res.error || "Failed to submit request.");
+      } catch (err: any) {
+        toast.error(err?.response?.data?.detail || err?.message || "Failed to submit request.");
       }
     });
   };

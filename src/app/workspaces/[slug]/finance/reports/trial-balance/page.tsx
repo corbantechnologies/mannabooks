@@ -1,6 +1,6 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { redirect } from "next/navigation";
-import { getTrialBalance } from "@/lib/actions/reports";
+import { apiClient } from "@/lib/api/client";
 import TrialBalanceClient from "./TrialBalanceClient";
 
 export default async function TrialBalancePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -8,8 +8,13 @@ export default async function TrialBalancePage({ params }: { params: Promise<{ s
     const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
-    const result = shop.isGlEnabled ? await getTrialBalance(shop.id) : null;
-    const data = result?.success ? result : null;
+    let data: any = null;
+    if (shop.isGlEnabled) {
+        const res = await apiClient.get<any>(`/v1/reports/trial-balance`, {
+            params: { shop_id: shop.id },
+        });
+        data = res.data?.success ? res.data : (res.data?.data ? res.data : null);
+    }
 
     return (
         <div className="p-5 sm:p-7 space-y-6">

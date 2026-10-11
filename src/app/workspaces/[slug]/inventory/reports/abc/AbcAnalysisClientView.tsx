@@ -1,0 +1,168 @@
+"use client";
+
+import { useProducts } from "@/hooks/useProducts";
+import { formatCurrency } from "@/lib/utils";
+import { Spinner } from "@/components/Spinner";
+
+interface Props {
+  shopId: string;
+  shopSlug: string;
+  shopCurrency: string;
+}
+
+const TIER_STYLES = {
+  A: { badge: "bg-emerald-100 text-emerald-900 border-emerald-300", bar: "bg-emerald-600", desc: "Top performers — top 70% of revenue" },
+  B: { badge: "bg-blue-100 text-blue-900 border-blue-300", bar: "bg-blue-500", desc: "Mid-range — next 20% of revenue" },
+  C: { badge: "bg-zinc-100 text-zinc-600 border-zinc-300", bar: "bg-zinc-400", desc: "Low volume — bottom 10% of revenue" },
+};
+
+export function AbcAnalysisClientView({ shopId, shopSlug, shopCurrency }: Props) {
+  const { data: allProducts = [], isLoading } = useProducts(shopId);
+
+  // Calculate product revenue contributions
+  const items = (allProducts || []).map((p: any) => {
+    const qty = parseFloat(String(p.stock_quantity ?? "0"));
+    const price = parseFloat(String(p.unit_price ?? "0"));
+    const revenue = Math.max(0, qty * price);
+    return {
+      id: p.id,
+      name: p.name,
+      sku: p.sku,
+      stockQuantity: qty,
+      unitPrice: price,
+      totalRevenue: revenue,
+    };
+  });
+
+  items.sort((a, b) => b.totalRevenue - a.totalRevenue);
+  const totalRevenue = items.reduce((s, p) => s + p.totalRevenue, 0);
+
+  let cumulative = 0;
+  const products = items.map((p) => {
+    cumulative += p.totalRevenue;
+    const cumPct = totalRevenue > 0 ? (cumulative / totalRevenue) * 100 : 100;
+    let tier: "A" | "B" | "C" = "C";
+    if (cumPct <= 70) tier = "A";
+    else if (cumPct <= 90) tier = "B";
+
+    return {
+      ...p,
+      tier,
+      revenueShare: totalRevenue > 0 ? (p.totalRevenue / totalRevenue) * 100 : 0,
+      cumulativeShare: cumPct,
+    };
+  });
+
+  const aTier = products.filter((p) => p.tier === "A");
+  const bTier = products.filter((p) => p.tier === "B");
+  const cTier = products.filter((p) => p.tier === "C");
+
+  return (
+    <div className="p-5 sm:p-7 space-y-6 font-mono text-xs">
+      {/* HEADER */}
+      <div className="space-y-2">
+        <span className="text-xs text-zinc-400 font-medium">Inventory / Reports</span>
+        <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">ABC Analysis</h1>
+        <p className="font-sans text-xs text-zinc-600 mt-1">
+          Products ranked by valuation and revenue contribution using the Pareto principle. A = top 70%, B = next 20%, C = remaining 10%.
+        </p>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center py-20">
+          <Spinner size={32} />
+        </div>
+      ) : products.length === 0 ? (
+        <div className="card-modern p-16 text-center space-y-3">
+          <p className="text-4xl">📊</p>
+          <p className="font-sans font-bold text-base text-black">No Products in Catalog</p>
+          <p className="font-sans text-xs text-zinc-500">Add products to your catalog to view ABC classification.</p>
+        </div>
+      ) : (
+        <>
+          {/* TIER SUMMARY CARDS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(["A", "B", "C"] as const).map((tier) => {
+              const tierProducts = tier === "A" ? aTier : tier === "B" ? bTier : cTier;
+              const tierRevenue = tierProducts.reduce((s, p) => s + p.totalRevenue, 0);
+              const style = TIER_STYLES[tier];
+              const tierPct = totalRevenue > 0 ? (tierRevenue / totalRevenue) * 100 : 0;
+              return (
+                <div key={tier} className="card-modern p-5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className={`px-3 py-0.5 rounded-full border font-bold text-sm ${style.badge}`}>
+                      Tier {tier}
+                    </span>
+                    <span className="font-mono font-bold text-xl text-black">{tierProducts.length}</span>
+                  </div>
+                  <p className="text-[10px] text-zinc-500">{style.desc}</p>
+                  <p className="font-semibold text-sm text-black">{formatCurrency(tierRevenue, shopCurrency)}</p>
+                  <div className="w-full bg-zinc-100 rounded-full h-1.5 mt-2">
+                    <div
+                      className={`h-1.5 rounded-full ${style.bar}`}
+                      style={{ width: `${Math.min(100, tierPct)}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-zinc-400">{tierPct.toFixed(1)}% of total value</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* TABLE */}
+          <div className="surface overflow-x-auto">
+            <table className="w-full text-left font-mono text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                  <th className="px-4 py-3 border-r border-zinc-100">#</th>
+                  <th className="px-4 py-3 border-r border-zinc-100">Product</th>
+                  <th className="px-4 py-3 border-r border-zinc-100">SKU</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-center">Tier</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Stock Qty</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Unit Price</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Total Value</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Share %</th>
+                  <th className="px-4 py-3 text-right">Cumulative %</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {products.map((p, idx) => {
+                  const style = TIER_STYLES[p.tier];
+                  return (
+                    <tr key={p.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                      <td className="px-4 py-3 border-r border-zinc-100 text-zinc-400">{idx + 1}</td>
+                      <td className="p-4 border-r border-zinc-100 font-sans font-semibold text-black text-sm">{p.name}</td>
+                      <td className="p-4 border-r border-zinc-100 text-zinc-500 uppercase tracking-wider">
+                        {p.sku || <span className="text-zinc-300 italic">—</span>}
+                      </td>
+                      <td className="px-4 py-3 border-r border-zinc-100 text-center">
+                        <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${style.badge}`}>
+                          {p.tier}
+                        </span>
+                      </td>
+                      <td className="p-4 border-r border-zinc-100 text-right font-mono text-zinc-700">
+                        {p.stockQuantity.toFixed(2)}
+                      </td>
+                      <td className="p-4 border-r border-zinc-100 text-right font-mono text-zinc-700">
+                        {formatCurrency(p.unitPrice, shopCurrency)}
+                      </td>
+                      <td className="p-4 border-r border-zinc-100 text-right font-bold text-black font-mono">
+                        {formatCurrency(p.totalRevenue, shopCurrency)}
+                      </td>
+                      <td className="p-4 border-r border-zinc-100 text-right font-mono text-zinc-600">
+                        {p.revenueShare.toFixed(1)}%
+                      </td>
+                      <td className="p-4 text-right font-mono text-zinc-400">
+                        {p.cumulativeShare.toFixed(1)}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

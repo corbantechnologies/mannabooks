@@ -85,3 +85,67 @@ export function useCreateBom(shopId: string) {
     },
   });
 }
+
+export function useCreateLocation(shopId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name: string; code?: string; isDefault?: boolean }) => {
+      return await axiosClient.post("/items/locations", {
+        shop_id: shopId,
+        name: data.name,
+        code: data.code,
+        is_default: data.isDefault,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory", "locations", shopId] });
+      queryClient.invalidateQueries({ queryKey: ["stock-locations", shopId] });
+      toast.success("Location created successfully!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to create location.");
+    },
+  });
+}
+
+export function useUpdateLocation(shopId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { locationId: string; name: string; code?: string; isDefault?: boolean; isActive?: boolean }) => {
+      return await axiosClient.patch(`/items/locations/${data.locationId}`, {
+        name: data.name,
+        code: data.code,
+        is_default: data.isDefault,
+        is_active: data.isActive,
+      }, { params: { shop_id: shopId } });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory", "locations", shopId] });
+      queryClient.invalidateQueries({ queryKey: ["stock-locations", shopId] });
+      toast.success("Location updated successfully!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to update location.");
+    },
+  });
+}
+
+export function useDeleteLocation(shopId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (locationId: string) => {
+      return await axiosClient.delete(`/items/locations/${locationId}`, {
+        params: { shop_id: shopId },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory", "locations", shopId] });
+      queryClient.invalidateQueries({ queryKey: ["stock-locations", shopId] });
+      toast.success("Location deleted.");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to delete location.");
+    },
+  });
+}
+

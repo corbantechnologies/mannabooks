@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { formatCurrency } from "@/lib/utils";
-import { createProductBatchAction } from "@/lib/actions/wms";
+import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 import {
@@ -75,27 +75,31 @@ export function ExpiryRiskClient({
     }
 
     startTransition(async () => {
-      const res = await createProductBatchAction({
-        shopId,
-        productId,
-        locationId,
-        binId: binId || undefined,
-        batchNumber: batchNumber.trim(),
-        manufactureDate: manufactureDate || undefined,
-        expiryDate,
-        quantity: parseFloat(quantity) || 0,
-        costPrice: parseFloat(costPrice) || 0,
-      });
+      try {
+        const res: any = await axiosClient.post("/inventory/batches", {
+          shop_id: shopId,
+          product_id: productId,
+          location_id: locationId,
+          bin_id: binId || undefined,
+          batch_number: batchNumber.trim(),
+          manufacture_date: manufactureDate || undefined,
+          expiry_date: expiryDate,
+          quantity: parseFloat(quantity) || 0,
+          cost_price: parseFloat(costPrice) || 0,
+        });
 
-      if (res.success) {
-        toast.success(`Batch ${batchNumber.trim()} registered with FEFO tracking!`);
-        setShowAddBatchModal(false);
-        setBatchNumber("");
-        setQuantity("");
-        setCostPrice("");
-        window.location.reload();
-      } else {
-        toast.error(res.error || "Failed to register batch.");
+        if (res?.success !== false) {
+          toast.success(`Batch ${batchNumber.trim()} registered with FEFO tracking!`);
+          setShowAddBatchModal(false);
+          setBatchNumber("");
+          setQuantity("");
+          setCostPrice("");
+          window.location.reload();
+        } else {
+          toast.error(res.error || "Failed to register batch.");
+        }
+      } catch (err: any) {
+        toast.error(err?.message || "Failed to register batch.");
       }
     });
   };

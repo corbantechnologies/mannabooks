@@ -1,6 +1,6 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { redirect } from "next/navigation";
-import { getBalanceSheet } from "@/lib/actions/reports";
+import { apiClient } from "@/lib/api/client";
 import { getShopPlanDetails } from "@/lib/paywall";
 import { PaywallLockedCard } from "@/components/PaywallLockedCard";
 import BalanceSheetClient from "./BalanceSheetClient";
@@ -31,8 +31,8 @@ export default async function BalanceSheetPage({ params }: { params: Promise<{ s
         );
     }
 
-    const result = await getBalanceSheet(shop.id);
-    const data = result.success ? result.data : null;
+    const res = await apiClient.get<any>(`/v1/reports/balance-sheet`, { params: { shop_id: shop.id } });
+    const data = res.data?.data || (res.data?.success !== false ? res.data : null);
 
     return (
         <div className="p-5 sm:p-7 space-y-6">

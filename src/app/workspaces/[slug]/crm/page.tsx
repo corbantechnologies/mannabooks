@@ -2,7 +2,7 @@ import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
-import { getDealsByShopAction, getPipelineForecastAction } from "@/lib/actions/crm";
+import { apiClient } from "@/lib/api/client";
 import { CRMKanbanBoard } from "./CRMKanbanBoard";
 import { Plus, TrendingUp, Target, Trophy, BarChart3 } from "lucide-react";
 
@@ -16,14 +16,13 @@ export default async function CRMPipelinePage({ params }: CRMPageProps) {
   const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
-  const [dealsResult, forecastResult] = await Promise.all([
-    getDealsByShopAction(shop.id),
-    getPipelineForecastAction(shop.id),
+  const [dealsRes, forecastRes] = await Promise.all([
+    apiClient.get<any>(`/v1/crm/deals`, { params: { shop_id: shop.id } }),
+    apiClient.get<any>(`/v1/crm/forecast`, { params: { shop_id: shop.id } }),
   ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const allDeals = (dealsResult.deals || []) as any[];
-  const forecast = forecastResult;
+  const allDeals = (dealsRes.data?.deals || (Array.isArray(dealsRes.data) ? dealsRes.data : [])) as any[];
+  const forecast = forecastRes.data || { totalDeals: allDeals.length, totalWeightedPipeline: 0, totalWonRevenue: 0, stageSummary: {} };
 
   const statCards = [
     {

@@ -186,3 +186,6 @@ export function useAdjustStock(shopId: string) {
     },
   });
 }
+
+export const useAdjustInventory = useAdjustStock;
+

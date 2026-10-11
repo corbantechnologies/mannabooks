@@ -3,17 +3,17 @@
 
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { recordStockAdjustment } from "@/lib/actions/inventory";
 import { formatCurrency } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useProducts, useAdjustInventory } from "@/hooks/useProducts";
+import { useStockLocations } from "@/hooks/useInventoryOps";
 
 interface Props {
   shopId: string;
   shopSlug: string;
   shopCurrency: string;
-  locations: any[];
-  trackedProducts: any[];
-  adjustmentHistory: any[];
+  locations?: any[];
+  trackedProducts?: any[];
+  adjustmentHistory?: any[];
 }
 
 const REASONS = [
@@ -31,20 +31,35 @@ const TYPE_BADGE: Record<string, string> = {
   OPENING_BALANCE: "bg-zinc-100 text-zinc-700 border-zinc-300",
 };
 
-export function AdjustmentsClientView({ shopId, shopSlug, shopCurrency, locations, trackedProducts, adjustmentHistory }: Props) {
-  const router = useRouter();
+export function AdjustmentsClientView({
+  shopId,
+  shopSlug,
+  shopCurrency,
+  locations: initialLocations = [],
+  trackedProducts: initialProducts = [],
+  adjustmentHistory = [],
+}: Props) {
+  const { data: fetchedProducts = [] } = useProducts(shopId);
+  const { data: fetchedLocations = [] } = useStockLocations(shopId);
+  const adjustMutation = useAdjustInventory(shopId);
+
+  const trackedProducts = fetchedProducts.length > 0
+    ? fetchedProducts.filter((p: any) => Boolean(p.track_stock ?? p.trackStock))
+    : initialProducts;
+  const locations = fetchedLocations.length > 0 ? fetchedLocations : initialLocations;
+
   const [loading, setLoading] = useState(false);
 
   // Form state
   const [productId, setProductId] = useState("");
-  const [locationId, setLocationId] = useState(locations.find(l => l.isDefault)?.id || locations[0]?.id || "");
+  const [locationId, setLocationId] = useState(locations.find((l: any) => l.isDefault || l.is_default)?.id || locations[0]?.id || "");
   const [direction, setDirection] = useState<"IN" | "OUT">("IN");
   const [quantity, setQuantity] = useState("");
   const [unitCost, setUnitCost] = useState("");
   const [reason, setReason] = useState<"COUNT_CORRECTION" | "DAMAGED" | "EXPIRED" | "THEFT" | "PROMOTION" | "OTHER">("COUNT_CORRECTION");
   const [notes, setNotes] = useState("");
 
-  const selectedProduct = trackedProducts.find(p => p.id === productId);
+  const selectedProduct = trackedProducts.find((p: any) => p.id === productId);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,31 +69,25 @@ export function AdjustmentsClientView({ shopId, shopSlug, shopCurrency, location
     if (!qty || qty <= 0) return toast.error("Quantity must be a positive number.");
 
     setLoading(true);
-    const toastId = toast.loading("Recording adjustment…");
 
-    const res = await recordStockAdjustment({
-      shopId,
-      shopSlug,
-      productId,
-      locationId,
-      direction,
-      quantity: qty,
-      unitCost: unitCost ? parseFloat(unitCost) : undefined,
-      reason,
-      notes: notes.trim() || undefined,
-    });
+    try {
+      await adjustMutation.mutateAsync({
+        productId,
+        locationId,
+        movementType: direction === "IN" ? "ADJUSTMENT_IN" : "ADJUSTMENT_OUT",
+        quantity: qty,
+        adjustmentReason: reason,
+        notes: notes.trim() || undefined,
+      });
 
-    setLoading(false);
-
-    if (res.success) {
-      toast.success(`Adjustment recorded. New stock: ${res.newStock?.toFixed(2)}`, { id: toastId });
       setProductId("");
       setQuantity("");
       setUnitCost("");
       setNotes("");
-      router.refresh();
-    } else {
-      toast.error(res.error || "Adjustment failed.", { id: toastId });
+    } catch {
+      // Handled in adjustMutation
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -136,16 +145,19 @@ export function AdjustmentsClientView({ shopId, shopSlug, shopCurrency, location
                   required
                 >
                   <option value="">— Select Product —</option>
-                  {trackedProducts.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} {p.sku ? `[${p.sku}]` : ""} — Current: {parseFloat(p.stockQuantity).toFixed(2)}
-                    </option>
-                  ))}
+                  {trackedProducts.map((p: any) => {
+                    const currentStock = parseFloat(String(p.stock_quantity ?? p.stockQuantity ?? "0"));
+                    return (
+                      <option key={p.id} value={p.id}>
+                        {p.name} {p.sku ? `[${p.sku}]` : ""} — Current: {currentStock.toFixed(2)}
+                      </option>
+                    );
+                  })}
                 </select>
                 {selectedProduct && (
                   <p className="text-[10px] text-zinc-500 mt-1">
-                    Current stock: <strong>{parseFloat(selectedProduct.stockQuantity).toFixed(2)} units</strong>
-                    {" | "}Cost price: <strong>{formatCurrency(selectedProduct.costPrice, shopCurrency)}</strong>
+                    Current stock: <strong>{parseFloat(String(selectedProduct.stock_quantity ?? selectedProduct.stockQuantity ?? "0")).toFixed(2)} units</strong>
+                    {" | "}Cost price: <strong>{formatCurrency(selectedProduct.cost_price ?? selectedProduct.costPrice ?? 0, shopCurrency)}</strong>
                   </p>
                 )}
               </div>
@@ -160,9 +172,9 @@ export function AdjustmentsClientView({ shopId, shopSlug, shopCurrency, location
                   required
                 >
                   <option value="">— Select Location —</option>
-                  {locations.map(l => (
+                  {locations.map((l: any) => (
                     <option key={l.id} value={l.id}>
-                      {l.name} {l.code ? `[${l.code}]` : ""}{l.isDefault ? " (Default)" : ""}
+                      {l.name} {l.code ? `[${l.code}]` : ""}{l.isDefault || l.is_default ? " (Default)" : ""}
                     </option>
                   ))}
                 </select>

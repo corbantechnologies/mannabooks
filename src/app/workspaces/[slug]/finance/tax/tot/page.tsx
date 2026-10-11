@@ -1,6 +1,6 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { redirect } from "next/navigation";
-import { getTurnoverTaxQuarterly } from "@/lib/actions/tax";
+import { apiClient } from "@/lib/api/client";
 import TurnoverTaxClient from "./TurnoverTaxClient";
 
 export default async function TurnoverTaxPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -32,8 +32,8 @@ export default async function TurnoverTaxPage({ params }: { params: Promise<{ sl
     }
 
     const year = new Date().getFullYear();
-    const result = await getTurnoverTaxQuarterly(shop.id, year);
-    const quarters = result.success ? result.quarters : [];
+    const res = await apiClient.get<any>(`/v1/tax/turnover-tax`, { params: { shop_id: shop.id, year: String(year) } });
+    const quarters = res.data?.quarters || (Array.isArray(res.data) ? res.data : []);
 
     return (
         <div className="p-5 sm:p-7 space-y-6">

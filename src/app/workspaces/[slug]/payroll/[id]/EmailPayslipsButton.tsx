@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { emailPayslipsAction } from "@/lib/actions/payroll";
+import { axiosClient } from "@/lib/api/axios";
 import { Spinner } from "@/components/Spinner";
 import { toast } from "react-hot-toast";
 
@@ -16,11 +16,11 @@ export function EmailPayslipsButton({ voucherId, shopId, shopSlug }: EmailPaysli
 
   function handleSend() {
     startTransition(async () => {
-      const res = await emailPayslipsAction(voucherId, shopId, shopSlug);
-      if (res.success) {
-        toast.success(`Dispatched ${res.countSent} payslip emails successfully! (Skipped ${res.countSkipped} without valid emails)`);
-      } else {
-        toast.error(res.error || "Failed to dispatch email payslips.");
+      try {
+        await axiosClient.post(`/payroll/${voucherId}/email`, {}, { params: { shop_id: shopId } });
+        toast.success("Dispatched payslip emails to staff successfully!");
+      } catch (err: any) {
+        toast.error(err?.response?.data?.detail || err?.message || "Failed to dispatch email payslips.");
       }
     });
   }

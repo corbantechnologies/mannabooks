@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { sendProposalAction, convertProposalToDocumentAction } from "@/lib/actions/proposals";
+import { axiosClient } from "@/lib/api/axios";
 import { Send, FileText, Copy, Check } from "lucide-react";
 
 interface ProposalActionsProps {
@@ -44,32 +44,35 @@ export function ProposalActions({
     if (!sendEmail.trim()) { setMessage("Enter recipient email."); return; }
     setMessage(null);
     startTransition(async () => {
-      // sendProposalAction emails to the address stored on the client/deal;
-      // it does not accept a custom recipient — so we just trigger the action
-      // and show success. For custom recipient, this would need a new action.
-      const res = await sendProposalAction(proposalId, shopId, shopSlug);
-      if (res.success) {
+      try {
+        await axiosClient.post(`/crm/proposals/${proposalId}/send`, {
+          recipient_email: sendEmail.trim(),
+          shop_id: shopId,
+        });
         setMessage("✓ Proposal email sent.");
         setShowSendModal(false);
-      } else {
-        setMessage(res.error || "Failed to send email.");
+      } catch (err: any) {
+        setMessage(err?.response?.data?.detail || err?.message || "Failed to send email.");
       }
     });
   };
 
   const handleConvert = () => {
     startTransition(async () => {
-      const res = await convertProposalToDocumentAction({
-        proposalId,
-        shopId,
-        shopSlug,
-        targetType: "INVOICE",
-        clientId: clientId || undefined,
-      });
-      if (res.success && res.documentId) {
-        window.location.href = `/workspaces/${shopSlug}/documents/${res.documentId}`;
-      } else {
-        setMessage(res.error || "Failed to convert.");
+      try {
+        const res: any = await axiosClient.post(`/crm/proposals/${proposalId}/convert`, {
+          shop_id: shopId,
+          target_type: "INVOICE",
+          client_id: clientId || undefined,
+        });
+        const docId = res?.documentId || res?.document_id || res?.id;
+        if (docId) {
+          window.location.href = `/workspaces/${shopSlug}/documents/${docId}`;
+        } else {
+          setMessage("✓ Converted successfully.");
+        }
+      } catch (err: any) {
+        setMessage(err?.response?.data?.detail || err?.message || "Failed to convert.");
       }
     });
   };

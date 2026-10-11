@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { closePeriod, reopenPeriod, getPeriodDetails } from "@/lib/actions/gl";
+import { axiosClient } from "@/lib/api/axios";
 import { Spinner } from "@/components/Spinner";
 
 interface Period {
@@ -49,15 +49,17 @@ export default function AccountingPeriodsClient({ shopId, shopSlug, isGlEnabled,
         setLoadingDetails(true);
         setPeriodDetails(null);
         try {
-            const res = await getPeriodDetails(shopId, periodId);
-            if (res.success) {
-                setPeriodDetails(res.data);
+            const res: any = await axiosClient.get(`/accounts/periods/${periodId}/details`, {
+                params: { shop_id: shopId },
+            });
+            if (res?.success ?? true) {
+                setPeriodDetails(res?.data || res);
             } else {
-                showMsg("error", res.error || "Failed to load period details.");
+                showMsg("error", res?.error || "Failed to load period details.");
                 setInspectPeriodId(null);
             }
         } catch (err: any) {
-            showMsg("error", err.message || "Failed to load period details.");
+            showMsg("error", err?.response?.data?.detail || err?.message || "Failed to load period details.");
             setInspectPeriodId(null);
         } finally {
             setLoadingDetails(false);
@@ -66,25 +68,37 @@ export default function AccountingPeriodsClient({ shopId, shopSlug, isGlEnabled,
 
     function handleClose(periodId: string) {
         startTransition(async () => {
-            const res = await closePeriod(shopId, shopSlug, periodId);
-            if (res.success) {
-                setPeriods(prev => prev.map(p => p.id === periodId ? { ...p, status: "CLOSED" as const, closedAt: new Date().toISOString() } : p));
-                showMsg("success", "Period closed. No new entries can be posted to this period.");
-                setConfirmClose(null);
-            } else {
-                showMsg("error", res.error);
+            try {
+                const res: any = await axiosClient.post(`/accounts/periods/${periodId}/close`, {
+                    shop_id: shopId,
+                });
+                if (res?.success ?? true) {
+                    setPeriods(prev => prev.map(p => p.id === periodId ? { ...p, status: "CLOSED" as const, closedAt: new Date().toISOString() } : p));
+                    showMsg("success", "Period closed. No new entries can be posted to this period.");
+                    setConfirmClose(null);
+                } else {
+                    showMsg("error", res?.error || "Failed to close period.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.response?.data?.detail || err?.message || "Failed to close period.");
             }
         });
     }
 
     function handleReopen(periodId: string) {
         startTransition(async () => {
-            const res = await reopenPeriod(shopId, shopSlug, periodId);
-            if (res.success) {
-                setPeriods(prev => prev.map(p => p.id === periodId ? { ...p, status: "OPEN" as const, closedAt: null } : p));
-                showMsg("success", "Period reopened. Entries can be posted again.");
-            } else {
-                showMsg("error", res.error);
+            try {
+                const res: any = await axiosClient.post(`/accounts/periods/${periodId}/reopen`, {
+                    shop_id: shopId,
+                });
+                if (res?.success ?? true) {
+                    setPeriods(prev => prev.map(p => p.id === periodId ? { ...p, status: "OPEN" as const, closedAt: null } : p));
+                    showMsg("success", "Period reopened. Entries can be posted again.");
+                } else {
+                    showMsg("error", res?.error || "Failed to reopen period.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.response?.data?.detail || err?.message || "Failed to reopen period.");
             }
         });
     }

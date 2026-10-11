@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getPublicCatalogData, decodeCatalogToken } from "@/lib/actions/catalog";
+import { getPublicCatalogData, decodeCatalogToken } from "@/lib/catalog";
 import { PublicCatalogClient } from "./PublicCatalogClient";
 
 interface PublicCatalogPageProps {

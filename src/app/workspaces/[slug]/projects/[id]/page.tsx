@@ -1,7 +1,7 @@
 // src/app/workspaces/[slug]/projects/[id]/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
-import { getProjectByIdAction } from "@/lib/actions/projects";
+import { apiClient } from "@/lib/api/client";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -29,10 +29,11 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
-  const result = await getProjectByIdAction(id, shop.id);
-  if (!result.project) notFound();
+  const res = await apiClient.get<any>(`/v1/projects/${id}`, { params: { shop_id: shop.id } });
+  const project = res.data?.project || (res.data?.id ? res.data : null);
+  if (!project) notFound();
 
-  const { project, metrics } = result;
+  const metrics = res.data?.metrics || { totalBillable: 0, approvedHours: 0 };
   const statusColor = STATUS_COLOR[project.status] || "#94a3b8";
   const budget = parseFloat(String(project.budgetAmount));
   const budgetHours = parseFloat(String(project.budgetHours));

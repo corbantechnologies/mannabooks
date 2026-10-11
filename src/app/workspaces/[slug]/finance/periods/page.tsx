@@ -1,6 +1,6 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { redirect } from "next/navigation";
-import { getAccountingPeriods } from "@/lib/actions/gl";
+import { apiClient } from "@/lib/api/client";
 import AccountingPeriodsClient from "./AccountingPeriodsClient";
 
 export default async function AccountingPeriodsPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -8,7 +8,11 @@ export default async function AccountingPeriodsPage({ params }: { params: Promis
     const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
-    const periods = shop.isGlEnabled ? await getAccountingPeriods(shop.id) : [];
+    let periods: any[] = [];
+    if (shop.isGlEnabled) {
+        const res = await apiClient.get<any>(`/v1/accounts/periods`, { params: { shop_id: shop.id } });
+        periods = res.data?.periods || (Array.isArray(res.data) ? res.data : []);
+    }
 
     return (
         <div className="p-5 sm:p-7 space-y-6">

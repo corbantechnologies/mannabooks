@@ -1,7 +1,7 @@
 // src/app/workspaces/[slug]/crm/proposals/[id]/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
-import { getProposalByIdAction } from "@/lib/actions/proposals";
+import { apiClient } from "@/lib/api/client";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -29,7 +29,8 @@ export default async function ProposalDetailPage({ params }: ProposalDetailPageP
   const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
-  const { proposal } = await getProposalByIdAction(id, shop.id);
+  const res = await apiClient.get<any>(`/v1/crm/proposals/${id}`, { params: { shop_id: shop.id } });
+  const proposal = res.data?.proposal || (res.data?.id ? res.data : null);
   if (!proposal) notFound();
 
   const isExpired = proposal.expiresAt ? new Date(proposal.expiresAt) < new Date() : false;

@@ -3,8 +3,8 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
-import { updateDealStageAction } from "@/lib/actions/crm";
-import type { DealStage } from "@/lib/actions/crm";
+import { axiosClient } from "@/lib/api/axios";
+import type { DealStage } from "@/types/crm";
 import { User, Calendar, TrendingUp, GripVertical, ArrowRight } from "lucide-react";
 
 interface Deal {
@@ -68,14 +68,14 @@ export function CRMKanbanBoard({
     setUpdating(draggedDealId);
 
     try {
-      await updateDealStageAction(deal.id, shopId, shopSlug, targetStage);
+      await axiosClient.patch(`/crm/deals/${deal.id}/stage`, { stage: targetStage, shop_id: shopId });
     } catch {
       // Revert on failure
       setDeals(prev => prev.map(d => d.id === deal.id ? { ...d, stage: deal.stage } : d));
     } finally {
       setUpdating(null);
     }
-  }, [draggedDealId, deals, shopId, shopSlug]);
+  }, [draggedDealId, deals, shopId]);
 
   const dealsByStage = (stage: DealStage) => deals.filter(d => d.stage === stage);
 

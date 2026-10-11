@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { getTaxComputation, type TaxComputationData } from "@/lib/actions/tax";
+import type { TaxComputationData } from "@/types/reports";
+import { axiosClient } from "@/lib/api/axios";
 
 interface Props {
     shopId: string;
@@ -38,8 +39,15 @@ export default function TaxComputationClient({ shopId, year: initialYear, curren
     function loadYear(y: number) {
         setYear(y);
         startTransition(async () => {
-            const res = await getTaxComputation(shopId, y);
-            if (res.success) setData(res.data);
+            try {
+                const res: any = await axiosClient.get("/finance/tax/computation", {
+                    params: { shop_id: shopId, year: y },
+                });
+                if (res?.data) setData(res.data);
+                else if (res && !res.error) setData(res);
+            } catch (err) {
+                console.error("Failed to load tax computation:", err);
+            }
         });
     }
 

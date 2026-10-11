@@ -82,32 +82,64 @@ export interface RecurringInvoiceItem {
 
 export type CleanSlateMode = "FULL" | "TEST_DATA_ONLY" | "FINANCE_RESET";
 
+export interface StatementLine {
+  date: string;
+  description: string;
+  reference: string;
+  type?: "INVOICE" | "PAYMENT" | "CREDIT_NOTE" | "BILL" | string;
+  docType?: string;
+  debit: number;
+  credit: number;
+  runningBalance: number;
+  status?: string;
+  docId: string;
+}
+
 export interface SupplierStatementData {
-  supplier: {
+  supplierName: string;
+  supplierEmail: string;
+  supplierPhone?: string | null;
+  taxPin?: string | null;
+  currency: string;
+  shopName: string;
+  periodLabel: string;
+  lines: StatementLine[];
+  totalDebits: number;
+  totalCredits: number;
+  closingBalance: number;
+  openingBalance?: number;
+  supplier?: {
     id: string;
     name: string;
     email: string;
     phone?: string | null;
     taxPin?: string | null;
   };
-  transactions: any[];
-  openingBalance: number;
-  closingBalance: number;
-  totalDebits: number;
-  totalCredits: number;
+  transactions?: any[];
 }
 
 export interface ClientStatementData {
-  client: {
+  clientName: string;
+  clientEmail: string;
+  clientPhone?: string | null;
+  taxPin?: string | null;
+  currency: string;
+  shopName: string;
+  periodLabel: string;
+  lines: StatementLine[];
+  totalDebits: number;
+  totalCredits: number;
+  closingBalance: number;
+  openingBalance?: number;
+  totalInvoiced?: number;
+  totalPaid?: number;
+  client?: {
     id: string;
     name: string;
     email: string;
     phone?: string | null;
     taxPin?: string | null;
   };
-  transactions: any[];
-  openingBalance: number;
-  closingBalance: number;
-  totalInvoiced: number;
-  totalPaid: number;
+  transactions?: any[];
 }
+

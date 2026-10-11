@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  acceptProposalPortalAction,
-  requestProposalAmendmentAction,
-  declineProposalPortalAction,
-} from "@/lib/actions/proposals";
+import { axiosClient } from "@/lib/api/axios";
 
 interface ProposalPortalActionsProps {
   token: string;
@@ -114,11 +110,14 @@ export function ProposalPortalActions({
     setResult(null);
     try {
       const signatureDataUrl = hasSignature ? canvasRef.current?.toDataURL("image/png") : undefined;
-      const res = await acceptProposalPortalAction({ token, signerName: signerName.trim(), signatureDataUrl });
-      setResult(res);
-      if (res.success) {
-        setTimeout(() => window.location.reload(), 2000);
-      }
+      const res: any = await axiosClient.post(`/portal/proposals/${token}/accept`, {
+        signerName: signerName.trim(),
+        signatureDataUrl,
+      });
+      setResult({ success: true, message: res?.message || "Proposal accepted successfully!" });
+      setTimeout(() => window.location.reload(), 2000);
+    } catch (err: any) {
+      setResult({ success: false, error: err?.response?.data?.detail || err?.message || "Failed to accept proposal." });
     } finally {
       setLoading(false);
     }
@@ -132,13 +131,14 @@ export function ProposalPortalActions({
     setLoading(true);
     setResult(null);
     try {
-      const res = await requestProposalAmendmentAction({
-        token,
+      const res: any = await axiosClient.post(`/portal/proposals/${token}/amendment`, {
         clientName: signerName || clientName,
         amendmentNotes: amendmentNotes.trim(),
         contactEmail: contactEmail.trim() || undefined,
       });
-      setResult(res);
+      setResult({ success: true, message: res?.message || "Amendment request submitted!" });
+    } catch (err: any) {
+      setResult({ success: false, error: err?.response?.data?.detail || err?.message || "Failed to request amendment." });
     } finally {
       setLoading(false);
     }
@@ -148,15 +148,14 @@ export function ProposalPortalActions({
     setLoading(true);
     setResult(null);
     try {
-      const res = await declineProposalPortalAction({
-        token,
+      const res: any = await axiosClient.post(`/portal/proposals/${token}/decline`, {
         clientName: signerName || clientName,
         reason: declineReason.trim() || undefined,
       });
-      setResult(res);
-      if (res.success) {
-        setTimeout(() => window.location.reload(), 1800);
-      }
+      setResult({ success: true, message: res?.message || "Proposal marked as declined." });
+      setTimeout(() => window.location.reload(), 1800);
+    } catch (err: any) {
+      setResult({ success: false, error: err?.response?.data?.detail || err?.message || "Failed to decline proposal." });
     } finally {
       setLoading(false);
     }

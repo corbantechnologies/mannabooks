@@ -1,5 +1,5 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
-import { getStocktakeDetail } from "@/lib/actions/stocktake";
+import { apiClient } from "@/lib/api/client";
 import { StocktakeAuditClient } from "./StocktakeAuditClient";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
@@ -17,9 +17,10 @@ export default async function StocktakeAuditPage({ params }: StocktakeAuditPageP
   const { slug, id } = await params;
   const { shop } = await getActiveWorkspaceContext(slug);
 
-  const stocktake = await getStocktakeDetail(id);
+  const res = await apiClient.get<any>(`/v1/inventory/stocktakes/${id}`, { params: { shop_id: shop.id } });
+  const stocktake = res.data?.stocktake || (res.data?.id ? res.data : null);
 
-  if (!stocktake || stocktake.shopId !== shop.id) {
+  if (!stocktake) {
     notFound();
   }
 

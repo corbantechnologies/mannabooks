@@ -1,6 +1,6 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { redirect } from "next/navigation";
-import { getFixedAssets } from "@/lib/actions/tax";
+import { apiClient } from "@/lib/api/client";
 import FixedAssetsClient from "./FixedAssetsClient";
 
 export default async function FixedAssetsPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -10,7 +10,8 @@ export default async function FixedAssetsPage({ params }: { params: Promise<{ sl
 
     if (!shop.isGlEnabled) redirect(`/workspaces/${slug}/finance/accounts`);
 
-    const assets = await getFixedAssets(shop.id);
+    const res = await apiClient.get<any>(`/v1/tax/fixed-assets`, { params: { shop_id: shop.id } });
+    const assets: any[] = res.data?.assets || (Array.isArray(res.data) ? res.data : []);
 
     return (
         <div className="p-5 sm:p-7 space-y-6">

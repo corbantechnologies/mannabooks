@@ -1,6 +1,5 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { redirect } from "next/navigation";
-import { getBudgetsWithActuals } from "@/lib/actions/budgets";
 import BudgetsClient from "./BudgetsClient";
 
 export default async function BudgetsPage({
@@ -23,8 +22,6 @@ export default async function BudgetsPage({
     const month = (!isNaN(parsedMonth) && parsedMonth >= 1 && parsedMonth <= 12) ? parsedMonth : now.getMonth() + 1;
     const year = (!isNaN(parsedYear) && parsedYear >= 2000 && parsedYear <= 2100) ? parsedYear : now.getFullYear();
 
-    const budgetLines = shop.isGlEnabled ? await getBudgetsWithActuals(shop.id, month, year) : [];
-
     return (
         <div className="p-5 sm:p-7 space-y-6">
             <div className="space-y-2">
@@ -41,7 +38,6 @@ export default async function BudgetsPage({
                 month={month}
                 year={year}
                 currency={shop.currency || "KES"}
-                lines={budgetLines}
             />
         </div>
     );

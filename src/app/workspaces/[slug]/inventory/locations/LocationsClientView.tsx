@@ -3,35 +3,43 @@
 
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { createStockLocation, updateStockLocation, deleteStockLocation } from "@/lib/actions/inventory";
-import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import Link from "next/link";
 import { ReconcileInventoryButton } from "@/components/ReconcileInventoryButton";
+import { useStockLocations, useCreateLocation, useUpdateLocation, useDeleteLocation } from "@/hooks/useInventoryOps";
+import { Spinner } from "@/components/Spinner";
 
 interface LocationWithStats {
   id: string;
   name: string;
   code: string | null;
-  isDefault: boolean;
-  isActive: boolean;
-  createdAt: Date;
-  totalProducts: number;
-  totalUnits: number;
-  totalValuation: number;
-  lowStockCount: number;
+  isDefault?: boolean;
+  is_default?: boolean;
+  isActive?: boolean;
+  is_active?: boolean;
+  createdAt?: Date;
+  totalProducts?: number;
+  totalUnits?: number;
+  totalValuation?: number;
+  lowStockCount?: number;
 }
 
 interface Props {
   shopId: string;
   shopSlug: string;
   shopCurrency: string;
-  initialLocations: LocationWithStats[];
+  initialLocations?: LocationWithStats[];
 }
 
-export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLocations }: Props) {
-  const router = useRouter();
+export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLocations = [] }: Props) {
+  const { data: fetchedLocations = [], isLoading } = useStockLocations(shopId);
+  const createLocation = useCreateLocation(shopId);
+  const updateLocation = useUpdateLocation(shopId);
+  const deleteLocation = useDeleteLocation(shopId);
+
+  const locations: any[] = fetchedLocations.length > 0 ? fetchedLocations : initialLocations;
+
   const [showForm, setShowForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<LocationWithStats | null>(null);
   const [loading, setLoading] = useState(false);
@@ -45,7 +53,7 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
     setEditingLocation(null);
     setName("");
     setCode("");
-    setIsDefault(initialLocations.length === 0);
+    setIsDefault(locations.length === 0);
     setShowForm(true);
   }
 
@@ -53,7 +61,7 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
     setEditingLocation(loc);
     setName(loc.name);
     setCode(loc.code || "");
-    setIsDefault(loc.isDefault);
+    setIsDefault(Boolean(loc.isDefault ?? loc.is_default));
     setShowForm(true);
   }
 
@@ -67,56 +75,38 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
     if (!name.trim()) return toast.error("Location name is required.");
     setLoading(true);
 
-    if (editingLocation) {
-      const res = await updateStockLocation({
-        locationId: editingLocation.id,
-        shopId,
-        shopSlug,
-        name,
-        code,
-        isDefault,
-        isActive: editingLocation.isActive,
-      });
-      if (res.success) {
-        toast.success("Location updated.");
-        router.refresh();
+    try {
+      if (editingLocation) {
+        await updateLocation.mutateAsync({
+          locationId: editingLocation.id,
+          name,
+          code: code || undefined,
+          isDefault,
+        });
         closeForm();
       } else {
-        toast.error(res.error || "Update failed.");
-      }
-    } else {
-      const res = await createStockLocation({ shopId, shopSlug, name, code, isDefault });
-      if (res.success) {
-        toast.success("Location created.");
-        router.refresh();
+        await createLocation.mutateAsync({ name, code: code || undefined, isDefault });
         closeForm();
-      } else {
-        toast.error(res.error || "Create failed.");
       }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   const [locationToDelete, setLocationToDelete] = useState<LocationWithStats | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleConfirmDelete() {
     if (!locationToDelete) return;
-    setIsDeleting(true);
-    const toastId = toast.loading(`Deleting location "${locationToDelete.name}"...`);
-    const res = await deleteStockLocation(locationToDelete.id, shopSlug);
-    setIsDeleting(false);
-    if (res.success) {
-      toast.success("Location deleted.", { id: toastId });
+    try {
+      await deleteLocation.mutateAsync(locationToDelete.id);
       setLocationToDelete(null);
-      router.refresh();
-    } else {
-      toast.error(res.error || "Delete failed.", { id: toastId });
+    } catch {
+      // Handled in hook
     }
   }
 
-  const totalAllUnits = initialLocations.reduce((sum, l) => sum + l.totalUnits, 0);
-  const totalAllValuation = initialLocations.reduce((sum, l) => sum + l.totalValuation, 0);
+  const totalAllUnits = locations.reduce((sum: number, l: any) => sum + (l.totalUnits || 0), 0);
+  const totalAllValuation = locations.reduce((sum: number, l: any) => sum + (l.totalValuation || 0), 0);
 
   return (
     <div className="p-5 sm:p-7 space-y-6 font-mono text-xs">
@@ -263,28 +253,28 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
                     <span className="text-[10px] text-zinc-400 group-hover:text-black font-mono">→</span>
                   </Link>
                   <span className="block text-[10px] text-zinc-400 mt-0.5">
-                    Added {new Date(loc.createdAt).toLocaleDateString("en-KE", { dateStyle: "medium" })}
+                    Added {new Date(loc.createdAt || Date.now()).toLocaleDateString("en-KE", { dateStyle: "medium" })}
                   </span>
                 </td>
                 <td className="p-4 border-r border-zinc-100 text-zinc-600 uppercase tracking-wider font-semibold">
                   {loc.code || <span className="text-zinc-300 italic font-normal lowercase">unassigned</span>}
                 </td>
                 <td className="p-4 border-r border-zinc-100 text-right font-semibold text-black">
-                  {loc.totalProducts} items
-                  {loc.lowStockCount > 0 && (
+                  {loc.totalProducts || 0} items
+                  {(loc.lowStockCount || 0) > 0 && (
                     <span className="block text-[10px] text-amber-700 font-normal">
                       ⚠️ {loc.lowStockCount} low stock
                     </span>
                   )}
                 </td>
                 <td className="p-4 border-r border-zinc-100 text-right font-semibold text-black">
-                  {loc.totalUnits.toFixed(2)}
+                  {(loc.totalUnits || 0).toFixed(2)}
                 </td>
                 <td className="p-4 border-r border-zinc-100 text-right font-semibold text-emerald-700">
-                  {formatCurrency(loc.totalValuation, shopCurrency)}
+                  {formatCurrency(loc.totalValuation || 0, shopCurrency)}
                 </td>
                 <td className="px-4 py-3 border-r border-zinc-100 text-center">
-                  {loc.isDefault ? (
+                  {loc.isDefault || loc.is_default ? (
                     <span className="bg-black text-white text-[10px] px-2 py-0.5 rounded font-semibold uppercase">DEFAULT</span>
                   ) : (
                     <span className="text-zinc-400 text-[10px]">—</span>
@@ -292,7 +282,7 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
                 </td>
                 <td className="px-4 py-3 border-r border-zinc-100 text-center">
                   <span className={`text-[10px] px-2 py-0.5 rounded border font-semibold uppercase ${
-                    loc.isActive ? "bg-emerald-100 text-emerald-900 border-emerald-300" : "bg-zinc-100 text-zinc-400 border-zinc-200"
+                    (loc.isActive ?? loc.is_active ?? true) ? "bg-emerald-100 text-emerald-900 border-emerald-300" : "bg-zinc-100 text-zinc-400 border-zinc-200"
                   }`}>
                     {loc.isActive ? "ACTIVE" : "ARCHIVED"}
                   </span>
@@ -344,7 +334,7 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
         message={`Are you sure you want to delete "${locationToDelete?.name}"? Any past historical ledger movements will be preserved, but this location will be permanently removed from active selection.`}
         confirmLabel="Delete Location"
         variant="danger"
-        isLoading={isDeleting}
+        isLoading={deleteLocation.isPending}
       />
 
       {/* INFO BOX */}

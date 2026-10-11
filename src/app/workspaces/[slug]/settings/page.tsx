@@ -1,7 +1,5 @@
-// src/app/workspaces/[slug]/settings/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
-import { getShopPaymentMethods } from "@/lib/actions/payments";
-import { getShopTerms } from "@/lib/actions/terms";
+import { apiClient } from "@/lib/api/client";
 import { SettingsForm } from "./SettingsForm";
 
 import Link from "next/link";
@@ -15,8 +13,12 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
 
   // Fetch context server-side — avoids the client useEffect + redirect() issue
   const { shop } = await getActiveWorkspaceContext(slug);
-  const paymentMethods = await getShopPaymentMethods(shop.id);
-  const shopTerms = await getShopTerms(shop.id);
+  const [paymentsRes, termsRes] = await Promise.all([
+    apiClient.get<any>(`/v1/workspaces/${shop.id}/payment-methods`),
+    apiClient.get<any>(`/v1/workspaces/${shop.id}/terms`),
+  ]);
+  const paymentMethods = paymentsRes.data?.paymentMethods || (Array.isArray(paymentsRes.data) ? paymentsRes.data : []);
+  const shopTerms = termsRes.data?.terms || (Array.isArray(termsRes.data) ? termsRes.data : []);
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white font-sans">

@@ -1,6 +1,6 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { redirect } from "next/navigation";
-import { getTaxInstalments } from "@/lib/actions/tax";
+import { apiClient } from "@/lib/api/client";
 import InstalmentsClient from "./InstalmentsClient";
 
 export default async function InstalmentsPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -32,7 +32,8 @@ export default async function InstalmentsPage({ params }: { params: Promise<{ sl
     }
 
     const year = new Date().getFullYear();
-    const instalments = await getTaxInstalments(shop.id, year);
+    const res = await apiClient.get<any>(`/v1/tax/instalments`, { params: { shop_id: shop.id, year: String(year) } });
+    const instalments: any[] = res.data?.instalments || (Array.isArray(res.data) ? res.data : []);
 
     // Compute estimated annual tax liability to check KES 30,000 threshold
     const estProfit = parseFloat(shop.estimatedAnnualProfit || "0");

@@ -5,8 +5,8 @@ import { useState, useMemo } from "react";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { updateStockLocation, deleteStockLocation } from "@/lib/actions/inventory";
-import { createStorageBinAction, deleteStorageBinAction } from "@/lib/actions/wms";
+import { useUpdateLocation, useDeleteLocation } from "@/hooks/useInventoryOps";
+import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import QRCode from "react-qr-code";
@@ -129,39 +129,51 @@ export function LocationDetailClientView({
     }
 
     setIsBinSubmitting(true);
-    const res = await createStorageBinAction({
-      shopId,
-      locationId: location.id,
-      zone: binZone.trim(),
-      rack: binRack.trim() || undefined,
-      shelf: binShelf.trim() || undefined,
-      binCode: binCode.trim(),
-      description: binDesc.trim() || undefined,
-    });
-    setIsBinSubmitting(false);
+    try {
+      const res: any = await axiosClient.post("/inventory/bins", {
+        shop_id: shopId,
+        location_id: location.id,
+        zone: binZone.trim(),
+        rack: binRack.trim() || undefined,
+        shelf: binShelf.trim() || undefined,
+        bin_code: binCode.trim(),
+        description: binDesc.trim() || undefined,
+      });
 
-    if (res.success && res.bin) {
-      toast.success(`Storage bin ${binCode.trim()} created!`);
-      setLocationBins((prev) => [...prev, res.bin]);
-      setShowAddBinModal(false);
-      setBinZone("");
-      setBinRack("");
-      setBinShelf("");
-      setBinCode("");
-      setBinDesc("");
-    } else {
-      toast.error(res.error || "Failed to create storage bin.");
+      const bin = res?.bin || res?.data || res;
+      if (bin && !res.error) {
+        toast.success(`Storage bin ${binCode.trim()} created!`);
+        setLocationBins((prev) => [...prev, bin]);
+        setShowAddBinModal(false);
+        setBinZone("");
+        setBinRack("");
+        setBinShelf("");
+        setBinCode("");
+        setBinDesc("");
+      } else {
+        toast.error(res.error || "Failed to create storage bin.");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to create storage bin.");
+    } finally {
+      setIsBinSubmitting(false);
     }
   }
 
   async function handleDeleteBin(bin: any) {
     if (!confirm(`Are you sure you want to archive storage bin "${bin.binCode}"?`)) return;
-    const res = await deleteStorageBinAction(shopId, bin.id);
-    if (res.success) {
-      toast.success("Storage bin archived.");
-      setLocationBins((prev) => prev.filter((b) => b.id !== bin.id));
-    } else {
-      toast.error(res.error || "Failed to archive storage bin.");
+    try {
+      const res: any = await axiosClient.delete(`/inventory/bins/${bin.id}`, {
+        params: { shop_id: shopId },
+      });
+      if (res?.success !== false) {
+        toast.success("Storage bin archived.");
+        setLocationBins((prev) => prev.filter((b) => b.id !== bin.id));
+      } else {
+        toast.error(res.error || "Failed to archive storage bin.");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to archive storage bin.");
     }
   }
 
@@ -172,29 +184,29 @@ export function LocationDetailClientView({
   const [isDefault, setIsDefault] = useState(location.isDefault);
   const [loading, setLoading] = useState(false);
 
+  const updateLocationMutation = useUpdateLocation(shopId);
+  const deleteLocationMutation = useDeleteLocation(shopId);
+
   async function handleUpdateLocation(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return toast.error("Location name is required.");
     setLoading(true);
 
-    const res = await updateStockLocation({
-      locationId: location.id,
-      shopId,
-      shopSlug,
-      name,
-      code,
-      isDefault,
-      isActive: location.isActive,
-    });
-
-    if (res.success) {
-      toast.success("Location updated.");
+    try {
+      await updateLocationMutation.mutateAsync({
+        locationId: location.id,
+        name,
+        code,
+        isDefault,
+        isActive: location.isActive,
+      });
       setShowEditModal(false);
       router.refresh();
-    } else {
-      toast.error(res.error || "Update failed.");
+    } catch (err: any) {
+      toast.error(err?.message || "Update failed.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -203,14 +215,15 @@ export function LocationDetailClientView({
   async function handleConfirmDelete() {
     setIsDeleting(true);
     const toastId = toast.loading(`Deleting location "${location.name}"...`);
-    const res = await deleteStockLocation(location.id, shopSlug);
-    setIsDeleting(false);
-    if (res.success) {
+    try {
+      await deleteLocationMutation.mutateAsync(location.id);
       toast.success("Location deleted.", { id: toastId });
       setShowDeleteConfirm(false);
       router.push(`/workspaces/${shopSlug}/inventory/locations`);
-    } else {
-      toast.error(res.error || "Delete failed.", { id: toastId });
+    } catch (err: any) {
+      toast.error(err?.message || "Delete failed.", { id: toastId });
+    } finally {
+      setIsDeleting(false);
     }
   }
 

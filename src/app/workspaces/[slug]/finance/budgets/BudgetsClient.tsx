@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { upsertBudget, copyPreviousMonthBudgetAction } from "@/lib/actions/budgets";
+import { axiosClient } from "@/lib/api/axios";
 
 interface BudgetLine {
     accountId: string;
@@ -23,7 +23,7 @@ interface Props {
     month: number;
     year: number;
     currency: string;
-    lines: BudgetLine[];
+    lines?: BudgetLine[];
 }
 
 const MONTH_NAMES = [
@@ -35,7 +35,7 @@ function fmt(n: number, currency: string) {
     return `${currency} ${n.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function BudgetsClient({ shopId, shopSlug, isGlEnabled, month, year, currency, lines: initialLines }: Props) {
+export default function BudgetsClient({ shopId, shopSlug, isGlEnabled, month, year, currency, lines: initialLines = [] }: Props) {
     const router = useRouter();
     const [lines, setLines] = useState<BudgetLine[]>(initialLines);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -43,10 +43,25 @@ export default function BudgetsClient({ shopId, shopSlug, isGlEnabled, month, ye
     const [isPending, startTransition] = useTransition();
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-    // Sync state when props change due to month/year router push
+    // Sync state or load data
     useEffect(() => {
-        setLines(initialLines);
-    }, [initialLines, month, year]);
+        async function load() {
+            try {
+                const res: any = await axiosClient.get("/operations/budgets", {
+                    params: { shop_id: shopId, month, year },
+                });
+                const data = Array.isArray(res) ? res : res?.data || res?.lines || [];
+                setLines(data);
+            } catch (err) {
+                console.error("Failed to load budgets", err);
+            }
+        }
+        if (!initialLines || initialLines.length === 0) {
+            load();
+        } else {
+            setLines(initialLines);
+        }
+    }, [initialLines, month, year, shopId]);
 
     function showMsg(type: "success" | "error", text: string) {
         setMessage({ type, text });
@@ -80,12 +95,20 @@ export default function BudgetsClient({ shopId, shopSlug, isGlEnabled, month, ye
 
     function handleClonePreviousBudget() {
         startTransition(async () => {
-            const res = await copyPreviousMonthBudgetAction(shopId, shopSlug, month, year);
-            if (res.success) {
-                showMsg("success", res.message || "Previous budget cloned successfully.");
-                router.refresh();
-            } else {
-                showMsg("error", res.error || "Failed to clone previous month's budget.");
+            try {
+                const res: any = await axiosClient.post("/operations/budgets/clone-previous", {
+                    shop_id: shopId,
+                    month,
+                    year,
+                });
+                if (res?.success !== false) {
+                    showMsg("success", res.message || "Previous budget cloned successfully.");
+                    router.refresh();
+                } else {
+                    showMsg("error", res.error || "Failed to clone previous month's budget.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to clone previous month's budget.");
             }
         });
     }
@@ -95,22 +118,27 @@ export default function BudgetsClient({ shopId, shopSlug, isGlEnabled, month, ye
         if (isNaN(limit) || limit < 0) return;
 
         startTransition(async () => {
-            const res = await upsertBudget(shopId, shopSlug, {
-                accountId: line.accountId,
-                month,
-                year,
-                monthlyLimit: limit,
-            });
-            if (res.success) {
-                const pct = limit > 0 ? Math.min((line.actual / limit) * 100, 100) : null;
-                setLines(prev => prev.map(l => l.accountId === line.accountId
-                    ? { ...l, monthlyLimit: limit, percentUsed: pct, isOverBudget: line.actual > limit, isWarning: pct !== null && pct >= 80 && pct < 100 }
-                    : l
-                ));
-                setEditingId(null);
-                showMsg("success", `Budget for ${line.accountName} set to ${fmt(limit, currency)}.`);
-            } else {
-                showMsg("error", (res as any).error || "Failed to save.");
+            try {
+                const res: any = await axiosClient.post("/operations/budgets", {
+                    shop_id: shopId,
+                    account_id: line.accountId,
+                    month,
+                    year,
+                    budget_amount: limit,
+                });
+                if (res?.success !== false) {
+                    const pct = limit > 0 ? Math.min((line.actual / limit) * 100, 100) : null;
+                    setLines(prev => prev.map(l => l.accountId === line.accountId
+                        ? { ...l, monthlyLimit: limit, percentUsed: pct, isOverBudget: line.actual > limit, isWarning: pct !== null && pct >= 80 && pct < 100 }
+                        : l
+                    ));
+                    setEditingId(null);
+                    showMsg("success", `Budget for ${line.accountName} set to ${fmt(limit, currency)}.`);
+                } else {
+                    showMsg("error", res?.error || "Failed to save.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to save.");
             }
         });
     }

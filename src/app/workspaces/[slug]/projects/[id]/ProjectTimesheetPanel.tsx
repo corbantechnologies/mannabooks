@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { logTimesheetAction, submitTimesheetAction, reviewTimesheetAction, generateInvoiceFromTimesheetsAction } from "@/lib/actions/projects";
+import { axiosClient } from "@/lib/api/axios";
 import { formatCurrency } from "@/lib/utils";
 import { Clock, Plus, Check, X, FileText, ChevronDown } from "lucide-react";
 
@@ -70,18 +70,16 @@ export function ProjectTimesheetPanel({
     }
     setError(null);
     startTransition(async () => {
-      const res = await logTimesheetAction({
-        projectId,
-        shopId,
-        shopSlug,
-        workDate: form.workDate,
-        hoursLogged: parseFloat(form.hours),
-        taskDescription: form.description.trim(),
-        isBillable: form.isBillable,
-      });
-      if (res.success) {
+      try {
+        const res: any = await axiosClient.post(`/crm/projects/${projectId}/timesheets`, {
+          shop_id: shopId,
+          work_date: form.workDate,
+          hours_logged: parseFloat(form.hours),
+          task_description: form.description.trim(),
+          is_billable: form.isBillable,
+        });
         const entry: Timesheet = {
-          id: res.timesheetId!,
+          id: res?.timesheetId || res?.id || crypto.randomUUID(),
           workDate: form.workDate,
           hoursLogged: form.hours,
           taskDescription: form.description.trim(),
@@ -93,23 +91,34 @@ export function ProjectTimesheetPanel({
         setTimesheets(prev => [entry, ...prev]);
         setForm({ workDate: today, hours: "", description: "", isBillable: true });
         setShowForm(false);
-      } else {
-        setError(res.error || "Failed to log timesheet.");
+      } catch (err: any) {
+        setError(err?.response?.data?.detail || err?.message || "Failed to log timesheet.");
       }
     });
   };
 
   const handleSubmit = (tsId: string) => {
     startTransition(async () => {
-      await submitTimesheetAction(tsId, shopId, shopSlug, projectId);
-      setTimesheets(prev => prev.map(t => t.id === tsId ? { ...t, status: "SUBMITTED" } : t));
+      try {
+        await axiosClient.post(`/crm/projects/${projectId}/timesheets/${tsId}/submit`, { shop_id: shopId });
+        setTimesheets(prev => prev.map(t => t.id === tsId ? { ...t, status: "SUBMITTED" } : t));
+      } catch (err: any) {
+        console.error("Failed to submit timesheet", err);
+      }
     });
   };
 
   const handleReview = (tsId: string, action: "APPROVED" | "REJECTED") => {
     startTransition(async () => {
-      await reviewTimesheetAction({ timesheetId: tsId, shopId, shopSlug, projectId, action });
-      setTimesheets(prev => prev.map(t => t.id === tsId ? { ...t, status: action } : t));
+      try {
+        await axiosClient.post(`/crm/projects/${projectId}/timesheets/${tsId}/review`, {
+          action,
+          shop_id: shopId,
+        });
+        setTimesheets(prev => prev.map(t => t.id === tsId ? { ...t, status: action } : t));
+      } catch (err: any) {
+        console.error("Failed to review timesheet", err);
+      }
     });
   };
 
@@ -121,18 +130,19 @@ export function ProjectTimesheetPanel({
     }
     setMessage(null);
     startTransition(async () => {
-      const res = await generateInvoiceFromTimesheetsAction({
-        projectId,
-        shopId,
-        shopSlug,
-        timesheetIds: selectedIds,
-      });
-      if (res.success) {
+      try {
+        const res: any = await axiosClient.post(`/crm/projects/${projectId}/timesheets/invoice`, {
+          shop_id: shopId,
+          timesheet_ids: selectedIds,
+        });
+        const docId = res?.documentId || res?.document_id || res?.id;
         setMessage("✓ Invoice created.");
         setSelected(new Set());
-        window.open(`/workspaces/${shopSlug}/documents/${res.documentId}`, "_blank");
-      } else {
-        setMessage(res.error || "Failed to generate invoice.");
+        if (docId) {
+          window.open(`/workspaces/${shopSlug}/documents/${docId}`, "_blank");
+        }
+      } catch (err: any) {
+        setMessage(err?.response?.data?.detail || err?.message || "Failed to generate invoice.");
       }
     });
   };

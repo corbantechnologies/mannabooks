@@ -1,6 +1,5 @@
-// src/app/workspaces/[slug]/settings/diagnostics/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
-import { getLedgerSnapshotsAction } from "@/lib/actions/documents";
+import { apiClient } from "@/lib/api/client";
 import { DiagnosticsClient } from "./DiagnosticsClient";
 
 interface DiagnosticsPageProps {
@@ -12,8 +11,8 @@ export default async function WorkspaceDiagnosticsPage({ params }: DiagnosticsPa
 
   // Fetch workspace details server-side
   const { shop } = await getActiveWorkspaceContext(slug);
-  const snapshotsRes = await getLedgerSnapshotsAction(shop.id);
-  const snapshots = snapshotsRes.success && snapshotsRes.data ? snapshotsRes.data : [];
+  const snapshotsRes = await apiClient.get<any>(`/v1/workspaces/${shop.id}/snapshots`);
+  const snapshots = snapshotsRes.data?.snapshots || (Array.isArray(snapshotsRes.data) ? snapshotsRes.data : []);
 
   return (
     <div className="p-8 max-w-7xl space-y-8 selection:bg-black selection:text-white">

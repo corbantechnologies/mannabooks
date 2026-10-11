@@ -1,75 +1,84 @@
+// src/lib/actions/auth-login.ts
 "use server";
 
-import { db } from "@/db";
-import { users } from "@/db/schema";
-import { createSession } from "@/lib/actions/auth";
-import bcrypt from "bcrypt";
-import { eq } from "drizzle-orm";
-
-import { isApiModuleEnabled } from "@/lib/api/flags";
 import { apiClient } from "@/lib/api/client";
+import { isApiModuleEnabled } from "@/lib/api/flags";
+import { cookies } from "next/headers";
+import { SESSION_COOKIE_NAME, SESSION_DURATION_DAYS } from "@/lib/actions/auth";
 
-interface LoginInput {
-
-  email: string;
-  passwordHex: string;
+export interface LoginInput {
+    email: string;
+    passwordHex?: string;
+    password?: string;
 }
 
-export async function loginUserAccount(input: LoginInput) {
-  try {
-    const cleanEmail = input.email.toLowerCase().trim();
+export interface LoginResult {
+    success: boolean;
+    error?: string;
+    token?: string;
+    shopSlug?: string;
+    user?: any;
+}
 
-    // FASTAPI STRANGLER ROUTING
-    if (isApiModuleEnabled("auth")) {
-      const res = await apiClient<{
-        success: boolean;
-        token?: string;
-        error?: string;
-      }>("/v1/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email: cleanEmail, password: input.passwordHex }),
-      });
+/**
+ * Authenticates user credentials via the FastAPI backend and sets the session cookie.
+ */
+export async function loginUser(input: LoginInput): Promise<LoginResult> {
+    try {
+        const password = input.passwordHex || input.password || "";
+        const email = input.email.toLowerCase().trim();
 
-      if (res.error || !res.data?.success || !res.data?.token) {
+        const res = await apiClient<{
+            access_token?: string;
+            token?: string;
+            shop_slug?: string;
+            shopSlug?: string;
+            user?: any;
+            error?: string;
+            detail?: string;
+        }>("/v1/auth/token", {
+            method: "POST",
+            body: JSON.stringify({ email, password }),
+        });
+
+        if (res.error || !res.data) {
+            return {
+                success: false,
+                error: res.data?.detail || res.data?.error || res.error || "Invalid email or password.",
+            };
+        }
+
+        const token = res.data.access_token || res.data.token;
+        if (!token) {
+            return {
+                success: false,
+                error: "Authentication token missing from response.",
+            };
+        }
+
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS);
+
+        const cookieStore = await cookies();
+        cookieStore.set(SESSION_COOKIE_NAME, token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            expires: expiresAt,
+            path: "/",
+        });
+
         return {
-          success: false,
-          error: res.data?.error || res.error || "Invalid credentials.",
+            success: true,
+            token,
+            shopSlug: res.data.shop_slug || res.data.shopSlug || "",
+            user: res.data.user,
         };
-      }
-
-      // Return the token for pure client JWT storage in localStorage
-      return {
-        success: true,
-        token: res.data.token,
-      };
+    } catch (err: any) {
+        console.error("Login action error:", err);
+        return {
+            success: false,
+            error: err.message || "An unexpected error occurred during login.",
+        };
     }
-
-
-    // Legacy local DB path
-    const userRecord = await db.query.users.findFirst({
-      where: eq(users.email, cleanEmail),
-    });
-
-    if (!userRecord) {
-      return { success: false, error: "Invalid email or password parameters." };
-    }
-
-    const isPasswordValid = await bcrypt.compare(
-      input.passwordHex,
-      userRecord.passwordHash
-    );
-    if (!isPasswordValid) {
-      return { success: false, error: "Invalid email or password parameters." };
-    }
-
-    await createSession(userRecord.id);
-
-    return { success: true };
-  } catch (error) {
-    console.error("Critical failure during login mutation processing:", error);
-    return {
-      success: false,
-      error: "Authentication system failure. Please try again.",
-    };
-  }
 }

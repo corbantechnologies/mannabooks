@@ -1,6 +1,6 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { redirect } from "next/navigation";
-import { getCashFlowStatement } from "@/lib/actions/reports";
+import { apiClient } from "@/lib/api/client";
 import CashFlowClient from "./CashFlowClient";
 
 export default async function CashFlowPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -8,8 +8,10 @@ export default async function CashFlowPage({ params }: { params: Promise<{ slug:
     const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
-    const result = await getCashFlowStatement(shop.id, "THIS_MONTH");
-    const data = result.success ? result.data : null;
+    const res = await apiClient.get<any>(`/v1/reports/cashflow`, {
+        params: { shop_id: shop.id, timeframe: "THIS_MONTH" },
+    });
+    const data = res.data?.data || (res.data?.success !== false ? res.data : null);
 
     return (
         <div className="p-5 sm:p-7 space-y-6">

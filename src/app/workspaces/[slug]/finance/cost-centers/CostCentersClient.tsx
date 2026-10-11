@@ -1,13 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import {
-  createCostCenter,
-  updateCostCenter,
-  deleteCostCenter,
-  type CreateCostCenterInput,
-} from "@/lib/actions/cost-centers";
+import { axiosClient } from "@/lib/api/axios";
 
 export interface SerializedCostCenter {
   id: string;
@@ -21,16 +16,38 @@ export interface SerializedCostCenter {
 interface CostCentersClientProps {
   shopSlug: string;
   currency: string;
-  initialCenters: SerializedCostCenter[];
+  initialCenters?: SerializedCostCenter[];
 }
 
 export function CostCentersClient({
   shopSlug,
   currency,
-  initialCenters,
+  initialCenters = [],
 }: CostCentersClientProps) {
   const [centers, setCenters] = useState<SerializedCostCenter[]>(initialCenters);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res: any = await axiosClient.get(`/operations/cost-centers?shop_slug=${shopSlug}`);
+        const data = Array.isArray(res) ? res : res?.data || [];
+        setCenters(data.map((c: any) => ({
+          id: c.id,
+          code: c.code,
+          name: c.name,
+          department: c.department || null,
+          isActive: Boolean(c.isActive ?? c.is_active ?? true),
+          createdAt: c.createdAt || c.created_at || new Date().toISOString(),
+        })));
+      } catch (err) {
+        console.error("Failed to load cost centers", err);
+      }
+    }
+    if (!initialCenters || initialCenters.length === 0) {
+      load();
+    }
+  }, [shopSlug]);
 
   // Modal State
   const [isOpen, setIsOpen] = useState(false);
@@ -87,12 +104,12 @@ export function CostCentersClient({
 
     try {
       if (editingCenter) {
-        const res = await updateCostCenter(editingCenter.id, shopSlug, {
+        const res: any = await axiosClient.patch(`/operations/cost-centers/${editingCenter.id}?shop_slug=${shopSlug}`, {
           code,
           name,
           department,
         });
-        if (!res.success) {
+        if (res && res.success === false) {
           setError(res.error || "Update failed");
           setIsSubmitting(false);
           return;
@@ -105,24 +122,25 @@ export function CostCentersClient({
           )
         );
       } else {
-        const res = await createCostCenter(shopSlug, {
+        const res: any = await axiosClient.post(`/operations/cost-centers?shop_slug=${shopSlug}`, {
           code,
           name,
           department,
         });
-        if (!res.success) {
+        if (res && res.success === false) {
           setError(res.error || "Creation failed");
           setIsSubmitting(false);
           return;
         }
-        if (res.costCenter) {
+        const costCenter = res?.costCenter || res?.data || res;
+        if (costCenter) {
           const created: SerializedCostCenter = {
-            id: res.costCenter.id,
-            code: res.costCenter.code,
-            name: res.costCenter.name,
-            department: res.costCenter.department,
-            isActive: res.costCenter.isActive,
-            createdAt: res.costCenter.createdAt.toISOString(),
+            id: costCenter.id,
+            code: costCenter.code,
+            name: costCenter.name,
+            department: costCenter.department,
+            isActive: costCenter.isActive,
+            createdAt: costCenter.createdAt ? new Date(costCenter.createdAt).toISOString() : new Date().toISOString(),
           };
           setCenters([...centers, created]);
         }
@@ -138,8 +156,8 @@ export function CostCentersClient({
   async function handleToggleActive(c: SerializedCostCenter) {
     try {
       const nextActive = !c.isActive;
-      const res = await updateCostCenter(c.id, shopSlug, { isActive: nextActive });
-      if (!res.success) {
+      const res: any = await axiosClient.patch(`/operations/cost-centers/${c.id}?shop_slug=${shopSlug}`, { isActive: nextActive });
+      if (res && res.success === false) {
         toast.error(res.error || "Failed to toggle status");
         return;
       }
@@ -167,8 +185,8 @@ export function CostCentersClient({
             onClick={async () => {
               toast.dismiss(t.id);
               try {
-                const res = await deleteCostCenter(c.id, shopSlug);
-                if (!res.success) {
+                const res: any = await axiosClient.delete(`/operations/cost-centers/${c.id}?shop_slug=${shopSlug}`);
+                if (res && res.success === false) {
                   toast.error(res.error || "Delete failed");
                   return;
                 }

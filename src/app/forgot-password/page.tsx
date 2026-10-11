@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { requestPasswordReset } from "@/lib/actions/auth-reset";
+import { axiosClient } from "@/lib/api/axios";
 import Link from "next/link";
 
 export default function ForgotPasswordPage() {
@@ -14,13 +14,17 @@ export default function ForgotPasswordPage() {
         setStatus("LOADING");
         setErrorMessage("");
 
-        const res = await requestPasswordReset(email);
-
-        if (res.success) {
-            setStatus("SUCCESS");
-        } else {
+        try {
+            const res: any = await axiosClient.post("/auth/forgot-password", { email });
+            if (res && res.success === false) {
+                setStatus("ERROR");
+                setErrorMessage(res.error || "An unexpected error occurred.");
+            } else {
+                setStatus("SUCCESS");
+            }
+        } catch (err: any) {
             setStatus("ERROR");
-            setErrorMessage(res.error || "An unexpected error occurred.");
+            setErrorMessage(err?.response?.data?.detail || err?.message || "An unexpected error occurred.");
         }
     }
 

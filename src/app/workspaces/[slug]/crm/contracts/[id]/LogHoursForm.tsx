@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { logContractHoursAction } from "@/lib/actions/contracts";
+import { axiosClient } from "@/lib/api/axios";
 import { Clock } from "lucide-react";
 
 interface LogHoursFormProps {
@@ -35,21 +35,19 @@ export function LogHoursForm({ contractId, shopId, shopSlug, brandColor }: LogHo
     if (!form.description.trim()) { setError("Task description is required."); return; }
     setError(null);
     startTransition(async () => {
-      const res = await logContractHoursAction({
-        contractId,
-        shopId,
-        shopSlug,
-        hoursUsed: hours,
-        description: form.description.trim(),
-        logDate: form.logDate,
-      });
-      if (res.success) {
+      try {
+        await axiosClient.post(`/crm/contracts/${contractId}/hours`, {
+          shop_id: shopId,
+          hours_used: hours,
+          description: form.description.trim(),
+          log_date: form.logDate,
+        });
         setSuccess(true);
         setForm({ hours: "", description: "", logDate: today });
         setIsOpen(false);
         setTimeout(() => setSuccess(false), 3000);
-      } else {
-        setError(res.error || "Failed to log hours.");
+      } catch (err: any) {
+        setError(err?.response?.data?.detail || err?.message || "Failed to log hours.");
       }
     });
   };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { generateTaxInstalments, payTaxInstalment } from "@/lib/actions/tax";
+import { axiosClient } from "@/lib/api/axios";
 
 interface Instalment {
     id: string;
@@ -47,12 +47,19 @@ export default function InstalmentsClient({ shopId, shopSlug, year, estimatedTax
 
     function handleGenerate() {
         startTransition(async () => {
-            const res = await generateTaxInstalments(shopId, shopSlug, year);
-            if (res.success) {
-                showMsg("success", "Tax instalment schedule generated successfully.");
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                showMsg("error", res.error || "Failed to generate schedule.");
+            try {
+                const res: any = await axiosClient.post("/finance/tax/instalments/generate", {
+                    shop_id: shopId,
+                    year,
+                });
+                if (res?.success !== false) {
+                    showMsg("success", "Tax instalment schedule generated successfully.");
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showMsg("error", res.error || "Failed to generate schedule.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to generate schedule.");
             }
         });
     }
@@ -62,21 +69,26 @@ export default function InstalmentsClient({ shopId, shopSlug, year, estimatedTax
         if (isNaN(amt) || amt <= 0 || !payment.paymentReference) return;
 
         startTransition(async () => {
-            const res = await payTaxInstalment(shopId, shopSlug, id, {
-                paidAmount: amt,
-                paymentReference: payment.paymentReference.trim(),
-                paidAt: new Date(payment.paidAt + "T00:00:00"),
-            });
-            if (res.success) {
-                setInstalments(prev => prev.map(i => i.id === id
-                    ? { ...i, status: "PAID", paidAmount: amt.toFixed(2), paidAt: payment.paidAt, paymentReference: payment.paymentReference }
-                    : i
-                ));
-                setPayingId(null);
-                setPayment({ paidAmount: "", paymentReference: "", paidAt: new Date().toISOString().split("T")[0] });
-                showMsg("success", `Payment of ${fmt(amt, currency)} recorded and DR 2310 / CR 1200 posted.`);
-            } else {
-                showMsg("error", res.error || "Failed to pay instalment.");
+            try {
+                const res: any = await axiosClient.post(`/finance/tax/instalments/${id}/pay`, {
+                    shop_id: shopId,
+                    paidAmount: amt,
+                    paymentReference: payment.paymentReference.trim(),
+                    paidAt: payment.paidAt,
+                });
+                if (res?.success !== false) {
+                    setInstalments(prev => prev.map(i => i.id === id
+                        ? { ...i, status: "PAID", paidAmount: amt.toFixed(2), paidAt: payment.paidAt, paymentReference: payment.paymentReference }
+                        : i
+                    ));
+                    setPayingId(null);
+                    setPayment({ paidAmount: "", paymentReference: "", paidAt: new Date().toISOString().split("T")[0] });
+                    showMsg("success", `Payment of ${fmt(amt, currency)} recorded and DR 2310 / CR 1200 posted.`);
+                } else {
+                    showMsg("error", res.error || "Failed to pay instalment.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to pay instalment.");
             }
         });
     }

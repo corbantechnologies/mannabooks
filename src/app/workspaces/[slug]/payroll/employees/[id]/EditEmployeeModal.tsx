@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateEmployee } from "@/lib/actions/payroll";
+import { axiosClient } from "@/lib/api/axios";
 import { Spinner } from "@/components/Spinner";
 import { toast } from "react-hot-toast";
 
@@ -61,33 +61,32 @@ export function EditEmployeeModal({ employee, shopId, shopSlug }: EditEmployeeMo
 
     setLoading(true);
 
-    const res = await updateEmployee({
-      id: employee.id,
-      shopId,
-      fullName: fullName.trim(),
-      email: email.trim() || undefined,
-      department: department.trim() || undefined,
-      designation: designation.trim() || undefined,
-      employmentType,
-      nationalId: nationalId.trim() || undefined,
-      kraPin: kraPin.trim().toUpperCase() || undefined,
-      baseSalary: parseFloat(baseSalary) || 0,
-      commissionRate: parseFloat(commissionRate) || 0,
-      bankName: bankName.trim() || undefined,
-      bankAccountNumber: bankAccountNumber.trim() || undefined,
-      bankBranch: bankBranch.trim() || undefined,
-      mpesaPhone: mpesaPhone.trim() || undefined,
-      isActive,
-    });
+    try {
+      await axiosClient.patch(`/employees/${employee.id}`, {
+        shop_id: shopId,
+        fullName: fullName.trim(),
+        email: email.trim() || undefined,
+        department: department.trim() || undefined,
+        designation: designation.trim() || undefined,
+        employmentType,
+        nationalId: nationalId.trim() || undefined,
+        kraPin: kraPin.trim().toUpperCase() || undefined,
+        baseSalary: parseFloat(baseSalary) || 0,
+        commissionRate: parseFloat(commissionRate) || 0,
+        bankName: bankName.trim() || undefined,
+        bankAccountNumber: bankAccountNumber.trim() || undefined,
+        bankBranch: bankBranch.trim() || undefined,
+        mpesaPhone: mpesaPhone.trim() || undefined,
+        isActive,
+      });
 
-    setLoading(false);
-
-    if (res.success) {
+      setLoading(false);
       setIsOpen(false);
       toast.success("Employee profile updated.");
       router.refresh();
-    } else {
-      setError(res.error || "Failed to update employee.");
+    } catch (err: any) {
+      setLoading(false);
+      setError(err?.response?.data?.detail || err?.message || "Failed to update employee.");
     }
   }
 

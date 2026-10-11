@@ -2,11 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import {
-  createMilestoneAction,
-  updateMilestoneStatusAction,
-  convertMilestoneToInvoiceAction,
-} from "@/lib/actions/projects";
+import { axiosClient } from "@/lib/api/axios";
 import { formatCurrency } from "@/lib/utils";
 import { Plus, CheckCircle2, FileText, Target, Trash2, ChevronDown } from "lucide-react";
 
@@ -70,23 +66,22 @@ export function ProjectMilestonePanel({
     if (!form.title.trim() || !form.amount) { setError("Title and amount are required."); return; }
     setError(null);
     startTransition(async () => {
-      const res = await createMilestoneAction({
-        projectId,
-        shopId,
-        shopSlug,
-        title: form.title.trim(),
-        description: form.description || undefined,
-        amount: parseFloat(form.amount),
-        currency,
-        percentageOfTotal: parseFloat(form.percentageOfTotal) || 0,
-        dueDate: form.dueDate || undefined,
-        displayOrder: milestones.length,
-      });
-      if (res.success) {
+      try {
+        const res: any = await axiosClient.post(`/crm/projects/${projectId}/milestones`, {
+          shop_id: shopId,
+          title: form.title.trim(),
+          description: form.description || undefined,
+          amount: parseFloat(form.amount),
+          currency,
+          percentage_of_total: parseFloat(form.percentageOfTotal) || 0,
+          due_date: form.dueDate || undefined,
+          display_order: milestones.length,
+        });
+        const milestoneId = res?.milestoneId || res?.id || crypto.randomUUID();
         setMilestones(prev => [
           ...prev,
           {
-            id: res.milestoneId!,
+            id: milestoneId,
             title: form.title.trim(),
             description: form.description || null,
             amount: form.amount,
@@ -99,30 +94,43 @@ export function ProjectMilestonePanel({
         ]);
         setForm({ title: "", description: "", amount: "", dueDate: "", percentageOfTotal: "" });
         setShowForm(false);
-      } else {
-        setError(res.error || "Failed to add milestone.");
+      } catch (err: any) {
+        setError(err?.response?.data?.detail || err?.message || "Failed to add milestone.");
       }
     });
   };
 
   const handleStatusChange = (milestoneId: string, newStatus: Milestone["status"]) => {
     startTransition(async () => {
-      await updateMilestoneStatusAction(milestoneId, projectId, shopId, shopSlug, newStatus);
-      setMilestones(prev => prev.map(m => m.id === milestoneId ? { ...m, status: newStatus } : m));
+      try {
+        await axiosClient.patch(`/crm/projects/${projectId}/milestones/${milestoneId}/status`, {
+          status: newStatus,
+          shop_id: shopId,
+        });
+        setMilestones(prev => prev.map(m => m.id === milestoneId ? { ...m, status: newStatus } : m));
+      } catch (err: any) {
+        console.error("Failed to update status", err);
+      }
     });
   };
 
   const handleConvert = (milestoneId: string) => {
     setConvertingId(milestoneId);
     startTransition(async () => {
-      const res = await convertMilestoneToInvoiceAction({ milestoneId, projectId, shopId, shopSlug, clientId });
-      if (res.success) {
+      try {
+        const res: any = await axiosClient.post(`/crm/projects/${projectId}/milestones/${milestoneId}/convert`, {
+          shop_id: shopId,
+          client_id: clientId,
+        });
+        const docId = res?.documentId || res?.document_id || res?.id;
         setMilestones(prev => prev.map(m =>
-          m.id === milestoneId ? { ...m, status: "INVOICED", invoicedDocument: { id: res.documentId!, docNumber: "" } } : m
+          m.id === milestoneId ? { ...m, status: "INVOICED", invoicedDocument: { id: docId, docNumber: "" } } : m
         ));
-        window.open(`/workspaces/${shopSlug}/documents/${res.documentId}`, "_blank");
-      } else {
-        setError(res.error || "Failed to convert to invoice.");
+        if (docId) {
+          window.open(`/workspaces/${shopSlug}/documents/${docId}`, "_blank");
+        }
+      } catch (err: any) {
+        setError(err?.response?.data?.detail || err?.message || "Failed to convert to invoice.");
       }
       setConvertingId(null);
     });

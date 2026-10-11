@@ -3,9 +3,10 @@
 
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { createStockTransfer } from "@/lib/actions/stock-transfers";
 import { formatCurrency } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useCreateStockTransfer, useStockLocations } from "@/hooks/useInventoryOps";
+import { useProducts } from "@/hooks/useProducts";
 
 interface TransferLine {
   productId: string;
@@ -17,16 +18,33 @@ interface Props {
   shopId: string;
   shopSlug: string;
   shopCurrency: string;
-  locations: any[];
-  trackedProducts: any[];
+  locations?: any[];
+  trackedProducts?: any[];
 }
 
-export function NewTransferForm({ shopId, shopSlug, shopCurrency, locations, trackedProducts }: Props) {
+export function NewTransferForm({
+  shopId,
+  shopSlug,
+  shopCurrency,
+  locations: initialLocations = [],
+  trackedProducts: initialProducts = [],
+}: Props) {
   const router = useRouter();
+  const createTransfer = useCreateStockTransfer(shopId);
+  const { data: fetchedLocations = [] } = useStockLocations(shopId);
+  const { data: fetchedProducts = [] } = useProducts(shopId);
+
+  const locations = fetchedLocations.length > 0 ? fetchedLocations : initialLocations;
+  const trackedProducts = fetchedProducts.length > 0
+    ? fetchedProducts.filter((p: any) => Boolean(p.track_stock ?? p.trackStock))
+    : initialProducts;
+
   const [loading, setLoading] = useState(false);
-  const [fromLocationId, setFromLocationId] = useState(locations.find(l => l.isDefault)?.id || locations[0]?.id || "");
+  const [fromLocationId, setFromLocationId] = useState(
+    locations.find((l: any) => l.isDefault || l.is_default)?.id || locations[0]?.id || ""
+  );
   const [toLocationId, setToLocationId] = useState(
-    locations.find(l => !l.isDefault)?.id || locations[1]?.id || ""
+    locations.find((l: any) => !l.isDefault && !l.is_default)?.id || locations[1]?.id || ""
   );
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<TransferLine[]>([
@@ -61,28 +79,29 @@ export function NewTransferForm({ shopId, shopSlug, shopCurrency, locations, tra
     }
 
     setLoading(true);
-    const toastId = toast.loading("Creating transfer…");
 
-    const res = await createStockTransfer({
-      shopId,
-      shopSlug,
-      fromLocationId,
-      toLocationId,
-      notes: notes.trim() || undefined,
-      items: validLines.map(l => ({
-        productId: l.productId,
-        quantityRequested: Number(l.quantityRequested),
-        notes: l.notes || undefined,
-      })),
-    });
+    try {
+      const res: any = await createTransfer.mutateAsync({
+        from_location_id: fromLocationId,
+        to_location_id: toLocationId,
+        notes: notes.trim() || undefined,
+        items: validLines.map(l => ({
+          product_id: l.productId,
+          quantity_requested: Number(l.quantityRequested),
+          notes: l.notes || undefined,
+        })),
+      });
 
-    setLoading(false);
-
-    if (res.success) {
-      toast.success("Transfer created. Review and dispatch when ready.", { id: toastId });
-      router.push(`/workspaces/${shopSlug}/inventory/transfers/${res.transferId}`);
-    } else {
-      toast.error(res.error || "Failed to create transfer.", { id: toastId });
+      const transferId = res?.transferId || res?.id;
+      if (transferId) {
+        router.push(`/workspaces/${shopSlug}/inventory/transfers/${transferId}`);
+      } else {
+        router.push(`/workspaces/${shopSlug}/inventory/transfers`);
+      }
+    } catch {
+      // Handled in mutation
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -112,7 +131,7 @@ export function NewTransferForm({ shopId, shopSlug, shopCurrency, locations, tra
                 className="w-full px-3 py-2.5 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black font-sans text-xs"
                 required
               >
-                {locations.map(l => (
+                {locations.map((l: any) => (
                   <option key={l.id} value={l.id}>{l.name}{l.code ? ` [${l.code}]` : ""}</option>
                 ))}
               </select>
@@ -125,7 +144,7 @@ export function NewTransferForm({ shopId, shopSlug, shopCurrency, locations, tra
                 className="w-full px-3 py-2.5 border border-zinc-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-black font-sans text-xs"
                 required
               >
-                {locations.filter(l => l.id !== fromLocationId).map(l => (
+                {locations.filter((l: any) => l.id !== fromLocationId).map((l: any) => (
                   <option key={l.id} value={l.id}>{l.name}{l.code ? ` [${l.code}]` : ""}</option>
                 ))}
               </select>

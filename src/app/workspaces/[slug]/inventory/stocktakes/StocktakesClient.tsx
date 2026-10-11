@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState } from "react";
 import {
   ClipboardCheck,
   Plus,
@@ -14,66 +14,84 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { startStocktakeAction } from "@/lib/actions/stocktake";
+import { useStocktakes, useCreateStocktake, useStockLocations } from "@/hooks/useInventoryOps";
+import { Spinner } from "@/components/Spinner";
 
 interface Stocktake {
   id: string;
-  stocktakeNumber: string;
+  stocktakeNumber?: string;
+  stocktake_number?: string;
   status: string;
-  startedAt: Date;
-  completedAt: Date | null;
-  createdAt: Date;
-  location: {
+  startedAt?: Date;
+  started_at?: string;
+  completedAt?: Date | null;
+  completed_at?: string | null;
+  createdAt?: Date;
+  created_at?: string;
+  location?: {
     name: string;
     code: string | null;
   };
-  conductedBy: {
+  location_name?: string;
+  location_code?: string | null;
+  conductedBy?: {
     name: string;
     email: string;
   };
-  items: any[];
+  conducted_by?: string;
+  items?: any[];
 }
 
 interface StocktakesClientProps {
   shopId: string;
   shopSlug: string;
-  initialStocktakes: Stocktake[];
-  locations: any[];
+  initialStocktakes?: Stocktake[];
+  locations?: any[];
 }
 
 export function StocktakesClient({
   shopId,
   shopSlug,
-  initialStocktakes,
-  locations,
+  initialStocktakes = [],
+  locations: initialLocations = [],
 }: StocktakesClientProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const { data: fetchedStocktakes = [], isLoading } = useStocktakes(shopId);
+  const { data: fetchedLocations = [] } = useStockLocations(shopId);
+  const createStocktake = useCreateStocktake(shopId);
+
+  const stocktakes: any[] = fetchedStocktakes.length > 0 ? fetchedStocktakes : initialStocktakes;
+  const locations: any[] = fetchedLocations.length > 0 ? fetchedLocations : initialLocations;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState(locations[0]?.id || "");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const activeAudits = initialStocktakes.filter((s) => s.status === "COUNTING" || s.status === "IN_PROGRESS" || s.status === "DRAFT");
-  const completedAudits = initialStocktakes.filter((s) => s.status === "COMPLETED");
+  const activeAudits = stocktakes.filter(
+    (s: any) => s.status === "COUNTING" || s.status === "IN_PROGRESS" || s.status === "DRAFT"
+  );
+  const completedAudits = stocktakes.filter((s: any) => s.status === "COMPLETED");
 
-  const handleStartStocktake = (e: React.FormEvent) => {
+  const handleStartStocktake = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    startTransition(async () => {
-      const res = await startStocktakeAction({
-        shopId,
-        locationId: selectedLocationId,
+    try {
+      const res: any = await createStocktake.mutateAsync({
+        location_id: selectedLocationId,
       });
 
-      if (res.success && res.stocktakeId) {
+      const newId = res?.stocktakeId || res?.id;
+      if (newId) {
         setIsModalOpen(false);
-        router.push(`/workspaces/${shopSlug}/inventory/stocktakes/${res.stocktakeId}`);
+        router.push(`/workspaces/${shopSlug}/inventory/stocktakes/${newId}`);
       } else {
-        setErrorMsg(res.error || "Failed to initialize audit session.");
+        setIsModalOpen(false);
+        router.push(`/workspaces/${shopSlug}/inventory/stocktakes`);
       }
-    });
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to initialize audit session.");
+    }
   };
 
   return (
@@ -165,18 +183,18 @@ export function StocktakesClient({
                   return (
                     <tr key={audit.id} className="hover:bg-zinc-50/70 transition">
                       <td className="py-3 px-4 font-mono font-bold text-zinc-900">
-                        {audit.stocktakeNumber}
+                        {audit.stocktakeNumber || audit.stocktake_number || audit.id.slice(0, 8)}
                       </td>
                       <td className="py-3 px-4">
-                        <span className="font-semibold text-zinc-800">{audit.location.name}</span>
-                        {audit.location.code && (
+                        <span className="font-semibold text-zinc-800">{audit.location?.name || audit.location_name || "Default"}</span>
+                        {(audit.location?.code || audit.location_code) && (
                           <span className="text-[10px] font-mono text-zinc-400 ml-1.5">
-                            [{audit.location.code}]
+                            [{audit.location?.code || audit.location_code}]
                           </span>
                         )}
                       </td>
                       <td className="py-3 px-4 text-zinc-600">
-                        {audit.conductedBy?.name || audit.conductedBy?.email}
+                        {audit.conductedBy?.name || audit.conductedBy?.email || audit.conducted_by || "Staff"}
                       </td>
                       <td className="py-3 px-4 text-center font-mono font-semibold text-zinc-800">
                         {audit.items?.length || 0} products
@@ -195,7 +213,7 @@ export function StocktakesClient({
                         )}
                       </td>
                       <td className="py-3 px-4 font-mono text-zinc-500 text-[11px]">
-                        {new Date(audit.startedAt).toLocaleString()}
+                        {new Date(audit.startedAt || audit.started_at || audit.createdAt || Date.now()).toLocaleString()}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <Link
@@ -284,10 +302,10 @@ export function StocktakesClient({
                 </button>
                 <button
                   type="submit"
-                  disabled={isPending}
+                  disabled={createStocktake.isPending}
                   className="px-4 py-1.5 bg-black text-white font-semibold rounded hover:bg-zinc-800 disabled:opacity-50"
                 >
-                  {isPending ? "Generating Audit..." : "Begin Stocktake"}
+                  {createStocktake.isPending ? "Generating Audit..." : "Begin Stocktake"}
                 </button>
               </div>
             </form>

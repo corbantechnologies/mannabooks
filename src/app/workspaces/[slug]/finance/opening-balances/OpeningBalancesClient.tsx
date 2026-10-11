@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { postOpeningBalances } from "@/lib/actions/gl";
+import { axiosClient } from "@/lib/api/axios";
 
 type AccountType = "ASSET" | "LIABILITY" | "EQUITY" | "REVENUE" | "EXPENSE";
 
@@ -90,13 +90,20 @@ export default function OpeningBalancesClient({ shopId, shopSlug, accounts }: Pr
         if (lines.length === 0) { setMessage({ type: "error", text: "Enter at least one balance." }); return; }
 
         startTransition(async () => {
-            const res = await postOpeningBalances(shopId, shopSlug, new Date(asOfDate + "T00:00:00"), lines);
-            if (res.success) {
-                setMessage({ type: "success", text: `✓ ${res.posted} opening balance entries posted successfully.` });
-                // Reset
-                setBalances(Object.fromEntries(accounts.map(a => [a.id, { accountId: a.id, debitAmount: "", creditAmount: "" }])));
-            } else {
-                setMessage({ type: "error", text: res.error });
+            try {
+                const res: any = await axiosClient.post(`/accounts/opening-balances?shop_id=${shopId}`, {
+                    as_of_date: asOfDate,
+                    lines,
+                });
+                if (res?.success ?? true) {
+                    setMessage({ type: "success", text: `✓ ${res?.posted || lines.length} opening balance entries posted successfully.` });
+                    // Reset
+                    setBalances(Object.fromEntries(accounts.map(a => [a.id, { accountId: a.id, debitAmount: "", creditAmount: "" }])));
+                } else {
+                    setMessage({ type: "error", text: res?.error || res?.message || "Failed to post opening balances." });
+                }
+            } catch (err: any) {
+                setMessage({ type: "error", text: err?.response?.data?.detail || err?.message || "Failed to post opening balances." });
             }
         });
     }

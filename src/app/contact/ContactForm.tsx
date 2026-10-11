@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { submitContactForm } from "@/lib/actions/contact";
+import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 
 const SUBJECTS = [
@@ -29,22 +29,27 @@ export function ContactForm() {
 
         const toastId = toast.loading("Sending your message...");
 
-        const res = await submitContactForm({
-            name: data.get("name") as string,
-            email: data.get("email") as string,
-            company: data.get("company") as string,
-            phone: data.get("phone") as string,
-            subject: data.get("subject") as string,
-            message: data.get("message") as string,
-        });
+        try {
+            const res: any = await axiosClient.post("/contact", {
+                name: data.get("name") as string,
+                email: data.get("email") as string,
+                company: data.get("company") as string,
+                phone: data.get("phone") as string,
+                subject: data.get("subject") as string,
+                message: data.get("message") as string,
+            });
 
-        setLoading(false);
+            setLoading(false);
 
-        if (res.success) {
-            toast.success("Message sent! We'll be in touch soon.", { id: toastId });
-            setSent(true);
-        } else {
-            toast.error(res.error || "Something went wrong. Please try again.", { id: toastId });
+            if (res?.success !== false) {
+                toast.success("Message sent! We'll be in touch soon.", { id: toastId });
+                setSent(true);
+            } else {
+                toast.error(res?.error || "Failed to send message.", { id: toastId });
+            }
+        } catch (err: any) {
+            setLoading(false);
+            toast.error(err?.message || "Failed to send message.", { id: toastId });
         }
     }
 

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useTransition } from "react";
-import { PublicCatalogItem, PublicShopProfile, PublicShopTerm, requestCatalogQuotationAction } from "@/lib/actions/catalog";
+import { type PublicCatalogItem, type PublicShopProfile, type PublicShopTerm } from "@/types/catalog";
+import { axiosClient } from "@/lib/api/axios";
 import { formatCurrency } from "@/lib/utils";
 import { Spinner } from "@/components/Spinner";
 import { toast } from "react-hot-toast";
@@ -137,31 +138,35 @@ export function PublicCatalogClient({
     }
 
     startTransition(async () => {
-      const res = await requestCatalogQuotationAction({
-        shopId: shop.id,
-        shopSlug: shop.slug,
-        customerName,
-        customerEmail: customerEmail || undefined,
-        customerPhone: customerPhone || undefined,
-        customerNotes: customerNotes || undefined,
-        items: Object.values(selectedItems).map((i) => ({
-          productId: i.product.id,
-          quantity: i.quantity,
-          notes: i.notes || undefined,
-        })),
-      });
-
-      if (res.success && res.serial) {
-        setSubmittedQuote({
-          serial: res.serial,
-          token: res.token,
-          documentId: res.documentId,
-          grandTotal: res.grandTotal,
+      try {
+        const res: any = await axiosClient.post(`/portal/catalog/${shop.slug}/quote`, {
+          shopId: shop.id,
+          shopSlug: shop.slug,
+          customerName,
+          customerEmail: customerEmail || undefined,
+          customerPhone: customerPhone || undefined,
+          customerNotes: customerNotes || undefined,
+          items: Object.values(selectedItems).map((i) => ({
+            productId: i.product.id,
+            quantity: i.quantity,
+            notes: i.notes || undefined,
+          })),
         });
-        setSelectedItems({});
-        toast.success(`Quotation ${res.serial} issued successfully!`);
-      } else {
-        toast.error((res as any).error || "Failed to submit quote request.");
+
+        if (res?.success && res?.serial) {
+          setSubmittedQuote({
+            serial: res.serial,
+            token: res.token,
+            documentId: res.documentId,
+            grandTotal: res.grandTotal,
+          });
+          setSelectedItems({});
+          toast.success(`Quotation ${res.serial} issued successfully!`);
+        } else {
+          toast.error(res?.error || "Failed to submit quote request.");
+        }
+      } catch (err: any) {
+        toast.error(err?.response?.data?.detail || err?.message || "Failed to submit quote request.");
       }
     });
   }

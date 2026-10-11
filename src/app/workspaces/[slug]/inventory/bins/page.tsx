@@ -1,6 +1,5 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
-import { getStockLocations } from "@/lib/actions/inventory";
-import { getStorageBins } from "@/lib/actions/wms";
+import { apiClient } from "@/lib/api/client";
 import { StorageBinsClient } from "./StorageBinsClient";
 import { Metadata } from "next";
 
@@ -17,10 +16,12 @@ export default async function StorageBinsPage({ params }: StorageBinsPageProps) 
   const { slug } = await params;
   const { shop } = await getActiveWorkspaceContext(slug);
 
-  const [locations, bins] = await Promise.all([
-    getStockLocations(shop.id),
-    getStorageBins(shop.id),
+  const [locationsRes, binsRes] = await Promise.all([
+    apiClient.get<any>(`/v1/inventory/locations`, { params: { shop_id: shop.id } }),
+    apiClient.get<any>(`/v1/inventory/bins`, { params: { shop_id: shop.id } }),
   ]);
+  const locations = locationsRes.data?.locations || (Array.isArray(locationsRes.data) ? locationsRes.data : []);
+  const bins = binsRes.data?.bins || (Array.isArray(binsRes.data) ? binsRes.data : []);
 
   return (
     <div className="p-5 sm:p-7 space-y-6">

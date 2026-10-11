@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { resetPasswordWithToken } from "@/lib/actions/auth-reset";
+import { axiosClient } from "@/lib/api/axios";
 import Link from "next/link";
 
 function ResetPasswordForm() {
@@ -42,13 +42,17 @@ function ResetPasswordForm() {
         setStatus("LOADING");
         setErrorMessage("");
 
-        const res = await resetPasswordWithToken(token, password);
-
-        if (res.success) {
-            setStatus("SUCCESS");
-        } else {
+        try {
+            const res: any = await axiosClient.post("/auth/reset-password", { token, password });
+            if (res && res.success === false) {
+                setStatus("ERROR");
+                setErrorMessage(res.error || "An unexpected error occurred.");
+            } else {
+                setStatus("SUCCESS");
+            }
+        } catch (err: any) {
             setStatus("ERROR");
-            setErrorMessage(res.error || "An unexpected error occurred.");
+            setErrorMessage(err?.response?.data?.detail || err?.message || "An unexpected error occurred.");
         }
     }
 

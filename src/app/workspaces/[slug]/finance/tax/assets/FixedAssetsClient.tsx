@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createFixedAsset, disposeFixedAsset, computeCapitalAllowances } from "@/lib/actions/tax";
+import { axiosClient } from "@/lib/api/axios";
 
 type AssetClass = "CLASS_1" | "CLASS_2" | "CLASS_3" | "CLASS_4" | "BUILDING";
 
@@ -62,25 +62,31 @@ export default function FixedAssetsClient({ shopId, shopSlug, initialAssets, cur
     function handleAdd() {
         if (!newAsset.name || !newAsset.purchaseCost) return;
         startTransition(async () => {
-            const res = await createFixedAsset(shopId, shopSlug, {
-                name: newAsset.name,
-                assetClass: newAsset.assetClass,
-                purchaseDate: new Date(newAsset.purchaseDate + "T00:00:00"),
-                purchaseCost: parseFloat(newAsset.purchaseCost),
-                scrapValue: parseFloat(newAsset.scrapValue) || 0,
-            });
-            if (res.success && res.asset) {
-                setAssets(prev => [{
-                    ...res.asset!,
-                    assetClass: res.asset!.assetClass as AssetClass,
-                    disposalDate: null,
-                    disposalProceeds: null,
-                }, ...prev]);
-                setShowAddForm(false);
-                setNewAsset({ name: "", assetClass: "CLASS_4", purchaseDate: new Date().toISOString().split("T")[0], purchaseCost: "", scrapValue: "0" });
-                showMsg("success", `Asset ${res.asset.name} registered and DR 1400 / CR 1200 journal entry posted.`);
-            } else {
-                showMsg("error", (res as any).error || "Failed to add asset.");
+            try {
+                const res: any = await axiosClient.post("/finance/fixed-assets", {
+                    shop_id: shopId,
+                    name: newAsset.name,
+                    assetClass: newAsset.assetClass,
+                    purchaseDate: newAsset.purchaseDate,
+                    purchaseCost: parseFloat(newAsset.purchaseCost),
+                    scrapValue: parseFloat(newAsset.scrapValue) || 0,
+                });
+                const asset = res?.asset || res?.data || res;
+                if (asset && !res.error) {
+                    setAssets(prev => [{
+                        ...asset,
+                        assetClass: (asset.assetClass || newAsset.assetClass) as AssetClass,
+                        disposalDate: null,
+                        disposalProceeds: null,
+                    }, ...prev]);
+                    setShowAddForm(false);
+                    setNewAsset({ name: "", assetClass: "CLASS_4", purchaseDate: new Date().toISOString().split("T")[0], purchaseCost: "", scrapValue: "0" });
+                    showMsg("success", `Asset ${asset.name || newAsset.name} registered and DR 1400 / CR 1200 journal entry posted.`);
+                } else {
+                    showMsg("error", res?.error || "Failed to add asset.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to add asset.");
             }
         });
     }
@@ -88,33 +94,46 @@ export default function FixedAssetsClient({ shopId, shopSlug, initialAssets, cur
     function handleDispose(assetId: string) {
         if (!disposal.disposalProceeds) return;
         startTransition(async () => {
-            const res = await disposeFixedAsset(shopId, shopSlug, assetId, {
-                disposalDate: new Date(disposal.disposalDate + "T00:00:00"),
-                disposalProceeds: parseFloat(disposal.disposalProceeds),
-            });
-            if (res.success) {
-                setAssets(prev => prev.map(a => a.id === assetId
-                    ? { ...a, isDisposed: true, disposalDate: disposal.disposalDate, disposalProceeds: disposal.disposalProceeds }
-                    : a
-                ));
-                setDisposingId(null);
-                setDisposal({ disposalDate: new Date().toISOString().split("T")[0], disposalProceeds: "" });
-                showMsg("success", "Asset disposed and DR 1200 / CR 1400 journal entry posted.");
-            } else {
-                showMsg("error", res.error || "Failed to dispose asset.");
+            try {
+                const res: any = await axiosClient.post(`/finance/fixed-assets/${assetId}/dispose`, {
+                    shop_id: shopId,
+                    disposalDate: disposal.disposalDate,
+                    disposalProceeds: parseFloat(disposal.disposalProceeds),
+                });
+                if (res?.success !== false) {
+                    setAssets(prev => prev.map(a => a.id === assetId
+                        ? { ...a, isDisposed: true, disposalDate: disposal.disposalDate, disposalProceeds: disposal.disposalProceeds }
+                        : a
+                    ));
+                    setDisposingId(null);
+                    setDisposal({ disposalDate: new Date().toISOString().split("T")[0], disposalProceeds: "" });
+                    showMsg("success", "Asset disposed and DR 1200 / CR 1400 journal entry posted.");
+                } else {
+                    showMsg("error", res.error || "Failed to dispose asset.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to dispose asset.");
             }
         });
     }
 
     function handleRunCapitalAllowances() {
         startTransition(async () => {
-            const year = new Date().getFullYear();
-            const res = await computeCapitalAllowances(shopId, shopSlug, year);
-            if (res.success) {
-                showMsg("success", `✓ Capital allowances calculated. Depreciation expense of KES ${res.amount?.toLocaleString("en-KE")} posted.`);
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                showMsg("error", res.error!);
+            try {
+                const year = new Date().getFullYear();
+                const res: any = await axiosClient.post("/finance/fixed-assets/capital-allowances", {
+                    shop_id: shopId,
+                    year,
+                });
+                if (res?.success !== false) {
+                    const amt = res?.amount || 0;
+                    showMsg("success", `✓ Capital allowances calculated. Depreciation expense of KES ${amt.toLocaleString("en-KE")} posted.`);
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showMsg("error", res.error || "Failed to calculate allowances.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to calculate allowances.");
             }
         });
     }

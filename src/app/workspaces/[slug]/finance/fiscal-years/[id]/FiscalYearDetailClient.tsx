@@ -28,8 +28,7 @@ import {
     Filter,
 } from "lucide-react";
 import { Spinner } from "@/components/Spinner";
-import { closePeriod, reopenPeriod, getPeriodDetails } from "@/lib/actions/gl";
-import { closeFiscalYear, reopenFiscalYear, deleteFiscalYear } from "@/lib/actions/fiscal-years";
+import { axiosClient } from "@/lib/api/axios";
 
 interface Props {
     shopId: string;
@@ -89,15 +88,17 @@ export default function FiscalYearDetailClient({
         setLoadingDetails(true);
         setPeriodDetails(null);
         try {
-            const res = await getPeriodDetails(shopId, periodId);
-            if (res.success) {
-                setPeriodDetails(res.data);
+            const res: any = await axiosClient.get(`/accounts/periods/${periodId}/details`, {
+                params: { shop_id: shopId },
+            });
+            if (res?.success ?? true) {
+                setPeriodDetails(res?.data || res);
             } else {
-                toast.error(res.error || "Failed to load period journal entries.");
+                toast.error(res?.error || "Failed to load period journal entries.");
                 setInspectPeriodId(null);
             }
         } catch (err: any) {
-            toast.error(err.message || "Failed to load period journal entries.");
+            toast.error(err?.response?.data?.detail || err?.message || "Failed to load period journal entries.");
             setInspectPeriodId(null);
         } finally {
             setLoadingDetails(false);
@@ -108,27 +109,33 @@ export default function FiscalYearDetailClient({
     function handleClosePeriod(periodId: string) {
         startTransition(async () => {
             const toastId = toast.loading("Closing period & recording balance snapshot...");
-            const res = await closePeriod(shopId, shopSlug, periodId);
-            if (res.success) {
-                toast.success("Period closed successfully. Entries are now locked.", { id: toastId });
-                setConfirmClosePeriodId(null);
-                // Optimistically update
-                setData((prev: any) => ({
-                    ...prev,
-                    periods: prev.periods.map((p: any) =>
-                        p.id === periodId
-                            ? { ...p, status: "CLOSED", closedAt: new Date().toISOString() }
-                            : p
-                    ),
-                    kpis: {
-                        ...prev.kpis,
-                        closedPeriodsCount: prev.kpis.closedPeriodsCount + 1,
-                        lockProgressPercent: Math.round(((prev.kpis.closedPeriodsCount + 1) / prev.kpis.totalPeriodsCount) * 100),
-                    },
-                }));
-                router.refresh();
-            } else {
-                toast.error(res.error || "Failed to close period.", { id: toastId });
+            try {
+                const res: any = await axiosClient.post(`/accounts/periods/${periodId}/close`, {
+                    shop_id: shopId,
+                });
+                if (res?.success ?? true) {
+                    toast.success("Period closed successfully. Entries are now locked.", { id: toastId });
+                    setConfirmClosePeriodId(null);
+                    // Optimistically update
+                    setData((prev: any) => ({
+                        ...prev,
+                        periods: prev.periods.map((p: any) =>
+                            p.id === periodId
+                                ? { ...p, status: "CLOSED", closedAt: new Date().toISOString() }
+                                : p
+                        ),
+                        kpis: {
+                            ...prev.kpis,
+                            closedPeriodsCount: prev.kpis.closedPeriodsCount + 1,
+                            lockProgressPercent: Math.round(((prev.kpis.closedPeriodsCount + 1) / prev.kpis.totalPeriodsCount) * 100),
+                        },
+                    }));
+                    router.refresh();
+                } else {
+                    toast.error(res?.error || "Failed to close period.", { id: toastId });
+                }
+            } catch (err: any) {
+                toast.error(err?.response?.data?.detail || err?.message || "Failed to close period.", { id: toastId });
             }
         });
     }
@@ -137,25 +144,31 @@ export default function FiscalYearDetailClient({
     function handleReopenPeriod(periodId: string) {
         startTransition(async () => {
             const toastId = toast.loading("Reopening period...");
-            const res = await reopenPeriod(shopId, shopSlug, periodId);
-            if (res.success) {
-                toast.success("Period reopened. Entries can now be posted.", { id: toastId });
-                setData((prev: any) => ({
-                    ...prev,
-                    periods: prev.periods.map((p: any) =>
-                        p.id === periodId
-                            ? { ...p, status: "OPEN", closedAt: null, closedByName: null }
-                            : p
-                    ),
-                    kpis: {
-                        ...prev.kpis,
-                        closedPeriodsCount: Math.max(0, prev.kpis.closedPeriodsCount - 1),
-                        lockProgressPercent: Math.round(((prev.kpis.closedPeriodsCount - 1) / prev.kpis.totalPeriodsCount) * 100),
-                    },
-                }));
-                router.refresh();
-            } else {
-                toast.error(res.error || "Failed to reopen period.", { id: toastId });
+            try {
+                const res: any = await axiosClient.post(`/accounts/periods/${periodId}/reopen`, {
+                    shop_id: shopId,
+                });
+                if (res?.success ?? true) {
+                    toast.success("Period reopened. Entries can now be posted.", { id: toastId });
+                    setData((prev: any) => ({
+                        ...prev,
+                        periods: prev.periods.map((p: any) =>
+                            p.id === periodId
+                                ? { ...p, status: "OPEN", closedAt: null, closedByName: null }
+                                : p
+                        ),
+                        kpis: {
+                            ...prev.kpis,
+                            closedPeriodsCount: Math.max(0, prev.kpis.closedPeriodsCount - 1),
+                            lockProgressPercent: Math.round(((prev.kpis.closedPeriodsCount - 1) / prev.kpis.totalPeriodsCount) * 100),
+                        },
+                    }));
+                    router.refresh();
+                } else {
+                    toast.error(res?.error || "Failed to reopen period.", { id: toastId });
+                }
+            } catch (err: any) {
+                toast.error(err?.response?.data?.detail || err?.message || "Failed to reopen period.", { id: toastId });
             }
         });
     }
@@ -164,18 +177,24 @@ export default function FiscalYearDetailClient({
     function handleCloseFiscalYear() {
         startTransition(async () => {
             const toastId = toast.loading("Executing year-end closure & Retained Earnings rollover...");
-            const res = await closeFiscalYear(shopId, shopSlug, fiscalYear.id);
-            if (res.success) {
-                toast.success("Fiscal Year closed and audited! Closing entries posted.", { id: toastId });
-                setShowCloseModal(false);
-                setData((prev: any) => ({
-                    ...prev,
-                    fiscalYear: { ...prev.fiscalYear, isClosed: true },
-                    closingChecklist: { ...prev.closingChecklist, canCloseYear: false },
-                }));
-                router.refresh();
-            } else {
-                toast.error(res.error || "Failed to close fiscal year.", { id: toastId });
+            try {
+                const res: any = await axiosClient.post(`/accounts/fiscal-years/${fiscalYear.id}/close`, {
+                    shop_id: shopId,
+                });
+                if (res?.success ?? true) {
+                    toast.success("Fiscal Year closed and audited! Closing entries posted.", { id: toastId });
+                    setShowCloseModal(false);
+                    setData((prev: any) => ({
+                        ...prev,
+                        fiscalYear: { ...prev.fiscalYear, isClosed: true },
+                        closingChecklist: { ...prev.closingChecklist, canCloseYear: false },
+                    }));
+                    router.refresh();
+                } else {
+                    toast.error(res?.error || "Failed to close fiscal year.", { id: toastId });
+                }
+            } catch (err: any) {
+                toast.error(err?.response?.data?.detail || err?.message || "Failed to close fiscal year.", { id: toastId });
             }
         });
     }
@@ -184,17 +203,23 @@ export default function FiscalYearDetailClient({
     function handleReopenFiscalYear() {
         startTransition(async () => {
             const toastId = toast.loading("Reversing year-end closing entries and reopening year...");
-            const res = await reopenFiscalYear(shopId, shopSlug, fiscalYear.id);
-            if (res.success) {
-                toast.success("Fiscal Year reopened! Prior closing entries removed.", { id: toastId });
-                setShowReopenModal(false);
-                setData((prev: any) => ({
-                    ...prev,
-                    fiscalYear: { ...prev.fiscalYear, isClosed: false },
-                }));
-                router.refresh();
-            } else {
-                toast.error(res.error || "Failed to reopen fiscal year.", { id: toastId });
+            try {
+                const res: any = await axiosClient.post(`/accounts/fiscal-years/${fiscalYear.id}/reopen`, {
+                    shop_id: shopId,
+                });
+                if (res?.success ?? true) {
+                    toast.success("Fiscal Year reopened! Prior closing entries removed.", { id: toastId });
+                    setShowReopenModal(false);
+                    setData((prev: any) => ({
+                        ...prev,
+                        fiscalYear: { ...prev.fiscalYear, isClosed: false },
+                    }));
+                    router.refresh();
+                } else {
+                    toast.error(res?.error || "Failed to reopen fiscal year.", { id: toastId });
+                }
+            } catch (err: any) {
+                toast.error(err?.response?.data?.detail || err?.message || "Failed to reopen fiscal year.", { id: toastId });
             }
         });
     }

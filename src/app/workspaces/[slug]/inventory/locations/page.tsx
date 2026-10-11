@@ -1,7 +1,6 @@
 // src/app/workspaces/[slug]/inventory/locations/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
-import { getStockLocationsWithStats } from "@/lib/actions/inventory";
 import { LocationsClientView } from "./LocationsClientView";
 
 interface LocationsPageProps {
@@ -13,14 +12,11 @@ export default async function StockLocationsPage({ params }: LocationsPageProps)
   const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
-  const locations = await getStockLocationsWithStats(shop.id);
-
   return (
     <LocationsClientView
       shopId={shop.id}
       shopSlug={slug}
       shopCurrency={shop.currency}
-      initialLocations={locations}
     />
   );
 }

@@ -1,7 +1,6 @@
-// src/app/workspaces/[slug]/inventory/transfers/[id]/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
-import { getStockTransfer } from "@/lib/actions/stock-transfers";
+import { apiClient } from "@/lib/api/client";
 import { TransferDetailClient } from "./TransferDetailClient";
 
 interface TransferDetailPageProps {
@@ -14,8 +13,9 @@ export default async function TransferDetailPage({ params }: TransferDetailPageP
   const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
-  const transfer = await getStockTransfer(id);
-  if (!transfer || transfer.shopId !== shop.id) notFound();
+  const res = await apiClient.get<any>(`/v1/inventory/transfers/${id}`, { params: { shop_id: shop.id } });
+  const transfer = res.data?.transfer || (res.data?.id ? res.data : null);
+  if (!transfer) notFound();
 
   return (
     <TransferDetailClient

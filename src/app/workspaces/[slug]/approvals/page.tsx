@@ -1,5 +1,4 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
-import { getApprovalRequests, getApprovalPolicies } from "@/lib/actions/approvals";
 import { ApprovalsClient } from "./ApprovalsClient";
 import { Metadata } from "next";
 
@@ -15,18 +14,6 @@ interface ApprovalsPageProps {
 export default async function ApprovalsPage({ params }: ApprovalsPageProps) {
   const { slug } = await params;
   const { shop, user, role } = await getActiveWorkspaceContext(slug);
-
-  let requests: any[] = [];
-  let policies: any[] = [];
-
-  try {
-    [requests, policies] = await Promise.all([
-      getApprovalRequests(shop.id),
-      getApprovalPolicies(shop.id),
-    ]);
-  } catch (err) {
-    console.error("Failed to load approvals data for workspace:", slug, err);
-  }
 
   return (
     <div className="p-5 sm:p-7 space-y-6">
@@ -48,8 +35,6 @@ export default async function ApprovalsPage({ params }: ApprovalsPageProps) {
         currency={shop.currency || "KES"}
         currentUser={user}
         userRole={role}
-        initialRequests={requests}
-        initialPolicies={policies}
       />
     </div>
   );

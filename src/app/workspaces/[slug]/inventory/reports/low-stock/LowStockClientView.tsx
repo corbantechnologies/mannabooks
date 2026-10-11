@@ -1,0 +1,166 @@
+"use client";
+
+import { useProducts } from "@/hooks/useProducts";
+import { formatCurrency } from "@/lib/utils";
+import { Spinner } from "@/components/Spinner";
+import Link from "next/link";
+
+interface Props {
+  shopId: string;
+  shopSlug: string;
+  shopCurrency: string;
+}
+
+export function LowStockClientView({ shopId, shopSlug, shopCurrency }: Props) {
+  const { data: allProducts = [], isLoading } = useProducts(shopId);
+
+  const trackedProducts = (allProducts || []).filter((p: any) => Boolean(p.track_stock ?? p.trackStock));
+  const lowStockProducts = trackedProducts
+    .filter((p: any) => {
+      const qty = parseFloat(String(p.stock_quantity ?? "0"));
+      const threshold = parseFloat(String(p.reorder_threshold ?? "5"));
+      return qty <= threshold;
+    })
+    .sort((a: any, b: any) => parseFloat(String(a.stock_quantity ?? "0")) - parseFloat(String(b.stock_quantity ?? "0")));
+
+  const outOfStock = lowStockProducts.filter((p: any) => parseFloat(String(p.stock_quantity ?? "0")) <= 0);
+  const critical = lowStockProducts.filter((p: any) => {
+    const qty = parseFloat(String(p.stock_quantity ?? "0"));
+    const threshold = parseFloat(String(p.reorder_threshold ?? "5"));
+    return qty > 0 && qty <= threshold / 2;
+  });
+  const reorderNeeded = lowStockProducts.filter((p: any) => {
+    const qty = parseFloat(String(p.stock_quantity ?? "0"));
+    const threshold = parseFloat(String(p.reorder_threshold ?? "5"));
+    return qty > threshold / 2 && qty <= threshold;
+  });
+
+  return (
+    <div className="p-5 sm:p-7 space-y-6 font-mono text-xs">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <span className="text-xs text-zinc-400 font-medium">Inventory / Reports</span>
+          <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Low Stock Alerts</h1>
+          <p className="font-sans text-xs text-zinc-600 mt-1">
+            Products at or below their reorder threshold requiring immediate attention.
+          </p>
+        </div>
+        <Link
+          href={`/workspaces/${shopSlug}/inventory/adjustments`}
+          className="bg-black text-white hover:bg-zinc-800 px-4 py-2 font-mono text-xs font-semibold uppercase rounded transition-colors"
+        >
+          + Adjust Stock
+        </Link>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center py-20">
+          <Spinner size={32} />
+        </div>
+      ) : (
+        <>
+          {/* KPI CARDS */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="card-modern p-5 border-rose-300 bg-rose-50 space-y-1">
+              <p className="text-[10px] text-rose-600 uppercase font-semibold">⛔ Out of Stock</p>
+              <p className="text-2xl font-semibold font-mono text-rose-900">{outOfStock.length}</p>
+              <p className="text-[10px] text-rose-700">Zero quantity — cannot fulfill orders</p>
+            </div>
+            <div className="card-modern p-5 border-amber-300 bg-amber-50 space-y-1">
+              <p className="text-[10px] text-amber-700 uppercase font-semibold">⚠️ Critical</p>
+              <p className="text-2xl font-semibold font-mono text-amber-900">{critical.length}</p>
+              <p className="text-[10px] text-amber-700">Below 50% of reorder threshold</p>
+            </div>
+            <div className="card-modern p-5 border-yellow-300 bg-yellow-50 space-y-1">
+              <p className="text-[10px] text-yellow-700 uppercase font-semibold">🔔 Reorder Now</p>
+              <p className="text-2xl font-semibold font-mono text-yellow-900">{reorderNeeded.length}</p>
+              <p className="text-[10px] text-yellow-700">At or below reorder threshold</p>
+            </div>
+          </div>
+
+          {lowStockProducts.length === 0 ? (
+            <div className="card-modern p-16 text-center space-y-3">
+              <p className="text-4xl">✅</p>
+              <p className="font-sans font-bold text-base text-black">All Stock Levels Healthy</p>
+              <p className="font-sans text-xs text-zinc-500">No products are currently below their reorder thresholds.</p>
+            </div>
+          ) : (
+            <div className="surface overflow-x-auto">
+              <div className="border-b border-zinc-100 px-5 py-3 bg-zinc-50/80">
+                <h2 className="font-sans font-bold text-sm uppercase tracking-tight">
+                  {lowStockProducts.length} Product{lowStockProducts.length !== 1 ? "s" : ""} Requiring Attention
+                </h2>
+              </div>
+              <table className="w-full text-left font-mono text-xs border-collapse">
+                <thead>
+                  <tr className="bg-zinc-50/50 border-b border-zinc-100 uppercase tracking-wider font-semibold text-zinc-600">
+                    <th className="px-4 py-3 border-r border-zinc-100">Product</th>
+                    <th className="px-4 py-3 border-r border-zinc-100">SKU</th>
+                    <th className="px-4 py-3 border-r border-zinc-100 text-right">Current Qty</th>
+                    <th className="px-4 py-3 border-r border-zinc-100 text-right">Reorder At</th>
+                    <th className="px-4 py-3 border-r border-zinc-100 text-right">Deficit</th>
+                    <th className="px-4 py-3 border-r border-zinc-100 text-right">Cost Price</th>
+                    <th className="px-4 py-3 text-center">Alert Level</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {lowStockProducts.map((p: any) => {
+                    const qty = parseFloat(String(p.stock_quantity ?? "0"));
+                    const threshold = parseFloat(String(p.reorder_threshold ?? "5"));
+                    const deficit = Math.max(0, threshold - qty);
+                    const isOut = qty <= 0;
+                    const isCritical = qty > 0 && qty <= threshold / 2;
+
+                    return (
+                      <tr
+                        key={p.id}
+                        className={`hover:bg-zinc-50/80 transition-colors ${
+                          isOut ? "bg-rose-50/50" : isCritical ? "bg-amber-50/30" : "bg-yellow-50/20"
+                        }`}
+                      >
+                        <td className="p-4 border-r border-zinc-100 font-sans font-semibold text-black text-sm">{p.name}</td>
+                        <td className="p-4 border-r border-zinc-100 text-zinc-500 uppercase tracking-wider">
+                          {p.sku || <span className="text-zinc-300 font-normal lowercase italic">—</span>}
+                        </td>
+                        <td
+                          className={`p-4 border-r border-zinc-100 font-bold text-right ${
+                            isOut ? "text-rose-700" : isCritical ? "text-amber-800" : "text-yellow-800"
+                          }`}
+                        >
+                          {qty.toFixed(2)}
+                        </td>
+                        <td className="p-4 border-r border-zinc-100 text-right text-zinc-600">{threshold.toFixed(2)}</td>
+                        <td className="p-4 border-r border-zinc-100 text-right font-semibold text-rose-700">
+                          {deficit > 0 ? `-${deficit.toFixed(2)}` : "—"}
+                        </td>
+                        <td className="p-4 border-r border-zinc-100 text-right text-zinc-600">
+                          {formatCurrency(p.cost_price || 0, shopCurrency)}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {isOut ? (
+                            <span className="bg-rose-100 text-rose-900 border-rose-300 border px-2 py-0.5 rounded text-[10px] font-bold uppercase">
+                              Out of Stock
+                            </span>
+                          ) : isCritical ? (
+                            <span className="bg-amber-100 text-amber-900 border-amber-300 border px-2 py-0.5 rounded text-[10px] font-bold uppercase">
+                              Critical
+                            </span>
+                          ) : (
+                            <span className="bg-yellow-100 text-yellow-900 border-yellow-300 border px-2 py-0.5 rounded text-[10px] font-bold uppercase">
+                              Reorder Now
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import { getPLStatement, type PLStatement, type ReportPeriod } from "@/lib/actions/reports";
+import type { PLStatement, ReportPeriod } from "@/types/reports";
+import { axiosClient } from "@/lib/api/axios";
 
 interface Props {
     shopId: string;
@@ -44,8 +45,15 @@ export default function PLStatementClient({ shopId, initialData, currency }: Pro
     function loadPeriod(p: ReportPeriod) {
         setPeriod(p);
         startTransition(async () => {
-            const res = await getPLStatement(shopId, p);
-            if (res.success) setData(res.data);
+            try {
+                const res: any = await axiosClient.get("/reports/profit-loss", {
+                    params: { shop_id: shopId, period: p },
+                });
+                if (res?.data) setData(res.data);
+                else if (res && !res.error) setData(res);
+            } catch (err) {
+                console.error("Failed to load P&L statement:", err);
+            }
         });
     }
 

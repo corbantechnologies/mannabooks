@@ -3,7 +3,7 @@ import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
-import { getEmployeeById } from "@/lib/actions/payroll";
+import { apiClient } from "@/lib/api/client";
 import { DeleteEmployeeButton } from "@/app/workspaces/[slug]/employees/DeleteEmployeeButton";
 import { EditEmployeeModal } from "./EditEmployeeModal";
 
@@ -22,7 +22,8 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
   }
 
   // 2. Fetch employee profile & historical payout sub-ledger
-  const employeeData = await getEmployeeById(id, shop.id);
+  const res = await apiClient.get<any>(`/v1/employees/${id}`, { params: { shop_id: shop.id } });
+  const employeeData = res.data?.employee || (res.data?.id ? res.data : null);
 
   if (!employeeData) {
     notFound();

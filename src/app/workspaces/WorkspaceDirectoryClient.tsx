@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { quickInviteStaffAction, removeStaffFromWorkspaceAction, type OrganizationStaffMember } from "@/lib/actions/team-directory";
-import { switchFiscalYearContextAction } from "@/lib/actions/fiscal-year-context";
+import type { OrganizationStaffMember } from "@/types/workspaces";
+import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 import { Users, Building2, UserPlus, Trash2, ArrowRight, ShieldCheck, X, Check, Calendar } from "lucide-react";
@@ -62,22 +62,24 @@ export function WorkspaceDirectoryClient({
     }
 
     startTransition(async () => {
-      const res = await quickInviteStaffAction({
-        shopId: inviteShopId,
-        email: inviteEmail.trim(),
-        role: inviteRole,
-        hideCostPrices,
-        directApprovalLimit: Number(directApprovalLimit) || 0,
-      });
+      try {
+        const res: any = await axiosClient.post(`/workspaces/${inviteShopId}/invitations`, {
+          email: inviteEmail.trim(),
+          role: inviteRole,
+          hide_cost_prices: hideCostPrices,
+          direct_approval_limit: Number(directApprovalLimit) || 0,
+        });
 
-      if (res.success) {
-        toast.success(`Staff invitation processed for ${inviteEmail.trim()}`);
-        setShowInviteModal(false);
-        setInviteEmail("");
-        // Reload page to refresh server state
-        window.location.reload();
-      } else {
-        toast.error(res.error || "Failed to invite staff member.");
+        if (res?.success !== false) {
+          toast.success(`Staff invitation processed for ${inviteEmail.trim()}`);
+          setShowInviteModal(false);
+          setInviteEmail("");
+          window.location.reload();
+        } else {
+          toast.error(res.error || "Failed to invite staff member.");
+        }
+      } catch (err: any) {
+        toast.error(err?.message || "Failed to invite staff member.");
       }
     });
   };
@@ -86,12 +88,16 @@ export function WorkspaceDirectoryClient({
     if (!confirm(`Are you sure you want to remove ${staffName} from this workspace?`)) return;
 
     startTransition(async () => {
-      const res = await removeStaffFromWorkspaceAction(shopId, membershipId);
-      if (res.success) {
-        toast.success("Staff member access revoked.");
-        window.location.reload();
-      } else {
-        toast.error(res.error || "Failed to remove staff member.");
+      try {
+        const res: any = await axiosClient.delete(`/workspaces/${shopId}/members/${membershipId}`);
+        if (res?.success !== false) {
+          toast.success("Staff member access revoked.");
+          window.location.reload();
+        } else {
+          toast.error(res.error || "Failed to remove staff member.");
+        }
+      } catch (err: any) {
+        toast.error(err?.message || "Failed to remove staff member.");
       }
     });
   };
@@ -204,7 +210,9 @@ export function WorkspaceDirectoryClient({
                           onChange={async (e) => {
                             const newId = e.target.value;
                             setSelectedFyByShop((prev) => ({ ...prev, [member.shop.id]: newId }));
-                            await switchFiscalYearContextAction(member.shop.id, member.shop.slug, newId);
+                            try {
+                              localStorage.setItem(`manna_active_fy_${member.shop.id}`, newId);
+                            } catch {}
                           }}
                           className="w-full sm:w-auto bg-zinc-50 hover:bg-white border border-zinc-300 hover:border-black text-black px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold cursor-pointer shadow-2xs transition-colors"
                           title="Select Contextual Fiscal Year"

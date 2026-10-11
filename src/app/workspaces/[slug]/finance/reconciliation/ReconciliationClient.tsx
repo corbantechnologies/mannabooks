@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, ChangeEvent } from "react";
-import { type BankReconciliationPayload, type CashGlEntry } from "@/lib/actions/reconciliation";
+import { type BankReconciliationPayload, type CashGlEntry } from "@/types/finance";
 
 interface StatementRow {
     id: string;

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import { getBalanceSheet, type BalanceSheetData } from "@/lib/actions/reports";
+import type { BalanceSheetData } from "@/types/reports";
+import { axiosClient } from "@/lib/api/axios";
 
 interface Props {
     shopId: string;
@@ -42,9 +43,14 @@ export default function BalanceSheetClient({ shopId, isGlEnabled, currency, init
     function handleDateChange(dateStr: string) {
         setAsOfDate(dateStr);
         startTransition(async () => {
-            const res = await getBalanceSheet(shopId, new Date(dateStr + "T23:59:59"));
-            if (res.success) {
-                setData(res.data);
+            try {
+                const res: any = await axiosClient.get("/reports/balance-sheet", {
+                    params: { shop_id: shopId, as_of_date: dateStr },
+                });
+                if (res?.data) setData(res.data);
+                else if (res && !res.error) setData(res);
+            } catch (err) {
+                console.error("Failed to load balance sheet:", err);
             }
         });
     }

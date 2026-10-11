@@ -1,5 +1,5 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
-import { getShopCurrencies } from "@/lib/actions/currencies";
+import { apiClient } from "@/lib/api/client";
 import { CurrencySettingsClient } from "./CurrencySettingsClient";
 
 interface CurrencySettingsPageProps {
@@ -10,7 +10,8 @@ export default async function CurrencySettingsPage({ params }: CurrencySettingsP
   const { slug } = await params;
   const { shop } = await getActiveWorkspaceContext(slug);
 
-  const currencies = await getShopCurrencies(shop.id, shop.currency || "KES");
+  const res = await apiClient.get<any>(`/v1/workspaces/${shop.id}/currencies`);
+  const currencies = res.data?.currencies || (Array.isArray(res.data) ? res.data : []);
 
   return (
     <div className="p-5 sm:p-7 space-y-6">

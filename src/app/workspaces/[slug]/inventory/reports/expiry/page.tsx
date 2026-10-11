@@ -1,7 +1,5 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
-import { getExpiryRiskReport, getStorageBins } from "@/lib/actions/wms";
-import { getStockLocations } from "@/lib/actions/inventory";
-import { getWorkspaceProducts } from "@/lib/actions/production";
+import { apiClient } from "@/lib/api/client";
 import { ExpiryRiskClient } from "./ExpiryRiskClient";
 import { Metadata } from "next";
 
@@ -18,12 +16,16 @@ export default async function ExpiryReportPage({ params }: ExpiryReportPageProps
   const { slug } = await params;
   const { shop } = await getActiveWorkspaceContext(slug);
 
-  const [report, productsList, locations, bins] = await Promise.all([
-    getExpiryRiskReport(shop.id),
-    getWorkspaceProducts(shop.id),
-    getStockLocations(shop.id),
-    getStorageBins(shop.id),
+  const [reportRes, productsRes, locationsRes, binsRes] = await Promise.all([
+    apiClient.get<any>(`/v1/inventory/reports/expiry`, { params: { shop_id: shop.id } }),
+    apiClient.get<any>(`/v1/products`, { params: { shop_id: shop.id } }),
+    apiClient.get<any>(`/v1/inventory/locations`, { params: { shop_id: shop.id } }),
+    apiClient.get<any>(`/v1/inventory/bins`, { params: { shop_id: shop.id } }),
   ]);
+  const report = reportRes.data?.report || reportRes.data || { totalValuationAtRisk: 0, items: [] };
+  const productsList = productsRes.data?.products || (Array.isArray(productsRes.data) ? productsRes.data : []);
+  const locations = locationsRes.data?.locations || (Array.isArray(locationsRes.data) ? locationsRes.data : []);
+  const bins = binsRes.data?.bins || (Array.isArray(binsRes.data) ? binsRes.data : []);
 
   return (
     <div className="p-5 sm:p-7 space-y-6">

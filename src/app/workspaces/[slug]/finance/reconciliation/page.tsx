@@ -1,6 +1,6 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { redirect } from "next/navigation";
-import { getBankReconciliationData } from "@/lib/actions/reconciliation";
+import { apiClient } from "@/lib/api/client";
 import { getShopPlanDetails } from "@/lib/paywall";
 import { PaywallLockedCard } from "@/components/PaywallLockedCard";
 import ReconciliationClient from "./ReconciliationClient";
@@ -31,8 +31,8 @@ export default async function BankReconciliationPage({ params }: { params: Promi
         );
     }
 
-    const result = await getBankReconciliationData(shop.id);
-    const data = result.success ? result.data : null;
+    const res = await apiClient.get<any>(`/v1/reconciliation`, { params: { shop_id: shop.id } });
+    const data = res.data?.data || (res.data?.success !== false ? res.data : null);
 
     return (
         <div className="p-5 sm:p-7 space-y-6">

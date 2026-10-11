@@ -6,7 +6,7 @@ import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/Spinner";
-import { toggleWorkspaceSuspensionAction, updateWorkspacePlanAction } from "@/lib/actions/admin";
+
 import { formatCurrency } from "@/lib/utils";
 
 interface WorkspaceSummary {
@@ -117,32 +117,36 @@ export function AdminWorkspacesClient({ initialWorkspaces, totalCount }: AdminWo
     setIsUpdatingPlan(true);
     const toastId = toast.loading("Updating tenant plan tier...");
 
-    const res = await updateWorkspacePlanAction({
-      shopId: editingShop.id,
-      plan: selectedPlan,
-      isLifetimePro,
-      subscriptionStatus: isLifetimePro ? "LIFETIME_FREE" : "ACTIVE",
-    });
+    try {
+      const res: any = await axiosClient.patch(`/admin/workspaces/${editingShop.id}/plan`, {
+        plan: selectedPlan,
+        is_lifetime_pro: isLifetimePro,
+        subscription_status: isLifetimePro ? "LIFETIME_FREE" : "ACTIVE",
+      });
 
-    setIsUpdatingPlan(false);
-    if (!res.success) {
-      toast.error(res.error || "Failed to update plan.", { id: toastId });
-    } else {
-      toast.success(res.message || "Plan updated successfully!", { id: toastId });
-      setWorkspaces((prev) =>
-        prev.map((item) =>
-          item.id === editingShop.id
-            ? {
-                ...item,
-                plan: selectedPlan,
-                isLifetimePro,
-                subscriptionStatus: isLifetimePro ? "LIFETIME_FREE" : "ACTIVE",
-              }
-            : item
-        )
-      );
-      setEditingShop(null);
-      router.refresh();
+      setIsUpdatingPlan(false);
+      if (res && res.success === false) {
+        toast.error(res.error || "Failed to update plan.", { id: toastId });
+      } else {
+        toast.success(res?.message || "Plan updated successfully!", { id: toastId });
+        setWorkspaces((prev) =>
+          prev.map((item) =>
+            item.id === editingShop.id
+              ? {
+                  ...item,
+                  plan: selectedPlan,
+                  isLifetimePro,
+                  subscriptionStatus: isLifetimePro ? "LIFETIME_FREE" : "ACTIVE",
+                }
+              : item
+          )
+        );
+        setEditingShop(null);
+        router.refresh();
+      }
+    } catch (err: any) {
+      setIsUpdatingPlan(false);
+      toast.error(err?.message || "Failed to update plan.", { id: toastId });
     }
   }
 
@@ -154,30 +158,34 @@ export function AdminWorkspacesClient({ initialWorkspaces, totalCount }: AdminWo
     setIsTogglingSuspend(true);
     const toastId = toast.loading(newSuspendedState ? "Suspending workspace..." : "Restoring workspace...");
 
-    const res = await toggleWorkspaceSuspensionAction({
-      shopId: suspendingShop.id,
-      isSuspended: newSuspendedState,
-      reason: newSuspendedState ? suspendReason : undefined,
-    });
+    try {
+      const res: any = await axiosClient.post(`/admin/workspaces/${suspendingShop.id}/suspension`, {
+        is_suspended: newSuspendedState,
+        reason: newSuspendedState ? suspendReason : undefined,
+      });
 
-    setIsTogglingSuspend(false);
-    if (!res.success) {
-      toast.error(res.error || "Failed to update status.", { id: toastId });
-    } else {
-      toast.success(res.message || "Workspace status updated!", { id: toastId });
-      setWorkspaces((prev) =>
-        prev.map((item) =>
-          item.id === suspendingShop.id
-            ? {
-                ...item,
-                isSuspended: newSuspendedState,
-                suspendedReason: newSuspendedState ? suspendReason : null,
-              }
-            : item
-        )
-      );
-      setSuspendingShop(null);
-      router.refresh();
+      setIsTogglingSuspend(false);
+      if (res && res.success === false) {
+        toast.error(res.error || "Failed to update status.", { id: toastId });
+      } else {
+        toast.success(res?.message || "Workspace status updated!", { id: toastId });
+        setWorkspaces((prev) =>
+          prev.map((item) =>
+            item.id === suspendingShop.id
+              ? {
+                  ...item,
+                  isSuspended: newSuspendedState,
+                  suspendedReason: newSuspendedState ? suspendReason : null,
+                }
+              : item
+          )
+        );
+        setSuspendingShop(null);
+        router.refresh();
+      }
+    } catch (err: any) {
+      setIsTogglingSuspend(false);
+      toast.error(err?.message || "Failed to update status.", { id: toastId });
     }
   }
 

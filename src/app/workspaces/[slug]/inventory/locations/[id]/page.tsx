@@ -1,8 +1,6 @@
-// src/app/workspaces/[slug]/inventory/locations/[id]/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
-import { getStockLocationDetail } from "@/lib/actions/inventory";
-import { getStorageBins } from "@/lib/actions/wms";
+import { apiClient } from "@/lib/api/client";
 import { LocationDetailClientView } from "./LocationDetailClientView";
 
 interface LocationDetailPageProps {
@@ -15,11 +13,13 @@ export default async function LocationDetailPage({ params }: LocationDetailPageP
   const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
-  const [detail, bins] = await Promise.all([
-    getStockLocationDetail(shop.id, id),
-    getStorageBins(shop.id, id),
+  const [detailRes, binsRes] = await Promise.all([
+    apiClient.get<any>(`/v1/inventory/locations/${id}`, { params: { shop_id: shop.id } }),
+    apiClient.get<any>(`/v1/inventory/bins`, { params: { shop_id: shop.id, location_id: id } }),
   ]);
-  if (!detail) notFound();
+  const detail = detailRes.data?.detail || detailRes.data;
+  if (!detail || !detail.location) notFound();
+  const bins = binsRes.data?.bins || (Array.isArray(binsRes.data) ? binsRes.data : []);
 
   return (
     <LocationDetailClientView

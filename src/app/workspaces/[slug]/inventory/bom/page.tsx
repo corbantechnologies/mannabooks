@@ -1,6 +1,5 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
-import { getStockLocations } from "@/lib/actions/inventory";
-import { getBillOfMaterials, getProductionOrders, getWorkspaceProducts } from "@/lib/actions/production";
+import { apiClient } from "@/lib/api/client";
 import { BomClient } from "./BomClient";
 import { Metadata } from "next";
 
@@ -17,12 +16,16 @@ export default async function BomPage({ params }: BomPageProps) {
   const { slug } = await params;
   const { shop } = await getActiveWorkspaceContext(slug);
 
-  const [boms, orders, locations, products] = await Promise.all([
-    getBillOfMaterials(shop.id),
-    getProductionOrders(shop.id),
-    getStockLocations(shop.id),
-    getWorkspaceProducts(shop.id),
+  const [bomsRes, ordersRes, locationsRes, productsRes] = await Promise.all([
+    apiClient.get<any>(`/v1/inventory/boms`, { params: { shop_id: shop.id } }),
+    apiClient.get<any>(`/v1/inventory/production-orders`, { params: { shop_id: shop.id } }),
+    apiClient.get<any>(`/v1/inventory/locations`, { params: { shop_id: shop.id } }),
+    apiClient.get<any>(`/v1/products`, { params: { shop_id: shop.id } }),
   ]);
+  const boms = bomsRes.data?.boms || (Array.isArray(bomsRes.data) ? bomsRes.data : []);
+  const orders = ordersRes.data?.orders || (Array.isArray(ordersRes.data) ? ordersRes.data : []);
+  const locations = locationsRes.data?.locations || (Array.isArray(locationsRes.data) ? locationsRes.data : []);
+  const products = productsRes.data?.products || (Array.isArray(productsRes.data) ? productsRes.data : []);
 
   return (
     <div className="p-5 sm:p-7 space-y-6">

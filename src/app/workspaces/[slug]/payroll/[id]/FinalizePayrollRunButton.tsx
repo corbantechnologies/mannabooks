@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updatePayrollVoucherStatus } from "@/lib/actions/payroll";
+import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 
 interface FinalizePayrollRunButtonProps {
@@ -19,14 +19,14 @@ export function FinalizePayrollRunButton({ voucherId, shopId }: FinalizePayrollR
     setLoading(true);
     const toastId = toast.loading("Finalizing and locking payroll run...");
 
-    const res = await updatePayrollVoucherStatus(voucherId, shopId, "PAID");
-    setLoading(false);
-
-    if (res.success) {
+    try {
+      await axiosClient.post(`/payroll/${voucherId}/finalize`, {}, { params: { shop_id: shopId } });
+      setLoading(false);
       toast.success("Payroll voucher status updated to PAID & locked.", { id: toastId });
       router.refresh();
-    } else {
-      toast.error(res.error || "Failed to update voucher status.", { id: toastId });
+    } catch (err: any) {
+      setLoading(false);
+      toast.error(err?.response?.data?.detail || err?.message || "Failed to update voucher status.", { id: toastId });
     }
   }
 

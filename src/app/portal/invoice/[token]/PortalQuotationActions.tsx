@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { acceptQuotationPortalAction, requestQuotationAmendmentPortalAction } from "@/lib/actions/portal-actions";
+import { axiosClient } from "@/lib/api/axios";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 
@@ -39,21 +39,16 @@ export function PortalQuotationActions({
     const toastId = toast.loading("Confirming quotation acceptance...");
 
     try {
-      const res = await acceptQuotationPortalAction({
-        token,
+      await axiosClient.post(`/portal/quotations/${token}/accept`, {
         clientName,
         clientNotes: acceptNotes.trim() || undefined,
       });
 
-      if (res.success) {
-        toast.success("Quotation accepted! The merchant has been notified.", { id: toastId });
-        setResponseState("ACCEPTED");
-        setIsAcceptModalOpen(false);
-      } else {
-        toast.error(res.error || "Failed to accept quotation.", { id: toastId });
-      }
-    } catch {
-      toast.error("Network error submitting acceptance.", { id: toastId });
+      toast.success("Quotation accepted! The merchant has been notified.", { id: toastId });
+      setResponseState("ACCEPTED");
+      setIsAcceptModalOpen(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || err?.message || "Failed to accept quotation.", { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
@@ -70,22 +65,17 @@ export function PortalQuotationActions({
     const toastId = toast.loading("Transmitting amendment request...");
 
     try {
-      const res = await requestQuotationAmendmentPortalAction({
-        token,
+      await axiosClient.post(`/portal/quotations/${token}/amendment`, {
         clientName,
         amendmentNotes: amendmentText.trim(),
         contactEmail: contactEmail.trim() || undefined,
       });
 
-      if (res.success) {
-        toast.success("Amendment request sent! The merchant will get back to you.", { id: toastId });
-        setResponseState("AMENDMENT_REQUESTED");
-        setIsAmendmentModalOpen(false);
-      } else {
-        toast.error(res.error || "Failed to send amendment request.", { id: toastId });
-      }
-    } catch {
-      toast.error("Network error submitting amendment request.", { id: toastId });
+      toast.success("Amendment request sent! The merchant will get back to you.", { id: toastId });
+      setResponseState("AMENDMENT_REQUESTED");
+      setIsAmendmentModalOpen(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || err?.message || "Failed to send amendment request.", { id: toastId });
     } finally {
       setIsSubmitting(false);
     }

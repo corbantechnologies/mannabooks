@@ -3,8 +3,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { purgeLedgerAction, repairLedgerAction } from "@/lib/actions/documents";
-import { exportWorkspaceDataAction, cleanSlateWorkspaceAction, CleanSlateMode } from "@/lib/actions/reset-workspace";
+import { axiosClient } from "@/lib/api/axios";
+
+export type CleanSlateMode = "ACCOUNTING_ONLY" | "FULL_FACTORY" | "FULL_WIPE";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 import Link from "next/link";
@@ -58,21 +59,22 @@ export function DiagnosticsClient({
     const toastId = toast.loading("1/2: Generating and downloading workspace backup...");
     try {
       // Step 1: Export backup data
-      const exportRes = await exportWorkspaceDataAction(shopId);
-      if (!exportRes.success || !exportRes.exportData) {
-        toast.error(exportRes.error || "Failed to generate backup.", { id: toastId });
+      const exportRes: any = await axiosClient.get(`/workspaces/${shopId}/export`);
+      const exportData = exportRes?.exportData || exportRes?.data || exportRes;
+      if (!exportData) {
+        toast.error("Failed to generate backup.", { id: toastId });
         setResetting(false);
         return;
       }
 
       // Trigger automatic client-side download
       try {
-        const jsonStr = JSON.stringify(exportRes.exportData, null, 2);
+        const jsonStr = JSON.stringify(exportData, null, 2);
         const blob = new Blob([jsonStr], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = exportRes.filename || `manna_backup_${shopSlug}.json`;
+        a.download = exportRes?.filename || `manna_backup_${shopSlug}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -83,19 +85,18 @@ export function DiagnosticsClient({
 
       // Step 2: Execute Clean Slate wipe
       toast.loading("2/2: Executing database clean slate...", { id: toastId });
-      const resetRes = await cleanSlateWorkspaceAction(shopId, shopSlug, cleanSlateMode, confirmationInput);
+      await axiosClient.post(`/workspaces/${shopId}/clean-slate`, {
+        mode: cleanSlateMode,
+        confirmation: confirmationInput,
+      });
 
-      if (resetRes.success) {
-        toast.success("Workspace successfully reset! Backup downloaded.", { id: toastId });
-        setShowCleanSlateModal(false);
-        setIsGlEnabled(false);
-        router.refresh();
-        setTimeout(() => window.location.reload(), 1200);
-      } else {
-        toast.error(resetRes.error || "Reset failed.", { id: toastId });
-      }
+      toast.success("Workspace successfully reset! Backup downloaded.", { id: toastId });
+      setShowCleanSlateModal(false);
+      setIsGlEnabled(false);
+      router.refresh();
+      setTimeout(() => window.location.reload(), 1200);
     } catch (err: any) {
-      toast.error(err.message || "An unexpected error occurred.", { id: toastId });
+      toast.error(err?.response?.data?.detail || err.message || "An unexpected error occurred.", { id: toastId });
     } finally {
       setResetting(false);
     }
@@ -106,16 +107,12 @@ export function DiagnosticsClient({
     setPurging(true);
     const toastId = toast.loading("Purging and archiving ledger entries...");
     try {
-      const res = await purgeLedgerAction(shopId, shopSlug);
-      if (res.success) {
-        toast.success("Ledger successfully purged. Live posting is now paused.", { id: toastId });
-        setIsGlEnabled(false);
-        router.refresh();
-      } else {
-        toast.error(res.error || "Failed to purge ledger.", { id: toastId });
-      }
-    } catch (err) {
-      toast.error("An unexpected error occurred during purge.", { id: toastId });
+      await axiosClient.post(`/workspaces/${shopId}/ledger/purge`);
+      toast.success("Ledger successfully purged. Live posting is now paused.", { id: toastId });
+      setIsGlEnabled(false);
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || err?.message || "Failed to purge ledger.", { id: toastId });
     } finally {
       setPurging(false);
     }
@@ -126,16 +123,12 @@ export function DiagnosticsClient({
     setRepairing(true);
     const toastId = toast.loading("Rebuilding ledger journal entries...");
     try {
-      const res = await repairLedgerAction(shopId, shopSlug);
-      if (res.success) {
-        toast.success("Ledger successfully rebuilt and re-activated.", { id: toastId });
-        setIsGlEnabled(true);
-        router.refresh();
-      } else {
-        toast.error(res.error || "Failed to rebuild ledger.", { id: toastId });
-      }
-    } catch (err) {
-      toast.error("An unexpected error occurred during ledger rebuild.", { id: toastId });
+      await axiosClient.post(`/workspaces/${shopId}/ledger/repair`);
+      toast.success("Ledger successfully rebuilt and re-activated.", { id: toastId });
+      setIsGlEnabled(true);
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || err?.message || "Failed to rebuild ledger.", { id: toastId });
     } finally {
       setRepairing(false);
     }

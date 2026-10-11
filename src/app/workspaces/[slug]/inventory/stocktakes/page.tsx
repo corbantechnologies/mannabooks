@@ -1,6 +1,5 @@
+// src/app/workspaces/[slug]/inventory/stocktakes/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
-import { getStockLocations } from "@/lib/actions/inventory";
-import { getStocktakes } from "@/lib/actions/stocktake";
 import { StocktakesClient } from "./StocktakesClient";
 import { Metadata } from "next";
 
@@ -16,11 +15,6 @@ interface StocktakesPageProps {
 export default async function StocktakesPage({ params }: StocktakesPageProps) {
   const { slug } = await params;
   const { shop } = await getActiveWorkspaceContext(slug);
-
-  const [stocktakes, locations] = await Promise.all([
-    getStocktakes(shop.id),
-    getStockLocations(shop.id),
-  ]);
 
   return (
     <div className="p-5 sm:p-7 space-y-6">
@@ -39,8 +33,6 @@ export default async function StocktakesPage({ params }: StocktakesPageProps) {
       <StocktakesClient
         shopId={shop.id}
         shopSlug={shop.slug}
-        initialStocktakes={stocktakes}
-        locations={locations}
       />
     </div>
   );

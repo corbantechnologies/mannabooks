@@ -3,16 +3,8 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
-import {
-  createVendorBill,
-  approveVendorBill,
-  payVendorBill,
-  cancelVendorBill,
-  deleteVendorBill,
-  updateVendorBillAttachment,
-  type CreateVendorBillInput,
-  type PayVendorBillInput,
-} from "@/lib/actions/bills";
+import type { CreateVendorBillInput, PayVendorBillInput } from "@/types/finance";
+import { axiosClient } from "@/lib/api/axios";
 import ReceiptAttachmentUploader from "@/components/ReceiptAttachmentUploader";
 import toast from "react-hot-toast";
 
@@ -470,8 +462,8 @@ export function VendorBillsClient({
     };
 
     try {
-      const res = await createVendorBill(shopSlug, payload);
-      if (!res.success) {
+      const res: any = await axiosClient.post(`/bills?shop_slug=${shopSlug}`, payload);
+      if (res && res.success === false) {
         setRegisterError(res.error || "Failed to create vendor bill");
         setIsSubmitting(false);
         return;
@@ -602,8 +594,8 @@ export function VendorBillsClient({
     }
 
     try {
-      const res = await approveVendorBill(bill.id, shopSlug);
-      if (!res.success) {
+      const res: any = await axiosClient.post(`/bills/${bill.id}/approve?shop_slug=${shopSlug}`);
+      if (res && res.success === false) {
         alert(res.error || "Approval failed");
         return;
       }
@@ -622,11 +614,11 @@ export function VendorBillsClient({
 
     setIsApprovingOverride(true);
     try {
-      const res = await approveVendorBill(overrideBill.id, shopSlug, {
-        allowVarianceOverride: true,
-        overrideNotes: overrideNotesInput.trim(),
+      const res: any = await axiosClient.post(`/bills/${overrideBill.id}/approve?shop_slug=${shopSlug}`, {
+        allow_variance_override: true,
+        override_notes: overrideNotesInput.trim(),
       });
-      if (!res.success) {
+      if (res && res.success === false) {
         alert(res.error || "Override approval failed");
         return;
       }
@@ -683,8 +675,8 @@ export function VendorBillsClient({
     };
 
     try {
-      const res = await payVendorBill(payingBill.id, shopSlug, payload);
-      if (!res.success) {
+      const res: any = await axiosClient.post(`/bills/${payingBill.id}/pay?shop_slug=${shopSlug}`, payload);
+      if (res && res.success === false) {
         setPaymentError(res.error || "Payment recording failed");
         setIsPaying(false);
         return;
@@ -717,8 +709,8 @@ export function VendorBillsClient({
   async function handleCancel(bill: SerializedBill) {
     if (!confirm(`Void/Cancel Bill ${bill.billNumber}?`)) return;
     try {
-      const res = await cancelVendorBill(bill.id, shopSlug);
-      if (!res.success) {
+      const res: any = await axiosClient.post(`/bills/${bill.id}/cancel?shop_slug=${shopSlug}`);
+      if (res && res.success === false) {
         alert(res.error || "Cancellation failed");
         return;
       }
@@ -731,8 +723,8 @@ export function VendorBillsClient({
   async function handleDeleteDraft(bill: SerializedBill) {
     if (!confirm(`Permanently delete draft bill ${bill.billNumber}?`)) return;
     try {
-      const res = await deleteVendorBill(bill.id, shopSlug);
-      if (!res.success) {
+      const res: any = await axiosClient.delete(`/bills/${bill.id}?shop_slug=${shopSlug}`);
+      if (res && res.success === false) {
         alert(res.error || "Delete failed");
         return;
       }
@@ -1663,7 +1655,7 @@ export function VendorBillsClient({
                     };
                     setInspectingBill(updated);
                     setBills((prev) => prev.map((b) => (b.id === inspectingBill.id ? updated : b)));
-                    await updateVendorBillAttachment(inspectingBill.id, shopSlug, {
+                    await axiosClient.patch(`/bills/${inspectingBill.id}/attachment?shop_slug=${shopSlug}`, {
                       attachmentUrl: data.url,
                       attachmentName: data.name,
                       attachmentSize: data.size,
@@ -1679,7 +1671,7 @@ export function VendorBillsClient({
                     };
                     setInspectingBill(updated);
                     setBills((prev) => prev.map((b) => (b.id === inspectingBill.id ? updated : b)));
-                    await updateVendorBillAttachment(inspectingBill.id, shopSlug, {
+                    await axiosClient.patch(`/bills/${inspectingBill.id}/attachment?shop_slug=${shopSlug}`, {
                       attachmentUrl: null,
                       attachmentName: null,
                       attachmentSize: null,

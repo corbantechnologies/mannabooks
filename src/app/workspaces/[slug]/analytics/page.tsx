@@ -1,6 +1,5 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
-import { getWorkspaceAnalyticsData } from "@/lib/actions/analytics";
 import { AnalyticsClientView } from "./AnalyticsClientView";
 
 interface AnalyticsPageProps {
@@ -17,19 +16,6 @@ export default async function WorkspaceAnalyticsPage({ params }: AnalyticsPagePr
     notFound();
   }
 
-  // 2. Fetch initial analytics data for THIS_MONTH default timeframe
-  const analyticsRes = await getWorkspaceAnalyticsData(shop.id, "THIS_MONTH");
-
-  if (!analyticsRes.success) {
-    return (
-      <div className="p-8 text-black font-mono">
-        <div className="border border-zinc-200 bg-zinc-50 p-4 font-medium rounded text-xs text-rose-700">
-          Unable to load analytics: {analyticsRes.error}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-5 sm:p-7 space-y-6">
       <div>
@@ -41,7 +27,6 @@ export default async function WorkspaceAnalyticsPage({ params }: AnalyticsPagePr
         shopId={shop.id}
         shopSlug={slug}
         fiscalYearStartMonth={shop.fiscalYearStartMonth}
-        initialData={analyticsRes.data}
       />
     </div>
   );

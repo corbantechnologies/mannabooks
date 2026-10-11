@@ -3,18 +3,9 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
-import {
-  createGroupEntity,
-  addShopToGroup,
-  removeShopFromGroup,
-  recordInterCompanyTransaction,
-  toggleElimination,
-  getConsolidatedPnL,
-  getConsolidatedBalanceSheet,
-  type ConsolidatedPnLResult,
-  type ConsolidatedBalanceSheetResult,
-} from "@/lib/actions/group-consolidation";
-import type { ReportPeriod } from "@/lib/actions/reports";
+import { axiosClient } from "@/lib/api/axios";
+import type { ConsolidatedPnLResult, ConsolidatedBalanceSheetResult } from "@/types/finance";
+import type { ReportPeriod } from "@/types/reports";
 
 export interface SerializedGroup {
   id: string;
@@ -144,12 +135,12 @@ export function GroupConsolidationClient({
     if (!groupId) return;
     setIsLoading(true);
     try {
-      const [pnlRes, bsRes] = await Promise.all([
-        getConsolidatedPnL(groupId, newPeriod),
-        getConsolidatedBalanceSheet(groupId),
+      const [pnlRes, bsRes]: [any, any] = await Promise.all([
+        axiosClient.get("/group-consolidation/pnl", { params: { group_id: groupId, period: newPeriod } }),
+        axiosClient.get("/group-consolidation/balance-sheet", { params: { group_id: groupId } }),
       ]);
-      if (pnlRes.success) setPnlData(pnlRes.data);
-      if (bsRes.success) setBalanceSheetData(bsRes.data);
+      if (pnlRes) setPnlData(pnlRes?.data || pnlRes);
+      if (bsRes) setBalanceSheetData(bsRes?.data || bsRes);
     } catch (err: any) {
       console.error(err);
     } finally {
@@ -179,22 +170,21 @@ export function GroupConsolidationClient({
     setCreateGroupError(null);
 
     try {
-      const res = await createGroupEntity(shopSlug, {
+      const res: any = await axiosClient.post("/group-consolidation/groups", {
         name: newGroupName,
         code: newGroupCode,
-        reportingCurrency: newGroupCurrency,
+        reporting_currency: newGroupCurrency,
         description: newGroupDesc,
       });
 
-      if (!res.success) {
-        setCreateGroupError(res.error || "Failed to create group entity.");
-        setIsCreatingGroup(false);
-        return;
+      const newId = res?.groupId || res?.group?.id || res?.id;
+      if (newId) {
+        window.location.href = `/workspaces/${shopSlug}/finance/group-consolidation?groupId=${newId}`;
+      } else {
+        window.location.reload();
       }
-
-      window.location.href = `/workspaces/${shopSlug}/finance/group-consolidation?groupId=${res.groupId}`;
     } catch (err: any) {
-      setCreateGroupError(err.message || "Failed to create group entity.");
+      setCreateGroupError(err?.response?.data?.detail || err.message || "Failed to create group entity.");
     } finally {
       setIsCreatingGroup(false);
     }
@@ -212,23 +202,16 @@ export function GroupConsolidationClient({
     setAddMemberError(null);
 
     try {
-      const res = await addShopToGroup(shopSlug, {
-        groupId: selectedGroupId,
-        shopId: memberShopId,
-        entityType: memberEntityType,
-        ownershipPercentage: memberOwnership,
+      await axiosClient.post(`/group-consolidation/groups/${selectedGroupId}/members`, {
+        shop_id: memberShopId,
+        entity_type: memberEntityType,
+        ownership_percentage: memberOwnership,
       });
-
-      if (!res.success) {
-        setAddMemberError(res.error || "Failed to enroll entity.");
-        setIsAddingMember(false);
-        return;
-      }
 
       setIsAddMemberOpen(false);
       window.location.reload();
     } catch (err: any) {
-      setAddMemberError(err.message || "Failed to enroll entity.");
+      setAddMemberError(err?.response?.data?.detail || err.message || "Failed to enroll entity.");
     } finally {
       setIsAddingMember(false);
     }
@@ -241,14 +224,10 @@ export function GroupConsolidationClient({
     }
 
     try {
-      const res = await removeShopFromGroup(shopSlug, membershipId);
-      if (!res.success) {
-        alert(res.error || "Failed to remove member");
-        return;
-      }
+      await axiosClient.delete(`/group-consolidation/memberships/${membershipId}`);
       window.location.reload();
     } catch (err: any) {
-      alert(err.message || "Failed to remove member");
+      alert(err?.response?.data?.detail || err.message || "Failed to remove member");
     }
   }
 
@@ -273,28 +252,22 @@ export function GroupConsolidationClient({
     setRecordTxError(null);
 
     try {
-      const res = await recordInterCompanyTransaction(shopSlug, {
-        groupId: selectedGroupId,
-        sourceShopId: txSourceShopId,
-        targetShopId: txTargetShopId,
+      await axiosClient.post("/group-consolidation/transactions", {
+        group_id: selectedGroupId,
+        source_shop_id: txSourceShopId,
+        target_shop_id: txTargetShopId,
         amount: val,
         currency,
-        transactionType: txType,
+        transaction_type: txType,
         notes: txNotes,
       });
-
-      if (!res.success) {
-        setRecordTxError(res.error || "Failed to record inter-company transaction.");
-        setIsRecordingTx(false);
-        return;
-      }
 
       setIsRecordTxOpen(false);
       setTxAmount("");
       setTxNotes("");
       window.location.reload();
     } catch (err: any) {
-      setRecordTxError(err.message || "Failed to record inter-company transaction.");
+      setRecordTxError(err?.response?.data?.detail || err.message || "Failed to record inter-company transaction.");
     } finally {
       setIsRecordingTx(false);
     }
@@ -303,14 +276,12 @@ export function GroupConsolidationClient({
   // Handle Toggle Elimination
   async function handleToggleElimination(txId: string, currentStatus: boolean) {
     try {
-      const res = await toggleElimination(shopSlug, txId, !currentStatus);
-      if (!res.success) {
-        alert(res.error || "Failed to update elimination status.");
-        return;
-      }
+      await axiosClient.patch(`/group-consolidation/transactions/${txId}/elimination`, {
+        is_eliminated: !currentStatus,
+      });
       window.location.reload();
     } catch (err: any) {
-      alert(err.message || "Failed to update elimination status.");
+      alert(err?.response?.data?.detail || err.message || "Failed to update elimination status.");
     }
   }
 

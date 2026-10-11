@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { getTurnoverTaxQuarterly, type TurnoverTaxQuarter } from "@/lib/actions/tax";
+import type { TurnoverTaxQuarter } from "@/types/reports";
+import { axiosClient } from "@/lib/api/axios";
 
 interface Props {
     shopId: string;
@@ -22,8 +23,15 @@ export default function TurnoverTaxClient({ shopId, year: initialYear, quarters:
     function loadYear(y: number) {
         setYear(y);
         startTransition(async () => {
-            const res = await getTurnoverTaxQuarterly(shopId, y);
-            if (res.success) setQuarters(res.quarters);
+            try {
+                const res: any = await axiosClient.get("/finance/tax/tot", {
+                    params: { shop_id: shopId, year: y },
+                });
+                if (res?.quarters) setQuarters(res.quarters);
+                else if (Array.isArray(res)) setQuarters(res);
+            } catch (err) {
+                console.error("Failed to load TOT quarters:", err);
+            }
         });
     }
 

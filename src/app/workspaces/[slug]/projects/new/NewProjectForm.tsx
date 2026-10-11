@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createProjectAction } from "@/lib/actions/projects";
+import { axiosClient } from "@/lib/api/axios";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -54,26 +54,30 @@ export function NewProjectForm({
     setError(null);
 
     startTransition(async () => {
-      const res = await createProjectAction({
-        shopId,
-        shopSlug,
-        name: form.name,
-        description: form.description || undefined,
-        clientId: form.clientId || undefined,
-        dealId: form.dealId || undefined,
-        contractId: form.contractId || undefined,
-        currency,
-        budgetType,
-        budgetAmount: parseFloat(form.budgetAmount) || 0,
-        budgetHours: parseFloat(form.budgetHours) || 0,
-        startDate: form.startDate || undefined,
-        endDate: form.endDate || undefined,
-      });
+      try {
+        const res: any = await axiosClient.post("/crm/projects", {
+          shop_id: shopId,
+          name: form.name,
+          description: form.description || undefined,
+          client_id: form.clientId || undefined,
+          deal_id: form.dealId || undefined,
+          contract_id: form.contractId || undefined,
+          currency,
+          budget_type: budgetType,
+          budget_amount: parseFloat(form.budgetAmount) || 0,
+          budget_hours: parseFloat(form.budgetHours) || 0,
+          start_date: form.startDate || undefined,
+          end_date: form.endDate || undefined,
+        });
 
-      if (res.success) {
-        router.push(`/workspaces/${shopSlug}/projects/${res.projectId}`);
-      } else {
-        setError(res.error || "Failed to create project.");
+        const projectId = res?.projectId || res?.project?.id || res?.id;
+        if (projectId) {
+          router.push(`/workspaces/${shopSlug}/projects/${projectId}`);
+        } else {
+          router.push(`/workspaces/${shopSlug}/projects`);
+        }
+      } catch (err: any) {
+        setError(err?.response?.data?.detail || err?.message || "Failed to create project.");
       }
     });
   };

@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { dispatchStockTransfer, receiveStockTransfer, cancelStockTransfer } from "@/lib/actions/stock-transfers";
+import { axiosClient } from "@/lib/api/axios";
 import { formatCurrency } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -48,14 +48,20 @@ export function TransferDetailClient({ transfer, shopSlug, shopCurrency }: Props
 
     if (confirmAction.type === "dispatch") {
       const toastId = toast.loading("Dispatching transfer...");
-      const res = await dispatchStockTransfer(transfer.id, shopSlug);
-      setLoading(false);
-      setConfirmAction(null);
-      if (res.success) {
-        toast.success("Transfer dispatched — stock deducted from source.", { id: toastId });
-        router.refresh();
-      } else {
-        toast.error(res.error || "Dispatch failed.", { id: toastId });
+      try {
+        const res: any = await axiosClient.post(`/items/transfers/${transfer.id}/dispatch`);
+        setLoading(false);
+        setConfirmAction(null);
+        if (res?.success !== false) {
+          toast.success("Transfer dispatched — stock deducted from source.", { id: toastId });
+          router.refresh();
+        } else {
+          toast.error(res.error || "Dispatch failed.", { id: toastId });
+        }
+      } catch (err: any) {
+        setLoading(false);
+        setConfirmAction(null);
+        toast.error(err?.message || "Dispatch failed.", { id: toastId });
       }
     } else if (confirmAction.type === "receive") {
       const toastId = toast.loading("Confirming transfer receipt...");
@@ -63,25 +69,39 @@ export function TransferDetailClient({ transfer, shopSlug, shopCurrency }: Props
         transferItemId: item.id,
         quantityReceived: Number(receivedQtys[item.id]) || 0,
       }));
-      const res = await receiveStockTransfer(transfer.id, shopSlug, receivedItems);
-      setLoading(false);
-      setConfirmAction(null);
-      if (res.success) {
-        toast.success("Transfer received — stock credited to destination.", { id: toastId });
-        router.refresh();
-      } else {
-        toast.error(res.error || "Receive failed.", { id: toastId });
+      try {
+        const res: any = await axiosClient.post(`/items/transfers/${transfer.id}/receive`, {
+          received_items: receivedItems,
+        });
+        setLoading(false);
+        setConfirmAction(null);
+        if (res?.success !== false) {
+          toast.success("Transfer received — stock credited to destination.", { id: toastId });
+          router.refresh();
+        } else {
+          toast.error(res.error || "Receive failed.", { id: toastId });
+        }
+      } catch (err: any) {
+        setLoading(false);
+        setConfirmAction(null);
+        toast.error(err?.message || "Receive failed.", { id: toastId });
       }
     } else if (confirmAction.type === "cancel") {
       const toastId = toast.loading("Cancelling transfer...");
-      const res = await cancelStockTransfer(transfer.id, shopSlug);
-      setLoading(false);
-      setConfirmAction(null);
-      if (res.success) {
-        toast.success("Transfer cancelled.", { id: toastId });
-        router.refresh();
-      } else {
-        toast.error(res.error || "Cancellation failed.", { id: toastId });
+      try {
+        const res: any = await axiosClient.post(`/items/transfers/${transfer.id}/cancel`);
+        setLoading(false);
+        setConfirmAction(null);
+        if (res?.success !== false) {
+          toast.success("Transfer cancelled.", { id: toastId });
+          router.refresh();
+        } else {
+          toast.error(res.error || "Cancellation failed.", { id: toastId });
+        }
+      } catch (err: any) {
+        setLoading(false);
+        setConfirmAction(null);
+        toast.error(err?.message || "Cancellation failed.", { id: toastId });
       }
     }
   }

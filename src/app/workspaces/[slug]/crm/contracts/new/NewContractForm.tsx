@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createContractAction } from "@/lib/actions/contracts";
+import { axiosClient } from "@/lib/api/axios";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -49,28 +49,32 @@ export function NewContractForm({ shopId, shopSlug, clients, deals, currency, br
     if (!form.startDate) { setError("Start date is required."); return; }
     setError(null);
     startTransition(async () => {
-      const res = await createContractAction({
-        shopId,
-        shopSlug,
-        title: form.title,
-        description: form.description || undefined,
-        clientId: form.clientId || undefined,
-        dealId: form.dealId || undefined,
-        currency,
-        monthlyFee: parseFloat(form.monthlyFee) || 0,
-        isRetainerHours: isHoursBased,
-        monthlyHoursAllocated: parseFloat(form.monthlyHoursAllocated) || 0,
-        hourlyRate: parseFloat(form.hourlyRate) || 0,
-        autoInvoiceEnabled: autoInvoice,
-        billingDayOfMonth: parseInt(form.billingDayOfMonth) || 1,
-        startDate: form.startDate,
-        endDate: form.endDate || undefined,
-        termsAndConditions: form.termsAndConditions || undefined,
-      });
-      if (res.success) {
-        router.push(`/workspaces/${shopSlug}/crm/contracts/${res.contractId}`);
-      } else {
-        setError(res.error || "Failed to create contract.");
+      try {
+        const res: any = await axiosClient.post("/crm/contracts", {
+          shop_id: shopId,
+          title: form.title,
+          description: form.description || undefined,
+          client_id: form.clientId || undefined,
+          deal_id: form.dealId || undefined,
+          currency,
+          monthly_fee: parseFloat(form.monthlyFee) || 0,
+          is_retainer_hours: isHoursBased,
+          monthly_hours_allocated: parseFloat(form.monthlyHoursAllocated) || 0,
+          hourly_rate: parseFloat(form.hourlyRate) || 0,
+          auto_invoice_enabled: autoInvoice,
+          billing_day_of_month: parseInt(form.billingDayOfMonth) || 1,
+          start_date: form.startDate,
+          end_date: form.endDate || undefined,
+          terms_and_conditions: form.termsAndConditions || undefined,
+        });
+        const contractId = res?.contractId || res?.contract?.id || res?.id;
+        if (contractId) {
+          router.push(`/workspaces/${shopSlug}/crm/contracts/${contractId}`);
+        } else {
+          router.push(`/workspaces/${shopSlug}/crm/contracts`);
+        }
+      } catch (err: any) {
+        setError(err?.response?.data?.detail || err?.message || "Failed to create contract.");
       }
     });
   };

@@ -1,7 +1,7 @@
 // src/app/workspaces/[slug]/crm/contracts/[id]/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
-import { getContractByIdAction, getContractBurndownAction } from "@/lib/actions/contracts";
+import { apiClient } from "@/lib/api/client";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -29,13 +29,13 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
   if (!shop) notFound();
 
   const [contractRes, burndownRes] = await Promise.all([
-    getContractByIdAction(id, shop.id),
-    getContractBurndownAction(id, shop.id),
+    apiClient.get<any>(`/v1/crm/contracts/${id}`, { params: { shop_id: shop.id } }),
+    apiClient.get<any>(`/v1/crm/contracts/${id}/burndown`, { params: { shop_id: shop.id } }),
   ]);
 
-  if (!contractRes.contract) notFound();
-  const contract = contractRes.contract;
-  const burndown = burndownRes.data;
+  const contract = contractRes.data?.contract || (contractRes.data?.id ? contractRes.data : null);
+  if (!contract) notFound();
+  const burndown = burndownRes.data?.data || burndownRes.data;
 
   const statusColor = STATUS_COLORS[contract.status] || "#94a3b8";
   const isRetainer = contract.isRetainerHours;

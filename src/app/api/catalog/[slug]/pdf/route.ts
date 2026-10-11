@@ -1,6 +1,6 @@
 // src/app/api/catalog/[slug]/pdf/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getPublicCatalogData, decodeCatalogToken } from "@/lib/actions/catalog";
+import { getPublicCatalogData, decodeCatalogToken } from "@/lib/catalog";
 import ReactPDF from "@react-pdf/renderer";
 import { formatCurrency } from "@/lib/utils";
 import { registerPdfFonts } from "@/lib/pdf-fonts";

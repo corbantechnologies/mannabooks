@@ -1,10 +1,8 @@
-"use server";
-
-import { db } from "@/db";
-import { auditLogs } from "@/db/schema";
+// src/lib/actions/audit.ts
+import { apiClient } from "@/lib/api/client";
 
 /**
- * All supported audit action types — must match the auditActionEnum in schema.ts
+ * All supported audit action types
  */
 export type AuditAction =
     | "CREATE"
@@ -35,26 +33,12 @@ export interface AuditInput {
 }
 
 /**
- * Fire-and-forget audit log writer.
- * Always call this AFTER the main mutation succeeds.
- * This function intentionally never throws — a logging failure
- * must never rollback a financial transaction.
+ * Records an audit log entry via the FastAPI backend.
  */
-export async function logAudit(input: AuditInput): Promise<void> {
+export async function recordAuditLog(input: AuditInput): Promise<void> {
     try {
-        const { apiClient } = await import("@/lib/api/client");
-        await apiClient.post("/v1/governance/audit-logs", {
-            shop_id: input.shopId,
-            action: input.action,
-            table_name: input.tableName,
-            record_id: input.recordId,
-            record_label: input.recordLabel,
-            before_state: input.before,
-            after_state: input.after,
-            ip_address: input.ipAddress,
-        });
-    } catch (err) {
-        // Silently swallow — audit log failures must never surface to the user
-        console.error("[AuditLog] Failed to write audit entry:", err);
+        await apiClient.post("/v1/audit", input);
+    } catch {
+        // Silently swallow audit failures so primary operations are uninterrupted
     }
 }

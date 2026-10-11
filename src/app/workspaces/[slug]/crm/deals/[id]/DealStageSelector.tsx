@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateDealStageAction } from "@/lib/actions/crm";
-import type { DealStage } from "@/lib/actions/crm";
+import { axiosClient } from "@/lib/api/axios";
+import type { DealStage } from "@/types/crm";
 import { ChevronDown } from "lucide-react";
 
 const STAGES: { id: DealStage; label: string; color: string }[] = [
@@ -45,7 +45,15 @@ export function DealStageSelector({ dealId, shopId, shopSlug, currentStage, bran
     setStage(newStage);
     setShowLossModal(false);
     startTransition(async () => {
-      await updateDealStageAction(dealId, shopId, shopSlug, newStage, reason);
+      try {
+        await axiosClient.patch(`/crm/deals/${dealId}/stage`, {
+          stage: newStage,
+          shop_id: shopId,
+          loss_reason: reason,
+        });
+      } catch (err: any) {
+        console.error("Failed to update deal stage", err);
+      }
     });
   };
 

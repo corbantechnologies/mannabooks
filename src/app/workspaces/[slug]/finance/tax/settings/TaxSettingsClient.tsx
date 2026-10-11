@@ -2,8 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { updateTaxSettings } from "@/lib/actions/tax";
-import { declareFiscalYear, closeFiscalYear, deleteFiscalYear } from "@/lib/actions/fiscal-years";
+import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 
 interface FiscalYear {
@@ -53,16 +52,21 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
 
     function handleSaveTaxSettings() {
         startTransition(async () => {
-            const res = await updateTaxSettings(shopId, shopSlug, {
-                isCitActive,
-                isTotActive,
-                citRate: parseFloat(citRate) || 0,
-                estimatedAnnualProfit: parseFloat(estimatedAnnualProfit) || 0,
-            });
-            if (res.success) {
-                showMsg("success", "Tax settings updated successfully.");
-            } else {
-                showMsg("error", res.error || "Failed to update tax settings.");
+            try {
+                const res: any = await axiosClient.post("/finance/tax/settings", {
+                    shop_id: shopId,
+                    isCitActive,
+                    isTotActive,
+                    citRate: parseFloat(citRate) || 0,
+                    estimatedAnnualProfit: parseFloat(estimatedAnnualProfit) || 0,
+                });
+                if (res?.success !== false) {
+                    showMsg("success", "Tax settings updated successfully.");
+                } else {
+                    showMsg("error", res.error || "Failed to update tax settings.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to update tax settings.");
             }
         });
     }
@@ -81,21 +85,25 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
         }
 
         startTransition(async () => {
-            const res = await declareFiscalYear(shopId, shopSlug, {
-                label: newFyLabel.trim(),
-                startDate: newFyStartDate,
-                endDate: newFyEndDate,
-            });
+            try {
+                const res: any = await axiosClient.post("/accounts/fiscal-years", {
+                    shop_id: shopId,
+                    label: newFyLabel.trim(),
+                    startDate: newFyStartDate,
+                    endDate: newFyEndDate,
+                });
 
-            if (res.success) {
-                showMsg("success", `Fiscal Year "${newFyLabel}" declared successfully. 12 calendar monthly periods pre-generated.`);
-                setNewFyLabel("");
-                setNewFyStartDate("");
-                setNewFyEndDate("");
-                // Reload window to fetch updated data or refresh
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                showMsg("error", res.error || "Failed to declare fiscal year.");
+                if (res?.success !== false) {
+                    showMsg("success", `Fiscal Year "${newFyLabel}" declared successfully. 12 calendar monthly periods pre-generated.`);
+                    setNewFyLabel("");
+                    setNewFyStartDate("");
+                    setNewFyEndDate("");
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showMsg("error", res.error || "Failed to declare fiscal year.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to declare fiscal year.");
             }
         });
     }
@@ -113,13 +121,19 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
                         onClick={async () => {
                             toast.dismiss(t.id);
                             const toastId = toast.loading(`Closing "${label}"...`);
-                            const res = await closeFiscalYear(shopId, shopSlug, fyId);
-                            if (!res.success) {
-                                toast.error(res.error || "Failed to close fiscal year.", { id: toastId });
-                            } else {
-                                toast.success(`✓ Fiscal Year "${label}" closed successfully.`, { id: toastId });
-                                setFiscalYearsList(prev => prev.map(fy => fy.id === fyId ? { ...fy, isClosed: true } : fy));
-                                setTimeout(() => window.location.reload(), 1500);
+                            try {
+                                const res: any = await axiosClient.post(`/accounts/fiscal-years/${fyId}/close`, {
+                                    shop_id: shopId,
+                                });
+                                if (res?.success === false) {
+                                    toast.error(res.error || "Failed to close fiscal year.", { id: toastId });
+                                } else {
+                                    toast.success(`✓ Fiscal Year "${label}" closed successfully.`, { id: toastId });
+                                    setFiscalYearsList(prev => prev.map(fy => fy.id === fyId ? { ...fy, isClosed: true } : fy));
+                                    setTimeout(() => window.location.reload(), 1500);
+                                }
+                            } catch (err: any) {
+                                toast.error(err?.message || "Failed to close fiscal year.", { id: toastId });
                             }
                         }}
                     >
@@ -149,13 +163,19 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
                         onClick={async () => {
                             toast.dismiss(t.id);
                             const toastId = toast.loading(`Deleting "${label}"...`);
-                            const res = await deleteFiscalYear(shopId, shopSlug, fyId);
-                            if (!res.success) {
-                                toast.error(res.error || "Failed to delete fiscal year.", { id: toastId });
-                            } else {
-                                toast.success(`✓ Fiscal Year "${label}" deleted successfully.`, { id: toastId });
-                                setFiscalYearsList(prev => prev.filter(fy => fy.id !== fyId));
-                                setTimeout(() => window.location.reload(), 1500);
+                            try {
+                                const res: any = await axiosClient.delete(`/accounts/fiscal-years/${fyId}`, {
+                                    params: { shop_id: shopId },
+                                });
+                                if (res?.success === false) {
+                                    toast.error(res.error || "Failed to delete fiscal year.", { id: toastId });
+                                } else {
+                                    toast.success(`✓ Fiscal Year "${label}" deleted successfully.`, { id: toastId });
+                                    setFiscalYearsList(prev => prev.filter(fy => fy.id !== fyId));
+                                    setTimeout(() => window.location.reload(), 1500);
+                                }
+                            } catch (err: any) {
+                                toast.error(err?.message || "Failed to delete fiscal year.", { id: toastId });
                             }
                         }}
                     >

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addDealActivityAction } from "@/lib/actions/crm";
-import type { DealActivityType } from "@/lib/actions/crm";
+import { axiosClient } from "@/lib/api/axios";
+import type { DealActivityType } from "@/types/crm";
 import { MessageSquare, Phone, Mail, Users, Plus, Clock } from "lucide-react";
 
 const ACTIVITY_TYPES: { id: DealActivityType; label: string; icon: React.ElementType; color: string }[] = [
@@ -54,21 +54,20 @@ export function DealActivityFeed({ activities: initialActivities, dealId, shopId
     if (!title.trim()) { setError("Activity title is required."); return; }
     setError(null);
     startTransition(async () => {
-      const res = await addDealActivityAction({
-        dealId,
-        shopId,
-        shopSlug,
-        activityType: selectedType,
-        title: title.trim(),
-        body: body.trim() || undefined,
-      });
-      if (res.success && res.activity) {
-        setActivities(prev => [res.activity as Activity, ...prev]);
+      try {
+        const res: any = await axiosClient.post(`/crm/deals/${dealId}/activities`, {
+          shop_id: shopId,
+          activity_type: selectedType,
+          title: title.trim(),
+          body: body.trim() || undefined,
+        });
+        const activity = res?.activity || res;
+        setActivities(prev => [activity as Activity, ...prev]);
         setTitle("");
         setBody("");
         setIsExpanded(false);
-      } else {
-        setError(res.error || "Failed to log activity.");
+      } catch (err: any) {
+        setError(err?.response?.data?.detail || err?.message || "Failed to log activity.");
       }
     });
   };

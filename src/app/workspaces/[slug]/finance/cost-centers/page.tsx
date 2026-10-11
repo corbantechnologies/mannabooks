@@ -1,6 +1,5 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
-import { getCostCenters } from "@/lib/actions/cost-centers";
 import { CostCentersClient } from "./CostCentersClient";
 
 interface CostCentersPageProps {
@@ -9,14 +8,11 @@ interface CostCentersPageProps {
 
 export default async function CostCentersPage({ params }: CostCentersPageProps) {
   const { slug } = await params;
-
   const { shop } = await getActiveWorkspaceContext(slug);
 
   if (!shop) {
     notFound();
   }
-
-  const centers = await getCostCenters(slug);
 
   return (
     <div className="p-5 sm:p-7 space-y-6">
@@ -31,14 +27,6 @@ export default async function CostCentersPage({ params }: CostCentersPageProps) 
       <CostCentersClient
         shopSlug={slug}
         currency={shop.currency}
-        initialCenters={centers.map((c) => ({
-          id: c.id,
-          code: c.code,
-          name: c.name,
-          department: c.department,
-          isActive: c.isActive,
-          createdAt: c.createdAt.toISOString(),
-        }))}
       />
     </div>
   );

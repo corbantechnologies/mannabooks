@@ -1,6 +1,6 @@
 // src/app/api/etims/initialize/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAndGetSession } from "@/lib/actions/auth";
+import { verifyAndGetSession } from "@/lib/auth/session";
 import { apiClient } from "@/lib/api/client";
 
 export async function POST(req: NextRequest) {

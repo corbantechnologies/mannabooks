@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { importB2BInvoiceAsExpenseAction, markB2BDocumentAsReadAction } from "@/lib/actions/b2b";
+import { axiosClient } from "@/lib/api/axios";
 import { formatCurrency } from "@/lib/utils";
 import { Spinner } from "@/components/Spinner";
 import { toast } from "react-hot-toast";
@@ -48,25 +48,30 @@ export function B2BInboxClient({
 
   const handleLogAsExpense = (doc: B2BDocument) => {
     startTransition(async () => {
-      const res = await importB2BInvoiceAsExpenseAction(doc.id, shopId, shopSlug);
-      if (res.success) {
+      try {
+        await axiosClient.post(`/b2b/inbox/${doc.id}/import-expense`, {
+          shop_id: shopId,
+        });
         toast.success(`Invoice ${doc.docNumber} imported successfully as expense!`);
         setLoggedExpenseIds((prev) => [...prev, doc.id]);
         setLocalReadDocIds((prev) => ({ ...prev, [doc.id]: true }));
-      } else {
-        toast.error(res.error || "Failed to import invoice.");
+      } catch (err: any) {
+        toast.error(err?.response?.data?.detail || err?.message || "Failed to import invoice.");
       }
     });
   };
 
   const handleToggleReadStatus = (docId: string, targetReadState: boolean) => {
     startTransition(async () => {
-      const res = await markB2BDocumentAsReadAction(docId, targetReadState, shopSlug);
-      if (res.success) {
+      try {
+        await axiosClient.patch(`/b2b/inbox/${docId}/read`, {
+          is_read: targetReadState,
+          shop_id: shopId,
+        });
         toast.success(targetReadState ? "Document archived." : "Document restored to active inbox.");
         setLocalReadDocIds((prev) => ({ ...prev, [docId]: targetReadState }));
-      } else {
-        toast.error(res.error || "Failed to update document status.");
+      } catch (err: any) {
+        toast.error(err?.response?.data?.detail || err?.message || "Failed to update document status.");
       }
     });
   };

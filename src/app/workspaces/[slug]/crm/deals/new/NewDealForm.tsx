@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createDealAction } from "@/lib/actions/crm";
+import { axiosClient } from "@/lib/api/axios";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -44,24 +44,28 @@ export function NewDealForm({ shopId, shopSlug, clients, currency, brandColor }:
     }
     setError(null);
     startTransition(async () => {
-      const res = await createDealAction({
-        shopId,
-        shopSlug,
-        title: form.title,
-        contactName: form.contactName,
-        contactEmail: form.contactEmail || undefined,
-        contactPhone: form.contactPhone || undefined,
-        clientId: form.clientId || undefined,
-        estimatedValue: parseFloat(form.estimatedValue) || 0,
-        winProbability: parseInt(form.winProbability) || 50,
-        expectedCloseDate: form.expectedCloseDate ? new Date(form.expectedCloseDate) : undefined,
-        currency,
-        notes: form.notes || undefined,
-      });
-      if (res.success) {
-        router.push(`/workspaces/${shopSlug}/crm/deals/${res.dealId}`);
-      } else {
-        setError(res.error || "Failed to create deal.");
+      try {
+        const res: any = await axiosClient.post("/crm/deals", {
+          shop_id: shopId,
+          title: form.title,
+          contact_name: form.contactName,
+          contact_email: form.contactEmail || undefined,
+          contact_phone: form.contactPhone || undefined,
+          client_id: form.clientId || undefined,
+          estimated_value: parseFloat(form.estimatedValue) || 0,
+          win_probability: parseInt(form.winProbability) || 50,
+          expected_close_date: form.expectedCloseDate ? form.expectedCloseDate : undefined,
+          currency,
+          notes: form.notes || undefined,
+        });
+        const dealId = res?.dealId || res?.deal?.id || res?.id;
+        if (dealId) {
+          router.push(`/workspaces/${shopSlug}/crm/deals/${dealId}`);
+        } else {
+          router.push(`/workspaces/${shopSlug}/crm`);
+        }
+      } catch (err: any) {
+        setError(err?.response?.data?.detail || err?.message || "Failed to create deal.");
       }
     });
   };

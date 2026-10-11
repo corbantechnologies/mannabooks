@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createProposalAction } from "@/lib/actions/proposals";
+import { axiosClient } from "@/lib/api/axios";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 
@@ -79,31 +79,35 @@ export function NewProposalForm({
     setError(null);
 
     startTransition(async () => {
-      const res = await createProposalAction({
-        shopId,
-        shopSlug,
-        title: form.title,
-        dealId: form.dealId || undefined,
-        clientId: form.clientId || undefined,
-        executiveSummary: form.executiveSummary || undefined,
-        scopeOfWork: form.scopeOfWork || undefined,
-        currency: form.currency || currency,
-        validityDays: parseInt(form.validityDays) || 30,
-        termsAndConditions: form.termsAndConditions || undefined,
-        items: validItems.map((it, idx) => ({
-          description: it.description,
-          quantity: parseFloat(it.quantity) || 1,
-          unitPrice: parseFloat(it.unitPrice) || 0,
-          packageLabel: it.packageLabel || undefined,
-          notes: it.notes || undefined,
-          displayOrder: idx,
-        })),
-      });
+      try {
+        const res: any = await axiosClient.post("/crm/proposals", {
+          shop_id: shopId,
+          title: form.title,
+          deal_id: form.dealId || undefined,
+          client_id: form.clientId || undefined,
+          executive_summary: form.executiveSummary || undefined,
+          scope_of_work: form.scopeOfWork || undefined,
+          currency: form.currency || currency,
+          validity_days: parseInt(form.validityDays) || 30,
+          terms_and_conditions: form.termsAndConditions || undefined,
+          items: validItems.map((it, idx) => ({
+            description: it.description,
+            quantity: parseFloat(it.quantity) || 1,
+            unit_price: parseFloat(it.unitPrice) || 0,
+            package_label: it.packageLabel || undefined,
+            notes: it.notes || undefined,
+            display_order: idx,
+          })),
+        });
 
-      if (res.success) {
-        router.push(`/workspaces/${shopSlug}/crm/proposals/${res.proposalId}`);
-      } else {
-        setError(res.error || "Failed to create proposal.");
+        const proposalId = res?.proposalId || res?.proposal?.id || res?.id;
+        if (proposalId) {
+          router.push(`/workspaces/${shopSlug}/crm/proposals/${proposalId}`);
+        } else {
+          router.push(`/workspaces/${shopSlug}/crm/proposals`);
+        }
+      } catch (err: any) {
+        setError(err?.response?.data?.detail || err?.message || "Failed to create proposal.");
       }
     });
   };

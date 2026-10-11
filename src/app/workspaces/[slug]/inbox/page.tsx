@@ -1,7 +1,6 @@
-// src/app/workspaces/[slug]/inbox/page.tsx
 import { notFound } from "next/navigation";
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
-import { getB2BInboxDocuments } from "@/lib/actions/b2b";
+import { apiClient } from "@/lib/api/client";
 import { B2BInboxClient } from "./B2BInboxClient";
 
 interface B2BInboxPageProps {
@@ -19,7 +18,8 @@ export default async function B2BInboxPage({ params }: B2BInboxPageProps) {
   }
 
   // 2. Fetch B2B Inbox documents
-  const inboxData = await getB2BInboxDocuments(shop.id);
+  const res = await apiClient.get<any>(`/v1/b2b/inbox`, { params: { shop_id: shop.id } });
+  const inboxData = res.data || { incomingBills: [], incomingOrders: [] };
 
   return (
     <div className="p-5 sm:p-7 space-y-6 font-mono text-xs">

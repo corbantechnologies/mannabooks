@@ -1,32 +1,98 @@
 "use client";
 
-import { useState } from "react";
-import { AnalyticsData, TimeframeFilter, getWorkspaceAnalyticsData } from "@/lib/actions/analytics";
+import { useState, useEffect } from "react";
+import { type AnalyticsData, type TimeframeFilter } from "@/types/analytics";
+import { axiosClient } from "@/lib/api/axios";
 import { formatCurrency } from "@/lib/utils";
 import { getFiscalYearRange } from "@/lib/fiscalYear";
+import { Spinner } from "@/components/Spinner";
 
 interface AnalyticsClientViewProps {
   shopId: string;
   shopSlug: string;
   fiscalYearStartMonth: number;
-  initialData: AnalyticsData;
+  initialData?: AnalyticsData;
 }
 
+const defaultAnalyticsData: AnalyticsData = {
+  timeframe: "THIS_MONTH",
+  currency: "KES",
+  totalSettledInflow: 0,
+  totalSettledOutflow: 0,
+  netOperatingCashFlow: 0,
+  totalCostOfGoodsSold: 0,
+  totalOperatingExpenses: 0,
+  totalOtherIncome: 0,
+  netGrossProfit: 0,
+  netOperatingProfit: 0,
+  netIncome: 0,
+  grossProfitMargin: 0,
+  pendingReceivables: 0,
+  accountsPayableDebt: 0,
+  monthlyTimeline: [],
+  kraVatSummary: {
+    daysRemaining: 20,
+    currentMonthName: "",
+    outputVat16: 0,
+    zeroRatedVolume: 0,
+    exemptVolume: 0,
+    taxableSalesVolume: 0,
+  },
+  arAging: {
+    current0To30: 0,
+    due31To60: 0,
+    late61To90: 0,
+    overdue90Plus: 0,
+    totalAr: 0,
+  },
+  topProducts: [],
+  topClients: [],
+  twelveMonthTimeline: [],
+  topTenClients: [],
+  productServiceSplit: {
+    productRevenue: 0,
+    serviceRevenue: 0,
+    totalRevenue: 0,
+    productPercent: 0,
+    servicePercent: 0,
+  },
+  quotationConversion: {
+    totalQuotesIssued: 0,
+    totalQuotesAcceptedOrConverted: 0,
+    conversionRatePercent: 0,
+    totalQuotedValue: 0,
+    totalConvertedValue: 0,
+  },
+};
+
 export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, initialData }: AnalyticsClientViewProps) {
-  const [timeframe, setTimeframe] = useState<TimeframeFilter>(initialData.timeframe);
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<AnalyticsData>(initialData);
+  const [timeframe, setTimeframe] = useState<TimeframeFilter>(initialData?.timeframe || "THIS_MONTH");
+  const [loading, setLoading] = useState(!initialData);
+  const [data, setData] = useState<AnalyticsData>(initialData || defaultAnalyticsData);
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const [showArDetails, setShowArDetails] = useState(false);
   const [timelineHorizon, setTimelineHorizon] = useState<"6M" | "12M">("12M");
 
+  useEffect(() => {
+    if (!initialData) {
+      handleTimeframeChange(timeframe);
+    }
+  }, []);
+
   async function handleTimeframeChange(tf: TimeframeFilter) {
     setTimeframe(tf);
     setLoading(true);
-    const res = await getWorkspaceAnalyticsData(shopId, tf);
-    setLoading(false);
-    if (res.success) {
-      setData(res.data);
+    try {
+      const res: any = await axiosClient.get("/analytics", {
+        params: { shop_id: shopId, timeframe: tf },
+      });
+      if (res?.data || res) {
+        setData(res?.data || res);
+      }
+    } catch (err: any) {
+      console.error("Failed to load analytics data", err);
+    } finally {
+      setLoading(false);
     }
   }
 

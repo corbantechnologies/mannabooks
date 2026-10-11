@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { computeKenyanDeductions, PayrollMode } from "@/lib/payroll-utils";
-import { commitPayrollVoucherRun } from "@/lib/actions/payroll";
+import { axiosClient } from "@/lib/api/axios";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "react-hot-toast";
 
@@ -134,24 +134,28 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
       customDeductions: parseFloat(r.customDeductions as any) || 0,
     }));
 
-    const res = await commitPayrollVoucherRun({
-      shopId: shop.id,
-      payrollPeriodCode: period,
-      mode,
-      status: targetStatus,
-      issueDate: new Date(issueDate),
-      lines: payload,
-    });
+    try {
+      const res: any = await axiosClient.post("/payroll/generate", {
+        shop_id: shop.id,
+        payrollPeriodCode: period,
+        mode,
+        status: targetStatus,
+        issueDate: issueDate,
+        lines: payload,
+      });
 
-    setLoading(false);
-
-    if (res.success && "docNumber" in res && "voucherId" in res) {
-      toast.success(`Payroll Voucher ${targetStatus === "DRAFT" ? "Draft Saved" : "Locked"}: ${res.docNumber}`, { id: toastId });
-      router.push(`/workspaces/${shopSlug}/payroll/${res.voucherId}`);
-    } else if ("error" in res) {
-      toast.error(`Execution Error: ${res.error}`, { id: toastId });
-    } else {
-      toast.error("Failed to commit payroll run.", { id: toastId });
+      setLoading(false);
+      const voucherId = res?.voucherId || res?.id || res?.documentId;
+      const docNumber = res?.docNumber || res?.doc_number || "VOUCHER";
+      toast.success(`Payroll Voucher ${targetStatus === "DRAFT" ? "Draft Saved" : "Locked"}: ${docNumber}`, { id: toastId });
+      if (voucherId) {
+        router.push(`/workspaces/${shopSlug}/payroll/${voucherId}`);
+      } else {
+        router.push(`/workspaces/${shopSlug}/payroll`);
+      }
+    } catch (err: any) {
+      setLoading(false);
+      toast.error(`Execution Error: ${err?.response?.data?.detail || err?.message || "Failed to commit payroll run."}`, { id: toastId });
     }
   };
 

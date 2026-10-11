@@ -2,8 +2,7 @@
 
 import { useState, useTransition, useMemo } from "react";
 import Link from "next/link";
-import { activateGeneralLedger, createAccount, deleteAccount, disableGlOnboardingMode } from "@/lib/actions/gl";
-import { runGlMigration } from "@/lib/actions/gl-migration";
+import { axiosClient } from "@/lib/api/axios";
 import { 
     Scale, 
     ArrowUpRight, 
@@ -151,12 +150,16 @@ export default function ChartOfAccountsClient({
 
     function handleActivate() {
         startTransition(async () => {
-            const res = await activateGeneralLedger(shopId, shopSlug);
-            if (res.success) {
-                showMsg("success", "General Ledger activated! Chart of Accounts seeded. Refreshing...");
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                showMsg("error", res.error);
+            try {
+                const res: any = await axiosClient.post("/accounts/activate-gl", { shop_id: shopId });
+                if (res?.success !== false) {
+                    showMsg("success", "General Ledger activated! Chart of Accounts seeded. Refreshing...");
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showMsg("error", res.error || "Failed to activate General Ledger.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to activate General Ledger.");
             }
         });
     }
@@ -164,31 +167,36 @@ export default function ChartOfAccountsClient({
     function handleAddAccount() {
         if (!newAccount.code.trim() || !newAccount.name.trim()) return;
         startTransition(async () => {
-            const res = await createAccount(shopId, shopSlug, {
-                code: newAccount.code.trim(),
-                name: newAccount.name.trim(),
-                accountType: newAccount.accountType,
-                parentCode: newAccount.parentCode.trim() || undefined,
-            });
-            if (res.success && res.account) {
-                const added: DetailedAccount = {
-                    id: res.account.id,
-                    code: res.account.code,
-                    name: res.account.name,
-                    accountType: res.account.accountType as AccountType,
-                    isSystem: res.account.isSystem,
-                    parentCode: res.account.parentCode,
-                    debits: 0,
-                    credits: 0,
-                    netBalance: 0,
-                    entriesCount: 0,
-                };
-                setAccounts(prev => [...prev, added].sort((a, b) => a.code.localeCompare(b.code)));
-                setNewAccount({ code: "", name: "", accountType: "ASSET", parentCode: "" });
-                setShowAddForm(false);
-                showMsg("success", `Account ${res.account.code} — ${res.account.name} created successfully.`);
-            } else {
-                showMsg("error", (res as any).error || "Failed to create account.");
+            try {
+                const res: any = await axiosClient.post(`/accounts?shop_id=${shopId}`, {
+                    code: newAccount.code.trim(),
+                    name: newAccount.name.trim(),
+                    account_type: newAccount.accountType,
+                    parent_code: newAccount.parentCode.trim() || undefined,
+                });
+                const acc = res?.account || res?.data || res;
+                if (acc && !res.error) {
+                    const added: DetailedAccount = {
+                        id: acc.id,
+                        code: acc.code,
+                        name: acc.name,
+                        accountType: (acc.accountType || acc.account_type) as AccountType,
+                        isSystem: Boolean(acc.isSystem || acc.is_system),
+                        parentCode: acc.parentCode || acc.parent_code || null,
+                        debits: 0,
+                        credits: 0,
+                        netBalance: 0,
+                        entriesCount: 0,
+                    };
+                    setAccounts(prev => [...prev, added].sort((a, b) => a.code.localeCompare(b.code)));
+                    setNewAccount({ code: "", name: "", accountType: "ASSET", parentCode: "" });
+                    setShowAddForm(false);
+                    showMsg("success", `Account ${acc.code} — ${acc.name} created successfully.`);
+                } else {
+                    showMsg("error", res?.error || "Failed to create account.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to create account.");
             }
         });
     }
@@ -198,12 +206,18 @@ export default function ChartOfAccountsClient({
         if (!confirm(`Are you sure you want to delete account "${acc?.code} — ${acc?.name}"?`)) return;
 
         startTransition(async () => {
-            const res = await deleteAccount(shopId, shopSlug, accountId);
-            if (res.success) {
-                setAccounts(prev => prev.filter(a => a.id !== accountId));
-                showMsg("success", "Account deleted.");
-            } else {
-                showMsg("error", res.error);
+            try {
+                const res: any = await axiosClient.delete(`/accounts/${accountId}`, {
+                    params: { shop_id: shopId },
+                });
+                if (res?.success !== false) {
+                    setAccounts(prev => prev.filter(a => a.id !== accountId));
+                    showMsg("success", "Account deleted.");
+                } else {
+                    showMsg("error", res.error || "Failed to delete account.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to delete account.");
             }
         });
     }
@@ -211,24 +225,32 @@ export default function ChartOfAccountsClient({
     function handleMigration() {
         startTransition(async () => {
             setMigrationResult(null);
-            const res = await runGlMigration(shopId, shopSlug);
-            if (res.success) {
-                setMigrationResult(res.summary!);
-                setTimeout(() => window.location.reload(), 2000);
-            } else {
-                showMsg("error", res.error!);
+            try {
+                const res: any = await axiosClient.post("/accounts/run-gl-migration", { shop_id: shopId });
+                if (res?.success !== false) {
+                    setMigrationResult(res.summary || "Migration completed.");
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    showMsg("error", res.error || "Failed to run GL migration.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to run GL migration.");
             }
         });
     }
 
     function handleDisableOnboarding() {
         startTransition(async () => {
-            const res = await disableGlOnboardingMode(shopId, shopSlug);
-            if (res.success) {
-                showMsg("success", "Onboarding mode disabled. Accounting period lock rules are now enforced.");
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                showMsg("error", res.error);
+            try {
+                const res: any = await axiosClient.post("/accounts/disable-onboarding", { shop_id: shopId });
+                if (res?.success !== false) {
+                    showMsg("success", "Onboarding mode disabled. Accounting period lock rules are now enforced.");
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showMsg("error", res.error || "Failed to disable onboarding mode.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.message || "Failed to disable onboarding mode.");
             }
         });
     }

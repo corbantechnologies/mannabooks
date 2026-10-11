@@ -2,12 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { type PlanDefinition } from "@/lib/paywall";
-import {
-  updatePlatformPlanAction,
-  createPlatformPlanAction,
-  deletePlatformPlanAction,
-  resetDefaultPlatformPlansAction,
-} from "@/lib/actions/admin-pricing";
+import { axiosClient } from "@/lib/api/axios";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -114,36 +109,41 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
     setIsSaving(true);
     const toastId = toast.loading(`Saving ${editingPlan.name} plan...`);
 
-    const res = await updatePlatformPlanAction({
-      id: editingPlan.id,
-      name: editingPlan.name,
-      tagline: editingPlan.tagline,
-      priceKesMonthly: editingPlan.priceKesMonthly,
-      priceKesAnnually: editingPlan.priceKesAnnually,
-      annualDiscountPercent: editingPlan.annualDiscountPercent ?? 20,
-      discountedPriceMonthly: editingPlan.discountedPriceMonthly ?? null,
-      discountedPriceAnnually: editingPlan.discountedPriceAnnually ?? null,
-      maxMembers: editingPlan.maxMembers === Infinity ? -1 : editingPlan.maxMembers,
-      maxLocations: editingPlan.maxLocations === Infinity ? -1 : editingPlan.maxLocations,
-      canTransferStock: editingPlan.canTransferStock,
-      hasGeneralLedger: editingPlan.hasGeneralLedger,
-      hasReconciliation: editingPlan.hasReconciliation,
-      hasStatutoryPayroll: editingPlan.hasStatutoryPayroll,
-      hasApiAccess: editingPlan.hasApiAccess,
-      badge: editingPlan.badge,
-      isHighlighted: Boolean(editingPlan.isHighlighted),
-      features: featureInputs,
-      isActive: true,
-    });
+    try {
+      const res: any = await axiosClient.put(`/admin/pricing/${editingPlan.id}`, {
+        id: editingPlan.id,
+        name: editingPlan.name,
+        tagline: editingPlan.tagline,
+        priceKesMonthly: editingPlan.priceKesMonthly,
+        priceKesAnnually: editingPlan.priceKesAnnually,
+        annualDiscountPercent: editingPlan.annualDiscountPercent ?? 20,
+        discountedPriceMonthly: editingPlan.discountedPriceMonthly ?? null,
+        discountedPriceAnnually: editingPlan.discountedPriceAnnually ?? null,
+        maxMembers: editingPlan.maxMembers === Infinity ? -1 : editingPlan.maxMembers,
+        maxLocations: editingPlan.maxLocations === Infinity ? -1 : editingPlan.maxLocations,
+        canTransferStock: editingPlan.canTransferStock,
+        hasGeneralLedger: editingPlan.hasGeneralLedger,
+        hasReconciliation: editingPlan.hasReconciliation,
+        hasStatutoryPayroll: editingPlan.hasStatutoryPayroll,
+        hasApiAccess: editingPlan.hasApiAccess,
+        badge: editingPlan.badge,
+        isHighlighted: Boolean(editingPlan.isHighlighted),
+        features: featureInputs,
+        isActive: true,
+      });
 
-    setIsSaving(false);
+      setIsSaving(false);
 
-    if (res.success) {
-      toast.success(res.message || "Plan updated!", { id: toastId });
-      router.refresh();
-    } else {
-      toast.error(res.error || "Failed to update plan.", { id: toastId });
-      // Revert if server action failed
+      if (res?.success !== false) {
+        toast.success(res?.message || "Plan updated!", { id: toastId });
+        router.refresh();
+      } else {
+        toast.error(res?.error || "Failed to update plan.", { id: toastId });
+        setPlans(previousPlans);
+      }
+    } catch (err: any) {
+      setIsSaving(false);
+      toast.error(err?.message || "Failed to update plan.", { id: toastId });
       setPlans(previousPlans);
     }
   }
@@ -177,41 +177,46 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
       features: createFeatures,
     };
 
-    // Instantly append to preview and close modal
     setPlans((prev) => [...prev, newPlan]);
     setIsCreating(false);
 
     setIsSaving(true);
     const toastId = toast.loading(`Creating new tier ${createPlanData.name}...`);
 
-    const res = await createPlatformPlanAction({
-      id: createPlanData.id,
-      name: createPlanData.name,
-      tagline: createPlanData.tagline,
-      priceKesMonthly: createPlanData.priceKesMonthly,
-      priceKesAnnually: createPlanData.priceKesAnnually,
-      annualDiscountPercent: createPlanData.annualDiscountPercent,
-      discountedPriceMonthly: createPlanData.discountedPriceMonthly ?? null,
-      discountedPriceAnnually: createPlanData.discountedPriceAnnually ?? null,
-      maxMembers: createPlanData.maxMembers,
-      maxLocations: createPlanData.maxLocations,
-      canTransferStock: createPlanData.canTransferStock,
-      hasGeneralLedger: createPlanData.hasGeneralLedger,
-      hasReconciliation: createPlanData.hasReconciliation,
-      hasStatutoryPayroll: createPlanData.hasStatutoryPayroll,
-      hasApiAccess: createPlanData.hasApiAccess,
-      badge: createPlanData.badge || null,
-      isHighlighted: createPlanData.isHighlighted,
-      features: createFeatures,
-    });
+    try {
+      const res: any = await axiosClient.post("/admin/pricing", {
+        id: createPlanData.id,
+        name: createPlanData.name,
+        tagline: createPlanData.tagline,
+        priceKesMonthly: createPlanData.priceKesMonthly,
+        priceKesAnnually: createPlanData.priceKesAnnually,
+        annualDiscountPercent: createPlanData.annualDiscountPercent,
+        discountedPriceMonthly: createPlanData.discountedPriceMonthly ?? null,
+        discountedPriceAnnually: createPlanData.discountedPriceAnnually ?? null,
+        maxMembers: createPlanData.maxMembers,
+        maxLocations: createPlanData.maxLocations,
+        canTransferStock: createPlanData.canTransferStock,
+        hasGeneralLedger: createPlanData.hasGeneralLedger,
+        hasReconciliation: createPlanData.hasReconciliation,
+        hasStatutoryPayroll: createPlanData.hasStatutoryPayroll,
+        hasApiAccess: createPlanData.hasApiAccess,
+        badge: createPlanData.badge || null,
+        isHighlighted: createPlanData.isHighlighted,
+        features: createFeatures,
+      });
 
-    setIsSaving(false);
+      setIsSaving(false);
 
-    if (res.success) {
-      toast.success(res.message || "New plan created!", { id: toastId });
-      router.refresh();
-    } else {
-      toast.error(res.error || "Failed to create plan.", { id: toastId });
+      if (res?.success !== false) {
+        toast.success(res?.message || "New plan created!", { id: toastId });
+        router.refresh();
+      } else {
+        toast.error(res?.error || "Failed to create plan.", { id: toastId });
+        setPlans(previousPlans);
+      }
+    } catch (err: any) {
+      setIsSaving(false);
+      toast.error(err?.message || "Failed to create plan.", { id: toastId });
       setPlans(previousPlans);
     }
   }
@@ -221,20 +226,25 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
     const previousPlans = [...plans];
     const target = planToDelete;
 
-    // Instantly remove from preview and close modal
     setPlans((prev) => prev.filter((p) => p.id !== target.id));
     setPlanToDelete(null);
 
     setIsDeleting(true);
     const toastId = toast.loading(`Deleting ${target.name} plan...`);
-    const res = await deletePlatformPlanAction(target.id);
-    setIsDeleting(false);
+    try {
+      const res: any = await axiosClient.delete(`/admin/pricing/${target.id}`);
+      setIsDeleting(false);
 
-    if (res.success) {
-      toast.success(res.message || "Plan deleted.", { id: toastId });
-      router.refresh();
-    } else {
-      toast.error(res.error || "Failed to delete plan.", { id: toastId });
+      if (res?.success !== false) {
+        toast.success(res?.message || "Plan deleted.", { id: toastId });
+        router.refresh();
+      } else {
+        toast.error(res?.error || "Failed to delete plan.", { id: toastId });
+        setPlans(previousPlans);
+      }
+    } catch (err: any) {
+      setIsDeleting(false);
+      toast.error(err?.message || "Failed to delete plan.", { id: toastId });
       setPlans(previousPlans);
     }
   }
@@ -242,15 +252,21 @@ export function AdminPricingClient({ initialPlans }: AdminPricingClientProps) {
   async function handleConfirmReset() {
     setIsResetting(true);
     const toastId = toast.loading("Resetting plans to defaults...");
-    const res = await resetDefaultPlatformPlansAction();
-    setIsResetting(false);
-    setShowResetConfirm(false);
+    try {
+      const res: any = await axiosClient.post("/admin/pricing/reset");
+      setIsResetting(false);
+      setShowResetConfirm(false);
 
-    if (res.success) {
-      toast.success("Plans reset to standard defaults.", { id: toastId });
-      router.refresh();
-    } else {
-      toast.error(res.error || "Failed to reset plans.", { id: toastId });
+      if (res?.success !== false) {
+        toast.success("Plans reset to standard defaults.", { id: toastId });
+        router.refresh();
+      } else {
+        toast.error(res?.error || "Failed to reset plans.", { id: toastId });
+      }
+    } catch (err: any) {
+      setIsResetting(false);
+      setShowResetConfirm(false);
+      toast.error(err?.message || "Failed to reset plans.", { id: toastId });
     }
   }
 

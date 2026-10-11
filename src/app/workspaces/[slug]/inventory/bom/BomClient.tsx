@@ -17,7 +17,7 @@ import {
   Cpu,
   Package,
 } from "lucide-react";
-import { createBillOfMaterialsAction, runProductionOrderAction } from "@/lib/actions/production";
+import { axiosClient } from "@/lib/api/axios";
 import { useRouter } from "next/navigation";
 
 interface BomItem {
@@ -168,31 +168,35 @@ export function BomClient({
     }
 
     startTransition(async () => {
-      const res = await createBillOfMaterialsAction({
-        shopId,
-        finishedProductId,
-        name: recipeName,
-        laborCostEstimate: Number(laborCost) || 0,
-        overheadCostEstimate: Number(overheadCost) || 0,
-        items: validItems.map((item) => ({
-          rawMaterialProductId: item.rawMaterialProductId,
-          quantityRequired: Number(item.quantityRequired),
-          wastagePercentage: Number(item.wastagePercentage) || 0,
-        })),
-      });
+      try {
+        const res: any = await axiosClient.post("/operations/boms", {
+          shop_id: shopId,
+          finished_product_id: finishedProductId,
+          name: recipeName,
+          labor_cost_estimate: Number(laborCost) || 0,
+          overhead_cost_estimate: Number(overheadCost) || 0,
+          items: validItems.map((item) => ({
+            raw_material_product_id: item.rawMaterialProductId,
+            quantity_required: Number(item.quantityRequired),
+            wastage_percentage: Number(item.wastagePercentage) || 0,
+          })),
+        });
 
-      if (res.success) {
-        setIsCreateModalOpen(false);
-        setRecipeName("");
-        setFinishedProductId("");
-        setLaborCost("0");
-        setOverheadCost("0");
-        setRawItems([{ rawMaterialProductId: "", quantityRequired: "1", wastagePercentage: "0" }]);
-        setFeedbackSuccess("Recipe (BOM) created successfully!");
-        setTimeout(() => setFeedbackSuccess(null), 4000);
-        router.refresh();
-      } else {
-        setFormError(res.error || "Failed to create BOM.");
+        if (res?.success !== false) {
+          setIsCreateModalOpen(false);
+          setRecipeName("");
+          setFinishedProductId("");
+          setLaborCost("0");
+          setOverheadCost("0");
+          setRawItems([{ rawMaterialProductId: "", quantityRequired: "1", wastagePercentage: "0" }]);
+          setFeedbackSuccess("Recipe (BOM) created successfully!");
+          setTimeout(() => setFeedbackSuccess(null), 4000);
+          router.refresh();
+        } else {
+          setFormError(res.error || "Failed to create BOM.");
+        }
+      } catch (err: any) {
+        setFormError(err?.message || "Failed to create BOM.");
       }
     });
   };
@@ -203,25 +207,30 @@ export function BomClient({
     setFormError(null);
 
     startTransition(async () => {
-      const res = await runProductionOrderAction({
-        shopId,
-        bomId: selectedBomForRun.id,
-        unitsToProduce: Number(unitsToProduce),
-        targetLocationId,
-        notes: orderNotes,
-      });
+      try {
+        const res: any = await axiosClient.post("/operations/boms/run", {
+          shop_id: shopId,
+          bom_id: selectedBomForRun.id,
+          units_to_produce: Number(unitsToProduce),
+          target_location_id: targetLocationId,
+          notes: orderNotes,
+        });
 
-      if (res.success) {
-        setIsRunModalOpen(false);
-        setSelectedBomForRun(null);
-        setOrderNotes("");
-        setFeedbackSuccess(
-          `Production run completed! Generated ${unitsToProduce} finished units at unit cost KES ${res.unitProductionCost?.toFixed(2)}.`
-        );
-        setTimeout(() => setFeedbackSuccess(null), 5000);
-        router.refresh();
-      } else {
-        setFormError(res.error || "Failed to execute production run.");
+        if (res?.success !== false) {
+          setIsRunModalOpen(false);
+          setSelectedBomForRun(null);
+          setOrderNotes("");
+          const unitCost = res?.unitProductionCost ? ` at unit cost KES ${res.unitProductionCost.toFixed(2)}` : "";
+          setFeedbackSuccess(
+            `Production run completed! Generated ${unitsToProduce} finished units${unitCost}.`
+          );
+          setTimeout(() => setFeedbackSuccess(null), 5000);
+          router.refresh();
+        } else {
+          setFormError(res.error || "Failed to execute production run.");
+        }
+      } catch (err: any) {
+        setFormError(err?.message || "Failed to execute production run.");
       }
     });
   };

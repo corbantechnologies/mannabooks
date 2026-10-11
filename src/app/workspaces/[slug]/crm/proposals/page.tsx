@@ -1,7 +1,7 @@
 // src/app/workspaces/[slug]/crm/proposals/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { notFound } from "next/navigation";
-import { getProposalsByShopAction } from "@/lib/actions/proposals";
+import { apiClient } from "@/lib/api/client";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { Plus, FileText, ArrowRight } from "lucide-react";
@@ -28,8 +28,8 @@ export default async function ProposalsListPage({ params, searchParams }: Propos
   const { shop } = await getActiveWorkspaceContext(slug);
   if (!shop) notFound();
 
-  const result = await getProposalsByShopAction(shop.id);
-  const allProposals = result.proposals || [];
+  const res = await apiClient.get<any>(`/v1/crm/proposals`, { params: { shop_id: shop.id } });
+  const allProposals = (res.data?.proposals || (Array.isArray(res.data) ? res.data : [])) as any[];
 
   const totalAccepted = allProposals.filter(p => p.status === "ACCEPTED").length;
   const totalPending = allProposals.filter(p => ["SENT", "VIEWED"].includes(p.status)).length;

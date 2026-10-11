@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { getCashFlowStatement, type CashFlowStatement, type ReportPeriod } from "@/lib/actions/reports";
+import type { CashFlowStatement, ReportPeriod } from "@/types/reports";
+import { axiosClient } from "@/lib/api/axios";
 
 interface Props { shopId: string; initialData: CashFlowStatement | null; currency: string; }
 
@@ -36,8 +37,15 @@ export default function CashFlowClient({ shopId, initialData, currency }: Props)
     function loadPeriod(p: ReportPeriod) {
         setPeriod(p);
         startTransition(async () => {
-            const res = await getCashFlowStatement(shopId, p);
-            if (res.success) setData(res.data);
+            try {
+                const res: any = await axiosClient.get("/reports/cashflow", {
+                    params: { shop_id: shopId, period: p },
+                });
+                if (res?.data) setData(res.data);
+                else if (res && !res.error) setData(res);
+            } catch (err) {
+                console.error("Failed to load cash flow statement:", err);
+            }
         });
     }
 

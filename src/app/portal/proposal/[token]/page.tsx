@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { ProposalPortalActions } from "./ProposalPortalActions";
-import { markProposalViewedAction } from "@/lib/actions/proposals";
 import { apiClient } from "@/lib/api/client";
 
 interface ProposalPortalPageProps {
@@ -49,7 +48,7 @@ export default async function PublicProposalPortalPage({ params }: ProposalPorta
   const items: ProposalItemData[] = proposal.items || [];
 
   // Silently bump view count (fire-and-forget, does not block SSR)
-  markProposalViewedAction(token).catch(() => {});
+  apiClient.post(`/v1/crm/proposals/public/${token}/view`).catch(() => {});
 
   const isExpired = proposal.expiresAt ? new Date(proposal.expiresAt) < new Date() : false;
   const isTerminal = ["ACCEPTED", "DECLINED"].includes(proposal.status);

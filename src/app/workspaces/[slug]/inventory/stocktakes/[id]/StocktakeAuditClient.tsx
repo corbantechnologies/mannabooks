@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { updateStocktakeItemCountAction, reconcileStocktakeAction } from "@/lib/actions/stocktake";
+import { axiosClient } from "@/lib/api/axios";
 
 interface StocktakeItem {
   id: string;
@@ -81,37 +81,42 @@ export function StocktakeAuditClient({
     );
 
     // 2. Persist to server
-    updateStocktakeItemCountAction({
-      stocktakeId: stocktake.id,
-      itemId,
-      countedQuantity: newCountStr === "" ? 0 : Number(newCountStr),
-    });
+    axiosClient.patch(`/operations/stocktakes/${stocktake.id}/items/${itemId}`, {
+      shop_id: shopId,
+      counted_quantity: newCountStr === "" ? 0 : Number(newCountStr),
+    }).catch((err) => console.error("Failed to update item count:", err));
   };
 
   const handleNotesChange = (itemId: string, notes: string) => {
     setItems((prev) =>
       prev.map((item) => (item.id === itemId ? { ...item, notes } : item))
     );
-    updateStocktakeItemCountAction({
-      stocktakeId: stocktake.id,
-      itemId,
-      countedQuantity: Number(items.find((i) => i.id === itemId)?.countedQuantity || 0),
+    axiosClient.patch(`/operations/stocktakes/${stocktake.id}/items/${itemId}`, {
+      shop_id: shopId,
+      counted_quantity: Number(items.find((i) => i.id === itemId)?.countedQuantity || 0),
       notes,
-    });
+    }).catch((err) => console.error("Failed to update item notes:", err));
   };
 
   const handleReconcile = () => {
     setReconcileError(null);
     startTransition(async () => {
-      const res = await reconcileStocktakeAction(shopId, stocktake.id);
-      if (res.success) {
-        setIsReconcileModalOpen(false);
-        setSuccessToast(
-          `Stocktake reconciled successfully! Adjusted ${res.totalAdjustmentCount} variance items in warehouse ledger.`
-        );
-        router.refresh();
-      } else {
-        setReconcileError(res.error || "Failed to finalize stocktake.");
+      try {
+        const res: any = await axiosClient.post(`/operations/stocktakes/${stocktake.id}/reconcile`, {
+          shop_id: shopId,
+        });
+        if (res?.success !== false) {
+          setIsReconcileModalOpen(false);
+          const adjCount = res?.totalAdjustmentCount || 0;
+          setSuccessToast(
+            `Stocktake reconciled successfully! Adjusted ${adjCount} variance items in warehouse ledger.`
+          );
+          router.refresh();
+        } else {
+          setReconcileError(res.error || "Failed to finalize stocktake.");
+        }
+      } catch (err: any) {
+        setReconcileError(err?.message || "Failed to finalize stocktake.");
       }
     });
   };

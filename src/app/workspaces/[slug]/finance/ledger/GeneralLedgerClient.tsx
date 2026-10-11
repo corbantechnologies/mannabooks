@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { postManualJournalEntry, postCompoundJournalEntry, CompoundJournalLine } from "@/lib/actions/gl";
+import { axiosClient } from "@/lib/api/axios";
 import { Plus, Trash2, Sparkles, Scale } from "lucide-react";
 
 interface Account { id: string; code: string; name: string; accountType: string; }
@@ -133,36 +133,40 @@ export default function GeneralLedgerClient({ shopId, shopSlug, glOnboardingMode
         if (isNaN(amount) || amount <= 0) { showMsg("error", "Enter a valid positive amount."); return; }
 
         startTransition(async () => {
-            const res = await postManualJournalEntry(shopId, shopSlug, {
-                entryDate: new Date(form.entryDate + "T00:00:00"),
-                description: form.description,
-                debitAccountId: form.debitAccountId,
-                creditAccountId: form.creditAccountId,
-                amount,
-                backdatedReason: form.backdatedReason || undefined,
-            });
-            if (res.success) {
-                showMsg("success", "Journal entry posted.");
-                // Add to local list optimistically
-                const debit = accounts.find(a => a.id === form.debitAccountId)!;
-                const credit = accounts.find(a => a.id === form.creditAccountId)!;
-                const newEntry: JournalEntry = {
-                    id: crypto.randomUUID(),
-                    entryDate: new Date(form.entryDate).toISOString(),
+            try {
+                const res: any = await axiosClient.post(`/accounts/journal-entries?shop_id=${shopId}`, {
+                    entry_date: form.entryDate,
                     description: form.description,
-                    debitAccountCode: debit.code, debitAccountName: debit.name,
-                    creditAccountCode: credit.code, creditAccountName: credit.name,
-                    amount: amount.toFixed(2),
-                    sourceType: "manual", periodName: null,
-                    isBackdated: new Date(form.entryDate) < new Date(),
-                    backdatedReason: form.backdatedReason || null,
-                    createdByName: "You",
-                };
-                setEntries(prev => [newEntry, ...prev]);
-                setForm({ entryDate: new Date().toISOString().split("T")[0], description: "", debitAccountId: "", creditAccountId: "", amount: "", backdatedReason: "" });
-                setShowForm(false);
-            } else {
-                showMsg("error", res.error);
+                    debit_account_id: form.debitAccountId,
+                    credit_account_id: form.creditAccountId,
+                    amount,
+                    backdated_reason: form.backdatedReason || undefined,
+                });
+                if (res?.success ?? true) {
+                    showMsg("success", "Journal entry posted.");
+                    // Add to local list optimistically
+                    const debit = accounts.find(a => a.id === form.debitAccountId)!;
+                    const credit = accounts.find(a => a.id === form.creditAccountId)!;
+                    const newEntry: JournalEntry = {
+                        id: res?.id || crypto.randomUUID(),
+                        entryDate: new Date(form.entryDate).toISOString(),
+                        description: form.description,
+                        debitAccountCode: debit ? debit.code : "", debitAccountName: debit ? debit.name : "",
+                        creditAccountCode: credit ? credit.code : "", creditAccountName: credit ? credit.name : "",
+                        amount: amount.toFixed(2),
+                        sourceType: "manual", periodName: null,
+                        isBackdated: new Date(form.entryDate) < new Date(),
+                        backdatedReason: form.backdatedReason || null,
+                        createdByName: "You",
+                    };
+                    setEntries(prev => [newEntry, ...prev]);
+                    setForm({ entryDate: new Date().toISOString().split("T")[0], description: "", debitAccountId: "", creditAccountId: "", amount: "", backdatedReason: "" });
+                    setShowForm(false);
+                } else {
+                    showMsg("error", res?.error || "Failed to post journal entry.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.response?.data?.detail || err?.message || "Failed to post journal entry.");
             }
         });
     }
@@ -183,32 +187,36 @@ export default function GeneralLedgerClient({ shopId, shopSlug, glOnboardingMode
         }
 
         startTransition(async () => {
-            const res = await postCompoundJournalEntry(shopId, shopSlug, {
-                entryDate: new Date(form.entryDate + "T00:00:00"),
-                referenceNumber: referenceNumber || undefined,
-                description: form.description,
-                costCenterId: selectedCostCenterId || undefined,
-                lines: valid.map(r => ({
-                    accountId: r.accountId,
-                    debitAmount: parseFloat(r.debit) || 0,
-                    creditAmount: parseFloat(r.credit) || 0,
-                    lineDescription: r.lineDescription || undefined,
-                    costCenterId: selectedCostCenterId || undefined,
-                })),
-                backdatedReason: form.backdatedReason || undefined,
-            });
-            if (res.success) {
-                showMsg("success", "Compound journal entry posted successfully.");
-                setForm(p => ({ ...p, description: "", amount: "", backdatedReason: "" }));
-                setReferenceNumber("");
-                setCompoundRows([
-                    { id: "1", accountId: "", lineDescription: "", debit: "", credit: "" },
-                    { id: "2", accountId: "", lineDescription: "", debit: "", credit: "" },
-                ]);
-                setShowForm(false);
-                window.location.reload();
-            } else {
-                showMsg("error", res.error);
+            try {
+                const res: any = await axiosClient.post(`/accounts/compound-journal-entries?shop_id=${shopId}`, {
+                    entry_date: form.entryDate,
+                    reference_number: referenceNumber || undefined,
+                    description: form.description,
+                    cost_center_id: selectedCostCenterId || undefined,
+                    lines: valid.map(r => ({
+                        account_id: r.accountId,
+                        debit_amount: parseFloat(r.debit) || 0,
+                        credit_amount: parseFloat(r.credit) || 0,
+                        line_description: r.lineDescription || undefined,
+                        cost_center_id: selectedCostCenterId || undefined,
+                    })),
+                    backdated_reason: form.backdatedReason || undefined,
+                });
+                if (res?.success ?? true) {
+                    showMsg("success", "Compound journal entry posted successfully.");
+                    setForm(p => ({ ...p, description: "", amount: "", backdatedReason: "" }));
+                    setReferenceNumber("");
+                    setCompoundRows([
+                        { id: "1", accountId: "", lineDescription: "", debit: "", credit: "" },
+                        { id: "2", accountId: "", lineDescription: "", debit: "", credit: "" },
+                    ]);
+                    setShowForm(false);
+                    window.location.reload();
+                } else {
+                    showMsg("error", res?.error || "Failed to post compound journal entry.");
+                }
+            } catch (err: any) {
+                showMsg("error", err?.response?.data?.detail || err?.message || "Failed to post compound journal entry.");
             }
         });
     }

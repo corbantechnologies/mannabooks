@@ -125,3 +125,38 @@ export function useDeleteClient(shopId: string, _shopSlug?: string) {
     },
   });
 }
+
+export function useClient(shopId: string, clientId: string) {
+  return useQuery<any>({
+    queryKey: ["client", shopId, clientId],
+    queryFn: async () => {
+      return await axiosClient.get(`/clients/${clientId}`, {
+        params: { shop_id: shopId },
+      });
+    },
+    enabled: Boolean(shopId && clientId),
+  });
+}
+
+export function useClientStatement(
+  shopId: string,
+  clientId: string,
+  startDate?: string,
+  endDate?: string
+) {
+  return useQuery<any>({
+    queryKey: ["client-statement", shopId, clientId, startDate, endDate],
+    queryFn: async () => {
+      const res: any = await axiosClient.get(`/clients/${clientId}/statement`, {
+        params: {
+          shop_id: shopId,
+          start_date: startDate || undefined,
+          end_date: endDate || undefined,
+        },
+      });
+      return res?.data || res;
+    },
+    enabled: Boolean(shopId && clientId),
+  });
+}
+

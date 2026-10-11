@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  useTeam,
   useInviteMember,
   useUpdateMember,
   useRemoveMember,
@@ -38,8 +39,12 @@ const PERMISSION_DEFINITIONS = [
     { key: "manage_payroll", label: "Can Manage Payroll & Staff Wages" },
 ];
 
-export default function TeamManagementClient({ shopId, initialMembers, initialInvites = [] }: { shopId: string, initialMembers: Member[], initialInvites?: Invite[] }) {
+export default function TeamManagementClient({ shopId, initialMembers = [], initialInvites = [] }: { shopId: string, initialMembers?: Member[], initialInvites?: Invite[] }) {
     const router = useRouter();
+    const { data: teamData, isLoading } = useTeam(shopId);
+    const members = (teamData?.members && teamData.members.length > 0) ? teamData.members : initialMembers;
+    const invites = (teamData?.invitations !== undefined) ? teamData.invitations : initialInvites;
+
     const [isInviting, setIsInviting] = useState(false);
     const [email, setEmail] = useState("");
     const [role, setRole] = useState<"ADMIN" | "MANAGER" | "ACCOUNTANT" | "EMPLOYEE" | "VIEWER">("VIEWER");
@@ -264,7 +269,7 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
                         </tr>
                     </thead>
                     <tbody className="bg-white">
-                        {initialMembers.map(member => {
+                        {members.map(member => {
                             const perms = member.customPermissions || {};
                             const activePermCount = Object.values(perms).filter(Boolean).length;
                             return (
@@ -314,7 +319,7 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
                                 </tr>
                             );
                         })}
-                        {initialMembers.length === 0 && (
+                        {members.length === 0 && (
                             <tr>
                                 <td colSpan={5} className="p-8 text-center text-xs text-zinc-500 font-mono">No team members found.</td>
                             </tr>
@@ -402,7 +407,7 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
                 </div>
             )}
 
-            {initialInvites.length > 0 && (
+            {invites.length > 0 && (
                 <div className="mt-8">
                     <h3 className="font-bold text-black uppercase text-xs mb-3">Pending Invitations</h3>
                     <div className="surface overflow-x-auto">
@@ -417,7 +422,7 @@ export default function TeamManagementClient({ shopId, initialMembers, initialIn
                                 </tr>
                             </thead>
                             <tbody className="bg-white">
-                                {initialInvites.map(invite => (
+                                {invites.map(invite => (
                                     <tr key={invite.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
                                         <td className="p-4 border-r border-zinc-100 font-mono text-[11px] text-black">{invite.email}</td>
                                         <td className="p-4 border-r border-zinc-100">

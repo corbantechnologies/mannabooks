@@ -1,5 +1,4 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
-import { apiClient } from "@/lib/api/client";
 import { redirect } from "next/navigation";
 import TeamManagementClient from "./TeamManagementClient";
 
@@ -10,44 +9,6 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
     if (role && role !== "OWNER" && role !== "ADMIN") {
         redirect(`/workspaces/${slug}`);
     }
-
-    const [membersRes, invitesRes] = await Promise.all([
-        apiClient.get<any[]>(`/v1/workspaces/${shop.id}/members`),
-        apiClient.get<any[]>(`/v1/workspaces/${shop.id}/invitations`),
-    ]);
-
-    const membersRaw: any[] = Array.isArray(membersRes.data)
-        ? membersRes.data
-        : (membersRes.data as any)?.members || [];
-    const allInvites: any[] = Array.isArray(invitesRes.data)
-        ? invitesRes.data
-        : (membersRes.data as any)?.invitations || (invitesRes.data as any)?.invitations || [];
-
-    const members = membersRaw.map((m: any) => {
-        let permissions = {};
-        try {
-            permissions = typeof m.customPermissions === "string" ? JSON.parse(m.customPermissions || "{}") : (m.customPermissions || {});
-        } catch {}
-
-        return {
-            id: m.id,
-            userId: m.userId,
-            name: m.user?.name || "Staff Member",
-            email: m.user?.email || "—",
-            role: m.role,
-            isActive: Boolean(m.isActive),
-            createdAt: m.createdAt || new Date().toISOString(),
-            customPermissions: permissions,
-        };
-    });
-
-    const safeInvites = allInvites.map((inv: any) => ({
-        id: inv.id,
-        email: inv.email,
-        role: inv.role,
-        status: inv.status,
-        createdAt: inv.createdAt || new Date().toISOString(),
-    }));
 
     return (
         <div className="p-5 sm:p-7 space-y-6">
@@ -60,8 +21,6 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
 
             <TeamManagementClient 
                 shopId={shop.id} 
-                initialMembers={members} 
-                initialInvites={safeInvites}
             />
         </div>
     );

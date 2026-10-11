@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCreateShopTerm, useUpdateShopTerm, useDeleteShopTerm, useSeedDefaultTerms } from "@/hooks/useTerms";
+import { useCreateShopTerm, useUpdateShopTerm, useDeleteShopTerm, useSeedDefaultTerms, useShopTerms } from "@/hooks/useTerms";
 import { Spinner } from "@/components/Spinner";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
@@ -15,17 +15,18 @@ interface ShopTermItem {
   content: string;
   isDefaultInvoice: boolean;
   isDefaultCatalog: boolean;
-  displayOrder: number;
+  displayOrder?: number;
 }
 
 interface TermsSettingsClientProps {
   shopId: string;
   shopSlug: string;
   shopName: string;
-  initialTerms: ShopTermItem[];
+  initialTerms?: ShopTermItem[];
 }
 
 const KENYAN_TERM_PRESETS = [
+
   {
     title: "100% Upfront Payment",
     content: "Full payment is required prior to order processing and dispatch. Goods will not be released without verified settlement.",
@@ -68,11 +69,15 @@ export function TermsSettingsClient({
   shopId,
   shopSlug,
   shopName,
-  initialTerms,
+  initialTerms = [],
 }: TermsSettingsClientProps) {
   const router = useRouter();
 
+  const { data: rawTerms = initialTerms, isLoading: isLoadingTerms } = useShopTerms(shopId);
+  const terms = rawTerms || [];
+
   const [showTermForm, setShowTermForm] = useState(false);
+
   const [editingTermId, setEditingTermId] = useState<string | null>(null);
   const [termTitle, setTermTitle] = useState("");
   const [termContent, setTermContent] = useState("");
@@ -175,10 +180,10 @@ export function TermsSettingsClient({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {initialTerms.length === 0 && (
+            {terms.length === 0 && (
               <button
                 type="button"
-                onClick={() => seedTermsMutation.mutate(undefined, { onSuccess: () => router.refresh() })}
+                onClick={() => seedTermsMutation.mutate(undefined)}
                 disabled={seedTermsMutation.isPending}
                 className="btn-secondary-modern px-3 py-2 font-semibold uppercase tracking-wider text-[11px] border border-emerald-600 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors flex items-center gap-1.5"
               >
@@ -186,6 +191,7 @@ export function TermsSettingsClient({
                 <span>{seedTermsMutation.isPending ? "Loading..." : "Load Kenyan SME Presets"}</span>
               </button>
             )}
+
             <button
               type="button"
               onClick={() => {
@@ -327,11 +333,11 @@ export function TermsSettingsClient({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold uppercase tracking-wider text-sm text-black font-sans">
-            Active Shop Terms Library ({initialTerms.length})
+            Active Shop Terms Library ({terms.length})
           </h2>
         </div>
 
-        {initialTerms.length === 0 ? (
+        {terms.length === 0 ? (
           <div className="card-modern p-12 text-center bg-white space-y-3">
             <div className="text-3xl">📜</div>
             <h3 className="font-bold font-sans text-sm text-black uppercase">No Commercial Terms Created Yet</h3>
@@ -341,7 +347,7 @@ export function TermsSettingsClient({
             <div className="pt-2">
               <button
                 type="button"
-                onClick={() => seedTermsMutation.mutate(undefined, { onSuccess: () => router.refresh() })}
+                onClick={() => seedTermsMutation.mutate(undefined)}
                 disabled={seedTermsMutation.isPending}
                 className="btn-primary-modern px-5 py-2.5 font-semibold uppercase tracking-wider text-xs"
               >
@@ -351,7 +357,8 @@ export function TermsSettingsClient({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {initialTerms.map((term) => (
+            {terms.map((term: any) => (
+
               <div
                 key={term.id}
                 className="card-modern p-5 bg-white rounded-lg flex flex-col justify-between gap-4 hover:border-zinc-400 transition-all shadow-sm"

@@ -75,3 +75,15 @@ export function useDeleteWorkspace(shopId: string) {
     },
   });
 }
+
+export function useDashboardSummary(shopId: string) {
+  return useQuery({
+    queryKey: ["dashboard-summary", shopId],
+    queryFn: async () => {
+      const res: any = await axiosClient.get(`/workspaces/${shopId}/dashboard-summary`);
+      return res;
+    },
+    enabled: Boolean(shopId),
+  });
+}
+

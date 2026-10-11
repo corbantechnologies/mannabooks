@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 const API_BASE_URL = (process.env.API_BASE_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || "";
-const SESSION_COOKIE_NAME = process.env.COOKIE_NAME;
+
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
@@ -19,18 +19,17 @@ export async function apiClient<T = any>(
       Object.entries(options.params).forEach(([k, v]) => url.searchParams.set(k, v));
     }
 
-    // Forward session cookie token if present
+    // Forward session token if present
     let sessionToken: string | undefined;
     try {
       const cookieStore = await cookies();
-      const cookieKey = SESSION_COOKIE_NAME || "kenya-nzuri-kabisa";
       sessionToken =
-        cookieStore.get(cookieKey)?.value ||
-        cookieStore.get("kenya-nzuri-kabisa")?.value ||
+        cookieStore.get("manna_access_token")?.value ||
         cookieStore.get("manna_session_token")?.value;
     } catch {
       // In static or build environments cookies() might fail
     }
+
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",

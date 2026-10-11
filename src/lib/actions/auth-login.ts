@@ -8,15 +8,12 @@ import { eq } from "drizzle-orm";
 
 import { isApiModuleEnabled } from "@/lib/api/flags";
 import { apiClient } from "@/lib/api/client";
-import { cookies } from "next/headers";
 
 interface LoginInput {
+
   email: string;
   passwordHex: string;
 }
-
-const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "kenya-nzuri-kabisa";
-const SESSION_DURATION_DAYS = Number(process.env.COOKIE_DURATION_DAYS) || 30;
 
 export async function loginUserAccount(input: LoginInput) {
   try {
@@ -40,24 +37,13 @@ export async function loginUserAccount(input: LoginInput) {
         };
       }
 
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS);
-
-      // Keep the httpOnly cookie for server-side calls
-      (await cookies()).set(SESSION_COOKIE_NAME, res.data.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        expires: expiresAt,
-        path: "/",
-      });
-
-      // Return the token so the client can also store it in localStorage
+      // Return the token for pure client JWT storage in localStorage
       return {
         success: true,
         token: res.data.token,
       };
     }
+
 
     // Legacy local DB path
     const userRecord = await db.query.users.findFirst({

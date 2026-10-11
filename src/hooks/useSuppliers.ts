@@ -122,3 +122,38 @@ export function useDeleteSupplier(shopId: string, _shopSlug?: string) {
     },
   });
 }
+
+export function useSupplier(shopId: string, supplierId: string) {
+  return useQuery<any>({
+    queryKey: ["supplier", shopId, supplierId],
+    queryFn: async () => {
+      return await axiosClient.get(`/suppliers/${supplierId}`, {
+        params: { shop_id: shopId },
+      });
+    },
+    enabled: Boolean(shopId && supplierId),
+  });
+}
+
+export function useSupplierStatement(
+  shopId: string,
+  supplierId: string,
+  startDate?: string,
+  endDate?: string
+) {
+  return useQuery<any>({
+    queryKey: ["supplier-statement", shopId, supplierId, startDate, endDate],
+    queryFn: async () => {
+      const res: any = await axiosClient.get(`/suppliers/${supplierId}/statement`, {
+        params: {
+          shop_id: shopId,
+          start_date: startDate || undefined,
+          end_date: endDate || undefined,
+        },
+      });
+      return res?.data || res;
+    },
+    enabled: Boolean(shopId && supplierId),
+  });
+}
+

@@ -32,22 +32,54 @@ export interface CreateDocumentInput {
 /**
  * Fetch documents list for a shop using pure Axios.
  */
-export function useDocuments(shopId: string, docType?: string, docStatus?: string) {
+export function useDocuments(
+  shopId: string,
+  docType?: string,
+  docStatus?: string,
+  supplierId?: string,
+  clientId?: string
+) {
   return useQuery<any[]>({
-    queryKey: ["documents", shopId, docType, docStatus],
+    queryKey: ["documents", shopId, docType, docStatus, supplierId, clientId],
     queryFn: async () => {
-      const data = await axiosClient.get("/documents", {
+      const data: any = await axiosClient.get("/documents", {
         params: {
           shop_id: shopId,
           doc_type: docType || undefined,
           doc_status: docStatus || undefined,
+          supplier_id: supplierId || undefined,
+          client_id: clientId || undefined,
+          limit: 200,
         },
       });
-      return Array.isArray(data) ? data : (data as any)?.documents || [];
+      return Array.isArray(data) ? data : data?.documents || [];
     },
     enabled: Boolean(shopId),
   });
 }
+
+export function useSupplierDocuments(shopId: string, supplierId: string) {
+  return useDocuments(shopId, undefined, undefined, supplierId);
+}
+
+export function useClientDocuments(shopId: string, clientId: string) {
+  return useDocuments(shopId, undefined, undefined, undefined, clientId);
+}
+
+export function useDocument(shopId: string, docId: string) {
+  return useQuery({
+    queryKey: ["document", shopId, docId],
+    queryFn: async () => {
+      const res: any = await axiosClient.get(`/documents/${docId}`, {
+        params: { shop_id: shopId, full: true },
+      });
+      return res?.document || res;
+    },
+    enabled: Boolean(shopId && docId),
+  });
+}
+
+
 
 /**
  * Create commercial document (Invoice, Quote, Receipt, etc.) via pure Axios.

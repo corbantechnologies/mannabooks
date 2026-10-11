@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import Link from "next/link";
 import { getClientStatement, type ClientStatementData } from "@/lib/actions/reports";
 import { sendClientStatementEmailAction } from "@/lib/actions/statement-email";
@@ -49,6 +49,13 @@ export default function ClientStatementView({
     const [recipientEmail, setRecipientEmail] = useState("");
     const [customNote, setCustomNote] = useState("");
     const [isSendingEmail, setIsSendingEmail] = useState(false);
+
+    useEffect(() => {
+        if (!data) {
+            applyFilter(startDate, endDate);
+        }
+    }, []);
+
 
     async function handleSendEmail() {
         setIsSendingEmail(true);

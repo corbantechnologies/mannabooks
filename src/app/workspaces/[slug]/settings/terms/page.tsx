@@ -1,6 +1,6 @@
 // src/app/workspaces/[slug]/settings/terms/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
-import { apiClient } from "@/lib/api/client";
+import { notFound } from "next/navigation";
 import { TermsSettingsClient } from "./TermsSettingsClient";
 
 interface TermsPageProps {
@@ -11,12 +11,8 @@ export default async function WorkspaceTermsPage({ params }: TermsPageProps) {
   const { slug } = await params;
   const { shop } = await getActiveWorkspaceContext(slug);
 
-  let terms: any[] = [];
-  try {
-    const res = await apiClient.get<any>(`/v1/workspaces/${shop.id}/terms`);
-    terms = res.data?.terms || [];
-  } catch (err) {
-    console.warn("Failed to fetch shop terms:", err);
+  if (!shop) {
+    notFound();
   }
 
   return (
@@ -25,7 +21,6 @@ export default async function WorkspaceTermsPage({ params }: TermsPageProps) {
         shopId={shop.id}
         shopSlug={slug}
         shopName={shop.name}
-        initialTerms={terms}
       />
     </div>
   );

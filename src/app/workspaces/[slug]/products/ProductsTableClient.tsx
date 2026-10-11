@@ -6,30 +6,58 @@ import { EditProductModal } from "./EditProductModal";
 import { ShareCatalogModal } from "./ShareCatalogModal";
 import { QuickRestockModal } from "./QuickRestockModal";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useProducts, useStockLocations } from "@/hooks/useProducts";
+import { Spinner } from "@/components/Spinner";
 
 interface ProductsTableClientProps {
-  catalogList: any[];
+  catalogList?: any[];
   shop: any;
   shopSlug: string;
   locations?: any[];
 }
 
 export function ProductsTableClient({
-  catalogList,
+  catalogList = [],
   shop,
   shopSlug,
   locations = [],
 }: ProductsTableClientProps) {
+  const searchParams = useSearchParams();
+  const search = searchParams.get("search")?.trim().toLowerCase() || "";
+  const taxType = searchParams.get("taxType") || "ALL";
+
+  const { data: rawProducts, isLoading } = useProducts(shop.id);
+  const { data: rawLocations } = useStockLocations(shop.id);
+
+  const activeLocations = Array.isArray(rawLocations) && rawLocations.length > 0 ? rawLocations : locations;
+
+  const effectiveProducts = useMemo(() => {
+    let list = Array.isArray(rawProducts) && rawProducts.length > 0 ? rawProducts : catalogList;
+    if (search) {
+      list = list.filter((p: any) =>
+        (p.name || "").toLowerCase().includes(search) ||
+        (p.sku || "").toLowerCase().includes(search)
+      );
+    }
+    if (taxType && taxType !== "ALL") {
+      list = list.filter((p: any) =>
+        (p.default_tax_type || p.defaultTaxType) === taxType
+      );
+    }
+    return list;
+  }, [rawProducts, catalogList, search, taxType]);
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const isAllSelected =
-    catalogList.length > 0 && selectedIds.length === catalogList.length;
+    effectiveProducts.length > 0 && selectedIds.length === effectiveProducts.length;
 
   function toggleSelectAll() {
     if (isAllSelected) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(catalogList.map((p) => p.id));
+      setSelectedIds(effectiveProducts.map((p: any) => p.id));
     }
   }
 
@@ -40,6 +68,15 @@ export function ProductsTableClient({
   }
 
   const selectedCount = selectedIds.length;
+
+  if (isLoading && (!catalogList || catalogList.length === 0)) {
+    return (
+      <div className="surface p-12 bg-white flex flex-col items-center justify-center space-y-3">
+        <Spinner className="w-5 h-5 text-zinc-600 animate-spin" />
+        <p className="text-xs text-zinc-500 font-mono">Loading product catalog...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -102,7 +139,7 @@ export function ProductsTableClient({
             </tr>
           </thead>
           <tbody className="bg-white">
-            {catalogList.map((p) => {
+            {effectiveProducts.map((p: any) => {
               const isChecked = selectedIds.includes(p.id);
               const qty = parseFloat(p.stockQuantity || "0");
               const threshold = parseFloat(p.reorderThreshold || "5");
@@ -172,7 +209,7 @@ export function ProductsTableClient({
                           shopId={shop.id}
                           shopSlug={shopSlug}
                           currency={shop.currency}
-                          locations={locations}
+                          locations={activeLocations}
                         />
                       </div>
                     ) : qty <= threshold ? (
@@ -185,7 +222,7 @@ export function ProductsTableClient({
                           shopId={shop.id}
                           shopSlug={shopSlug}
                           currency={shop.currency}
-                          locations={locations}
+                          locations={activeLocations}
                         />
                       </div>
                     ) : (
@@ -198,7 +235,7 @@ export function ProductsTableClient({
                           shopId={shop.id}
                           shopSlug={shopSlug}
                           currency={shop.currency}
-                          locations={locations}
+                          locations={activeLocations}
                           triggerButton={
                             <button
                               type="button"
@@ -224,12 +261,20 @@ export function ProductsTableClient({
                   </td>
                   <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center gap-1.5">
-                      <EditProductModal product={p} shopId={shop.id} shopSlug={shopSlug} locations={locations} />
+                      <EditProductModal product={p} shopId={shop.id} shopSlug={shopSlug} locations={activeLocations} />
                     </div>
                   </td>
                 </tr>
               );
             })}
+
+            {effectiveProducts.length === 0 && (
+              <tr>
+                <td colSpan={9} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
+                  No products or services found in this catalog.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

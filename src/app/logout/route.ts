@@ -3,18 +3,11 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { apiClient } from "@/lib/api/client";
 
-const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "kenya-nzuri-kabisa";
-
-/**
- * GET /logout
- * Route Handler that explicitly calls backend logout, destroys session cookies,
- * and redirects to /login.
- */
 export async function GET(request: Request) {
     try {
         const cookieStore = await cookies();
         const token =
-            cookieStore.get(SESSION_COOKIE_NAME)?.value ||
+            cookieStore.get("manna_access_token")?.value ||
             cookieStore.get("manna_session_token")?.value ||
             cookieStore.get("kenya-nzuri-kabisa")?.value;
 
@@ -31,10 +24,11 @@ export async function GET(request: Request) {
 
         // 2. Clear known session cookie names across root path
         const cookiesToClear = [
-            SESSION_COOKIE_NAME,
+            "manna_access_token",
             "manna_session_token",
             "kenya-nzuri-kabisa",
         ];
+
 
         for (const name of cookiesToClear) {
             cookieStore.delete(name);

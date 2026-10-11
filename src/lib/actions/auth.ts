@@ -11,11 +11,10 @@ import { generateUniqueShopCode } from "./shopCode";
 import { isApiModuleEnabled } from "@/lib/api/flags";
 import { apiClient } from "@/lib/api/client";
 
-const SESSION_COOKIE_NAME = process.env.COOKIE_NAME || "kenya-nzuri-kabisa";
 const SESSION_DURATION_DAYS = Number(process.env.COOKIE_DURATION_DAYS) || 30;
 
 /**
- * Creates an authentic, stateful database session for a user and injects the HTTP-only cookie.
+ * Creates an authentic, stateful database session for a user.
  */
 export async function createSession(userId: string): Promise<string> {
     // 1. Generate a 64-character un-guessable token ID
@@ -30,17 +29,9 @@ export async function createSession(userId: string): Promise<string> {
         expiresAt,
     });
 
-    // 3. Bake the token directly into an encrypted, ultra-secure HTTP-only cookie
-    (await cookies()).set(SESSION_COOKIE_NAME, token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        expires: expiresAt,
-        path: "/",
-    });
-
     return token;
 }
+
 
 /**
  * Validates the session token from cookies against FastAPI (JWT) or the local database.
@@ -51,12 +42,12 @@ export const verifyAndGetSession = cache(async function verifyAndGetSession() {
     try {
         const store = await cookies();
         token =
-            store.get(SESSION_COOKIE_NAME)?.value ||
-            store.get("kenya-nzuri-kabisa")?.value ||
+            store.get("manna_access_token")?.value ||
             store.get("manna_session_token")?.value;
     } catch {
         return null;
     }
+
 
     if (!token) return null;
 
@@ -120,7 +111,9 @@ export const verifyAndGetSession = cache(async function verifyAndGetSession() {
 export async function invalidateSession() {
     try {
         const cookieStore = await cookies();
-        const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+        const token =
+            cookieStore.get("manna_access_token")?.value ||
+            cookieStore.get("manna_session_token")?.value;
         if (token) {
             try {
                 await db.delete(sessions).where(eq(sessions.id, token));
@@ -128,11 +121,11 @@ export async function invalidateSession() {
         }
 
         const cookieNames = [
-            SESSION_COOKIE_NAME,
-            "kenya-nzuri-kabisa",
             "manna_session_token",
             "manna_access_token",
+            "kenya-nzuri-kabisa",
         ];
+
 
         for (const name of cookieNames) {
             cookieStore.delete(name);
@@ -184,23 +177,13 @@ export async function registerOwnerAccount(input: RegisterOwnerInput) {
                 };
             }
 
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS);
-
-            (await cookies()).set(SESSION_COOKIE_NAME, res.data.token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
-                expires: expiresAt,
-                path: "/",
-            });
-
             return {
                 success: true as const,
                 shopSlug: res.data.shop_slug || "",
                 token: res.data.token,
             };
         }
+
 
         // Run all DB writes inside a transaction for atomicity
         const result = await db.transaction(async (tx) => {

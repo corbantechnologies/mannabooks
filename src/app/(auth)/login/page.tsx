@@ -10,6 +10,7 @@ import * as z from "zod";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
+import axiosClient from "@/lib/api/axios";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -74,6 +75,19 @@ function LoginFormContent() {
     const toastId = toast.loading("Authenticating credentials...");
 
     try {
+      // 1. Fetch token directly to guarantee client storage is immediately populated for Axios
+      let token: string | undefined;
+      try {
+        const tokenRes: any = await axiosClient.post("/auth/token", {
+          email: data.email,
+          password: data.password,
+        });
+        token = tokenRes.access_token || tokenRes.token;
+      } catch {
+        // Fallback to NextAuth getSession if direct call is unavailable
+      }
+
+      // 2. Establish NextAuth session
       const res = await signIn("credentials", {
         email: data.email,
         password: data.password,
@@ -88,14 +102,17 @@ function LoginFormContent() {
         return;
       }
 
-      // Synchronize client access token for Axios calls
-      const session = await getSession();
-      const token = (session?.user as any)?.accessToken;
+      // 3. Fallback to session if direct token was not fetched
+      if (!token) {
+        const session = await getSession();
+        token = (session?.user as any)?.accessToken;
+      }
+
       if (token && typeof window !== "undefined") {
         localStorage.setItem("manna_auth_token", token);
-        document.cookie = `manna_session_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
-        document.cookie = `kenya-nzuri-kabisa=${token}; path=/; max-age=2592000; SameSite=Lax`;
+        localStorage.setItem("manna_access_token", token);
       }
+
 
       toast.success("Login successful!", { id: toastId });
       window.location.href = callbackUrl;

@@ -1,7 +1,6 @@
+// src/app/workspaces/[slug]/clients/[id]/statement/page.tsx
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
-import { notFound, redirect } from "next/navigation";
-import { apiClient } from "@/lib/api/client";
-import { getClientStatement } from "@/lib/actions/reports";
+import { redirect } from "next/navigation";
 import ClientStatementView from "./ClientStatementView";
 
 export default async function ClientStatementPage({
@@ -17,23 +16,13 @@ export default async function ClientStatementPage({
     const { shop } = await getActiveWorkspaceContext(slug);
     if (!shop) redirect("/dashboard");
 
-    const clientRes = await apiClient.get<any>(`/v1/clients/${id}?shop_id=${shop.id}`);
-    const client = clientRes.data;
-    if (!client) notFound();
-
-    const startDate = start ? new Date(start + "T00:00:00") : undefined;
-    const endDate = end ? new Date(end + "T23:59:59") : undefined;
-
-    const result = await getClientStatement(shop.id, client.id, startDate, endDate);
-    const data = result.success ? result.data : null;
-
     return (
         <div className="p-5 sm:p-7 space-y-6">
             <ClientStatementView
                 shopId={shop.id}
                 shopSlug={slug}
-                clientId={client.id}
-                initialData={data}
+                clientId={id}
+                initialData={null}
                 shopName={shop.name}
                 shopPhone={shop.phone}
                 shopEmail={shop.email}

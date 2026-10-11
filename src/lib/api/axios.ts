@@ -20,11 +20,8 @@ export const axiosClient = axios.create({
 axiosClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token =
-      localStorage.getItem("manna_access_token") ||
-      localStorage.getItem("manna_auth_token") ||
-      getClientCookie("manna_access_token") ||
-      getClientCookie("kenya-nzuri-kabisa") ||
-      getClientCookie("manna_session_token");
+      localStorage.getItem("access_token") ||
+      getClientCookie("access_token");
 
     if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -39,8 +36,8 @@ axiosClient.interceptors.response.use(
   (error: AxiosError<{ detail?: string; error?: string; message?: string }>) => {
     if (error.response?.status === 401) {
       if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-        localStorage.removeItem("manna_access_token");
-        localStorage.removeItem("manna_auth_token");
+        localStorage.removeItem("access_token");
+        document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
       }
     }
 

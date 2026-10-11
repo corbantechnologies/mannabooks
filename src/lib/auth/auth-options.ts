@@ -1,7 +1,17 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-const API_BASE_URL = (process.env.API_BASE_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+function getApiBaseUrl(): string {
+  const envUrl = (process.env.API_BASE_URL || "").replace(/\/$/, "");
+  if (envUrl) return envUrl;
+  if (process.env.NEXT_PUBLIC_API_URL?.startsWith("http")) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
+  }
+  if (process.env.NEXT_PUBLIC_APP_URL?.startsWith("http")) {
+    return `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/api/v1`;
+  }
+  return "http://127.0.0.1:8000";
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -17,7 +27,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const res = await fetch(`${API_BASE_URL}/v1/auth/token`, {
+          const apiBase = getApiBaseUrl();
+          const res = await fetch(`${apiBase}/v1/auth/token`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

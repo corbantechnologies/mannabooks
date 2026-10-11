@@ -19,13 +19,31 @@ export async function apiClient<T = any>(
       Object.entries(options.params).forEach(([k, v]) => url.searchParams.set(k, v));
     }
 
-    // Forward session token if present
+    // Forward standard session token if present
     let sessionToken: string | undefined;
     try {
       const cookieStore = await cookies();
-      sessionToken =
-        cookieStore.get("manna_access_token")?.value ||
-        cookieStore.get("manna_session_token")?.value;
+      sessionToken = cookieStore.get("access_token")?.value;
+
+      if (!sessionToken) {
+        const nextAuthCookie =
+          cookieStore.get("next-auth.session-token")?.value ||
+          cookieStore.get("__Secure-next-auth.session-token")?.value;
+        if (nextAuthCookie) {
+          try {
+            const { decode } = await import("next-auth/jwt");
+            const decoded = await decode({
+              token: nextAuthCookie,
+              secret: process.env.NEXTAUTH_SECRET || "manna_books_nextauth_secret_key_africa",
+            });
+            if (decoded?.accessToken) {
+              sessionToken = decoded.accessToken as string;
+            }
+          } catch {
+            // NextAuth decode failed
+          }
+        }
+      }
     } catch {
       // In static or build environments cookies() might fail
     }

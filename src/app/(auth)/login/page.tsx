@@ -53,7 +53,8 @@ function LoginFormContent() {
     const toastId = toast.loading("Clearing session cookies...");
     try {
       if (typeof window !== "undefined") {
-        localStorage.removeItem("manna_auth_token");
+        localStorage.removeItem("access_token");
+        document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
         document.cookie.split(";").forEach((c) => {
           document.cookie = c
             .replace(/^ +/, "")
@@ -83,39 +84,67 @@ function LoginFormContent() {
           password: data.password,
         });
         token = tokenRes.access_token || tokenRes.token;
-      } catch {
-        // Fallback to NextAuth getSession if direct call is unavailable
+      } catch (err: any) {
+        console.warn("Direct token exchange failed, attempting NextAuth fallback:", err);
       }
 
       // 2. Establish NextAuth session
-      const res = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        redirect: false,
-      });
+      let nextAuthError: string | null = null;
+      try {
+        const res = await signIn("credentials", {
+          email: data.email,
+          password: data.password,
+          redirect: false,
+        });
 
-      if (res?.error) {
-        const msg = res.error || "Authentication handshake rejected.";
+        if (res?.error) {
+          nextAuthError = res.error;
+        }
+      } catch (e: any) {
+        nextAuthError = e?.message || "NextAuth initialization error";
+      }
+
+      // 3. Fallback to session if direct token was not fetched
+      if (!token) {
+        try {
+          const session = await getSession();
+          token = (session?.user as any)?.accessToken;
+        } catch {
+          // ignore
+        }
+      }
+
+      // If neither token nor NextAuth succeeded, notify user
+      if (!token && nextAuthError) {
+        const msg = nextAuthError === "CredentialsSignin" ? "Invalid email or password." : nextAuthError;
         setError(msg);
         toast.error(msg, { id: toastId });
         setLoading(false);
         return;
       }
 
-      // 3. Fallback to session if direct token was not fetched
       if (!token) {
-        const session = await getSession();
-        token = (session?.user as any)?.accessToken;
+        const msg = "Unable to authenticate credentials. Please verify your email and password.";
+        setError(msg);
+        toast.error(msg, { id: toastId });
+        setLoading(false);
+        return;
       }
 
-      if (token && typeof window !== "undefined") {
-        localStorage.setItem("manna_auth_token", token);
-        localStorage.setItem("manna_access_token", token);
-      }
+      // 4. Persist token in localStorage AND browser cookie so Next.js server proxy & components can read it
+      if (typeof window !== "undefined") {
+        localStorage.setItem("access_token", token);
 
+        const maxAge = 30 * 24 * 60 * 60; // 30 days
+        const isSecure = window.location.protocol === "https:";
+        const secureFlag = isSecure ? "; Secure" : "";
+
+        document.cookie = `access_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+      }
 
       toast.success("Login successful!", { id: toastId });
-      window.location.href = callbackUrl;
+      const targetUrl = callbackUrl && !callbackUrl.includes("/login") ? callbackUrl : "/dashboard";
+      window.location.href = targetUrl;
     } catch (err: any) {
       console.error("Login authentication error:", err);
       const msg = err?.message || "An unexpected error occurred. Please try again.";

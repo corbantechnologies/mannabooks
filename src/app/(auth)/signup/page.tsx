@@ -89,12 +89,13 @@ function SignupContent() {
         console.warn("NextAuth session establishment warning:", authRes.error);
       }
 
-      // 3. Persist session token if returned
+      // 3. Persist standard session token if returned
       const token = response.token;
       if (token && typeof window !== "undefined") {
-        localStorage.setItem("manna_auth_token", token);
-        document.cookie = `manna_session_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
-        document.cookie = `kenya-nzuri-kabisa=${token}; path=/; max-age=2592000; SameSite=Lax`;
+        localStorage.setItem("access_token", token);
+        const isSecure = window.location.protocol === "https:";
+        const secureFlag = isSecure ? "; Secure" : "";
+        document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax${secureFlag}`;
       }
 
       const shopSlug = response.shop_slug || response.shopSlug;

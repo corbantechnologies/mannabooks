@@ -7,7 +7,7 @@ import { generateShopCode } from "./shopCode";
 import { isApiModuleEnabled } from "@/lib/api/flags";
 import { apiClient } from "@/lib/api/client";
 
-export const SESSION_COOKIE_NAME = "manna_access_token";
+export const SESSION_COOKIE_NAME = "access_token";
 export const SESSION_DURATION_DAYS = 30;
 
 export interface SessionUser {
@@ -45,10 +45,7 @@ export interface RegisterResult {
 export const verifyAndGetSession = cache(async function verifyAndGetSession(): Promise<UserSession | null> {
     try {
         const cookieStore = await cookies();
-        const token =
-            cookieStore.get(SESSION_COOKIE_NAME)?.value ||
-            cookieStore.get("manna_session_token")?.value ||
-            cookieStore.get("kenya-nzuri-kabisa")?.value;
+        const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
         if (!token) return null;
 

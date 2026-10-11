@@ -6,10 +6,7 @@ import { apiClient } from "@/lib/api/client";
 export async function GET(request: Request) {
     try {
         const cookieStore = await cookies();
-        const token =
-            cookieStore.get("manna_access_token")?.value ||
-            cookieStore.get("manna_session_token")?.value ||
-            cookieStore.get("kenya-nzuri-kabisa")?.value;
+        const token = cookieStore.get("access_token")?.value;
 
         // 1. Notify FastAPI backend to revoke session
         if (token) {
@@ -22,24 +19,15 @@ export async function GET(request: Request) {
             }
         }
 
-        // 2. Clear known session cookie names across root path
-        const cookiesToClear = [
-            "manna_access_token",
-            "manna_session_token",
-            "kenya-nzuri-kabisa",
-        ];
-
-
-        for (const name of cookiesToClear) {
-            cookieStore.delete(name);
-            cookieStore.set(name, "", {
-                path: "/",
-                maxAge: 0,
-                expires: new Date(0),
-                httpOnly: true,
-                sameSite: "lax",
-            });
-        }
+        // 2. Clear standard access_token cookie
+        cookieStore.delete("access_token");
+        cookieStore.set("access_token", "", {
+            path: "/",
+            maxAge: 0,
+            expires: new Date(0),
+            httpOnly: true,
+            sameSite: "lax",
+        });
     } catch (err) {
         console.error("Error clearing cookies in /logout route:", err);
     }

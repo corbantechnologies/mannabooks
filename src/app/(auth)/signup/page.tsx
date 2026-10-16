@@ -3,20 +3,23 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, getSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
-import axiosClient from "@/lib/api/axios";
+import { registerUser } from "@/lib/actions/auth";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Full legal name is required."),
   email: z.string().email("Please enter a valid email address."),
   businessName: z.string().min(2, "Business entity name is required."),
-  password: z.string().min(6, "Password must be at least 6 characters."),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters.")
+    .max(72, "Password is too long.")
+    .refine((v) => !/^[A-Za-z]+$/.test(v) && !/^\d+$/.test(v), "Mix letters with numbers or symbols."),
 });
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -63,46 +66,21 @@ function SignupContent() {
     const toastId = toast.loading("Compiling profile & workspace...");
 
     try {
-      // 1. Direct Axios call to FastAPI auth register endpoint
-      const response: any = await axiosClient.post("/auth/register", {
-        name: data.name.trim(),
-        email: data.email.toLowerCase().trim(),
+      const response = await registerUser({
+        name: data.name,
+        email: data.email,
         password: data.password,
-        business_name: data.businessName.trim(),
-        invite_token: inviteToken || null,
+        businessName: data.businessName,
+        inviteToken: inviteToken || undefined,
       });
-
-      if (!response.success && response.error) {
-        throw new Error(response.error);
+      if (!response.success) {
+        throw new Error(response.error || "Account creation failed.");
       }
 
       toast.success("Account & workspace created successfully!", { id: toastId });
 
-      // 2. Establish Next-Auth session
-      const authRes = await signIn("credentials", {
-        email: data.email.toLowerCase().trim(),
-        password: data.password,
-        redirect: false,
-      });
-
-      if (authRes?.error) {
-        console.warn("NextAuth session establishment warning:", authRes.error);
-      }
-
-      // 3. Persist standard session token if returned
-      const token = response.token;
-      if (token && typeof window !== "undefined") {
-        localStorage.setItem("access_token", token);
-        const isSecure = window.location.protocol === "https:";
-        const secureFlag = isSecure ? "; Secure" : "";
-        document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax${secureFlag}`;
-      }
-
-      const shopSlug = response.shop_slug || response.shopSlug;
-      if (inviteToken) {
-        window.location.href = "/dashboard";
-      } else if (shopSlug) {
-        window.location.href = `/workspaces/${shopSlug}`;
+      if (!inviteToken && response.shopSlug) {
+        window.location.href = `/workspaces/${encodeURIComponent(response.shopSlug)}`;
       } else {
         window.location.href = "/dashboard";
       }

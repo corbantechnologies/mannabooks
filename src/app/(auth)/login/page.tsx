@@ -3,14 +3,13 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, getSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
-import axiosClient from "@/lib/api/axios";
+import { loginUser } from "@/lib/actions/auth-login";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -23,8 +22,12 @@ function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawCallback = searchParams.get("callbackUrl");
+  // Only same-site relative paths are allowed (blocks open redirects such as //evil.com).
   const callbackUrl =
     rawCallback &&
+    rawCallback.startsWith("/") &&
+    !rawCallback.startsWith("//") &&
+    !rawCallback.startsWith("/\\") &&
     !rawCallback.startsWith("/login") &&
     !rawCallback.startsWith("/signup") &&
     !rawCallback.startsWith("/logout")
@@ -48,26 +51,10 @@ function LoginFormContent() {
     },
   });
 
-  async function handleClearSession() {
+  function handleClearSession() {
     setIsClearing(true);
-    const toastId = toast.loading("Clearing session cookies...");
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("access_token");
-        document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
-        document.cookie.split(";").forEach((c) => {
-          document.cookie = c
-            .replace(/^ +/, "")
-            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-        });
-      }
-      toast.success("Session cookies wiped cleanly. You can now log in.", { id: toastId });
-      setError(null);
-    } catch {
-      toast.error("Failed to clear cookies.", { id: toastId });
-    } finally {
-      setIsClearing(false);
-    }
+    // The session cookie is HttpOnly; /logout clears it server-side.
+    window.location.href = "/logout";
   }
 
   async function onSubmit(data: LoginFormData) {
@@ -76,78 +63,20 @@ function LoginFormContent() {
     const toastId = toast.loading("Authenticating credentials...");
 
     try {
-      // 1. Fetch token directly to guarantee client storage is immediately populated for Axios
-      let token: string | undefined;
-      try {
-        const tokenRes: any = await axiosClient.post("/auth/token", {
-          email: data.email,
-          password: data.password,
-        });
-        token = tokenRes.access_token || tokenRes.token;
-      } catch (err: any) {
-        console.warn("Direct token exchange failed, attempting NextAuth fallback:", err);
-      }
-
-      // 2. Establish NextAuth session
-      let nextAuthError: string | null = null;
-      try {
-        const res = await signIn("credentials", {
-          email: data.email,
-          password: data.password,
-          redirect: false,
-        });
-
-        if (res?.error) {
-          nextAuthError = res.error;
-        }
-      } catch (e: any) {
-        nextAuthError = e?.message || "NextAuth initialization error";
-      }
-
-      // 3. Fallback to session if direct token was not fetched
-      if (!token) {
-        try {
-          const session = await getSession();
-          token = (session?.user as any)?.accessToken;
-        } catch {
-          // ignore
-        }
-      }
-
-      // If neither token nor NextAuth succeeded, notify user
-      if (!token && nextAuthError) {
-        const msg = nextAuthError === "CredentialsSignin" ? "Invalid email or password." : nextAuthError;
+      const res = await loginUser({ email: data.email, password: data.password });
+      if (!res.success) {
+        const msg = res.error || "Invalid email or password.";
         setError(msg);
         toast.error(msg, { id: toastId });
         setLoading(false);
         return;
-      }
-
-      if (!token) {
-        const msg = "Unable to authenticate credentials. Please verify your email and password.";
-        setError(msg);
-        toast.error(msg, { id: toastId });
-        setLoading(false);
-        return;
-      }
-
-      // 4. Persist token in localStorage AND browser cookie so Next.js server proxy & components can read it
-      if (typeof window !== "undefined") {
-        localStorage.setItem("access_token", token);
-
-        const maxAge = 30 * 24 * 60 * 60; // 30 days
-        const isSecure = window.location.protocol === "https:";
-        const secureFlag = isSecure ? "; Secure" : "";
-
-        document.cookie = `access_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
       }
 
       toast.success("Login successful!", { id: toastId });
-      const targetUrl = callbackUrl && !callbackUrl.includes("/login") ? callbackUrl : "/dashboard";
-      window.location.href = targetUrl;
+      window.location.href = callbackUrl;
     } catch (err: any) {
       console.error("Login authentication error:", err);
-      const msg = err?.message || "An unexpected error occurred. Please try again.";
+      const msg = "An unexpected error occurred. Please try again.";
       setError(msg);
       toast.error(msg, { id: toastId });
       setLoading(false);
@@ -171,6 +100,12 @@ function LoginFormContent() {
             Enter your credentials to access your account
           </p>
         </div>
+
+        {searchParams.get("expired") === "1" && !error && (
+          <div className="border border-amber-200 bg-amber-50 p-3 font-sans text-xs text-amber-800 rounded font-semibold">
+            Your session ended after a period of inactivity. Please log in again.
+          </div>
+        )}
 
         {searchParams.get("cleared") === "1" && !error && (
           <div className="border border-emerald-200 bg-emerald-50 p-3 font-sans text-xs text-emerald-800 rounded font-semibold flex items-center gap-2">

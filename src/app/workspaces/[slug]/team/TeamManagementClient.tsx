@@ -197,7 +197,7 @@ export default function TeamManagementClient({ shopId, initialMembers = [], init
                                     required
                                     className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs"
                                 />
-                                <p className="text-[10px] text-zinc-500">If they don't have an account, we'll email them an invite link.</p>
+                                <p className="text-[10px] text-zinc-500">If they don&apos;t have an account, we&apos;ll email them an invite link.</p>
                             </div>
 
                             <div className="space-y-1.5">

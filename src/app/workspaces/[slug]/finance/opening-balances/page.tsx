@@ -31,8 +31,8 @@ export default async function OpeningBalancesPage({ params }: { params: Promise<
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 space-y-1">
                 <p className="font-bold font-mono text-xs uppercase">When to use this vs. Manual Journal Entries</p>
                 <ul className="list-disc pl-4 space-y-1 mt-1">
-                    <li><strong>Opening Balances</strong> → For account totals you already know (e.g. "My bank account had KES 240,000 on September 30, 2025")</li>
-                    <li><strong>Manual Journal Entries</strong> (GL Ledger page) → For individual historical transactions you want recorded (e.g. "Paid Railway KES 3,200 on Nov 1, 2025"; "Paid Google Cloud KES 4,800 on Dec 1, 2025")</li>
+                    <li><strong>Opening Balances</strong> → For account totals you already know (e.g. &quot;My bank account had KES 240,000 on September 30, 2025&quot;)</li>
+                    <li><strong>Manual Journal Entries</strong> (GL Ledger page) → For individual historical transactions you want recorded (e.g. &quot;Paid Railway KES 3,200 on Nov 1, 2025&quot;; &quot;Paid Google Cloud KES 4,800 on Dec 1, 2025&quot;)</li>
                 </ul>
             </div>
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { axiosClient } from "@/lib/api/axios";
 import Link from "next/link";
 
 export default function ForgotPasswordPage() {
@@ -15,7 +14,12 @@ export default function ForgotPasswordPage() {
         setErrorMessage("");
 
         try {
-            const res: any = await axiosClient.post("/auth/forgot-password", { email });
+            // Next.js route: emails the link server-side and always answers generically.
+            const res: any = await fetch("/api/auth/forgot-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            }).then((r) => r.json());
             if (res && res.success === false) {
                 setStatus("ERROR");
                 setErrorMessage(res.error || "An unexpected error occurred.");

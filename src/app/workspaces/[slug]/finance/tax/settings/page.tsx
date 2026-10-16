@@ -24,7 +24,7 @@ export default async function TaxSettingsPage({ params }: { params: Promise<{ sl
             <div className="space-y-2">
                 <span className="text-xs text-zinc-400 font-medium">Tax Configurations</span>
                 <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">Tax Profile & Settings</h1>
-                <p className="text-sm text-zinc-500 mt-1">Configure your workspace's tax regime, rates, and active Fiscal Years for KRA compliance.</p>
+                <p className="text-sm text-zinc-500 mt-1">Configure your workspace&apos;s tax regime, rates, and active Fiscal Years for KRA compliance.</p>
             </div>
 
             <TaxSettingsClient

@@ -75,6 +75,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                             </Link>
 
                             <Link 
+                                href="/admin/statutory-rates" 
+                                className="flex items-center gap-2.5 px-3 py-2 text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg font-semibold transition-colors no-underline"
+                            >
+                                <span>🧾</span>
+                                <span>Statutory Payroll Rates</span>
+                            </Link>
+
+                            <Link 
                                 href="/admin/pricing" 
                                 className="flex items-center gap-2.5 px-3 py-2 text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg font-semibold transition-colors no-underline"
                             >

@@ -317,7 +317,7 @@ export function LocationsClientView({ shopId, shopSlug, shopCurrency, initialLoc
             {initialLocations.length === 0 && (
               <tr>
                 <td colSpan={8} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
-                  No locations added yet. Click "+ Add Location" to create your first stock location.
+                  No locations added yet. Click &quot;+ Add Location&quot; to create your first stock location.
                 </td>
               </tr>
             )}

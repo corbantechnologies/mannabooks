@@ -43,7 +43,7 @@ function ResetPasswordForm() {
         setErrorMessage("");
 
         try {
-            const res: any = await axiosClient.post("/auth/reset-password", { token, password });
+            const res: any = await axiosClient.post("/auth/reset-password", { token, new_password: password });
             if (res && res.success === false) {
                 setStatus("ERROR");
                 setErrorMessage(res.error || "An unexpected error occurred.");

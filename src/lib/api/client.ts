@@ -1,67 +1,61 @@
 // src/lib/api/client.ts
+// Server-side client for the FastAPI backend (Server Components, Route Handlers, Server Actions).
 import { cookies } from "next/headers";
+import { unstable_rethrow } from "next/navigation";
+import { SESSION_COOKIE_NAME } from "@/lib/auth/session-cookie";
 
 const API_BASE_URL = (process.env.API_BASE_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || "";
 
+if (!INTERNAL_API_KEY && process.env.NODE_ENV === "production") {
+  console.error("[API Client] INTERNAL_API_KEY is not set; backend calls will be rejected.");
+}
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
+  /** Do not forward the signed-in user's session (public pages, login, registration). */
+  anonymous?: boolean;
+}
+
+async function readSessionToken(): Promise<string | undefined> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get(SESSION_COOKIE_NAME)?.value || undefined;
+  } catch (err) {
+    // Let Next.js mark the route as dynamic; otherwise cookies() is simply unavailable (build time).
+    unstable_rethrow(err);
+    return undefined;
+  }
 }
 
 export async function apiClient<T = any>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<{ data?: T; error?: string; status: number }> {
+  const { params, anonymous, ...init } = options;
   try {
     const url = new URL(`${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`);
-    if (options.params) {
-      Object.entries(options.params).forEach(([k, v]) => url.searchParams.set(k, v));
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
     }
-
-    // Forward standard session token if present
-    let sessionToken: string | undefined;
-    try {
-      const cookieStore = await cookies();
-      sessionToken = cookieStore.get("access_token")?.value;
-
-      if (!sessionToken) {
-        const nextAuthCookie =
-          cookieStore.get("next-auth.session-token")?.value ||
-          cookieStore.get("__Secure-next-auth.session-token")?.value;
-        if (nextAuthCookie) {
-          try {
-            const { decode } = await import("next-auth/jwt");
-            const decoded = await decode({
-              token: nextAuthCookie,
-              secret: process.env.NEXTAUTH_SECRET || "manna_books_nextauth_secret_key_africa",
-            });
-            if (decoded?.accessToken) {
-              sessionToken = decoded.accessToken as string;
-            }
-          } catch {
-            // NextAuth decode failed
-          }
-        }
-      }
-    } catch {
-      // In static or build environments cookies() might fail
-    }
-
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       "X-Internal-Key": INTERNAL_API_KEY,
-      ...(options.headers as Record<string, string>),
+      ...(init.headers as Record<string, string>),
     };
 
-    if (sessionToken && !headers["Authorization"]) {
-      headers["Authorization"] = `Bearer ${sessionToken}`;
+    if (!anonymous && !headers["Authorization"]) {
+      const sessionToken = await readSessionToken();
+      if (sessionToken) {
+        headers["Authorization"] = `Bearer ${sessionToken}`;
+      }
     }
 
     const res = await fetch(url.toString(), {
-      ...options,
+      ...init,
       headers,
+      cache: init.cache ?? "no-store",
     });
 
     const json = await res.json().catch(() => null);
@@ -78,19 +72,20 @@ export async function apiClient<T = any>(
       data: json as T,
     };
   } catch (err: any) {
+    unstable_rethrow(err);
     console.error(`[API Client Error: ${endpoint}]`, err);
     return {
       status: 500,
-      error: err.message || "Failed to communicate with FastAPI backend.",
+      error: "Failed to communicate with the backend service.",
     };
   }
 }
 
-apiClient.get = function<T = any>(endpoint: string, options?: RequestOptions) {
+apiClient.get = function <T = any>(endpoint: string, options?: RequestOptions) {
   return apiClient<T>(endpoint, { ...options, method: "GET" });
 };
 
-apiClient.post = function<T = any>(endpoint: string, body?: any, options?: RequestOptions) {
+apiClient.post = function <T = any>(endpoint: string, body?: any, options?: RequestOptions) {
   return apiClient<T>(endpoint, {
     ...options,
     method: "POST",
@@ -98,7 +93,7 @@ apiClient.post = function<T = any>(endpoint: string, body?: any, options?: Reque
   });
 };
 
-apiClient.put = function<T = any>(endpoint: string, body?: any, options?: RequestOptions) {
+apiClient.put = function <T = any>(endpoint: string, body?: any, options?: RequestOptions) {
   return apiClient<T>(endpoint, {
     ...options,
     method: "PUT",
@@ -106,7 +101,7 @@ apiClient.put = function<T = any>(endpoint: string, body?: any, options?: Reques
   });
 };
 
-apiClient.patch = function<T = any>(endpoint: string, body?: any, options?: RequestOptions) {
+apiClient.patch = function <T = any>(endpoint: string, body?: any, options?: RequestOptions) {
   return apiClient<T>(endpoint, {
     ...options,
     method: "PATCH",
@@ -114,9 +109,8 @@ apiClient.patch = function<T = any>(endpoint: string, body?: any, options?: Requ
   });
 };
 
-apiClient.delete = function<T = any>(endpoint: string, options?: RequestOptions) {
+apiClient.delete = function <T = any>(endpoint: string, options?: RequestOptions) {
   return apiClient<T>(endpoint, { ...options, method: "DELETE" });
 };
 
 export const apiCall = apiClient;
-

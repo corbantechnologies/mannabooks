@@ -1,9 +1,29 @@
 import type { NextConfig } from "next";
 
-// Ensure Node runtime defaults to East Africa Time (EAT)
-process.env.TMEZONE = "Africa/Nairobi";
+// Ensure the Node runtime defaults to East Africa Time (EAT)
+process.env.TZ = process.env.TZ || "Africa/Nairobi";
+
+const isProd = process.env.NODE_ENV === "production";
+
+// Baseline security headers. The CSP below restricts framing, plugins, <base> and form targets
+// without touching scripts/styles (a full script CSP needs nonces; tracked in MODULE_AUDIT_PLAN.md).
+const securityHeaders = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=()" },
+  {
+    key: "Content-Security-Policy",
+    value: "frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+  },
+  ...(isProd ? [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" }] : []),
+];
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
   images: {
     remotePatterns: [
       {

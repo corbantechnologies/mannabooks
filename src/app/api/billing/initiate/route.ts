@@ -3,10 +3,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { formatMpesaPhoneNumber, sendMpesaStkPush } from "@/lib/services/mpesa";
 import { PLAN_SPECS, getDynamicPlanSpecs } from "@/lib/paywall";
 import { apiClient } from "@/lib/api/client";
+import { verifyAndGetSession } from "@/lib/auth/session";
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await verifyAndGetSession();
+    if (!session) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
     const input = await req.json();
+    if (typeof input.shopId !== "string" || !input.shopId) {
+      return NextResponse.json({ success: false, error: "shopId is required" }, { status: 400 });
+    }
     const targetPlan = (input.plan || "PRO").toUpperCase();
     const dynamicSpecs = await getDynamicPlanSpecs();
     const planSpec = dynamicSpecs[targetPlan] || PLAN_SPECS[targetPlan];
@@ -14,7 +22,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid plan" }, { status: 400 });
     }
 
-    const months = Math.max(1, input.months || 1);
+    const months = Math.min(24, Math.max(1, Math.floor(Number(input.months) || 1)));
     let amount = 0;
     const effectiveAnnual =
       planSpec.discountedPriceAnnually && planSpec.discountedPriceAnnually > 0
@@ -41,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     const shopRes = await apiClient<{ success: boolean; shop: any }>(
-      `/v1/workspaces/${input.shopId}`
+      `/v1/workspaces/${encodeURIComponent(input.shopId)}`
     );
     if (!shopRes.data?.shop) {
       return NextResponse.json({ success: false, error: "Workspace not found" }, { status: 404 });
@@ -86,6 +94,7 @@ export async function POST(req: NextRequest) {
       amount,
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error("Billing initiate error:", error);
+    return NextResponse.json({ success: false, error: "Could not start the payment. Please try again." }, { status: 500 });
   }
 }

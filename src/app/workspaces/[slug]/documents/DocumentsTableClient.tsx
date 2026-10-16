@@ -123,7 +123,7 @@ export function DocumentsTableClient({
     const ancestors: (StreamDocument | ParentDocSummary)[] = [];
     const visited = new Set<string>([doc.id]);
     let currParentId = doc.parentDocumentId;
-    let immediateParentSnapshot = doc.parentDocument;
+    const immediateParentSnapshot = doc.parentDocument;
 
     while (currParentId) {
       if (visited.has(currParentId)) break; // cycle protection
@@ -238,10 +238,12 @@ export function DocumentsTableClient({
     const toastId = toast.loading(`Dispatching emails for ${selectedIds.size} documents...`);
 
     try {
-      const res = await axiosClient.post("/api/documents/email", {
-        documentIds: Array.from(selectedIds),
-      });
-      const data = res.data;
+      // Next.js route handler (not the FastAPI proxy): it renders and sends the email via Resend.
+      const data = await fetch("/api/documents/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shopId, documentIds: Array.from(selectedIds) }),
+      }).then((r) => r.json());
       if (data?.sent > 0) {
         toast.success(
           `Successfully sent ${data.sent} document emails!${data.failed > 0 ? ` (${data.failed} skipped/no email)` : ""}`,

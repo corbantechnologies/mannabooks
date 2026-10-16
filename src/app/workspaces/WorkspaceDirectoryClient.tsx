@@ -336,7 +336,7 @@ export function WorkspaceDirectoryClient({
                 {roster.length === 0 && (
                   <tr>
                     <td colSpan={4} className="py-8 text-center text-zinc-400 italic">
-                      No staff members assigned yet. Use "+ Add / Assign Staff" to invite team members.
+                      No staff members assigned yet. Use &quot;+ Add / Assign Staff&quot; to invite team members.
                     </td>
                   </tr>
                 )}

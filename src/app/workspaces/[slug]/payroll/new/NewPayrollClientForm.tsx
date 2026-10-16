@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { computeKenyanDeductions, PayrollMode } from "@/lib/payroll-utils";
 import { axiosClient } from "@/lib/api/axios";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "react-hot-toast";
@@ -16,6 +15,32 @@ interface SpreadsheetEmployeeRow {
   commissions: number;
   customDeductions: number;
 }
+
+type PayrollMode = "KENYA_STATUTORY" | "MANUAL_CUSTOM";
+
+interface ComputedPay {
+  grossSalary: number;
+  nssf: number;
+  shif: number;
+  housingLevy: number;
+  paye: number;
+  customDeductions: number;
+  totalDeductions: number;
+  netPay: number;
+  employerCost: number;
+}
+
+interface RateSetInfo {
+  name: string;
+  isVerified: boolean;
+  period: string;
+}
+
+const EMPTY_PAY: ComputedPay = {
+  grossSalary: 0, nssf: 0, shif: 0, housingLevy: 0, paye: 0, customDeductions: 0, totalDeductions: 0, netPay: 0, employerCost: 0,
+};
+
+const num = (v: unknown) => Number(v) || 0;
 
 interface NewPayrollClientFormProps {
   shop: any;
@@ -100,21 +125,55 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
     setRows((prev) => prev.filter((r) => r.id !== id));
   };
 
-  // Compile calculations collectively
-  const rowsWithCalcs = rows.map((r) => ({
-    ...r,
-    computed: computeKenyanDeductions({
-      baseSalary: parseFloat(r.baseSalary as any) || 0,
-      allowances: parseFloat(r.allowances as any) || 0,
-      commissions: parseFloat(r.commissions as any) || 0,
-      customDeductions: parseFloat(r.customDeductions as any) || 0,
-      mode,
-    }),
-  }));
+  // Statutory figures come from the API so every screen uses the same, effective-dated rates.
+  const [computedRows, setComputedRows] = useState<ComputedPay[]>([]);
+  const [rateSet, setRateSet] = useState<RateSetInfo | null>(null);
+  const [calcError, setCalcError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      try {
+        const res: any = await axiosClient.post("/payroll/calculate", {
+          shop_id: shop.id,
+          period: issueDate,
+          mode,
+          lines: rows.map((r) => ({
+            employeeId: r.employeeId,
+            employeeName: r.fullName,
+            baseSalary: num(r.baseSalary),
+            allowances: num(r.allowances),
+            commissions: num(r.commissions),
+            customDeductions: num(r.customDeductions),
+          })),
+        });
+        setComputedRows(
+          (res?.calculations || []).map((c: any) => ({
+            grossSalary: num(c.gross_pay),
+            nssf: num(c.nssf_employee),
+            shif: num(c.shif),
+            housingLevy: num(c.housing_levy_employee),
+            paye: num(c.paye),
+            customDeductions: num(c.custom_deductions),
+            totalDeductions: num(c.total_deductions),
+            netPay: num(c.net_pay),
+            employerCost: num(c.employer_cost),
+          }))
+        );
+        setRateSet(res?.rateSet || null);
+        setCalcError(null);
+      } catch (err: any) {
+        setCalcError(err?.message || "Could not calculate statutory deductions.");
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [rows, mode, issueDate, shop.id]);
+
+  const rowsWithCalcs = rows.map((r, idx) => ({ ...r, computed: computedRows[idx] || EMPTY_PAY }));
 
   const totalGross = rowsWithCalcs.reduce((sum, r) => sum + r.computed.grossSalary, 0);
   const totalDeductions = rowsWithCalcs.reduce((sum, r) => sum + r.computed.totalDeductions, 0);
   const totalNetPayPayout = rowsWithCalcs.reduce((sum, r) => sum + r.computed.netPay, 0);
+  const totalEmployerCost = rowsWithCalcs.reduce((sum, r) => sum + r.computed.employerCost, 0);
 
   const handleExecutionSubmit = async (targetStatus: "DRAFT" | "PAID" = "DRAFT") => {
     if (!period.trim()) {
@@ -161,6 +220,30 @@ export function NewPayrollClientForm({ shop, shopSlug, initialEmployees }: NewPa
 
   return (
     <div className="space-y-8 font-mono text-xs selection:bg-black selection:text-white">
+      {mode === "KENYA_STATUTORY" && (rateSet || calcError) && (
+        <div
+          className={`border p-3 rounded text-[11px] font-sans ${
+            calcError || !rateSet?.isVerified
+              ? "border-amber-200 bg-amber-50 text-amber-800"
+              : "border-zinc-200 bg-zinc-50 text-zinc-600"
+          }`}
+        >
+          {calcError
+            ? calcError
+            : `Statutory rates: ${rateSet?.name}${rateSet?.isVerified ? "" : " (not yet verified by an administrator; check figures before finalizing)"}. `}
+          {!calcError && (
+            <span>
+              Employer cost (gross + employer NSSF, Housing Levy, NITA):{" "}
+              <strong>{formatCurrency(totalEmployerCost, shop.currency)}</strong>
+            </span>
+          )}
+          {payoutCycle === "WEEKLY" && (
+            <span className="block mt-1">
+              Weekly runs are taxed with monthly statutory bands. Run Kenyan statutory payroll monthly for correct PAYE.
+            </span>
+          )}
+        </div>
+      )}
       
       {/* CONTROL & STRATEGY PANEL */}
       <div className="card-modern p-6 grid grid-cols-1 md:grid-cols-4 gap-4 bg-white">

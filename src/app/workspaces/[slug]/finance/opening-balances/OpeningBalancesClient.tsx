@@ -204,7 +204,7 @@ export default function OpeningBalancesClient({ shopId, shopSlug, accounts }: Pr
 
                 {!isBalanced && hasAnyEntry && (
                     <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                        ⚠ Your debits and credits don't balance. You can still post — the difference will sit in the Opening Balances account (3200) and can be corrected later.
+                        ⚠ Your debits and credits don&apos;t balance. You can still post — the difference will sit in the Opening Balances account (3200) and can be corrected later.
                     </p>
                 )}
 

@@ -121,3 +121,14 @@ export function calculateDocumentTotals({ items, isShopVatRegistered }: Document
         { subTotal: 0, taxAmount: 0, grandTotal: 0 }
     );
 }
+/**
+ * Escapes text for safe interpolation into HTML (emails, server-rendered templates).
+ */
+export function escapeHtml(value: unknown): string {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}

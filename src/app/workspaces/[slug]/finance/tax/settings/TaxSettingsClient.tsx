@@ -113,7 +113,7 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
             <div className="flex flex-col gap-3 font-mono text-xs max-w-sm">
                 <span className="font-semibold uppercase tracking-tight text-black">Close Fiscal Year?</span>
                 <p className="text-zinc-500 normal-case leading-relaxed text-[11px]">
-                    Are you sure you want to CLOSE "{label}"? This will reset all Revenue and Expense accounts to Retained Earnings (3300) and lock all entries permanently.
+                    Are you sure you want to CLOSE &quot;{label}&quot;? This will reset all Revenue and Expense accounts to Retained Earnings (3300) and lock all entries permanently.
                 </p>
                 <div className="flex gap-2">
                     <button 
@@ -155,7 +155,7 @@ export default function TaxSettingsClient({ shopId, shopSlug, isGlEnabled, initi
             <div className="flex flex-col gap-3 font-mono text-xs max-w-sm">
                 <span className="font-semibold uppercase tracking-tight text-black">Delete Fiscal Year?</span>
                 <p className="text-zinc-500 normal-case leading-relaxed text-[11px]">
-                    Are you sure you want to DELETE "${label}"? This will permanently delete this Fiscal Year and all its monthly periods. This action can only succeed if no journal entries are recorded in these periods.
+                    Are you sure you want to DELETE &quot;${label}&quot;? This will permanently delete this Fiscal Year and all its monthly periods. This action can only succeed if no journal entries are recorded in these periods.
                 </p>
                 <div className="flex gap-2">
                     <button 

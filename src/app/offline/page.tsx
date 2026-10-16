@@ -17,6 +17,8 @@ export default function OfflineFallbackPage() {
         </div>
 
         <div className="pt-4 border-t border-zinc-200/80 flex flex-col gap-3">
+          {/* Full page load on purpose: retry the network instead of a client-side transition. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/workspaces"
             className="btn-primary-modern px-4 py-2 text-xs font-semibold uppercase tracking-wider block text-center"

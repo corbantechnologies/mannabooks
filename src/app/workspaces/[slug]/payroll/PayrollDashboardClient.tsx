@@ -70,6 +70,12 @@ export function PayrollDashboardClient({
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <RegisterEmployeeModal shopId={shopId} shopSlug={shopSlug} />
           <Link
+            href={`/workspaces/${shopSlug}/payroll/statutory`}
+            className="btn-secondary-modern px-4 py-2 text-xs font-semibold uppercase tracking-wider text-center"
+          >
+            Statutory &amp; Returns
+          </Link>
+          <Link
             href={`/workspaces/${shopSlug}/payroll/new`}
             className="btn-primary-modern px-4 py-2 text-xs font-semibold uppercase tracking-wider text-center"
           >
@@ -279,7 +285,7 @@ export function PayrollDashboardClient({
                 {staffList.length === 0 && (
                   <tr>
                     <td colSpan={7} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
-                      No employees added yet. Click "+ Register Employee" to get started.
+                      No employees added yet. Click &quot;+ Register Employee&quot; to get started.
                     </td>
                   </tr>
                 )}

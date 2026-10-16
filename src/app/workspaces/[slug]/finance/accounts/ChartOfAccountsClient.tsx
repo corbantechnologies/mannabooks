@@ -452,7 +452,7 @@ export default function ChartOfAccountsClient({
             </div>
 
             {/* CONTROLS: TYPE FILTER TABS, SEARCH, AND ACTIONS */}
-            <div className="flex flex-col md:flex-row gap-3 md:items-center justify-between">
+            <div className="flex flex-col xl:flex-row gap-3 xl:items-center justify-between">
                 {/* Category filter tabs */}
                 <div className="flex flex-wrap gap-1.5 p-1 bg-zinc-100 rounded-xl border border-zinc-200">
                     <button
@@ -490,8 +490,8 @@ export default function ChartOfAccountsClient({
                 </div>
 
                 {/* Search & Actions */}
-                <div className="flex items-center gap-2">
-                    <div className="relative flex-1 sm:w-64">
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative min-w-0 flex-1 sm:w-64">
                         <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                             type="text"

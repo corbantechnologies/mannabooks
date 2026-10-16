@@ -7,10 +7,15 @@ import { formatCurrency } from "@/lib/utils";
 import { getFiscalYearRange } from "@/lib/fiscalYear";
 import { Spinner } from "@/components/Spinner";
 
+import { type FiscalYearOption } from "@/lib/fiscal-year-context";
+import Link from "next/link";
+
 interface AnalyticsClientViewProps {
   shopId: string;
   shopSlug: string;
   fiscalYearStartMonth: number;
+  activeFiscalYear?: FiscalYearOption | null;
+  allFiscalYears?: FiscalYearOption[];
   initialData?: AnalyticsData;
 }
 
@@ -65,7 +70,17 @@ const defaultAnalyticsData: AnalyticsData = {
   },
 };
 
-export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, initialData }: AnalyticsClientViewProps) {
+export function AnalyticsClientView({
+  shopId,
+  shopSlug,
+  fiscalYearStartMonth,
+  activeFiscalYear,
+  allFiscalYears = [],
+  initialData,
+}: AnalyticsClientViewProps) {
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState<FiscalYearOption | null>(
+    activeFiscalYear || (allFiscalYears.length > 0 ? allFiscalYears[0] : null)
+  );
   const [timeframe, setTimeframe] = useState<TimeframeFilter>(initialData?.timeframe || "THIS_MONTH");
   const [loading, setLoading] = useState(!initialData);
   const [data, setData] = useState<AnalyticsData>(initialData || defaultAnalyticsData);
@@ -79,12 +94,26 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
     }
   }, []);
 
-  async function handleTimeframeChange(tf: TimeframeFilter) {
+  async function handleFiscalYearSwitch(fyId: string) {
+    const targetFy = allFiscalYears.find((f) => f.id === fyId) || null;
+    setSelectedFiscalYear(targetFy);
+    if (typeof document !== "undefined") {
+      document.cookie = `mannabooks_fy_${shopId}=${fyId}; path=/; max-age=31536000; SameSite=Lax`;
+    }
+    await handleTimeframeChange(timeframe, fyId);
+  }
+
+  async function handleTimeframeChange(tf: TimeframeFilter, customFyId?: string) {
     setTimeframe(tf);
     setLoading(true);
+    const activeFyId = customFyId !== undefined ? customFyId : selectedFiscalYear?.id;
     try {
       const res: any = await axiosClient.get("/analytics", {
-        params: { shop_id: shopId, timeframe: tf },
+        params: {
+          shop_id: shopId,
+          timeframe: tf,
+          fiscal_year_id: activeFyId || undefined,
+        },
       });
       if (res?.data || res) {
         setData(res?.data || res);
@@ -105,13 +134,13 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
     1
   );
 
-  const fyLabel = data.activeFiscalYearLabel || getFiscalYearRange(fiscalYearStartMonth).label;
+  const activeLabel = selectedFiscalYear?.label || data.activeFiscalYearLabel || getFiscalYearRange(fiscalYearStartMonth).label;
 
   const timeframes: { id: TimeframeFilter; label: string }[] = [
     { id: "THIS_MONTH", label: "This Month" },
     { id: "LAST_MONTH", label: "Last Month" },
     { id: "THIS_QUARTER", label: "This Quarter" },
-    { id: "THIS_YEAR", label: fyLabel },
+    { id: "THIS_YEAR", label: `FY: ${activeLabel}` },
     { id: "ALL_TIME", label: "All Time" },
   ];
 
@@ -121,6 +150,68 @@ export function AnalyticsClientView({ shopId, shopSlug, fiscalYearStartMonth, in
   return (
     <div className={`space-y-8 font-mono text-xs selection:bg-black selection:text-white transition-opacity duration-300 ${loading ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
       
+      {/* FISCAL YEAR CONTEXT BAR */}
+      <div className="bg-gradient-to-r from-zinc-900 via-zinc-800 to-black text-white rounded-xl p-4 sm:p-5 shadow-sm border border-zinc-700/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-lg shrink-0">
+            📅
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] tracking-wider uppercase font-bold text-emerald-400">
+                Active Platform Fiscal Year
+              </span>
+              {selectedFiscalYear?.isClosed ? (
+                <span className="px-2 py-0.5 text-[9px] uppercase font-bold bg-amber-500/20 text-amber-300 rounded border border-amber-500/40">
+                  Closed
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 text-[9px] uppercase font-bold bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/40">
+                  Open
+                </span>
+              )}
+            </div>
+            <h1 className="text-sm sm:text-base font-bold font-sans tracking-tight text-white mt-0.5">
+              {activeLabel}
+              {selectedFiscalYear?.startDate && selectedFiscalYear?.endDate && (
+                <span className="text-xs font-mono text-zinc-400 font-normal ml-2">
+                  ({selectedFiscalYear.startDate} to {selectedFiscalYear.endDate})
+                </span>
+              )}
+            </h1>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 self-start md:self-auto">
+          {allFiscalYears.length > 0 && (
+            <div className="relative">
+              <select
+                value={selectedFiscalYear?.id || ""}
+                onChange={(e) => handleFiscalYearSwitch(e.target.value)}
+                disabled={loading}
+                className="bg-zinc-800 hover:bg-zinc-700 text-white text-[11px] font-sans font-medium px-3 py-1.5 rounded-lg border border-zinc-600 focus:outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer appearance-none pr-8"
+              >
+                {allFiscalYears.map((fy) => (
+                  <option key={fy.id} value={fy.id}>
+                    {fy.label} {fy.isClosed ? "(Closed)" : "(Open)"}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-400 text-xs">
+                ▾
+              </div>
+            </div>
+          )}
+
+          <Link
+            href={`/workspaces/${shopSlug}/finance/fiscal-years`}
+            className="px-3 py-1.5 text-[11px] font-sans font-medium text-zinc-300 hover:text-white bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-600 rounded-lg transition-colors flex items-center gap-1.5"
+          >
+            Manage FYs ↗
+          </Link>
+        </div>
+      </div>
+
       {/* TIMEFRAME SELECTOR */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-zinc-100 pb-5">
         <div className="flex-1 min-w-0">

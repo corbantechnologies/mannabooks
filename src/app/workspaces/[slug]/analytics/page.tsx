@@ -1,4 +1,5 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
+import { getActiveFiscalYearContext } from "@/lib/fiscal-year-context";
 import { notFound } from "next/navigation";
 import { AnalyticsClientView } from "./AnalyticsClientView";
 
@@ -16,17 +17,16 @@ export default async function WorkspaceAnalyticsPage({ params }: AnalyticsPagePr
     notFound();
   }
 
+  const { activeFiscalYear, allFiscalYears } = await getActiveFiscalYearContext(shop.id);
+
   return (
     <div className="p-5 sm:p-7 space-y-6">
-      <div>
-        <span className="text-xs text-zinc-400 font-medium">Reports &amp; Performance</span>
-        <h1 className="text-[22px] font-semibold text-zinc-900 mt-0.5 leading-tight">{shop.name} Analytics</h1>
-      </div>
-
       <AnalyticsClientView
         shopId={shop.id}
         shopSlug={slug}
         fiscalYearStartMonth={shop.fiscalYearStartMonth}
+        activeFiscalYear={activeFiscalYear}
+        allFiscalYears={allFiscalYears}
       />
     </div>
   );

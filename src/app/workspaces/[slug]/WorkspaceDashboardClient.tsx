@@ -10,6 +10,7 @@ import { RecurringInvoicesWidget } from "./RecurringInvoicesWidget";
 import { QuickCreatePopover } from "./QuickCreatePopover";
 import { useDashboardSummary } from "@/hooks/useWorkspaces";
 import { Spinner } from "@/components/Spinner";
+import { DocumentsTableClient, type StreamDocument } from "./documents/DocumentsTableClient";
 import {
   TrendingUp,
   Clock,
@@ -30,6 +31,7 @@ export function WorkspaceDashboardClient({ shop, shopSlug }: WorkspaceDashboardC
   const {
     recentDocs,
     allDocs,
+    streamDocs,
     allProducts,
     recurringInvoices,
     weeks,
@@ -148,9 +150,41 @@ export function WorkspaceDashboardClient({ shop, shopSlug }: WorkspaceDashboardC
       (p: any) => p.trackStock && parseFloat(p.stockQuantity || "0") <= parseFloat(p.reorderThreshold || "5")
     );
 
+    const streamDocs: StreamDocument[] = (docs.length > 0 ? docs : recent).map((d: any) => ({
+      id: d.id,
+      docNumber: d.doc_number || d.docNumber,
+      type: d.type,
+      status: d.status,
+      grandTotal: String(d.grand_total || d.grandTotal || "0"),
+      issueDate: d.issue_date || d.issueDate,
+      parentDocumentId: d.parent_document_id || d.parentDocumentId || null,
+      parentDocument: d.parentDocument || null,
+      requiresEtims: d.requires_etims ?? d.requiresEtims,
+      kraCuInvoiceNumber: d.kra_cu_invoice_number || d.kraCuInvoiceNumber,
+      client: d.client
+        ? {
+            id: d.client.id,
+            name: d.client.name,
+            email: d.client.email,
+            phone: d.client.phone,
+            taxPin: d.client.tax_pin || d.client.taxPin,
+          }
+        : null,
+      supplier: d.supplier
+        ? {
+            id: d.supplier.id,
+            name: d.supplier.name,
+            email: d.supplier.email,
+            phone: d.supplier.phone,
+            taxPin: d.supplier.tax_pin || d.supplier.taxPin,
+          }
+        : null,
+    }));
+
     return {
       recentDocs: recent,
       allDocs: docs,
+      streamDocs,
       allProducts: products,
       recurringInvoices: recInv,
       weeks: w,
@@ -356,110 +390,17 @@ export function WorkspaceDashboardClient({ shop, shopSlug }: WorkspaceDashboardC
         <RecurringInvoicesWidget slug={shopSlug} currency={shop.currency} recurringInvoices={recurringInvoices} />
       )}
 
-      {/* RECENT TRANSACTIONS */}
+      {/* UNIFIED DOCUMENTS LEDGER STREAM */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-zinc-400 font-medium">Recent Activity</p>
-            <h2 className="text-[15px] font-semibold text-zinc-900 mt-0.5">
-              Latest Invoices &amp; Receipts
-            </h2>
-          </div>
-          <Link
-            href={`/workspaces/${shopSlug}/documents`}
-            className="text-[12px] font-semibold text-zinc-500 hover:text-zinc-900 transition-colors no-underline flex items-center gap-1"
-          >
-            <span>View all</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {/* Documents Table */}
-        <div className="surface overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-2xs">
-          <table className="w-full text-left font-mono text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
-                <th className="px-4 py-3 border-r border-zinc-100">Document No</th>
-                <th className="px-4 py-3 border-r border-zinc-100">Type</th>
-                <th className="px-4 py-3 border-r border-zinc-100">Client / Party</th>
-                <th className="px-4 py-3 border-r border-zinc-100">Date Issued</th>
-                <th className="px-4 py-3 border-r border-zinc-100 text-right">Total</th>
-                <th className="px-4 py-3 border-r border-zinc-100 text-center">Status</th>
-                <th className="px-4 py-3 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-zinc-100/80">
-              {recentDocs.map((doc: any) => {
-                const statusColor =
-                  doc.status === "PAID" ? "badge-emerald" :
-                  doc.status === "OVERDUE" ? "badge-rose" :
-                  doc.status === "PARTIALLY_PAID" ? "badge-amber" :
-                  doc.status === "DRAFT" ? "badge-amber" :
-                  "badge-zinc";
-
-                return (
-                  <tr key={doc.id} className="hover:bg-zinc-50/80 transition-colors">
-                    <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider">
-                      <Link
-                        href={`/workspaces/${shopSlug}/documents/${doc.id}`}
-                        className="hover:underline underline-offset-2 flex items-center gap-1.5"
-                      >
-                        <span>{doc.docNumber}</span>
-                      </Link>
-                    </td>
-                    <td className="p-4 border-r border-zinc-100">
-                      <span className="badge-zinc">{doc.type}</span>
-                    </td>
-                    <td className="p-4 border-r border-zinc-100 font-sans text-zinc-700">
-                      {doc.client ? (
-                        <Link
-                          href={`/workspaces/${shopSlug}/clients/${doc.client.id}`}
-                          className="hover:underline text-black font-medium"
-                        >
-                          {doc.client.name}
-                        </Link>
-                      ) : doc.supplier ? (
-                        <Link
-                          href={`/workspaces/${shopSlug}/suppliers/${doc.supplier.id}`}
-                          className="hover:underline text-black font-medium"
-                        >
-                          {doc.supplier.name}
-                        </Link>
-                      ) : (
-                        <span className="text-zinc-400 italic">Walk-in Customer</span>
-                      )}
-                    </td>
-                    <td className="p-4 border-r border-zinc-100 text-zinc-500 font-sans">
-                      {new Date(doc.issueDate).toLocaleDateString("en-KE", { dateStyle: "medium" })}
-                    </td>
-                    <td className="p-4 border-r border-zinc-100 font-semibold text-sm text-black text-right font-mono">
-                      {formatCurrency(doc.grandTotal, shop.currency)}
-                    </td>
-                    <td className="px-4 py-3 border-r border-zinc-100 text-center">
-                      <span className={statusColor}>{doc.status}</span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <Link
-                        href={`/workspaces/${shopSlug}/documents/${doc.id}`}
-                        className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block no-underline"
-                      >
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-
-              {recentDocs.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="p-10 text-center text-zinc-400 font-sans text-xs italic">
-                    No recent transactions yet
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DocumentsTableClient
+          slug={shopSlug}
+          shopId={shop.id}
+          currency={shop.currency}
+          documents={streamDocs}
+          embedded={true}
+          title="Recent Activity & Ledger"
+          maxRows={15}
+        />
       </div>
     </div>
   );

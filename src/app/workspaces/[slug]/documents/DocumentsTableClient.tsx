@@ -33,27 +33,48 @@ export interface StreamDocument {
   supplier?: { id: string; name: string; email?: string | null; phone?: string | null; taxPin?: string | null } | null;
 }
 
+const DEFAULT_DOC_TABS = [
+  { key: "ALL", label: "All Documents" },
+  { key: "INVOICE", label: "Invoices" },
+  { key: "QUOTATION", label: "Quotes" },
+  { key: "RECEIPT", label: "Receipts" },
+  { key: "CREDIT_NOTE", label: "Credit Notes" },
+  { key: "DELIVERY_NOTE", label: "Delivery" },
+];
+
 interface DocumentsTableClientProps {
   slug: string;
   shopId?: string;
   currency: string;
-  activeType: string;
+  activeType?: string;
   documents: StreamDocument[];
-  docTypeTabs: Array<{ key: string; label: string }>;
+  docTypeTabs?: Array<{ key: string; label: string }>;
+  embedded?: boolean;
+  title?: string;
+  maxRows?: number;
 }
 
 export function DocumentsTableClient({
   slug,
   shopId,
   currency,
-  activeType,
+  activeType = "ALL",
   documents,
   docTypeTabs,
+  embedded = false,
+  title,
+  maxRows,
 }: DocumentsTableClientProps) {
   const router = useRouter();
+  const [localType, setLocalType] = useState<string>(activeType || "ALL");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  const currentType = embedded ? localType : (activeType || "ALL");
+  const effectiveTabs = docTypeTabs || DEFAULT_DOC_TABS;
+
   // Default to GROUPED when viewing ALL documents, or FLAT when on specific type tabs
   const [viewMode, setViewMode] = useState<"GROUPED" | "FLAT">(
-    activeType === "ALL" ? "GROUPED" : "FLAT"
+    currentType === "ALL" ? "GROUPED" : "FLAT"
   );
   const [expandedChains, setExpandedChains] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -122,19 +143,42 @@ export function DocumentsTableClient({
     return ancestors;
   };
 
-  // Filter visible documents based on viewMode
-  // In GROUPED mode (when in "ALL"), we only show terminal documents (docs not superseded by a child)
+  // Filter visible documents based on viewMode, currentType, searchQuery, and maxRows
   const visibleDocs = useMemo(() => {
-    if (viewMode === "GROUPED" && activeType === "ALL") {
-      return documents.filter((doc) => !parentIdSet.has(doc.id));
+    let list = documents;
+
+    if (embedded && currentType !== "ALL") {
+      list = list.filter((doc) => doc.type === currentType);
     }
-    return documents;
-  }, [documents, viewMode, activeType, parentIdSet]);
+
+    if (embedded && searchQuery.trim() !== "") {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((d) =>
+        d.docNumber.toLowerCase().includes(q) ||
+        (d.client?.name && d.client.name.toLowerCase().includes(q)) ||
+        (d.supplier?.name && d.supplier.name.toLowerCase().includes(q))
+      );
+    }
+
+    if (viewMode === "GROUPED" && currentType === "ALL") {
+      list = list.filter((doc) => !parentIdSet.has(doc.id));
+    }
+
+    if (maxRows && maxRows > 0) {
+      list = list.slice(0, maxRows);
+    }
+
+    return list;
+  }, [documents, embedded, currentType, searchQuery, viewMode, parentIdSet, maxRows]);
 
   // Count of terminal / chain docs
   const terminalDocsCount = useMemo(() => {
-    return documents.filter((doc) => !parentIdSet.has(doc.id)).length;
-  }, [documents, parentIdSet]);
+    let list = documents;
+    if (embedded && currentType !== "ALL") {
+      list = list.filter((doc) => doc.type === currentType);
+    }
+    return list.filter((doc) => !parentIdSet.has(doc.id)).length;
+  }, [documents, embedded, currentType, parentIdSet]);
 
   // Toggle single accordion chain
   function toggleChain(docId: string) {
@@ -419,10 +463,78 @@ export function DocumentsTableClient({
         </div>
       )}
 
+      {/* EMBEDDED SEARCH & TYPE TABS */}
+      {embedded && (
+        <div className="space-y-3 pb-2 border-b border-zinc-100">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            {title && (
+              <h3 className="font-semibold uppercase tracking-tight text-sm font-sans text-black">
+                {title}
+              </h3>
+            )}
+            <div className="relative flex-1 max-w-sm">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Filter by doc #, party, notes..."
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-black"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-black text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <Link
+              href={`/workspaces/${slug}/documents`}
+              className="text-xs font-sans text-zinc-500 hover:text-black font-semibold flex items-center gap-1 shrink-0"
+            >
+              Full Ledger ↗
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {effectiveTabs.map((tab) => {
+              const count = tab.key === "ALL"
+                ? documents.length
+                : documents.filter((d) => d.type === tab.key).length;
+              const isActive = currentType === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setLocalType(tab.key)}
+                  className={`px-3 py-1.5 text-[11px] font-sans font-medium rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                    isActive
+                      ? "bg-zinc-900 text-white shadow-xs"
+                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900"
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                      isActive ? "bg-zinc-700 text-white" : "bg-zinc-200 text-zinc-700"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* VIEW MODE & CHAIN CONTROLS TOOLBAR */}
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex flex-wrap items-center gap-2">
-          {activeType === "ALL" ? (
+          {currentType === "ALL" ? (
             <div className="inline-flex rounded-lg border border-zinc-200 bg-zinc-100 p-0.5 shadow-xs">
               <button
                 type="button"
@@ -464,27 +576,27 @@ export function DocumentsTableClient({
                       : "bg-zinc-200 text-zinc-700"
                   }`}
                 >
-                  {documents.length}
+                  {visibleDocs.length}
                 </span>
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-zinc-500 font-sans text-xs">
               <span className="font-semibold text-zinc-900">
-                {documents.length} {docTypeTabs.find((t) => t.key === activeType)?.label || activeType}s
+                {visibleDocs.length} {effectiveTabs.find((t) => t.key === currentType)?.label || currentType}s
               </span>
               <span>• Lineage indicators enabled</span>
             </div>
           )}
 
-          {viewMode === "GROUPED" && activeType === "ALL" && (
+          {viewMode === "GROUPED" && currentType === "ALL" && (
             <span className="hidden sm:inline-block text-[11px] text-zinc-500 font-sans">
               Showing terminal documents in active chains. Parent quotes & invoices are nested in expandable drawers.
             </span>
           )}
         </div>
 
-        {viewMode === "GROUPED" && activeType === "ALL" && docsWithAncestors.length > 0 && (
+        {viewMode === "GROUPED" && currentType === "ALL" && docsWithAncestors.length > 0 && (
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -811,14 +923,14 @@ export function DocumentsTableClient({
                 <td colSpan={7} className="p-16 text-center">
                   <div className="space-y-3">
                     <p className="font-bold text-zinc-800 text-sm font-sans">
-                      {activeType !== "ALL"
-                        ? `No ${docTypeTabs.find((t) => t.key === activeType)?.label || activeType}s found`
+                      {currentType !== "ALL"
+                        ? `No ${effectiveTabs.find((t) => t.key === currentType)?.label || currentType}s found`
                         : "No documents yet"}
                     </p>
                     <p className="text-zinc-400 text-xs font-sans max-w-xs mx-auto leading-relaxed">
-                      {activeType === "QUOTATION"
+                      {currentType === "QUOTATION"
                         ? "Create your first quote and convert it to an invoice in one click."
-                        : activeType === "INVOICE"
+                        : currentType === "INVOICE"
                         ? "Generate your first invoice or convert an existing quotation."
                         : "Start by generating a document for your workspace."}
                     </p>

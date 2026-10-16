@@ -122,7 +122,7 @@ export function FiscalYearSwitcher({
 
             <div className="border-t border-zinc-100 pt-1.5 px-2 mt-1 flex flex-col gap-1">
               <Link
-                href={`/workspaces/${shopSlug}/finance/periods`}
+                href={`/workspaces/${shopSlug}/finance/fiscal-years`}
                 onClick={() => setIsOpen(false)}
                 className="text-[11px] font-sans font-semibold text-zinc-600 hover:text-black hover:bg-zinc-50 p-1.5 rounded flex items-center justify-between transition-colors no-underline"
               >
@@ -225,7 +225,7 @@ export function FiscalYearSwitcher({
 
           <div className="border-t border-zinc-800 pt-1.5 px-2 mt-1">
             <Link
-              href={`/workspaces/${shopSlug}/finance/periods`}
+              href={`/workspaces/${shopSlug}/finance/fiscal-years`}
               onClick={() => setIsOpen(false)}
               className="text-[10px] font-sans font-semibold text-zinc-300 hover:text-white hover:bg-white/10 p-1.5 rounded flex items-center justify-between transition-colors no-underline"
             >

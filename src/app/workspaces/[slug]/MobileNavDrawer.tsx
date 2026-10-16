@@ -118,6 +118,7 @@ export function MobileNavDrawer({
     {
       label: "Finance & Accounting",
       children: [
+        { href: `/workspaces/${slug}/finance/fiscal-years`, label: "Fiscal Years" },
         { href: `/workspaces/${slug}/finance/tax/settings`, label: "Tax Profile" },
         { href: `/workspaces/${slug}/finance/tax/computation`, label: "Tax Computation" },
         { href: `/workspaces/${slug}/finance/accounts`, label: "Chart of Accounts" },

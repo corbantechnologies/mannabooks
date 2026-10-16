@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { ClientActionsPopover } from "./ClientActionsPopover";
-import { ClientDocumentsSubLedger } from "./ClientDocumentsSubLedger";
+import { DocumentsTableClient, type StreamDocument } from "../../documents/DocumentsTableClient";
 import { useClient } from "@/hooks/useClients";
 import { useClientDocuments } from "@/hooks/useDocuments";
 import { useSuppliers } from "@/hooks/useSuppliers";
@@ -61,7 +61,7 @@ export function ClientProfileClient({ shop, shopSlug, clientId }: ClientProfileC
     createdAt: rawClient.created_at || rawClient.createdAt || new Date().toISOString(),
   };
 
-  const docs = (Array.isArray(rawDocs) ? rawDocs : []).map((d: any) => ({
+  const docs: StreamDocument[] = (Array.isArray(rawDocs) ? rawDocs : []).map((d: any) => ({
     id: d.id,
     docNumber: d.doc_number || d.docNumber,
     type: d.type,
@@ -69,8 +69,18 @@ export function ClientProfileClient({ shop, shopSlug, clientId }: ClientProfileC
     grandTotal: String(d.grand_total || d.grandTotal || "0"),
     issueDate: d.issue_date || d.issueDate,
     dueDate: d.due_date || d.dueDate,
+    parentDocumentId: d.parent_document_id || d.parentDocumentId || null,
+    parentDocument: d.parentDocument || null,
     requiresEtims: d.requires_etims ?? d.requiresEtims,
+    kraCuInvoiceNumber: d.kra_cu_invoice_number || d.kraCuInvoiceNumber,
     notes: d.notes,
+    client: {
+      id: clientRecord.id,
+      name: clientRecord.name,
+      email: clientRecord.email,
+      phone: clientRecord.phone,
+      taxPin: clientRecord.taxPin,
+    },
   }));
 
   const suppliersList = Array.isArray(rawSuppliers) ? rawSuppliers : [];
@@ -216,13 +226,15 @@ export function ClientProfileClient({ shop, shopSlug, clientId }: ClientProfileC
         </div>
       </div>
 
-      {/* STANDALONE HISTORICAL SUB-LEDGER GRID */}
+      {/* UNIFIED CLIENT DOCUMENTS SUB-LEDGER */}
       <div className="space-y-4">
-        <h3 className="font-semibold uppercase tracking-tight text-sm font-sans text-black">Documents &amp; Transactions</h3>
-        <ClientDocumentsSubLedger
-          documents={docs}
+        <DocumentsTableClient
           slug={shopSlug}
+          shopId={shop.id}
           currency={shop.currency}
+          documents={docs}
+          embedded={true}
+          title="Customer Transactions & Lineage"
         />
       </div>
     </div>

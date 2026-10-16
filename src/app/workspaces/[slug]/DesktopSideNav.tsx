@@ -47,6 +47,7 @@ import {
   FolderKanban,
   FileSignature,
   CheckCircle2,
+  Calendar,
 } from "lucide-react";
 
 interface DesktopSideNavProps {
@@ -144,6 +145,7 @@ export function DesktopSideNav({ slug, brandColor = "#064e3b", businessMode = "H
       label: "Finance & Accounting",
       icon: Calculator,
       children: [
+        { href: `/workspaces/${slug}/finance/fiscal-years`, label: "Fiscal Years", icon: Calendar },
         { href: `/workspaces/${slug}/finance/tax/settings`, label: "Tax Profile", icon: ShieldCheck },
         { href: `/workspaces/${slug}/finance/tax/computation`, label: "Tax Computation", icon: FileBarChart },
         { href: `/workspaces/${slug}/finance/accounts`, label: "Chart of Accounts", icon: Layers },

@@ -7,6 +7,17 @@ import { useSupplier } from "@/hooks/useSuppliers";
 import { useSupplierDocuments } from "@/hooks/useDocuments";
 import { useClients } from "@/hooks/useClients";
 import { Spinner } from "@/components/Spinner";
+import { DocumentsTableClient, type StreamDocument } from "../../documents/DocumentsTableClient";
+
+const SUPPLIER_DOC_TABS = [
+  { key: "ALL", label: "All Records" },
+  { key: "LPO", label: "Local Purchase Orders" },
+  { key: "PO", label: "Purchase Orders" },
+  { key: "INVOICE", label: "Vendor Invoices" },
+  { key: "RECEIPT", label: "Payment Receipts" },
+  { key: "GOODS_RECEIVED_NOTE", label: "GRN" },
+  { key: "PAYMENT_VOUCHER", label: "Vouchers" },
+];
 
 interface SupplierDetailClientProps {
   shop: any;
@@ -63,6 +74,28 @@ export function SupplierDetailClient({ shop, shopSlug, supplierId }: SupplierDet
   const accountsPayableDebt = (Array.isArray(supplierDocuments) ? supplierDocuments : [])
     .filter((d: any) => d.status === "ISSUED" || d.status === "OVERDUE")
     .reduce((acc: number, curr: any) => acc + Number(curr.grand_total || curr.grandTotal || 0), 0);
+
+  const streamDocs: StreamDocument[] = (Array.isArray(supplierDocuments) ? supplierDocuments : []).map((doc: any) => ({
+    id: doc.id,
+    docNumber: doc.doc_number || doc.docNumber,
+    type: doc.type,
+    status: doc.status,
+    grandTotal: String(doc.grand_total || doc.grandTotal || "0"),
+    issueDate: doc.issue_date || doc.issueDate,
+    dueDate: doc.due_date || doc.dueDate,
+    parentDocumentId: doc.parent_document_id || doc.parentDocumentId || null,
+    parentDocument: doc.parentDocument || null,
+    requiresEtims: doc.requires_etims ?? doc.requiresEtims,
+    kraCuInvoiceNumber: doc.kra_cu_invoice_number || doc.kraCuInvoiceNumber,
+    notes: doc.notes,
+    supplier: {
+      id: supplierRecord.id,
+      name: supplierRecord.name,
+      email: supplierRecord.email,
+      phone: supplierRecord.phone,
+      taxPin: supplierRecord.taxPin || supplierRecord.tax_pin,
+    },
+  }));
 
   return (
     <div className="p-5 sm:p-7 space-y-6">
@@ -167,94 +200,17 @@ export function SupplierDetailClient({ shop, shopSlug, supplierId }: SupplierDet
         </div>
       </div>
 
-      {/* PROCUREMENT SUB-LEDGER TABLE */}
+      {/* UNIFIED PROCUREMENT SUB-LEDGER TABLE */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">
-            Purchase Orders &amp; Invoices
-          </h2>
-          <span className="text-[10px] text-zinc-400 uppercase font-semibold">
-            Total Documents: {supplierDocuments.length}
-          </span>
-        </div>
-
-        <div className="surface overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-2xs">
-          <table className="w-full text-left text-xs border-collapse font-mono">
-            <thead>
-              <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
-                <th className="px-4 py-3 border-r border-zinc-100">Document No</th>
-                <th className="px-4 py-3 border-r border-zinc-100">Document Type</th>
-                <th className="px-4 py-3 border-r border-zinc-100">Issue Date</th>
-                <th className="px-4 py-3 border-r border-zinc-100 text-right">Total Amount</th>
-                <th className="px-4 py-3 border-r border-zinc-100 text-center">Status</th>
-                <th className="px-4 py-3 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-zinc-100/80">
-              {(supplierDocuments || []).map((doc: any) => (
-                <tr
-                  key={doc.id}
-                  className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0"
-                >
-                  <td className="p-4 border-r border-zinc-100 font-semibold text-black tracking-wider">
-                    <Link
-                      href={`/workspaces/${shopSlug}/documents/${doc.id}`}
-                      className="hover:underline underline-offset-2"
-                    >
-                      {doc.doc_number || doc.docNumber}
-                    </Link>
-                  </td>
-                  <td className="p-4 border-r border-zinc-100">
-                    <span className="border border-zinc-300 px-2 py-0.5 text-[9px] font-semibold tracking-widest bg-white rounded">
-                      {doc.type}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 border-r border-zinc-100 text-zinc-400">
-                    {new Date(doc.issue_date || doc.issueDate).toLocaleDateString("en-KE", {
-                      dateStyle: "medium",
-                    })}
-                  </td>
-                  <td className="px-4 py-3 border-r border-zinc-100 font-semibold text-sm text-zinc-900 text-right">
-                    {formatCurrency(doc.grand_total || doc.grandTotal, shop.currency)}
-                  </td>
-                  <td className="px-4 py-3 border-r border-zinc-100 text-center">
-                    <span
-                      className={`border px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded ${
-                        doc.status === "PAID"
-                          ? "badge-emerald"
-                          : doc.status === "ISSUED"
-                          ? "bg-white text-black border-zinc-300"
-                          : doc.status === "OVERDUE"
-                          ? "bg-rose-50 border-rose-300 text-rose-700"
-                          : "badge-zinc"
-                      }`}
-                    >
-                      {doc.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Link
-                      href={`/workspaces/${shopSlug}/documents/${doc.id}`}
-                      className="btn-secondary-modern px-2.5 py-1 text-[10px] font-semibold uppercase inline-block"
-                    >
-                      View Details
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-              {(supplierDocuments || []).length === 0 && (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="p-12 text-center text-zinc-400 italic font-sans text-xs"
-                  >
-                    No purchase records found for this supplier.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DocumentsTableClient
+          slug={shopSlug}
+          shopId={shop.id}
+          currency={shop.currency}
+          documents={streamDocs}
+          docTypeTabs={SUPPLIER_DOC_TABS}
+          embedded={true}
+          title="Procurement Records & Lineage"
+        />
       </div>
     </div>
   );

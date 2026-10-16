@@ -96,7 +96,7 @@ export default function TaxComputationClient({ shopId, year: initialYear, curren
                             <TaxRow label="Taxable Net Income" amount={data.taxableIncome} currency={currency} bold positive />
                             <div className="flex justify-between py-1 pl-6">
                                 <span className="text-xs text-zinc-500">Corporate Income Tax Rate</span>
-                                <span className="font-mono text-xs font-bold text-black">{data.citRate.toFixed(1)}%</span>
+                                <span className="font-mono text-xs font-bold text-black">{Number(data.citRate ?? 0).toFixed(1)}%</span>
                             </div>
                         </div>
 

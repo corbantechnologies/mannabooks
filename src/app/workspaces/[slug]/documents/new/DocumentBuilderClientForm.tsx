@@ -171,8 +171,8 @@ export function DocumentBuilderClientForm({
       const res = await fetch(`/api/exchange-rate?from=${fromCurr}&to=${toCurr}`);
       const data = await res.json();
       if (data.success && typeof data.rate === "number") {
-        setExchangeRate(data.rate.toFixed(4));
-        toast.success(`Guidance rate: 1 ${fromCurr} = ${data.rate.toFixed(4)} ${toCurr}`);
+        setExchangeRate(Number(data.rate ?? 0).toFixed(4));
+        toast.success(`Guidance rate: 1 ${fromCurr} = ${Number(data.rate ?? 0).toFixed(4)} ${toCurr}`);
       }
     } catch {
       toast.error("Could not fetch live rate. Please enter manually.");

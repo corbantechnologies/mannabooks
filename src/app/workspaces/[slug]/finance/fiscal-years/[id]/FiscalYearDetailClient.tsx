@@ -406,7 +406,7 @@ export default function FiscalYearDetailClient({
                     </div>
                     <div className="text-[11px] font-mono font-medium flex items-center gap-1.5">
                         <span className={kpis.netMargin >= 0 ? "text-emerald-600" : "text-rose-500"}>
-                            {kpis.netMargin.toFixed(1)}% Net Margin
+                            {Number(kpis.netMargin ?? 0).toFixed(1)}% Net Margin
                         </span>
                     </div>
                 </div>
@@ -529,7 +529,7 @@ export default function FiscalYearDetailClient({
                                         <div className="font-mono font-semibold text-zinc-900">
                                             {currency} {fmt(acc.amount)}
                                             <span className="text-zinc-400 font-normal ml-1.5 text-[10px]">
-                                                ({acc.percentage.toFixed(1)}%)
+                                                ({Number(acc.percentage ?? 0).toFixed(1)}%)
                                             </span>
                                         </div>
                                     </div>
@@ -571,7 +571,7 @@ export default function FiscalYearDetailClient({
                                         <div className="font-mono font-semibold text-rose-600">
                                             {currency} {fmt(acc.amount)}
                                             <span className="text-zinc-400 font-normal ml-1.5 text-[10px]">
-                                                ({acc.percentage.toFixed(1)}%)
+                                                ({Number(acc.percentage ?? 0).toFixed(1)}%)
                                             </span>
                                         </div>
                                     </div>
@@ -747,7 +747,7 @@ export default function FiscalYearDetailClient({
                                                     {currency} {fmt(period.netProfit)}
                                                 </span>
                                                 <span className="font-mono text-[9px] text-zinc-400">
-                                                    {period.netMargin.toFixed(1)}% margin
+                                                    {Number(period.netMargin ?? 0).toFixed(1)}% margin
                                                 </span>
                                             </div>
 

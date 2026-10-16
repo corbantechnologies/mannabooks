@@ -304,7 +304,7 @@ export function AnalyticsClientView({
               ? "bg-emerald-700 text-white"
               : "bg-rose-600 text-white"
           }`}>
-            Margin: {data.grossProfitMargin.toFixed(1)}%
+            Margin: {Number(data.grossProfitMargin ?? 0).toFixed(1)}%
           </div>
         </div>
 
@@ -342,7 +342,7 @@ export function AnalyticsClientView({
         <div className="mt-4 pt-4 border-t border-emerald-200/40">
           <div className="flex justify-between items-center text-[10px] font-semibold uppercase text-zinc-500 mb-1.5">
             <span>Profit Realization Rate</span>
-            <span>{data.grossProfitMargin.toFixed(1)}% Gross Margin</span>
+            <span>{Number(data.grossProfitMargin ?? 0).toFixed(1)}% Gross Margin</span>
           </div>
           <div className="w-full h-2.5 bg-zinc-200/60 rounded-full overflow-hidden">
             <div
@@ -609,7 +609,7 @@ export function AnalyticsClientView({
                   ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
                   : "bg-zinc-100 text-zinc-700 border border-zinc-200"
               }`}>
-                {data.quotationConversion.conversionRatePercent.toFixed(1)}% Conversion
+                {Number(data.quotationConversion.conversionRatePercent ?? 0).toFixed(1)}% Conversion
               </span>
             )}
           </div>
@@ -633,7 +633,7 @@ export function AnalyticsClientView({
               <div className="space-y-1.5 pt-2">
                 <div className="flex justify-between text-[10px] font-semibold uppercase text-zinc-500">
                   <span>Conversion Rate</span>
-                  <span>{data.quotationConversion.conversionRatePercent.toFixed(1)}%</span>
+                  <span>{Number(data.quotationConversion.conversionRatePercent ?? 0).toFixed(1)}%</span>
                 </div>
                 <div className="w-full h-3 bg-zinc-100 rounded-full overflow-hidden">
                   <div
@@ -745,7 +745,7 @@ export function AnalyticsClientView({
                   </div>
                   <div className="text-right shrink-0 ml-2">
                     <span className="font-bold text-black text-xs block">{formatCurrency(c.ltv, data.currency)}</span>
-                    <span className="text-[9px] text-zinc-400">{c.revenueSharePercent.toFixed(1)}% Share</span>
+                    <span className="text-[9px] text-zinc-400">{Number(c.revenueSharePercent ?? 0).toFixed(1)}% Share</span>
                   </div>
                 </div>
                 <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">
@@ -786,7 +786,7 @@ export function AnalyticsClientView({
                   </div>
                   <div className="text-right shrink-0 ml-2">
                     <span className="font-bold text-black text-xs block">{formatCurrency(p.revenueGenerated, data.currency)}</span>
-                    <span className="text-[9px] text-zinc-400">{p.quantitySold} units · {p.revenueSharePercent.toFixed(1)}%</span>
+                    <span className="text-[9px] text-zinc-400">{p.quantitySold} units · {Number(p.revenueSharePercent ?? 0).toFixed(1)}%</span>
                   </div>
                 </div>
                 <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">

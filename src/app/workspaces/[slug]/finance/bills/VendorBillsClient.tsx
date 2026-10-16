@@ -475,8 +475,8 @@ export function VendorBillsClient({
       const selectedGrn = availableGrns.find((g) => g.id === selectedGrnId);
 
       const newBill: SerializedBill = {
-        id: res.billId!,
-        billNumber: res.billNumber!,
+        id: res.bill?.id ?? res.billId,
+        billNumber: res.bill?.billNumber ?? res.billNumber,
         reference: reference || null,
         billDate: new Date(billDate).toISOString(),
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
@@ -496,7 +496,7 @@ export function VendorBillsClient({
         notes: notes || null,
         sourcePoId: selectedPoId || null,
         sourceGrnId: selectedGrnId || null,
-        matchingStatus: res.matchingStatus || formCalculations.matchPreview,
+        matchingStatus: (res.bill?.matchingStatus ?? res.matchingStatus) || formCalculations.matchPreview,
         priceVarianceAmount: formCalculations.priceVariance.toFixed(2),
         quantityVarianceCount: formCalculations.qtyVarianceCount,
         varianceNotes: varianceJustification || null,
@@ -690,7 +690,7 @@ export function VendorBillsClient({
             return {
               ...b,
               amountPaid: nextPaid.toFixed(2),
-              status: res.newStatus || (nextPaid >= parseFloat(b.netPayable) - 0.01 ? "PAID" : "PARTIALLY_PAID"),
+              status: (res.bill?.status ?? res.newStatus) || (nextPaid >= parseFloat(b.netPayable) - 0.01 ? "PAID" : "PARTIALLY_PAID"),
               paymentChannel,
               paymentReference,
             };

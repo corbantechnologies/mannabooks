@@ -79,7 +79,7 @@ export function ProjectTimesheetPanel({
           is_billable: form.isBillable,
         });
         const entry: Timesheet = {
-          id: res?.timesheetId || res?.id || crypto.randomUUID(),
+          id: res?.timesheet?.id || res?.timesheetId || res?.id || crypto.randomUUID(),
           workDate: form.workDate,
           hoursLogged: form.hours,
           taskDescription: form.description.trim(),

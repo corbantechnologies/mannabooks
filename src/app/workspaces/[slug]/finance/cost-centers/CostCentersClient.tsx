@@ -31,7 +31,7 @@ export function CostCentersClient({
     async function load() {
       try {
         const res: any = await axiosClient.get(`/operations/cost-centers?shop_slug=${shopSlug}`);
-        const data = Array.isArray(res) ? res : res?.data || [];
+        const data = Array.isArray(res) ? res : res?.costCenters || res?.data || [];
         setCenters(data.map((c: any) => ({
           id: c.id,
           code: c.code,

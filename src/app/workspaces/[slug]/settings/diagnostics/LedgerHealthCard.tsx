@@ -30,7 +30,7 @@ export function LedgerHealthCard({ shopId }: { shopId: string }) {
     onError: (err: any) => toast.error(err?.message || "Repair failed."),
   });
 
-  const issues: [string, any][] = Object.entries(data?.issues || {});
+  const issues: [string, any][] = Object.entries(data?.issues || {}).filter(([key]) => key in ISSUE_LABELS);
 
   return (
     <section className="rounded-xl border border-zinc-200 bg-white p-5 space-y-4">

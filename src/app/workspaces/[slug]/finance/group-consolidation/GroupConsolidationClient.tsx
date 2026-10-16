@@ -432,7 +432,7 @@ export function GroupConsolidationClient({
               <div className="surface p-4 rounded-xl border border-zinc-200/80 bg-white">
                 <p className="text-[11px] font-mono uppercase tracking-wider text-zinc-400">Operating Margin</p>
                 <p className="text-xl font-bold text-zinc-900 mt-1">
-                  {pnlData.consolidated.grossProfitMargin.toFixed(1)}%
+                  {Number(pnlData.consolidated.grossProfitMargin ?? 0).toFixed(1)}%
                 </p>
                 <p className="text-[11px] text-zinc-500 mt-1">
                   Gross: {formatCurrency(pnlData.consolidated.grossProfit, currency)}

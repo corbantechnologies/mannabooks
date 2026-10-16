@@ -148,7 +148,7 @@ export default function GeneralLedgerClient({ shopId, shopSlug, glOnboardingMode
                     const debit = accounts.find(a => a.id === form.debitAccountId)!;
                     const credit = accounts.find(a => a.id === form.creditAccountId)!;
                     const newEntry: JournalEntry = {
-                        id: res?.id || crypto.randomUUID(),
+                        id: res?.entry?.id || res?.id || crypto.randomUUID(),
                         entryDate: new Date(form.entryDate).toISOString(),
                         description: form.description,
                         debitAccountCode: debit ? debit.code : "", debitAccountName: debit ? debit.name : "",

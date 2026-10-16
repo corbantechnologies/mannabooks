@@ -77,7 +77,7 @@ export function ProjectMilestonePanel({
           due_date: form.dueDate || undefined,
           display_order: milestones.length,
         });
-        const milestoneId = res?.milestoneId || res?.id || crypto.randomUUID();
+        const milestoneId = res?.milestone?.id || res?.milestoneId || res?.id || crypto.randomUUID();
         setMilestones(prev => [
           ...prev,
           {

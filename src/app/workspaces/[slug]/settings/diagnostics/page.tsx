@@ -1,6 +1,7 @@
 import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { apiClient } from "@/lib/api/client";
 import { DiagnosticsClient } from "./DiagnosticsClient";
+import { LedgerHealthCard } from "./LedgerHealthCard";
 
 interface DiagnosticsPageProps {
   params: Promise<{ slug: string }>;
@@ -24,6 +25,7 @@ export default async function WorkspaceDiagnosticsPage({ params }: DiagnosticsPa
         initialIsGlEnabled={shop.isGlEnabled}
         ledgerSnapshots={snapshots as any}
       />
+      <LedgerHealthCard shopId={shop.id} />
     </div>
   );
 }

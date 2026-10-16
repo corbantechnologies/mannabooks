@@ -211,7 +211,7 @@ export function StorageBinsClient({
 
         {filteredBins.length === 0 && (
           <div className="col-span-full card-modern p-12 text-center text-zinc-400 italic text-xs bg-white border border-zinc-200">
-            No storage bins defined yet. Click "+ Add Storage Bin / Shelf" to map warehouse aisles, racks, and shelves.
+            No storage bins defined yet. Click &quot;+ Add Storage Bin / Shelf&quot; to map warehouse aisles, racks, and shelves.
           </div>
         )}
       </div>

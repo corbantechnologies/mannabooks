@@ -80,6 +80,7 @@ export default async function WorkspaceSettingsPage({ params }: SettingsPageProp
         paymentMethods={paymentMethods}
         initialTerms={shopTerms as any}
         initialAutoStockDeductionEnabled={(shop as any).autoStockDeductionEnabled ?? true}
+        initialCatalogAutoIssueQuotes={(shop as any).catalogAutoIssueQuotes ?? false}
         initialBusinessMode={((shop as any).businessMode || "HYBRID") as "SERVICES" | "RETAIL" | "HYBRID"}
         initialLoyaltyEngineMode={(shop as any).loyaltyEngineMode || "OFF"}
       />

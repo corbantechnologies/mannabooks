@@ -226,7 +226,7 @@ export function EditProductModal({ product, shopId, shopSlug, locations = [] }: 
                         ) : (
                           <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
                             <span className="text-amber-800 text-[10px] font-semibold uppercase">
-                              Auto-creates "General Store" location
+                              Auto-creates &quot;General Store&quot; location
                             </span>
                             <Link
                               href={`/workspaces/${shopSlug}/inventory/locations`}

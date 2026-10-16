@@ -2,7 +2,6 @@
 "use client";
 
 import { useState } from "react";
-import { axiosClient } from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 
 const SUBJECTS = [
@@ -30,14 +29,18 @@ export function ContactForm() {
         const toastId = toast.loading("Sending your message...");
 
         try {
-            const res: any = await axiosClient.post("/contact", {
+            const res: any = await fetch("/api/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
                 name: data.get("name") as string,
                 email: data.get("email") as string,
                 company: data.get("company") as string,
                 phone: data.get("phone") as string,
                 subject: data.get("subject") as string,
                 message: data.get("message") as string,
-            });
+            }),
+            }).then((r) => r.json());
 
             setLoading(false);
 

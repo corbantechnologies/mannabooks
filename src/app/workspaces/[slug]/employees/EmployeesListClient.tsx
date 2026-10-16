@@ -166,7 +166,7 @@ export function EmployeesListClient({
               {staffList.length === 0 && (
                 <tr>
                   <td colSpan={7} className="p-12 text-center text-zinc-400 italic font-sans text-xs">
-                    No employees registered yet. Click "+ Register Employee" to add staff.
+                    No employees registered yet. Click &quot;+ Register Employee&quot; to add staff.
                   </td>
                 </tr>
               )}

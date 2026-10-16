@@ -1,9 +1,13 @@
 // src/app/api/billing/status/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { queryMpesaStkPushStatus } from "@/lib/services/mpesa";
 import { apiClient } from "@/lib/api/client";
+import { verifyAndGetSession } from "@/lib/auth/session";
 
 export async function GET(req: NextRequest) {
+  const session = await verifyAndGetSession();
+  if (!session) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
   const transactionId = req.nextUrl.searchParams.get("transactionId");
   if (!transactionId) {
     return NextResponse.json({ success: false, error: "Missing transactionId" }, { status: 400 });
@@ -16,7 +20,7 @@ export async function GET(req: NextRequest) {
       mpesaReceipt?: string;
       targetPlan: string;
       resultDesc?: string;
-    }>(`/v1/billing/status/${transactionId}`);
+    }>(`/v1/billing/status/${encodeURIComponent(transactionId)}`);
 
     if (!statusRes.data?.success) {
       return NextResponse.json({ success: false, error: statusRes.error || "Transaction not found" }, { status: 404 });
@@ -48,6 +52,7 @@ export async function GET(req: NextRequest) {
       targetPlan: tx.targetPlan,
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error("Billing status error:", error);
+    return NextResponse.json({ success: false, error: "Could not check payment status." }, { status: 500 });
   }
 }

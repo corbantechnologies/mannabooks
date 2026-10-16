@@ -2,83 +2,43 @@
 "use server";
 
 import { apiClient } from "@/lib/api/client";
-import { isApiModuleEnabled } from "@/lib/api/flags";
-import { cookies } from "next/headers";
-import { SESSION_COOKIE_NAME, SESSION_DURATION_DAYS } from "@/lib/actions/auth";
+import { getClientMeta, setSessionCookies, type SessionTokens } from "@/lib/auth/session-cookie";
 
 export interface LoginInput {
     email: string;
-    passwordHex?: string;
-    password?: string;
+    password: string;
 }
 
 export interface LoginResult {
     success: boolean;
     error?: string;
-    token?: string;
-    shopSlug?: string;
-    user?: any;
 }
 
 /**
- * Authenticates user credentials via the FastAPI backend and sets the session cookie.
+ * Authenticates credentials against the FastAPI backend and stores the access and refresh tokens
+ * in HttpOnly cookies. Tokens are never returned to the browser.
  */
 export async function loginUser(input: LoginInput): Promise<LoginResult> {
-    try {
-        const password = input.passwordHex || input.password || "";
-        const email = input.email.toLowerCase().trim();
+    const email = (input.email || "").toLowerCase().trim();
+    const password = input.password || "";
+    if (!email || !password) {
+        return { success: false, error: "Email and password are required." };
+    }
 
-        const res = await apiClient<{
-            access_token?: string;
-            token?: string;
-            shop_slug?: string;
-            shopSlug?: string;
-            user?: any;
-            error?: string;
-            detail?: string;
-        }>("/v1/auth/token", {
-            method: "POST",
-            body: JSON.stringify({ email, password }),
-        });
+    const res = await apiClient<SessionTokens>("/v1/auth/token", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+        anonymous: true,
+        headers: await getClientMeta(),
+    });
 
-        if (res.error || !res.data) {
-            return {
-                success: false,
-                error: res.data?.detail || res.data?.error || res.error || "Invalid email or password.",
-            };
-        }
-
-        const token = res.data.access_token || res.data.token;
-        if (!token) {
-            return {
-                success: false,
-                error: "Authentication token missing from response.",
-            };
-        }
-
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS);
-
-        const cookieStore = await cookies();
-        cookieStore.set(SESSION_COOKIE_NAME, token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            expires: expiresAt,
-            path: "/",
-        });
-
-        return {
-            success: true,
-            token,
-            shopSlug: res.data.shop_slug || res.data.shopSlug || "",
-            user: res.data.user,
-        };
-    } catch (err: any) {
-        console.error("Login action error:", err);
+    if (res.error || !res.data?.access_token || !res.data.refresh_token) {
         return {
             success: false,
-            error: err.message || "An unexpected error occurred during login.",
+            error: res.status === 429 ? res.error : res.status >= 500 ? "Login is temporarily unavailable. Please try again." : "Invalid email or password.",
         };
     }
+
+    await setSessionCookies(res.data);
+    return { success: true };
 }

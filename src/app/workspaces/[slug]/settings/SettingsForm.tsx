@@ -36,6 +36,7 @@ interface SettingsFormProps {
   paymentMethods: PaymentMethod[];
   initialTerms?: ShopTermItem[];
   initialAutoStockDeductionEnabled?: boolean;
+  initialCatalogAutoIssueQuotes?: boolean;
   initialBusinessMode?: "SERVICES" | "RETAIL" | "HYBRID";
   initialLoyaltyEngineMode?: "OFF" | "POINTS_ONLY" | "TIERS_ONLY" | "HYBRID";
 }
@@ -69,6 +70,7 @@ export function SettingsForm({
   paymentMethods: initialMethods,
   initialTerms = [],
   initialAutoStockDeductionEnabled = true,
+  initialCatalogAutoIssueQuotes = false,
   initialBusinessMode = "HYBRID",
   initialLoyaltyEngineMode = "OFF",
 }: SettingsFormProps) {
@@ -90,6 +92,7 @@ export function SettingsForm({
   const [currency, setCurrency] = useState(initialCurrency);
   const [fiscalYearStartMonth, setFiscalYearStartMonth] = useState(initialFiscalYearStartMonth);
   const [autoStockDeductionEnabled, setAutoStockDeductionEnabled] = useState(initialAutoStockDeductionEnabled);
+  const [catalogAutoIssueQuotes, setCatalogAutoIssueQuotes] = useState(initialCatalogAutoIssueQuotes);
   const [businessMode, setBusinessMode] = useState<"SERVICES" | "RETAIL" | "HYBRID">(initialBusinessMode);
   const [loyaltyEngineMode, setLoyaltyEngineMode] = useState<"OFF" | "POINTS_ONLY" | "TIERS_ONLY" | "HYBRID">(initialLoyaltyEngineMode);
   const [saving, setSaving] = useState(false);
@@ -195,6 +198,7 @@ export function SettingsForm({
       currency: currency.toUpperCase().trim(),
       fiscal_year_start_month: fiscalYearStartMonth,
       auto_stock_deduction_enabled: autoStockDeductionEnabled,
+      catalog_auto_issue_quotes: catalogAutoIssueQuotes,
       business_mode: businessMode,
       loyalty_engine_mode: loyaltyEngineMode,
     };
@@ -634,6 +638,28 @@ export function SettingsForm({
               </label>
               <p className="font-sans text-[11px] text-zinc-500 normal-case leading-tight">
                 When enabled (recommended for retail and distribution), issued Invoices, Receipts, and POS sales automatically deduct inventory balances. Credit Notes and cancellations restore items. Turn this off if your business prefers manual stocktakes or operates purely in services.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* PUBLIC CATALOG QUOTE REQUESTS */}
+        <div className="border border-zinc-200 p-4 bg-zinc-50/50 rounded space-y-3">
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="catalogAutoIssue"
+              checked={catalogAutoIssueQuotes}
+              onChange={(e) => setCatalogAutoIssueQuotes(e.target.checked)}
+              className="w-4 h-4 border border-zinc-300 accent-black rounded-sm mt-0.5 cursor-pointer"
+            />
+            <div className="space-y-1">
+              <label htmlFor="catalogAutoIssue" className="font-semibold uppercase tracking-tight block cursor-pointer select-none text-xs text-black">
+                Auto-issue catalog quotations
+              </label>
+              <p className="font-sans text-[11px] text-zinc-500 normal-case leading-tight">
+                When a customer requests a quote from your public catalog, issue the quotation immediately and send them the link.
+                When off (recommended), a draft quotation is created for your team to review, adjust and issue.
               </p>
             </div>
           </div>

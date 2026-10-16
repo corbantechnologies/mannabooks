@@ -122,7 +122,12 @@ export async function sendMpesaStkPush(params: StkPushParams): Promise<StkPushRe
 
     const config = getDarajaConfig();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.mannabooks.co.ke";
-    const callbackUrl = `${appUrl}/api/billing/mpesa-callback`;
+    // The secret lets our callback route reject forged "payment succeeded" posts.
+    const callbackSecret = process.env.MPESA_CALLBACK_SECRET;
+    if (!callbackSecret) {
+        return { success: false, error: "M-Pesa payments are not configured (MPESA_CALLBACK_SECRET missing)." };
+    }
+    const callbackUrl = `${appUrl}/api/billing/mpesa-callback?secret=${encodeURIComponent(callbackSecret)}`;
 
     const token = await getDarajaAccessToken();
 

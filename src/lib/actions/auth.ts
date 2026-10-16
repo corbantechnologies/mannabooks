@@ -1,33 +1,13 @@
 // src/lib/actions/auth.ts
 "use server";
 
-import { cookies } from "next/headers";
-import { cache } from "react";
-import { generateShopCode } from "./shopCode";
-import { isApiModuleEnabled } from "@/lib/api/flags";
 import { apiClient } from "@/lib/api/client";
-
-export const SESSION_COOKIE_NAME = "access_token";
-export const SESSION_DURATION_DAYS = 30;
-
-export interface SessionUser {
-    id: string;
-    name: string;
-    email: string;
-    isSuperAdmin: boolean;
-    plan?: string;
-    subscriptionStatus?: string;
-}
-
-export interface UserSession {
-    user: SessionUser;
-}
+import { clearSessionCookies, getClientMeta, getRefreshToken, setSessionCookies } from "@/lib/auth/session-cookie";
 
 export interface RegisterUserInput {
     name: string;
     email: string;
-    passwordHex?: string;
-    password?: string;
+    password: string;
     businessName: string;
     inviteToken?: string;
 }
@@ -36,113 +16,60 @@ export interface RegisterResult {
     success: boolean;
     error?: string;
     shopSlug?: string;
-    token?: string;
 }
 
 /**
- * Validates the current user session against the FastAPI backend.
- */
-export const verifyAndGetSession = cache(async function verifyAndGetSession(): Promise<UserSession | null> {
-    try {
-        const cookieStore = await cookies();
-        const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-
-        if (!token) return null;
-
-        const res = await apiClient.get<{ success: boolean; user?: SessionUser }>("/v1/auth/me");
-        if (res.data?.success && res.data.user) {
-            return { user: res.data.user };
-        }
-        return null;
-    } catch (err) {
-        return null;
-    }
-});
-
-/**
- * Validates current session and returns the user only if they are a super admin.
- */
-export async function enforceSuperAdmin(): Promise<SessionUser | null> {
-    const session = await verifyAndGetSession();
-    if (!session || !session.user || !session.user.isSuperAdmin) {
-        return null;
-    }
-    return session.user;
-}
-
-/**
- * Revokes the active session row and clears the client browser cookie.
+ * Signs this device out: revokes the refresh-token family and the current access token on the
+ * backend, then clears the session cookies.
  */
 export async function invalidateSession(): Promise<void> {
     try {
-        const cookieStore = await cookies();
-        cookieStore.delete(SESSION_COOKIE_NAME);
-        cookieStore.set(SESSION_COOKIE_NAME, "", {
-            path: "/",
-            maxAge: 0,
-            expires: new Date(0),
-            httpOnly: true,
-            sameSite: "lax",
-        });
-        await apiClient.post("/v1/auth/logout");
-    } catch (e) {
-        // Safe fallback
+        const refreshToken = await getRefreshToken();
+        await apiClient.post("/v1/auth/logout", { refresh_token: refreshToken || null });
+    } catch {
+        // Clearing the cookies below still signs the browser out.
     }
+    await clearSessionCookies();
 }
 
 /**
- * Registers a new user and workspace through the FastAPI backend.
+ * Registers a new user and workspace through the FastAPI backend and signs them in.
  */
 export async function registerUser(input: RegisterUserInput): Promise<RegisterResult> {
-    try {
-        const res = await apiClient<{
-            success: boolean;
-            token?: string;
-            shop_slug?: string;
-            error?: string;
-        }>("/v1/auth/register", {
-            method: "POST",
-            body: JSON.stringify({
-                name: input.name.trim(),
-                email: input.email.toLowerCase().trim(),
-                password: input.passwordHex || input.password,
-                business_name: input.businessName.trim(),
-                invite_token: input.inviteToken,
-                shop_code: generateShopCode(input.businessName),
-            }),
-        });
+    const res = await apiClient<{
+        success: boolean;
+        token?: string;
+        refresh_token?: string;
+        expires_in?: number;
+        refresh_expires_in?: number;
+        shop_slug?: string;
+        error?: string;
+    }>("/v1/auth/register", {
+        method: "POST",
+        anonymous: true,
+        headers: await getClientMeta(),
+        body: JSON.stringify({
+            name: (input.name || "").trim(),
+            email: (input.email || "").toLowerCase().trim(),
+            password: input.password,
+            business_name: (input.businessName || "").trim(),
+            invite_token: input.inviteToken || null,
+        }),
+    });
 
-        if (res.error || !res.data?.success || !res.data?.token) {
-            return {
-                success: false,
-                error:
-                    res.data?.error ||
-                    res.error ||
-                    "Account initialization failed. Please try again.",
-            };
-        }
-
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS);
-
-        const cookieStore = await cookies();
-        cookieStore.set(SESSION_COOKIE_NAME, res.data.token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            expires: expiresAt,
-            path: "/",
-        });
-
-        return {
-            success: true,
-            shopSlug: res.data.shop_slug || "",
-            token: res.data.token,
-        };
-    } catch (err: any) {
+    const data = res.data;
+    if (res.error || !data?.success || !data.token || !data.refresh_token) {
         return {
             success: false,
-            error: err.message || "Failed to complete user registration.",
+            error: data?.error || res.error || "Account initialization failed. Please try again.",
         };
     }
+
+    await setSessionCookies({
+        access_token: data.token,
+        refresh_token: data.refresh_token,
+        expires_in: data.expires_in ?? 15 * 60,
+        refresh_expires_in: data.refresh_expires_in ?? 30 * 24 * 60 * 60,
+    });
+    return { success: true, shopSlug: data.shop_slug || "" };
 }

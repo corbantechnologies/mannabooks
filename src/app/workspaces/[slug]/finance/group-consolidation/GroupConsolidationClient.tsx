@@ -968,7 +968,7 @@ export function GroupConsolidationClient({
                   {groupDetails.transactions.length === 0 && (
                     <tr>
                       <td colSpan={7} className="p-12 text-center text-zinc-400">
-                        No inter-company transactions recorded. Use the "Inter-Co Trade" button to log shared services,
+                        No inter-company transactions recorded. Use the &quot;Inter-Co Trade&quot; button to log shared services,
                         loans, or billing between Company A and Company B.
                       </td>
                     </tr>

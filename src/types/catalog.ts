@@ -11,7 +11,9 @@ export interface PublicCatalogItem {
     unitPrice: number;
     defaultTaxType: "V_16" | "V_0" | "EXEMPT";
     trackStock: boolean;
-    stockQuantity: number;
+    /** Availability only; exact stock levels are not published. */
+    inStock?: boolean;
+    stockQuantity?: number;
 }
 
 export interface PublicShopProfile {

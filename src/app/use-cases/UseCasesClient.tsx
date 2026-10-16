@@ -317,7 +317,7 @@ export default function UseCasesClient() {
                 No matching scenarios found
               </h3>
               <p className="text-xs text-zinc-500">
-                Try searching for different keywords or select "All Scenarios" above.
+                Try searching for different keywords or select &quot;All Scenarios&quot; above.
               </p>
               <button
                 onClick={() => {

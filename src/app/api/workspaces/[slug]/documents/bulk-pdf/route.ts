@@ -10,7 +10,7 @@ export async function POST(
     try {
         const { slug } = await params;
         const ctxRes = await apiClient<{ success: boolean; shop: any }>(
-            `/v1/workspaces/by-slug/${slug}/context`
+            `/v1/workspaces/by-slug/${encodeURIComponent(slug)}/context`
         );
 
         if (!ctxRes.data?.success || !ctxRes.data.shop) {
@@ -22,6 +22,9 @@ export async function POST(
 
         if (!Array.isArray(documentIds) || documentIds.length === 0) {
             return new NextResponse("No documents specified for bulk export.", { status: 400 });
+        }
+        if (documentIds.length > 100) {
+            return new NextResponse("At most 100 documents can be exported at once.", { status: 400 });
         }
 
         // Create Zip container

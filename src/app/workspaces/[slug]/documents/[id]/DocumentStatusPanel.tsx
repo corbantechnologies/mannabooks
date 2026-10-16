@@ -243,11 +243,14 @@ export function DocumentStatusPanel({
     );
 
     try {
-      const res = await axiosClient.post("/api/documents/email", {
-        documentId,
-        recipientEmail: targetEmail,
-        isReminder,
-      });
+      // Next.js route handler (not the FastAPI proxy): it renders and sends the email via Resend.
+      const res = {
+        data: await fetch("/api/documents/email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ shopId, documentId, recipientEmail: targetEmail, isReminder }),
+        }).then((r) => r.json()),
+      };
       setSending(false);
 
       if (res.data?.success) {

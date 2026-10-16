@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useTransition } from "react";
 import { type PublicCatalogItem, type PublicShopProfile, type PublicShopTerm } from "@/types/catalog";
-import { axiosClient } from "@/lib/api/axios";
 import { formatCurrency } from "@/lib/utils";
 import { Spinner } from "@/components/Spinner";
 import { toast } from "react-hot-toast";
@@ -40,6 +39,8 @@ export function PublicCatalogClient({
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
+  // Honeypot: hidden from people, often filled in by bots.
+  const [website, setWebsite] = useState("");
   const [submittedQuote, setSubmittedQuote] = useState<{
     serial: string;
     token?: string;
@@ -139,9 +140,11 @@ export function PublicCatalogClient({
 
     startTransition(async () => {
       try {
-        const res: any = await axiosClient.post(`/portal/catalog/${shop.slug}/quote`, {
-          shopId: shop.id,
-          shopSlug: shop.slug,
+        const res: any = await fetch(`/api/catalog/${encodeURIComponent(shop.slug)}/quote`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+          website,
           customerName,
           customerEmail: customerEmail || undefined,
           customerPhone: customerPhone || undefined,
@@ -151,7 +154,8 @@ export function PublicCatalogClient({
             quantity: i.quantity,
             notes: i.notes || undefined,
           })),
-        });
+          }),
+        }).then((r) => r.json());
 
         if (res?.success && res?.serial) {
           setSubmittedQuote({
@@ -161,7 +165,7 @@ export function PublicCatalogClient({
             grandTotal: res.grandTotal,
           });
           setSelectedItems({});
-          toast.success(`Quotation ${res.serial} issued successfully!`);
+          toast.success(res.token ? `Quotation ${res.serial} issued!` : `Request ${res.serial} received!`);
         } else {
           toast.error(res?.error || "Failed to submit quote request.");
         }
@@ -512,17 +516,26 @@ export function PublicCatalogClient({
 
                 <div className="space-y-2">
                   <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 inline-block">
-                    Official Quotation {submittedQuote.serial} Issued
+                    {submittedQuote.token ? `Quotation ${submittedQuote.serial} Issued` : `Request Reference ${submittedQuote.serial}`}
                   </span>
                   <h2 className="text-2xl font-extrabold text-black font-sans">
                     Quotation Request Received!
                   </h2>
                   <p className="text-xs text-zinc-600 font-sans max-w-md mx-auto leading-relaxed">
-                    {customerEmail ? (
+                    {submittedQuote.token ? (
                       <>
-                        A formal quotation estimate has been generated and emailed to{" "}
-                        <strong className="text-black">{customerEmail}</strong>. Our sales team at{" "}
-                        <strong>{shop.name}</strong> will also follow up on your request.
+                        Your quotation is ready to view below
+                        {customerEmail ? (
+                          <>
+                            {" "}and a copy was emailed to <strong className="text-black">{customerEmail}</strong>
+                          </>
+                        ) : null}
+                        .
+                      </>
+                    ) : customerEmail ? (
+                      <>
+                        We&apos;ve emailed a confirmation to <strong className="text-black">{customerEmail}</strong>. The team at{" "}
+                        <strong>{shop.name}</strong> will review your items and send you a formal quotation.
                       </>
                     ) : (
                       <>
@@ -693,6 +706,13 @@ export function PublicCatalogClient({
 
                 {/* CONTACT FORM */}
                 <form onSubmit={handleSubmitQuoteRequest} className="space-y-4">
+                  <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
+                    <label>
+                      Website
+                      <input type="text" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+                    </label>
+                  </div>
+
                   <div className="space-y-1">
                     <label className="font-mono text-[10px] uppercase font-bold text-zinc-700 block">
                       Your Name / Business Name *

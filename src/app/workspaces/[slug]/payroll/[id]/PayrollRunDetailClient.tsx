@@ -4,8 +4,9 @@ import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { PrintPayrollVoucherButton } from "./PrintPayrollVoucherButton";
 import { FinalizePayrollRunButton } from "./FinalizePayrollRunButton";
-import { EmailPayslipsButton } from "./EmailPayslipsButton";
+import { useQuery } from "@tanstack/react-query";
 import { useDocument } from "@/hooks/useDocuments";
+import { axiosClient } from "@/lib/api/axios";
 import { Spinner } from "@/components/Spinner";
 
 interface PayrollRunDetailClientProps {
@@ -20,6 +21,12 @@ export function PayrollRunDetailClient({
   voucherId,
 }: PayrollRunDetailClientProps) {
   const { data: rawDoc, isLoading, error } = useDocument(shop.id, voucherId);
+  const { data: payroll } = useQuery<any>({
+    queryKey: ["payroll-lines", shop.id, voucherId],
+    queryFn: () => axiosClient.get(`/payroll/${voucherId}/lines`, { params: { shop_id: shop.id } }),
+  });
+  const lines: any[] = payroll?.lines || [];
+  const totals: any = payroll?.totals || {};
 
   if (isLoading) {
     return (
@@ -100,7 +107,14 @@ export function PayrollRunDetailClient({
               <FinalizePayrollRunButton voucherId={voucherRecord.id} shopId={shop.id} />
             )}
 
-            <EmailPayslipsButton voucherId={voucherRecord.id} shopId={shop.id} shopSlug={shopSlug} />
+            {!isDraft && payroll?.period && (
+              <a
+                href={`/api/v1/payroll/p10?shop_id=${encodeURIComponent(shop.id)}&period=${payroll.period}&format=csv`}
+                className="btn-secondary-modern px-3 py-1.5 text-[10px] uppercase"
+              >
+                P10 CSV ({payroll.period})
+              </a>
+            )}
             <PrintPayrollVoucherButton voucherId={voucherRecord.id} />
           </div>
         </div>
@@ -119,7 +133,10 @@ export function PayrollRunDetailClient({
         <div className="p-6 space-y-1">
           <p className="text-[10px] text-zinc-400 uppercase font-semibold">Total Deductions</p>
           <p className="text-xl font-semibold font-mono tracking-tight text-rose-600">
-            {formatCurrency(parseFloat(voucherRecord.taxAmount), shop.currency)}
+            {formatCurrency(
+              parseFloat(voucherRecord.subTotal) - parseFloat(voucherRecord.grandTotal),
+              shop.currency
+            )}
           </p>
           <p className="text-[10px] text-zinc-500 leading-tight">PAYE, SHIF, Housing Levy, NSSF &amp; Advance deductions.</p>
         </div>
@@ -135,37 +152,95 @@ export function PayrollRunDetailClient({
 
       {/* STAFF DISBURSEMENT BREAKDOWN MATRIX */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-1">
           <h2 className="text-sm font-semibold uppercase tracking-wider font-sans text-black">
-            Staff Breakdown ({voucherRecord.items.length} employees)
+            Staff Breakdown ({lines.length || voucherRecord.items.length} employees)
           </h2>
+          {payroll?.rateSet && (
+            <span className="text-[10px] text-zinc-500 font-sans">
+              Rates: {payroll.rateSet.name}
+              {!payroll.rateSet.isVerified && " (unverified)"}
+            </span>
+          )}
         </div>
 
         <div className="card-modern overflow-x-auto bg-white">
-          <table className="w-full text-left font-mono text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
-                <th className="px-4 py-3 border-r border-zinc-100">#</th>
-                <th className="px-4 py-3 border-r border-zinc-100">Employee / Description</th>
-                <th className="px-4 py-3 border-r border-zinc-100 text-right">Net Pay</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {voucherRecord.items.map((item: any, idx: number) => (
-                <tr key={item.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
-                  <td className="p-4 border-r border-zinc-100 font-semibold text-zinc-400">
-                    #{idx + 1}
-                  </td>
-                  <td className="p-4 border-r border-zinc-100 font-mono text-xs text-zinc-800 leading-relaxed">
-                    {item.description}
-                  </td>
-                  <td className="p-4 border-r border-zinc-100 font-semibold text-emerald-700 text-right text-sm">
-                    {formatCurrency(parseFloat(item.unitPrice), shop.currency)}
+          {lines.length > 0 ? (
+            <table className="w-full text-left font-mono text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                  <th className="px-3 py-3">Employee</th>
+                  <th className="px-3 py-3 text-right">Gross</th>
+                  <th className="px-3 py-3 text-right">PAYE</th>
+                  <th className="px-3 py-3 text-right">NSSF</th>
+                  <th className="px-3 py-3 text-right">SHIF</th>
+                  <th className="px-3 py-3 text-right">Housing Levy</th>
+                  <th className="px-3 py-3 text-right">Other</th>
+                  <th className="px-3 py-3 text-right">Net Pay</th>
+                  <th className="px-3 py-3 text-right" title="Employer NSSF + Housing Levy + NITA">Employer Cost</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {lines.map((l: any) => (
+                  <tr key={l.id} className="border-b border-zinc-100/80 last:border-0 hover:bg-zinc-50">
+                    <td className="px-3 py-3 text-zinc-800">
+                      {l.employeeName}
+                      {l.kraPin && <span className="block text-[10px] text-zinc-400">{l.kraPin}</span>}
+                    </td>
+                    <td className="px-3 py-3 text-right">{formatCurrency(Number(l.gross_pay), shop.currency)}</td>
+                    <td className="px-3 py-3 text-right">{formatCurrency(Number(l.paye), shop.currency)}</td>
+                    <td className="px-3 py-3 text-right">{formatCurrency(Number(l.nssf_employee), shop.currency)}</td>
+                    <td className="px-3 py-3 text-right">{formatCurrency(Number(l.shif), shop.currency)}</td>
+                    <td className="px-3 py-3 text-right">{formatCurrency(Number(l.housing_levy_employee), shop.currency)}</td>
+                    <td className="px-3 py-3 text-right">{formatCurrency(Number(l.custom_deductions), shop.currency)}</td>
+                    <td className="px-3 py-3 text-right font-semibold text-emerald-700">{formatCurrency(Number(l.net_pay), shop.currency)}</td>
+                    <td className="px-3 py-3 text-right text-zinc-500">
+                      {formatCurrency(Number(l.nssf_employer) + Number(l.housing_levy_employer) + Number(l.nita), shop.currency)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-zinc-200 font-semibold bg-zinc-50/60">
+                  <td className="px-3 py-3 uppercase text-[10px]">Totals</td>
+                  <td className="px-3 py-3 text-right">{formatCurrency(Number(totals.gross_pay || 0), shop.currency)}</td>
+                  <td className="px-3 py-3 text-right">{formatCurrency(Number(totals.paye || 0), shop.currency)}</td>
+                  <td className="px-3 py-3 text-right">{formatCurrency(Number(totals.nssf_employee || 0), shop.currency)}</td>
+                  <td className="px-3 py-3 text-right">{formatCurrency(Number(totals.shif || 0), shop.currency)}</td>
+                  <td className="px-3 py-3 text-right">{formatCurrency(Number(totals.housing_levy_employee || 0), shop.currency)}</td>
+                  <td className="px-3 py-3 text-right">{formatCurrency(Number(totals.custom_deductions || 0), shop.currency)}</td>
+                  <td className="px-3 py-3 text-right text-emerald-700">{formatCurrency(Number(totals.net_pay || 0), shop.currency)}</td>
+                  <td className="px-3 py-3 text-right text-zinc-500">
+                    {formatCurrency(
+                      Number(totals.nssf_employer || 0) + Number(totals.housing_levy_employer || 0) + Number(totals.nita || 0),
+                      shop.currency
+                    )}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </tfoot>
+            </table>
+          ) : (
+            <table className="w-full text-left font-mono text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wide font-semibold text-zinc-400 bg-zinc-50/60">
+                  <th className="px-4 py-3 border-r border-zinc-100">#</th>
+                  <th className="px-4 py-3 border-r border-zinc-100">Employee / Description</th>
+                  <th className="px-4 py-3 border-r border-zinc-100 text-right">Net Pay</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {voucherRecord.items.map((item: any, idx: number) => (
+                  <tr key={item.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100/80 last:border-0">
+                    <td className="p-4 border-r border-zinc-100 font-semibold text-zinc-400">#{idx + 1}</td>
+                    <td className="p-4 border-r border-zinc-100 font-mono text-xs text-zinc-800 leading-relaxed">{item.description}</td>
+                    <td className="p-4 border-r border-zinc-100 font-semibold text-emerald-700 text-right text-sm">
+                      {formatCurrency(parseFloat(item.unitPrice), shop.currency)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

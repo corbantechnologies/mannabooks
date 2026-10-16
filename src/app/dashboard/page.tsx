@@ -4,7 +4,8 @@ import { apiClient } from "@/lib/api/client";
 export default async function DashboardProxyPage() {
   const meRes = await apiClient<{ success: boolean; user: any }>("/v1/auth/me");
   if (!meRes.data?.success || !meRes.data.user) {
-    redirect("/login");
+    // Stale or revoked session: clear the cookie (avoids a /login <-> /dashboard loop).
+    redirect("/logout");
   }
 
   const user = meRes.data.user;

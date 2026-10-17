@@ -5,6 +5,7 @@ import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 import { DocumentStatusPanel } from "./DocumentStatusPanel";
+import { statusBadgeClass, statusLabel } from "./DocumentLifecycle";
 import { DocumentChain, type ChainNode } from "@/components/DocumentChain";
 import { PaymentHistorySubLedger } from "./PaymentHistorySubLedger";
 import { DocumentInternalNotes } from "./DocumentInternalNotes";
@@ -101,15 +102,12 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
           </div>
           <div className="flex gap-2 font-mono text-[10px] flex-wrap items-center">
             <span className="badge-zinc">{doc.type}</span>
-            <span className={
-              doc.status === "PAID" ? "badge-emerald" :
-              doc.status === "ISSUED" ? "badge-zinc" :
-              doc.status === "PARTIALLY_PAID" ? "badge-amber" :
-              doc.status === "OVERDUE" ? "badge-rose" :
-              "badge-zinc text-zinc-400"
-            }>
-              {doc.status}
+            <span className={statusBadgeClass(doc.status)}>
+              {statusLabel(doc.type, doc.status)}
             </span>
+            {doc.status === "OVERDUE" && parseFloat(doc.workflow?.amountPaid || "0") > 0 && (
+              <span className="badge-amber">Partially paid</span>
+            )}
             {doc.emailDeliveryStatus === "OPENED" ? (
               <span className="badge-emerald" title={`Email opened on ${doc.lastEmailOpenedAt ? new Date(doc.lastEmailOpenedAt).toLocaleString() : ''}`}>
                 👁️ Email Opened
@@ -332,7 +330,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
       })()}
 
       {/* PAYMENT SETTLEMENT & INSTALLMENTS SUB-LEDGER */}
-      {(doc.type === "INVOICE" || doc.type === "PAYMENT_VOUCHER" || (doc.payments && doc.payments.length > 0)) && (
+      {(doc.type === "INVOICE" || doc.type === "DEBIT_NOTE" || (doc.payments && doc.payments.length > 0)) && (
         <PaymentHistorySubLedger
           documentId={doc.id}
           shopId={shop.id}
@@ -349,6 +347,10 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
             recordedBy: p.recordedBy ? { name: p.recordedBy.name } : null,
           }))}
           docStatus={doc.status}
+          balanceDue={doc.workflow?.balanceDue}
+          amountCredited={doc.workflow?.amountCredited}
+          canRecordPayment={!!doc.workflow?.canRecordPayment}
+          canRemovePayments={!!doc.workflow?.canRemovePayments}
         />
       )}
 
@@ -393,6 +395,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         initialAttachmentUrl={doc.attachmentUrl}
         initialAttachmentName={doc.attachmentName}
         initialAttachmentSize={doc.attachmentSize}
+        workflow={doc.workflow}
       />
 
       {/* INTERNAL NOTES & OPERATOR AUDIT TRAIL */}

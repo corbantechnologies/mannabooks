@@ -359,7 +359,7 @@ export function DocumentsTableClient({
 
     if (confirmStatus !== newStatus) {
       setConfirmStatus(newStatus);
-      toast(`Click "${newStatus === "PAID" ? "Confirm Paid" : "Confirm Void"}" again to apply to ${selectedIds.size} documents.`, {
+      toast(`Click "Confirm Void" again to apply to ${selectedIds.size} documents.`, {
         icon: "⚠️",
       });
       setTimeout(() => setConfirmStatus(null), 4000);
@@ -377,7 +377,13 @@ export function DocumentsTableClient({
       });
 
       if (res.data?.success) {
-        toast.success(`Updated ${res.data.updatedCount ?? selectedIds.size} documents to ${newStatus}!`, { id: toastId });
+        const skipped: Array<{ docNumber: string; reason: string }> = res.data.skipped || [];
+        const done = res.data.updatedCount ?? 0;
+        if (skipped.length) {
+          toast(`${done} updated, ${skipped.length} skipped. ${skipped[0].docNumber}: ${skipped[0].reason}`, { id: toastId, icon: "⚠️", duration: 8000 });
+        } else {
+          toast.success(`Voided ${done} documents.`, { id: toastId });
+        }
         setSelectedIds(new Set());
         router.refresh();
       } else {
@@ -437,13 +443,6 @@ export function DocumentsTableClient({
 
             {/* Status Dropdown */}
             <div className="flex items-center gap-1 border-l border-zinc-800 pl-2">
-              <button
-                onClick={() => handleBulkStatus("PAID")}
-                disabled={isBulkUpdating}
-                className="px-2.5 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 text-emerald-300 font-semibold transition-colors disabled:opacity-50"
-              >
-                {confirmStatus === "PAID" ? "Confirm Paid?" : "Mark Paid"}
-              </button>
               <button
                 onClick={() => handleBulkStatus("CANCELLED")}
                 disabled={isBulkUpdating}

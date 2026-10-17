@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { formatCurrency, calculateDocumentTotals } from "@/lib/utils";
 import { useCreateDocument } from "@/hooks/useDocuments";
 import { useCreateClient } from "@/hooks/useClients";
+import { useLoyaltyProgram } from "@/hooks/useLoyalty";
+import axiosClient from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 import { ThermalReceiptModal, type ThermalReceiptData } from "@/components/ThermalReceiptModal";
 
@@ -56,6 +58,31 @@ export function WalkInSalesTerminal({ shop, shopSlug, products, clients = [] }: 
 
   // Basket Items
   const [basket, setBasket] = useState<PosBasketItem[]>([]);
+
+  // Loyalty: a selected member can redeem points as a discount on this sale; the receipt earns points.
+  const { data: loyaltyData } = useLoyaltyProgram(shop.id);
+  const loyaltyProgram = loyaltyData?.program;
+  const pointsProgramOn = !!loyaltyProgram?.isEnabled && ["POINTS_ONLY", "HYBRID"].includes(loyaltyProgram?.engineMode);
+  const pointValue = parseFloat(loyaltyProgram?.pointValueKes || "0") || 0;
+  const minRedeemPoints = loyaltyProgram?.minRedeemPoints ?? 0;
+  const [memberPoints, setMemberPoints] = useState<number | null>(null);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+
+  useEffect(() => {
+    setPointsToRedeem(0);
+    setMemberPoints(null);
+    if (!selectedClientId || !pointsProgramOn) return;
+    let cancelled = false;
+    axiosClient
+      .get(`/operations/loyalty/account`, { params: { shop_id: shop.id, client_id: selectedClientId } })
+      .then((res: any) => {
+        if (!cancelled && res?.success && res.data) setMemberPoints(res.data.currentPoints ?? 0);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedClientId, pointsProgramOn, shop.id]);
 
   // Debounced client search
   useEffect(() => {
@@ -165,8 +192,17 @@ export function WalkInSalesTerminal({ shop, shopSlug, products, clients = [] }: 
     isShopVatRegistered: isVatEnabled,
   });
 
+  // Points can cover at most the sale total; the server checks the balance and minimum again.
+  const maxRedeemablePoints = memberPoints && pointValue > 0
+    ? Math.min(memberPoints, Math.floor(totals.grandTotal / pointValue))
+    : 0;
+  const canRedeem = pointsProgramOn && pointValue > 0 && (memberPoints ?? 0) >= minRedeemPoints && maxRedeemablePoints > 0;
+  const redeemedPoints = canRedeem ? Math.min(pointsToRedeem, maxRedeemablePoints) : 0;
+  const loyaltyDiscount = redeemedPoints * pointValue;
+  const payable = Math.max(0, totals.grandTotal - loyaltyDiscount);
+
   const tenderedNum = parseFloat(amountTendered) || 0;
-  const changeDue = Math.max(0, tenderedNum - totals.grandTotal);
+  const changeDue = Math.max(0, tenderedNum - payable);
 
   async function handleCheckout() {
     if (basket.length === 0) {
@@ -205,6 +241,7 @@ export function WalkInSalesTerminal({ shop, shopSlug, products, clients = [] }: 
         notes: customerNote.trim() || undefined,
         paymentChannel: paymentChannel,
         paymentReference: paymentReference.trim() || undefined,
+        loyaltyPointsRedeemed: resolvedClientId ? redeemedPoints : 0,
         items: basket.map((item) => ({
           productId: item.productId,
           description: item.description,
@@ -239,12 +276,13 @@ export function WalkInSalesTerminal({ shop, shopSlug, products, clients = [] }: 
           itemTotal: item.quantity * item.unitPrice,
           taxType: item.taxType,
         })),
-        subTotal: totals.subTotal,
-        taxAmount: totals.taxAmount,
-        grandTotal: totals.grandTotal,
+        // The server's figures: a redemption lowers the VAT as well as the total.
+        subTotal: parseFloat(docRes?.subTotal ?? docRes?.sub_total ?? totals.subTotal),
+        taxAmount: parseFloat(docRes?.taxAmount ?? docRes?.tax_amount ?? totals.taxAmount),
+        grandTotal: parseFloat(docRes?.grandTotal ?? docRes?.grand_total ?? payable),
         paymentChannel: paymentChannel,
         paymentReference: paymentReference.trim() || undefined,
-        amountTendered: tenderedNum > 0 ? tenderedNum : totals.grandTotal,
+        amountTendered: tenderedNum > 0 ? tenderedNum : payable,
         changeDue: changeDue,
         kraCuInvoiceNumber: undefined,
         cashierName: "Cashier Terminal",
@@ -262,6 +300,7 @@ export function WalkInSalesTerminal({ shop, shopSlug, products, clients = [] }: 
       setClientQuery("");
       setSelectedClientId(null);
       setSaveCustomer(false);
+      setPointsToRedeem(0);
     } catch (err: any) {
       toast.error(err.message || "Failed to complete walk-in sale.", { id: toastId });
     } finally {
@@ -522,7 +561,7 @@ export function WalkInSalesTerminal({ shop, shopSlug, products, clients = [] }: 
                     step="1"
                     value={amountTendered}
                     onChange={(e) => setAmountTendered(e.target.value)}
-                    placeholder={`e.g. ${Math.ceil(totals.grandTotal / 100) * 100}`}
+                    placeholder={`e.g. ${Math.ceil(payable / 100) * 100}`}
                     className="w-full px-3 py-2 border border-zinc-300 bg-white rounded-lg font-sans font-bold text-sm focus:outline-none focus:border-black"
                   />
                   {tenderedNum > 0 && (
@@ -694,9 +733,39 @@ export function WalkInSalesTerminal({ shop, shopSlug, products, clients = [] }: 
                   <span className="font-semibold text-black">{formatCurrency(totals.taxAmount, shop.currency)}</span>
                 </div>
 
+                {/* LOYALTY REDEMPTION */}
+                {selectedClientId && pointsProgramOn && memberPoints !== null && (
+                  <div className="flex justify-between items-center text-[10px] bg-emerald-50 border border-emerald-200 rounded px-2 py-1.5">
+                    <span className="text-emerald-800 font-semibold">
+                      {redeemedPoints > 0
+                        ? `Points redeemed (${redeemedPoints} pts): -${formatCurrency(loyaltyDiscount, shop.currency)}`
+                        : `${memberPoints} pts available`}
+                    </span>
+                    {redeemedPoints > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => setPointsToRedeem(0)}
+                        className="font-bold uppercase text-rose-600 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    ) : canRedeem ? (
+                      <button
+                        type="button"
+                        onClick={() => setPointsToRedeem(maxRedeemablePoints)}
+                        className="font-bold uppercase px-2 py-0.5 rounded bg-black text-white hover:bg-zinc-800"
+                      >
+                        Redeem {maxRedeemablePoints} pts
+                      </button>
+                    ) : (
+                      <span className="text-zinc-400">Min {minRedeemPoints} pts to redeem</span>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex justify-between text-black font-bold text-sm pt-2 border-t border-zinc-200">
                   <span className="uppercase">Total Payable:</span>
-                  <span className="text-base font-extrabold">{formatCurrency(totals.grandTotal, shop.currency)}</span>
+                  <span className="text-base font-extrabold">{formatCurrency(payable, shop.currency)}</span>
                 </div>
               </div>
 

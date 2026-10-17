@@ -26,6 +26,9 @@ export interface CreateDocumentInput {
   locationId?: string | null;
   paymentChannel?: string | null;
   paymentReference?: string | null;
+  /** Points to redeem as a discount (invoices and cash receipts); the server validates and prices it. */
+  loyaltyPointsRedeemed?: number;
+  applyTierDiscount?: boolean;
   items: DocumentItemInput[];
 }
 
@@ -103,6 +106,8 @@ export function useCreateDocument(shopId: string) {
           location_id: input.locationId || null,
           payment_channel: input.paymentChannel || null,
           payment_reference: input.paymentReference || null,
+          loyalty_points_redeemed: input.loyaltyPointsRedeemed || 0,
+          apply_tier_discount: Boolean(input.applyTierDiscount),
           items: input.items.map((it) => ({
             product_id: it.productId || null,
             description: it.description,

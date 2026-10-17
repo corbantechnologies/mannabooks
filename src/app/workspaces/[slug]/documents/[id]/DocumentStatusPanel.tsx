@@ -3,12 +3,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUpdateDocumentStatus, useDuplicateDocument, useDeleteDocument } from "@/hooks/useDocuments";
+import { useDuplicateDocument, useDeleteDocument } from "@/hooks/useDocuments";
 import axiosClient from "@/lib/api/axios";
 import { toast } from "react-hot-toast";
 import { Spinner } from "@/components/Spinner";
 
 import { DocumentActionsPopover } from "./DocumentActionsPopover";
+import { DocumentLifecycle, type DocumentWorkflow } from "./DocumentLifecycle";
 import type { DocumentType } from "@/types/models";
 import { isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
@@ -27,8 +28,9 @@ interface DocumentStatusPanelProps {
   documentId: string;
   shopId: string;
   shopSlug: string;
-  currentStatus: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED" | "CANCELLED" | "CONFIRMED";
+  currentStatus: string;
   docType: DocumentType;
+  workflow: DocumentWorkflow;
   items: DocumentItem[];
   portalLink: string | null;
   clientEmail: string;
@@ -59,57 +61,6 @@ interface DocumentStatusPanelProps {
   initialAttachmentSize?: number | null;
 }
 
-// Per-type status state machines — defines what options are shown in the UI
-function getStatusOptions(docType: DocumentType): { value: string; label: string; color: string }[] {
-  switch (docType) {
-    case "QUOTATION":
-      return [
-        { value: "DRAFT",     label: "Draft",     color: "zinc" },
-        { value: "ISSUED",    label: "Issued",    color: "blue" },
-      ];
-    case "INVOICE":
-      return [
-        { value: "DRAFT",    label: "Draft",    color: "zinc" },
-        { value: "ISSUED",   label: "Issued",   color: "blue" },
-        { value: "OVERDUE",  label: "Overdue",  color: "amber" },
-        { value: "PAID",     label: "Paid",     color: "emerald" },
-      ];
-    case "LPO":
-    case "PO":
-    case "LSO":
-      return [
-        { value: "DRAFT",    label: "Draft",    color: "zinc" },
-        { value: "ISSUED",   label: "Issued",   color: "blue" },
-        { value: "RECEIVED", label: docType === "LSO" ? "Completed" : "Received", color: "purple" },
-        { value: "PAID",     label: "Paid",     color: "emerald" },
-      ];
-    case "GOODS_RECEIVED_NOTE":
-    case "SERVICE_COMPLETION_NOTE":
-      return [
-        { value: "RECEIVED", label: docType === "SERVICE_COMPLETION_NOTE" ? "Signed Off" : "Received", color: "purple" },
-        { value: "PAID",     label: "Paid",     color: "emerald" },
-      ];
-    // Immutable documents — no status toggle rendered
-    case "RECEIPT":
-    case "CREDIT_NOTE":
-    case "PAYMENT_VOUCHER":
-    case "PAYROLL_VOUCHER":
-    case "DELIVERY_NOTE":
-    case "DEBIT_NOTE":
-      return [];
-    default:
-      return [
-        { value: "DRAFT",  label: "Draft",  color: "zinc" },
-        { value: "ISSUED", label: "Issued", color: "blue" },
-      ];
-  }
-}
-
-// Whether a document type has immutable status (set on creation, never changed)
-function isImmutableDoc(docType: DocumentType): boolean {
-  return ["RECEIPT", "CREDIT_NOTE", "PAYMENT_VOUCHER", "PAYROLL_VOUCHER"].includes(docType);
-}
-
 export function DocumentStatusPanel({
   documentId,
   shopId,
@@ -120,7 +71,7 @@ export function DocumentStatusPanel({
   portalLink,
   clientEmail,
   docNumber,
-  dueDate,
+  dueDate: _dueDate,
   kraCuInvoiceNumber,
   requiresEtims = false,
   initialPaymentChannel = "",
@@ -144,9 +95,10 @@ export function DocumentStatusPanel({
   initialAttachmentUrl,
   initialAttachmentName,
   initialAttachmentSize,
+  workflow,
 }: DocumentStatusPanelProps) {
   const router = useRouter();
-  const [status, setStatus] = useState<"DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "PARTIALLY_PAID" | "RECEIVED" | "CANCELLED" | "CONFIRMED">(currentStatus as any);
+  const status = currentStatus;
   const [cuNumber, setCuNumber] = useState(kraCuInvoiceNumber || "");
   const [paymentChannel, setPaymentChannel] = useState(initialPaymentChannel || (docType === "PAYMENT_VOUCHER" ? "BANK" : ""));
   const [paymentReference, setPaymentReference] = useState(initialPaymentReference || "");
@@ -160,17 +112,6 @@ export function DocumentStatusPanel({
   const [showThermalModal, setShowThermalModal] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
 
-  // Computed: is this quotation "Outdated" (past its validity date but not cancelled/confirmed)?
-  const isOutdatedQuote = docType === "QUOTATION" &&
-    dueDate != null &&
-    new Date(dueDate) < new Date() &&
-    status !== "CANCELLED" &&
-    status !== "CONFIRMED";
-
-  const statusOptions = getStatusOptions(docType);
-  const immutable = isImmutableDoc(docType);
-
-  const updateStatusMutation = useUpdateDocumentStatus(shopId, shopSlug);
   const duplicateDocMutation = useDuplicateDocument(shopId, shopSlug);
   const deleteDocMutation = useDeleteDocument(shopId, shopSlug);
 
@@ -219,19 +160,6 @@ export function DocumentStatusPanel({
     } finally {
       setSavingSettlement(false);
     }
-  }
-
-  async function handleStatusUpdate(newStatus: "DRAFT" | "ISSUED" | "OVERDUE" | "PAID" | "RECEIVED" | "CANCELLED" | "CONFIRMED") {
-    if (newStatus === status) return;
-    updateStatusMutation.mutate(
-      { documentId, status: newStatus },
-      {
-        onSuccess: () => {
-          setStatus(newStatus);
-          router.refresh();
-        },
-      }
-    );
   }
 
   async function executeSendEmail(targetEmail: string, isReminder = false) {
@@ -392,147 +320,19 @@ export function DocumentStatusPanel({
           items={items}
           kraCuInvoiceNumber={kraCuInvoiceNumber}
           status={status}
+          workflow={workflow}
         />
       </div>
 
-      {/* STATUS TOGGLE — document-type aware state machine */}
-      <div className="space-y-3">
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <p className="text-[10px] text-zinc-400 uppercase font-semibold">Document Status</p>
-            {/* Terminal / immutable status messages */}
-            {status === "PAID" && (
-              <span className="text-[9px] text-zinc-400 italic">PAID is final. Use Credit Note to reverse.</span>
-            )}
-            {status === "CANCELLED" && (
-              <span className="text-[9px] text-rose-600 italic">CANCELLED — document is voided.</span>
-            )}
-            {status === "CONFIRMED" && (
-              <span className="text-[9px] text-emerald-700 italic font-semibold">✓ CONFIRMED — converted to invoice.</span>
-            )}
-          </div>
-
-          {/* Outdated quote banner */}
-          {isOutdatedQuote && (
-            <div className="bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg flex items-center gap-2">
-              <span className="text-amber-600 text-sm">⚠</span>
-              <div>
-                <p className="font-sans text-xs font-bold text-amber-900">This quotation is Outdated</p>
-                <p className="font-sans text-[11px] text-amber-700 mt-0.5">The validity date has passed. Convert to Invoice or cancel this quote.</p>
-              </div>
-            </div>
-          )}
-
-          {/* QUICK RECEIVE ACTION FOR LPO / PO */}
-          {(docType === "LPO" || docType === "PO") && status !== "RECEIVED" && status !== "PAID" && status !== "CANCELLED" && (
-            <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div>
-                <p className="font-sans text-xs font-bold text-emerald-900">📦 Goods Delivered from Supplier?</p>
-                <p className="font-sans text-[11px] text-emerald-700 mt-0.5">
-                  Marking as received will automatically increment your product and warehouse location stock.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleStatusUpdate("RECEIVED")}
-                disabled={updateStatusMutation.isPending}
-                className="bg-emerald-700 hover:bg-emerald-800 text-white font-sans text-xs font-semibold px-3.5 py-1.5 rounded transition-colors shrink-0 shadow-2xs"
-              >
-                {updateStatusMutation.isPending && updateStatusMutation.variables?.status === "RECEIVED" ? "Receiving..." : "Mark as Received"}
-              </button>
-            </div>
-          )}
-
-          {/* QUICK SIGN-OFF ACTION FOR LSO */}
-          {docType === "LSO" && status !== "RECEIVED" && status !== "PAID" && status !== "CANCELLED" && (
-            <div className="bg-purple-50 border border-purple-200 p-3.5 rounded flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div>
-                <p className="font-sans text-xs font-bold text-purple-900">📋 Service Satisfactorily Rendered?</p>
-                <p className="font-sans text-[11px] text-purple-700 mt-0.5">
-                  Sign off service completion without affecting warehouse inventory balances.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleStatusUpdate("RECEIVED")}
-                disabled={updateStatusMutation.isPending}
-                className="bg-purple-700 hover:bg-purple-800 text-white font-sans text-xs font-semibold px-3.5 py-1.5 rounded transition-colors shrink-0 shadow-2xs"
-              >
-                {updateStatusMutation.isPending && updateStatusMutation.variables?.status === "RECEIVED" ? "Signing Off..." : "Sign Off Service"}
-              </button>
-            </div>
-          )}
-
-          {status === "RECEIVED" && (docType === "LPO" || docType === "PO" || docType === "GOODS_RECEIVED_NOTE") && (
-            <div className="bg-emerald-50 border border-emerald-200 px-3 py-2 rounded text-xs font-semibold text-emerald-900 flex items-center gap-2 font-sans">
-              <span>✓</span>
-              <span>Goods marked as received. Inventory quantities and location balances have been credited.</span>
-            </div>
-          )}
-
-          {status === "RECEIVED" && (docType === "LSO" || docType === "SERVICE_COMPLETION_NOTE") && (
-            <div className="bg-purple-50 border border-purple-200 px-3 py-2 rounded text-xs font-semibold text-purple-900 flex items-center gap-2 font-sans">
-              <span>✓</span>
-              <span>Service verified and completed. Ready for 3-Way Matching against inbound Vendor Bill.</span>
-            </div>
-          )}
-
-          {/* IMMUTABLE DOCS — just show their permanent status badge */}
-          {immutable ? (
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider border rounded-md bg-emerald-900 text-white border-emerald-900 shadow-2xs">
-                ✓ {status}
-              </span>
-              <span className="text-[10px] text-zinc-400 italic">This document type is permanently settled on creation.</span>
-            </div>
-          ) : status === "CONFIRMED" ? (
-            /* CONFIRMED QUOTATION — locked, show conversion badge */
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider border rounded-md bg-blue-900 text-white border-blue-900 shadow-2xs">
-                ✓ Confirmed & Converted
-              </span>
-            </div>
-          ) : status === "CANCELLED" ? (
-            /* CANCELLED — locked */
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider border rounded-md bg-rose-600 text-white border-rose-600 shadow-2xs cursor-not-allowed">
-                Cancelled
-              </span>
-            </div>
-          ) : (
-            /* INTERACTIVE STATUS TOGGLES */
-            <div className="flex flex-wrap gap-1.5">
-              {statusOptions.map((opt) => {
-                const isBlocked = status === "PAID" && opt.value !== status;
-                const isCurrentPending = updateStatusMutation.isPending && updateStatusMutation.variables?.status === opt.value;
-                const isActive = status === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    disabled={updateStatusMutation.isPending || isBlocked}
-                    onClick={() => handleStatusUpdate(opt.value as any)}
-                    className={`px-3 py-1 text-[11px] font-semibold uppercase tracking-wider border transition-all rounded-md disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer ${
-                      isActive
-                        ? "bg-emerald-900 text-white border-emerald-900 shadow-2xs"
-                        : "bg-white text-zinc-700 border-zinc-300 hover:border-emerald-600 hover:bg-emerald-50/50 hover:text-emerald-900"
-                    }`}
-                  >
-                    {isCurrentPending ? (
-                      <>
-                        <Spinner size={10} color={isActive ? "white" : "currentColor"} />
-                        <span>{opt.label}</span>
-                      </>
-                    ) : (
-                      opt.label
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
+      {/* LIFECYCLE: only the actions the API allows for this document */}
+      <DocumentLifecycle
+        documentId={documentId}
+        shopId={shopId}
+        docType={docType}
+        status={status}
+        workflow={workflow}
+        currency={currency || "KES"}
+      />
 
       {/* CLIENT DELIVERY ACTIONS & SHARING POPOVER */}
       <div className="border-t border-zinc-200/80 pt-4 space-y-3">
@@ -540,7 +340,7 @@ export function DocumentStatusPanel({
           <p className="text-[10px] text-zinc-400 uppercase font-semibold">Client Delivery &amp; Distribution</p>
           {status !== "DRAFT" && (
             <span
-              title="Issued or Paid documents cannot be deleted. Raise a Credit Note to reverse financial value."
+              title="Issued documents can't be edited or deleted. Void them, or raise a credit note to correct amounts."
               className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider flex items-center gap-1"
             >
               🔒 Audit Protected
@@ -659,20 +459,20 @@ export function DocumentStatusPanel({
                   <span>📋</span> {duplicateDocMutation.isPending ? "Duplicating..." : "Duplicate Document"}
                 </button>
 
-                {status === "DRAFT" && (
+                {(workflow.canEdit || workflow.canDelete) && (
                   <div className="border-t border-zinc-100 my-1 pt-1">
                     <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
                       Draft Management
                     </div>
-                    <Link
+                    {workflow.canEdit && <Link
                       href={`/workspaces/${shopSlug}/documents/${documentId}/edit`}
                       onClick={() => setIsShareOpen(false)}
                       className="w-full text-left px-2.5 py-2 text-xs font-medium text-zinc-800 hover:bg-zinc-100 rounded-lg transition-colors flex items-center gap-2 no-underline"
                     >
                       <span>✏️</span> Edit Draft
-                    </Link>
+                    </Link>}
 
-                    {showDeleteConfirm ? (
+                    {!workflow.canDelete ? null : showDeleteConfirm ? (
                       <div className="p-2 bg-rose-50 rounded-lg space-y-1.5 mt-1">
                         <span className="text-[10px] text-rose-700 font-bold uppercase block">Purge this draft?</span>
                         <div className="flex items-center gap-1.5">

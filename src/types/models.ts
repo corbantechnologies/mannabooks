@@ -31,7 +31,11 @@ export type DocumentStatus =
   | "CANCELLED"
   | "ACCEPTED"
   | "REJECTED"
-  | "ISSUED";
+  | "ISSUED"
+  | "PARTIALLY_PAID"
+  | "RECEIVED"
+  | "CONFIRMED"
+  | "EXPIRED";
 
 export interface DocumentItemModel {
   id?: string;

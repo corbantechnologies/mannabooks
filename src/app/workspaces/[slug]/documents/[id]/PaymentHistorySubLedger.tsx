@@ -25,6 +25,10 @@ interface PaymentHistorySubLedgerProps {
   grandTotal: number | string;
   payments: PaymentItem[];
   docStatus: string;
+  balanceDue?: string | null;
+  amountCredited?: string | null;
+  canRecordPayment?: boolean;
+  canRemovePayments?: boolean;
 }
 
 export function PaymentHistorySubLedger({
@@ -35,6 +39,10 @@ export function PaymentHistorySubLedger({
   grandTotal,
   payments = [],
   docStatus,
+  balanceDue,
+  amountCredited,
+  canRecordPayment = true,
+  canRemovePayments = true,
 }: PaymentHistorySubLedgerProps) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,7 +57,9 @@ export function PaymentHistorySubLedger({
 
   const totalBilled = typeof grandTotal === "string" ? parseFloat(grandTotal || "0") : grandTotal;
   const totalPaid = payments.reduce((acc, p) => acc + parseFloat(p.amount || "0"), 0);
-  const balanceRemaining = Math.max(0, totalBilled - totalPaid);
+  const credited = parseFloat(amountCredited || "0");
+  const balanceRemaining =
+    balanceDue != null ? parseFloat(balanceDue) : Math.max(0, totalBilled - totalPaid - credited);
 
   async function handleRecordPayment(e: React.FormEvent) {
     e.preventDefault();
@@ -122,9 +132,12 @@ export function PaymentHistorySubLedger({
             <span className={`font-black text-sm ${balanceRemaining > 0 ? "text-rose-600" : "text-emerald-700"}`}>
               {formatCurrency(balanceRemaining, currency)}
             </span>
+            {credited > 0 && (
+              <span className="text-[10px] text-zinc-500 block">after {formatCurrency(credited, currency)} credited</span>
+            )}
           </div>
 
-          <button
+          {canRecordPayment && <button
             type="button"
             onClick={() => {
               setAmount(balanceRemaining > 0 ? balanceRemaining.toFixed(2) : "");
@@ -133,7 +146,10 @@ export function PaymentHistorySubLedger({
             className="btn-primary-modern px-3 py-1.5 text-xs font-semibold uppercase tracking-wider shrink-0"
           >
             + Record Payment
-          </button>
+          </button>}
+          {!canRecordPayment && docStatus === "DRAFT" && (
+            <span className="text-[11px] text-zinc-500 font-sans">Issue the invoice to record payments.</span>
+          )}
         </div>
       </div>
 
@@ -171,7 +187,7 @@ export function PaymentHistorySubLedger({
                   {formatCurrency(p.amount, currency)}
                 </td>
                 <td className="p-3 text-center">
-                  <button
+                  {canRemovePayments && <button
                     type="button"
                     disabled={deletingId === p.id}
                     onClick={() => handleDeletePayment(p.id)}
@@ -180,7 +196,7 @@ export function PaymentHistorySubLedger({
                     }`}
                   >
                     {deletingId === p.id ? "Deleting..." : confirmingId === p.id ? "Confirm?" : "Remove"}
-                  </button>
+                  </button>}
                 </td>
               </tr>
             ))}

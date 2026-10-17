@@ -125,6 +125,10 @@ export function DocumentBuilderClientForm({
   const [loyaltyDiscountAmount, setLoyaltyDiscountAmount] = useState<number>(
     parseFloat(initialDocument?.loyaltyDiscountAmount || "0")
   );
+  // A member tier discount is sent as a flag; the server works out the amount.
+  const [tierDiscountApplied, setTierDiscountApplied] = useState<boolean>(
+    !initialDocument?.loyaltyPointsRedeemed && parseFloat(initialDocument?.loyaltyDiscountAmount || "0") > 0
+  );
   const [kraCuInvoiceNumber, setKraCuInvoiceNumber] = useState(initialDocument?.kraCuInvoiceNumber || "");
   const [paymentChannel, setPaymentChannel] = useState(
     initialDocument?.paymentChannel || (initialDocType === "PAYMENT_VOUCHER" ? "BANK" : (initialDocType === "RECEIPT" ? "MPESA" : ""))
@@ -275,12 +279,38 @@ export function DocumentBuilderClientForm({
     isShopVatRegistered: shop.isVatRegistered,
   });
 
+  // Loyalty: points are redeemed and earned on invoices and cash receipts; member discounts also apply to quotations.
+  // A redemption is a discount, so VAT is charged on the discounted value (the server does the exact split).
+  const canRedeemPoints = docType === "INVOICE" || docType === "RECEIPT";
+  const canApplyTierDiscount = canRedeemPoints || docType === "QUOTATION";
+  const pointsProgramOn = !!loyaltyProgram?.isEnabled && ["POINTS_ONLY", "HYBRID"].includes(loyaltyProgram?.engineMode);
   const netGrandTotal = Math.max(0, totals.grandTotal - loyaltyDiscountAmount);
+  const netTaxAmount = totals.grandTotal > 0 ? (totals.taxAmount * netGrandTotal) / totals.grandTotal : totals.taxAmount;
   const earnRate = parseFloat(loyaltyProgram?.earnRateKes || "100");
   const tierMultiplier = loyaltyAccount?.tier?.pointsMultiplier ? parseFloat(loyaltyAccount.tier.pointsMultiplier) : 1;
-  const estimatedPointsEarned = (loyaltyProgram?.isEnabled && loyaltyProgram?.engineMode !== "OFF" && earnRate > 0)
+  const estimatedPointsEarned = (pointsProgramOn && canRedeemPoints && earnRate > 0)
     ? Math.floor((netGrandTotal / earnRate) * tierMultiplier)
     : 0;
+
+  // Drop a discount the document type can't carry (e.g. switching an invoice to a delivery note).
+  useEffect(() => {
+    if (!canRedeemPoints && loyaltyPointsToRedeem > 0) {
+      setLoyaltyPointsToRedeem(0);
+      setLoyaltyDiscountAmount(0);
+    }
+    if (!canApplyTierDiscount && tierDiscountApplied) {
+      setTierDiscountApplied(false);
+      setLoyaltyDiscountAmount(0);
+    }
+  }, [canRedeemPoints, canApplyTierDiscount, loyaltyPointsToRedeem, tierDiscountApplied]);
+
+  // Keep a member tier discount in step with the lines.
+  const tierPercent = parseFloat(loyaltyAccount?.tier?.discountPercent || "0");
+  useEffect(() => {
+    if (tierDiscountApplied && tierPercent > 0) {
+      setLoyaltyDiscountAmount(Math.round(totals.grandTotal * tierPercent) / 100);
+    }
+  }, [tierDiscountApplied, tierPercent, totals.grandTotal]);
 
   // Resolve loyalty account when client is selected
   useEffect(() => {
@@ -301,6 +331,7 @@ export function DocumentBuilderClientForm({
       setLoyaltyAccount(null);
       setLoyaltyPointsToRedeem(0);
       setLoyaltyDiscountAmount(0);
+      setTierDiscountApplied(false);
     }
   }, [partyType, targetId, shop.id, loyaltyProgram]);
 
@@ -348,6 +379,7 @@ export function DocumentBuilderClientForm({
     if (points <= 0) {
       setLoyaltyPointsToRedeem(0);
       setLoyaltyDiscountAmount(0);
+      setTierDiscountApplied(false);
       return;
     }
 
@@ -362,16 +394,20 @@ export function DocumentBuilderClientForm({
     const finalDiscount = Math.min(calculatedDiscount, maxDiscountAllowed);
     const actualPointsUsed = Math.floor(finalDiscount / pointValue);
 
+    const discountUsed = actualPointsUsed * pointValue;
+    setTierDiscountApplied(false);
     setLoyaltyPointsToRedeem(actualPointsUsed);
-    setLoyaltyDiscountAmount(finalDiscount);
-    toast.success(`Applied ${actualPointsUsed} points discount: -${formatCurrency(finalDiscount, currency)}`);
+    setLoyaltyDiscountAmount(discountUsed);
+    toast.success(`Applied ${actualPointsUsed} points discount: -${formatCurrency(discountUsed, currency)}`);
   }
 
   function applyTierDiscount() {
     if (!loyaltyAccount?.tier?.discountPercent) return;
     const tierPct = parseFloat(loyaltyAccount.tier.discountPercent);
     if (tierPct <= 0) return;
-    const discountVal = (totals.subTotal * tierPct) / 100;
+    const discountVal = Math.round(totals.grandTotal * tierPct) / 100;  // VAT inclusive, like the server
+    setLoyaltyPointsToRedeem(0);
+    setTierDiscountApplied(true);
     setLoyaltyDiscountAmount(discountVal);
     toast.success(`Applied ${tierPct}% ${loyaltyAccount.tier.name} tier discount (-${formatCurrency(discountVal, currency)})`);
   }
@@ -489,6 +525,8 @@ export function DocumentBuilderClientForm({
             payment_channel: paymentChannel.trim() || undefined,
             payment_reference: paymentReference.trim() || undefined,
             terms_and_conditions: finalTermsSerialized,
+            loyalty_points_redeemed: canRedeemPoints ? loyaltyPointsToRedeem : 0,
+            apply_tier_discount: canApplyTierDiscount && tierDiscountApplied,
             items: itemsPayload.map((it) => ({
               product_id: it.productId || null,
               description: it.description,
@@ -515,6 +553,8 @@ export function DocumentBuilderClientForm({
             payment_channel: paymentChannel.trim() || undefined,
             payment_reference: paymentReference.trim() || undefined,
             terms_and_conditions: finalTermsSerialized,
+            loyalty_points_redeemed: canRedeemPoints ? loyaltyPointsToRedeem : 0,
+            apply_tier_discount: canApplyTierDiscount && tierDiscountApplied,
             items: itemsPayload.map((it) => ({
               product_id: it.productId || null,
               description: it.description,
@@ -972,18 +1012,18 @@ export function DocumentBuilderClientForm({
 
               <div className="md:col-span-6 flex flex-wrap items-center justify-start md:justify-end gap-2">
                 {/* 1-Click Tier Benefit */}
-                {loyaltyAccount.tier && parseFloat(loyaltyAccount.tier.discountPercent || "0") > 0 && (
+                {canApplyTierDiscount && loyaltyAccount.tier && parseFloat(loyaltyAccount.tier.discountPercent || "0") > 0 && (
                   <button
                     type="button"
-                    onClick={applyTierDiscount}
+                    onClick={tierDiscountApplied ? () => applyPointsRedemption(0) : applyTierDiscount}
                     className="text-[10px] font-bold uppercase px-3 py-1.5 rounded border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-colors shadow-xs"
                   >
-                    Apply {loyaltyAccount.tier.discountPercent}% VIP Discount
+                    {tierDiscountApplied ? "Remove" : "Apply"} {loyaltyAccount.tier.discountPercent}% VIP Discount
                   </button>
                 )}
 
                 {/* Points Redemption */}
-                {loyaltyAccount.currentPoints >= (loyaltyProgram.minRedeemPoints || 50) ? (
+                {!canRedeemPoints || !pointsProgramOn ? null : loyaltyAccount.currentPoints >= (loyaltyProgram.minRedeemPoints || 50) ? (
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
@@ -992,7 +1032,7 @@ export function DocumentBuilderClientForm({
                     >
                       Redeem All ({loyaltyAccount.currentPoints} pts)
                     </button>
-                    {loyaltyPointsToRedeem > 0 && (
+                    {(loyaltyPointsToRedeem > 0 || tierDiscountApplied) && (
                       <button
                         type="button"
                         onClick={() => applyPointsRedemption(0)}
@@ -1362,6 +1402,12 @@ export function DocumentBuilderClientForm({
                     </span>
                   </span>
                   <span className="font-bold">-{formatCurrency(loyaltyDiscountAmount, currency)}</span>
+                </div>
+              )}
+              {loyaltyDiscountAmount > 0 && totals.taxAmount > 0 && (
+                <div className="flex justify-between text-zinc-500 text-[10px]">
+                  <span>VAT on the discounted amount (approx.):</span>
+                  <span>{formatCurrency(netTaxAmount, currency)}</span>
                 </div>
               )}
 

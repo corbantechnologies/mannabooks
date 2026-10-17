@@ -479,8 +479,8 @@ export function DocumentBuilderClientForm({
         const updated: any = await axiosClient.put(
           `/documents/${initialDocument.id}`,
           {
-            client_id: partyType === "CLIENT" ? targetId : undefined,
-            supplier_id: partyType === "SUPPLIER" ? targetId : undefined,
+            client_id: partyType === "CLIENT" && targetId ? targetId : undefined,
+            supplier_id: partyType === "SUPPLIER" && targetId ? targetId : undefined,
             type: docType === "QUOTATION" ? "QUOTE" : docType,
             due_date: dueDate ? new Date(dueDate).toISOString() : undefined,
             requires_etims: isFiscalDocType(docType) ? requiresEtims : false,
@@ -505,8 +505,8 @@ export function DocumentBuilderClientForm({
         const created: any = await axiosClient.post(
           "/documents",
           {
-            client_id: partyType === "CLIENT" ? targetId : undefined,
-            supplier_id: partyType === "SUPPLIER" ? targetId : undefined,
+            client_id: partyType === "CLIENT" && targetId ? targetId : undefined,
+            supplier_id: partyType === "SUPPLIER" && targetId ? targetId : undefined,
             type: docType === "QUOTATION" ? "QUOTE" : docType,
             due_date: dueDate ? new Date(dueDate).toISOString() : undefined,
             requires_etims: isFiscalDocType(docType) ? requiresEtims : false,

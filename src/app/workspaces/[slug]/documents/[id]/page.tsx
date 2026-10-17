@@ -5,7 +5,7 @@ import { getActiveWorkspaceContext } from "@/lib/workspace-context";
 import { formatCurrency, isFiscalDocType } from "@/lib/utils";
 import Link from "next/link";
 import { DocumentStatusPanel } from "./DocumentStatusPanel";
-import { statusBadgeClass, statusLabel } from "./DocumentLifecycle";
+import { fallbackWorkflow, statusBadgeClass, statusLabel } from "./documentWorkflow";
 import { DocumentChain, type ChainNode } from "@/components/DocumentChain";
 import { PaymentHistorySubLedger } from "./PaymentHistorySubLedger";
 import { DocumentInternalNotes } from "./DocumentInternalNotes";
@@ -27,6 +27,9 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
   const docRes = await apiClient.get<any>(`/v1/documents/${id}?shop_id=${shop.id}&full=true`);
   if (docRes.error || !docRes.data) notFound();
   const doc = docRes.data;
+  const workflow = doc.workflow ?? fallbackWorkflow(doc.status);
+  const items: any[] = doc.items ?? [];
+  const payments: any[] = doc.payments ?? [];
 
   const party = doc.client || doc.supplier || {
     name: doc.type === "PAYROLL_VOUCHER"
@@ -105,7 +108,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
             <span className={statusBadgeClass(doc.status)}>
               {statusLabel(doc.type, doc.status)}
             </span>
-            {doc.status === "OVERDUE" && parseFloat(doc.workflow?.amountPaid || "0") > 0 && (
+            {doc.status === "OVERDUE" && parseFloat(workflow.amountPaid || "0") > 0 && (
               <span className="badge-amber">Partially paid</span>
             )}
             {doc.emailDeliveryStatus === "OPENED" ? (
@@ -193,12 +196,12 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
           <p className="font-mono text-[10px] text-zinc-500">
             Sub: {formatCurrency(doc.subTotal, doc.currency || shop.currency)} | VAT: {formatCurrency(doc.taxAmount, doc.currency || shop.currency)}
           </p>
-          {doc.loyaltyDiscountAmount && parseFloat(doc.loyaltyDiscountAmount) > 0 && (
+          {parseFloat(doc.loyaltyDiscountAmount || "0") > 0 && (
             <p className="font-mono text-[10px] text-emerald-700 font-semibold">
               🎁 Loyalty Discount: -{formatCurrency(doc.loyaltyDiscountAmount, doc.currency || shop.currency)} ({doc.loyaltyPointsRedeemed || 0} pts)
             </p>
           )}
-          {doc.loyaltyPointsEarned && doc.loyaltyPointsEarned > 0 && (
+          {Number(doc.loyaltyPointsEarned) > 0 && (
             <p className="font-mono text-[10px] text-zinc-600">
               ✨ Points Accrued: +{doc.loyaltyPointsEarned} pts
             </p>
@@ -269,7 +272,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
               </tr>
             </thead>
             <tbody className="bg-white">
-              {doc.items.map((item: any) => (
+              {items.map((item: any) => (
                 <tr key={item.id} className="hover:bg-zinc-50/70 transition-colors">
                   <td className="p-3.5 border-r border-zinc-100 font-sans text-sm">
                     <div className="font-semibold text-black">{item.description}</div>
@@ -330,14 +333,14 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
       })()}
 
       {/* PAYMENT SETTLEMENT & INSTALLMENTS SUB-LEDGER */}
-      {(doc.type === "INVOICE" || doc.type === "DEBIT_NOTE" || (doc.payments && doc.payments.length > 0)) && (
+      {(doc.type === "INVOICE" || doc.type === "DEBIT_NOTE" || (payments.length > 0)) && (
         <PaymentHistorySubLedger
           documentId={doc.id}
           shopId={shop.id}
           shopSlug={slug}
           currency={shop.currency || "KES"}
           grandTotal={doc.grandTotal}
-          payments={doc.payments.map((p: any) => ({
+          payments={payments.map((p: any) => ({
             id: p.id,
             amount: p.amount,
             paymentDate: p.paymentDate,
@@ -347,10 +350,10 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
             recordedBy: p.recordedBy ? { name: p.recordedBy.name } : null,
           }))}
           docStatus={doc.status}
-          balanceDue={doc.workflow?.balanceDue}
-          amountCredited={doc.workflow?.amountCredited}
-          canRecordPayment={!!doc.workflow?.canRecordPayment}
-          canRemovePayments={!!doc.workflow?.canRemovePayments}
+          balanceDue={workflow.balanceDue}
+          amountCredited={workflow.amountCredited}
+          canRecordPayment={!!workflow.canRecordPayment}
+          canRemovePayments={!!workflow.canRemovePayments}
         />
       )}
 
@@ -361,7 +364,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         shopSlug={slug}
         currentStatus={doc.status}
         docType={doc.type as any}
-        items={doc.items.map((i: any) => ({
+        items={items.map((i: any) => ({
           id: i.id,
           description: i.description,
           quantity: i.quantity,
@@ -374,8 +377,8 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         dueDate={doc.dueDate}
         kraCuInvoiceNumber={doc.kraCuInvoiceNumber}
         requiresEtims={doc.requiresEtims}
-        initialPaymentChannel={doc.paymentChannel || doc.payments?.[0]?.paymentChannel || ""}
-        initialPaymentReference={doc.paymentReference || doc.payments?.[0]?.paymentReference || ""}
+        initialPaymentChannel={doc.paymentChannel || payments[0]?.paymentChannel || ""}
+        initialPaymentReference={doc.paymentReference || payments[0]?.paymentReference || ""}
         parentDocument={parentDoc ? { id: parentDoc.id, docNumber: parentDoc.docNumber, type: parentDoc.type } : null}
         childDocuments={childDocs}
         shopName={shop.name}
@@ -395,7 +398,7 @@ export default async function DocumentDetailPage({ params, searchParams }: Docum
         initialAttachmentUrl={doc.attachmentUrl}
         initialAttachmentName={doc.attachmentName}
         initialAttachmentSize={doc.attachmentSize}
-        workflow={doc.workflow}
+        workflow={workflow}
       />
 
       {/* INTERNAL NOTES & OPERATOR AUDIT TRAIL */}
